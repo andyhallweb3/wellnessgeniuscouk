@@ -40,13 +40,13 @@ const clients = [
 
 const testimonials = [
   {
-    quote: "Wellness Genius quickly identified where we were losing time and value across content, data, and operations. The approach was practical, commercial, and execution-led — not theoretical. We came away with real clarity and momentum.",
+    quote: "A professional team with a refreshing approach. Wellness Genius quickly identified where we were losing time and value across content, data, and operations. The work was practical, commercial, and execution-led — not theoretical.",
     author: "David Langridge",
     role: "Founder",
     company: "Fitter Stock",
   },
   {
-    quote: "Wellness Genius brings a rare mix of strategic thinking and hands-on delivery. They don't just advise — they build, test, and challenge assumptions. That's what made the work genuinely valuable.",
+    quote: "We were amazed at the quality and speed of the build. Wellness Genius brings a rare mix of strategic thinking and hands-on delivery. They don't just advise — they build, test, and challenge assumptions.",
     author: "Beth Laker",
     role: "Co-Founder",
     company: "The Leisure Experts",
@@ -58,13 +58,13 @@ const testimonials = [
     company: "Awake Meditation",
   },
   {
-    quote: "Working with Wellness Genius brought clarity to both our product positioning and our next phase of growth. They ask the right questions and don't let you hide behind vague answers.",
+    quote: "Trusted and knowledgeable — bespoke and easy to work with. Working with Wellness Genius brought clarity to both our product positioning and our next phase of growth.",
     author: "Nicole Nason",
     role: "Director",
     company: "Nuforma",
   },
   {
-    quote: "Wellness Genius brought structure and strategic thinking to a space that's often intuitive and fragmented. The result was clearer direction and better decision-making.",
+    quote: "Trusted and knowledgeable, with a bespoke approach that made everything easy. Wellness Genius brought structure and strategic thinking to a space that's often intuitive and fragmented.",
     author: "Nicole Nason",
     role: "Director",
     company: "Equesoul",
