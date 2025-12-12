@@ -7,7 +7,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: "/ai-readiness", label: "AI Readiness Index", isRoute: true },
+    { href: "/ai-readiness", label: "Free AI Assessment", isRoute: true },
     { href: "#services", label: "Services" },
     { href: "#proof", label: "Proof" },
     { href: "#how-it-works", label: "How It Works" },

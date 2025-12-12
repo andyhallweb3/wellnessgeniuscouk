@@ -45,24 +45,27 @@ const AssessmentIntro = ({ onStart }: AssessmentIntroProps) => {
     <div className="max-w-4xl mx-auto">
       {/* Hero */}
       <div className="text-center mb-12">
-        <p className="text-sm font-medium text-accent uppercase tracking-wider mb-3">
-          AI Readiness Index
-        </p>
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
+          Free Assessment + Strategy Call
+        </div>
         <h1 className="text-4xl lg:text-5xl font-heading mb-4">
-          Are you actually ready for AI?
+          AI Readiness Index
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          A 10-minute assessment that shows whether your business is ready to deploy AI — and where it will fail if you rush.
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
+          A 10-minute diagnostic that shows whether your business is ready to deploy AI — and where it will fail if you rush.
+        </p>
+        <p className="text-muted-foreground max-w-xl mx-auto">
+          Complete the assessment and book a free 30-minute call to discuss your results and identify your highest-ROI AI opportunities.
         </p>
       </div>
 
-      {/* Benefits */}
+      {/* What you get */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {[
-          { icon: Clock, label: "10 minutes", desc: "Quick and focused" },
-          { icon: Target, label: "5 pillars", desc: "Comprehensive analysis" },
-          { icon: BarChart3, label: "Scored 0-100", desc: "Clear benchmarking" },
-          { icon: Shield, label: "Actionable", desc: "Know your next step" },
+          { icon: Clock, label: "10-min assessment", desc: "Quick and focused" },
+          { icon: Target, label: "5-pillar analysis", desc: "Comprehensive view" },
+          { icon: BarChart3, label: "Personalised score", desc: "With benchmarks" },
+          { icon: Shield, label: "30-min call", desc: "Discuss your results" },
         ].map((item, i) => (
           <div key={i} className="text-center p-4">
             <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-3">
