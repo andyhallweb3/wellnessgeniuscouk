@@ -85,7 +85,7 @@ const Footer = () => {
               </a>
               <div className="flex gap-4">
                 <a
-                  href="https://linkedin.com"
+                  href="https://www.linkedin.com/in/andyhallwellnessgenius"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
@@ -94,7 +94,7 @@ const Footer = () => {
                   <Linkedin size={18} />
                 </a>
                 <a
-                  href="https://twitter.com"
+                  href="https://twitter.com/wellnessgeniu5"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
