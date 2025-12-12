@@ -1,4 +1,5 @@
 import { useParams, Link, Navigate } from "react-router-dom";
+import { useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,11 @@ const blogPosts: Record<string, {
   readTime: string;
   content: string[];
   cta: string;
+  seo: {
+    metaTitle: string;
+    metaDescription: string;
+    keywords: string[];
+  };
 }> = {
   "ai-wellness-policy-compliance": {
     title: "AI, Wellness & Policy: Why Compliance Is Now a Competitive Advantage",
@@ -19,26 +25,31 @@ const blogPosts: Record<string, {
     category: "AI Agents",
     date: "Dec 12, 2024",
     readTime: "6 min read",
+    seo: {
+      metaTitle: "AI, Wellness & Compliance: Why Policy Drives Scale",
+      metaDescription: "How AI-driven wellness platforms can turn compliance, privacy, and regulation into a growth advantage across the UK, EU, and global markets.",
+      keywords: ["AI wellness compliance", "AI in wellness regulation", "GDPR AI wellness", "AI policy health and wellness", "EU AI Act wellness platforms", "privacy-first AI wellness"]
+    },
     content: [
       "AI is moving faster than regulation — and that's exactly why wellness brands can't afford to ignore policy and compliance.",
-      "In wellness, fitness, and health-adjacent industries, data isn't just valuable — it's sensitive. Movement, sleep, mental state, habits, location. That puts AI-powered wellness platforms directly in the regulatory crosshairs.",
+      "In the UK and EU, AI systems used in wellness, fitness, and health-adjacent industries face increasing scrutiny. The data these platforms handle isn't just valuable — it's sensitive. Movement, sleep, mental state, habits, location. That puts AI-powered wellness platforms directly in the regulatory crosshairs.",
       "But here's the truth most people miss: **compliance isn't a blocker to innovation — it's what enables scale.**",
       "## The Shifting Regulatory Landscape",
       "Across the UK, EU, and global markets, we're seeing clear signals:",
       "- **GDPR enforcement is tightening** — fines are increasing and scope is expanding",
-      "- **The EU AI Act** introduces risk-based AI classification with real consequences",
+      "- **The EU AI Act** introduces risk-based AI classification with real consequences for enterprise wellness and fitness providers",
       "- **Health and wellbeing data** is increasingly treated as quasi-medical",
       "- **Consent, explainability, and auditability** are no longer optional extras",
-      "For wellness brands using AI agents, automation, or behavioural data, this fundamentally changes the game.",
+      "For UK and EU wellness platforms using AI agents, automation, or behavioural data, this fundamentally changes the game.",
       "## The Real Risk Isn't AI — It's Unmanaged AI",
       "Most compliance failures don't come from malicious intent. They come from:",
       "- Poor data governance and unclear ownership",
       "- Black-box automation with no audit trail",
       "- Over-collection of data \"just in case\"",
       "- No explanation for why AI made a specific decision",
-      "AI that touches wellness must be **purpose-limited, transparent, explainable, and secure by design**. If you can't explain why an AI system made a recommendation or triggered an action, you're exposed.",
+      "AI-powered health and wellbeing systems must be **purpose-limited, transparent, explainable, and secure by design**. If you can't explain why an AI system made a recommendation or triggered an action, you're exposed.",
       "## Privacy-First AI Is the New Baseline",
-      "Forward-thinking platforms are shifting to:",
+      "Forward-thinking enterprise wellness solutions are shifting to:",
       "- **Minimal data capture** — only what's genuinely needed",
       "- **On-device or edge processing** where possible",
       "- **Clear consent flows** tied to specific outcomes",
@@ -49,9 +60,10 @@ const blogPosts: Record<string, {
       "Wellness brands that get this right unlock:",
       "- **Faster enterprise sales cycles** — compliance is often the blocker",
       "- **Easier international expansion** — one framework, multiple markets",
-      "- **Stronger partnerships** with healthcare, hospitality, and employers",
+      "- **Stronger partnerships** with healthcare, hospitality, and corporate wellbeing providers",
       "- **Reduced legal and reputational risk** — insurance loves compliant systems",
       "- **Long-term defensibility** — trust scales faster than features",
+      "In the UK and EU, AI systems used in wellness and fitness platforms are increasingly assessed using healthcare-adjacent compliance standards.",
       "## The Takeaway",
       "AI in wellness doesn't need less regulation — it needs better architecture. Build compliant systems from day one, and policy stops being a headache and starts becoming a moat."
     ],
@@ -63,20 +75,26 @@ const blogPosts: Record<string, {
     category: "Data",
     date: "Dec 8, 2024",
     readTime: "5 min read",
+    seo: {
+      metaTitle: "AI & Data in Wellness: Turning Insight into Action",
+      metaDescription: "Why AI-powered data intelligence is transforming wellness, fitness, and hospitality platforms from reporting tools into decision engines.",
+      keywords: ["AI data analytics wellness", "wellness data intelligence", "AI in fitness analytics", "data-driven wellness platforms", "predictive analytics fitness", "wellness business intelligence"]
+    },
     content: [
       "Most wellness businesses are sitting on data they don't understand, don't trust, and don't use.",
       "Steps, sessions, bookings, drop-offs, engagement, churn, feedback, behaviour — the data exists. The problem is that without AI, it's just noise.",
       "**AI is what turns wellness data into decisions.**",
+      "In wellness platforms, AI-driven data intelligence refers to systems that analyse behavioural, operational, and commercial data to trigger automated decisions in real time.",
       "## Data Alone Doesn't Create Value",
       "Collecting data is easy. Creating insight is hard.",
-      "Common issues we see across wellness, fitness, and hospitality:",
+      "Common issues we see across enterprise wellness platforms, multi-site fitness operators, and hospitality wellness providers:",
       "- Data spread across disconnected tools with no single source of truth",
       "- Reports that explain the past but don't guide action",
       "- Dashboards no one actually checks",
       "- Metrics without context or causality",
       "AI changes this by moving from reporting to reasoning.",
       "## What AI Actually Does Differently",
-      "When applied properly, AI can:",
+      "When applied properly, AI enables real-time operational intelligence that can:",
       "- **Identify behaviour patterns** humans consistently miss",
       "- **Predict churn** before it happens — not after",
       "- **Segment users dynamically** — not once a year in a spreadsheet",
@@ -85,14 +103,14 @@ const blogPosts: Record<string, {
       "Instead of asking: *\"What happened last month?\"*",
       "AI helps answer: *\"What's likely to happen next — and what should we do about it?\"*",
       "## From Raw Data to Operational Intelligence",
-      "The most powerful wellness platforms use AI to connect:",
+      "The most powerful enterprise wellness platforms use AI to connect:",
       "- **Behavioural data** — activity, engagement, habits",
       "- **Operational data** — bookings, attendance, utilisation",
       "- **Commercial data** — conversion, retention, revenue",
       "- **Contextual data** — time, location, lifecycle stage",
       "This creates a real-time feedback loop where insight drives action — automatically.",
       "## Why This Matters Commercially",
-      "Data-driven AI enables:",
+      "Data-driven AI enables multi-location fitness and hospitality operators to achieve:",
       "- **Higher retention** through early intervention",
       "- **Smarter pricing and packaging** based on actual behaviour",
       "- **More relevant communication** that doesn't feel spammy",
@@ -110,10 +128,15 @@ const blogPosts: Record<string, {
     category: "Wellness",
     date: "Dec 4, 2024",
     readTime: "5 min read",
+    seo: {
+      metaTitle: "AI Personalisation in Wellness: One-to-One at Scale",
+      metaDescription: "How AI enables personalised wellness experiences at scale—without becoming intrusive, invasive, or operationally complex.",
+      keywords: ["AI personalisation wellness", "personalised wellness AI", "AI coaching personalisation", "adaptive wellness platforms", "scalable personalisation fitness", "ethical AI personalisation wellness"]
+    },
     content: [
       "Personalisation is no longer a \"nice to have\" — it's the baseline expectation.",
-      "In a world shaped by Spotify, Netflix, and Apple Fitness, users expect wellness experiences to adapt to them, not the other way around.",
-      "**AI is what makes that possible at scale.**",
+      "In a world shaped by Spotify, Netflix, and Apple Fitness, users expect AI-powered wellness platforms to adapt to them, not the other way around.",
+      "**AI is what makes personalised wellbeing at scale possible.**",
       "## Why Traditional Personalisation Fails",
       "Most \"personalised\" wellness experiences are still rule-based:",
       "- Static onboarding questions that never get updated",
@@ -121,7 +144,7 @@ const blogPosts: Record<string, {
       "- Manual tagging that can't keep pace",
       "- Generic journeys that feel like everyone else's",
       "This works for dozens of users — not thousands or millions.",
-      "AI enables **living personalisation** that evolves in real time.",
+      "AI enables **living personalisation** that evolves in real time for enterprise and consumer wellness solutions.",
       "## What AI-Powered Personalisation Actually Looks Like",
       "Modern AI systems can:",
       "- **Adjust recommendations** based on behaviour, not promises",
@@ -130,9 +153,9 @@ const blogPosts: Record<string, {
       "- **Personalise nudges, goals, and challenges** dynamically",
       "- **Balance automation with human input** where it matters",
       "The result is an experience that feels relevant, timely, supportive, and non-intrusive. And critically — useful.",
-      "## Personalisation Without Creepiness",
+      "## Is AI Personalisation Safe in Wellness?",
       "The line between helpful and intrusive matters. Get it wrong and you lose trust permanently.",
-      "The best AI-driven wellness platforms:",
+      "The most effective AI personalisation systems in wellness balance automation, transparency, and user control. The best AI-driven wellness platforms:",
       "- **Explain why** something is recommended",
       "- **Let users control** intensity and frequency",
       "- **Use anonymised patterns**, not invasive profiling",
@@ -156,11 +179,47 @@ const blogPosts: Record<string, {
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   
-  if (!slug || !blogPosts[slug]) {
+  const post = slug ? blogPosts[slug] : null;
+
+  useEffect(() => {
+    if (post) {
+      document.title = post.seo.metaTitle + " | Wellness Genius";
+      
+      // Update meta description
+      let metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute("content", post.seo.metaDescription);
+      }
+      
+      // Update Open Graph tags
+      let ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) {
+        ogTitle.setAttribute("content", post.seo.metaTitle);
+      }
+      let ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) {
+        ogDesc.setAttribute("content", post.seo.metaDescription);
+      }
+      
+      // Update keywords
+      let metaKeywords = document.querySelector('meta[name="keywords"]');
+      if (!metaKeywords) {
+        metaKeywords = document.createElement("meta");
+        metaKeywords.setAttribute("name", "keywords");
+        document.head.appendChild(metaKeywords);
+      }
+      metaKeywords.setAttribute("content", post.seo.keywords.join(", "));
+    }
+    
+    return () => {
+      document.title = "Wellness Genius | AI Agents for Wellness & Fitness Brands";
+    };
+  }, [post]);
+  
+  if (!slug || !post) {
     return <Navigate to="/insights" replace />;
   }
 
-  const post = blogPosts[slug];
   const otherPosts = Object.entries(blogPosts)
     .filter(([key]) => key !== slug)
     .slice(0, 2);
