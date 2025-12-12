@@ -5,6 +5,11 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock, ArrowRight } from "lucide-react";
 
+// Blog images
+import aiComplianceImg from "@/assets/blog/ai-compliance.jpeg";
+import aiWellnessDataImg from "@/assets/blog/ai-wellness-data.webp";
+import aiPersonalisationImg from "@/assets/blog/ai-personalisation.jpeg";
+
 const blogPosts: Record<string, {
   title: string;
   excerpt: string;
@@ -13,6 +18,7 @@ const blogPosts: Record<string, {
   readTime: string;
   content: string[];
   cta: string;
+  image: string;
   seo: {
     metaTitle: string;
     metaDescription: string;
@@ -25,6 +31,7 @@ const blogPosts: Record<string, {
     category: "AI Agents",
     date: "Dec 12, 2024",
     readTime: "6 min read",
+    image: aiComplianceImg,
     seo: {
       metaTitle: "AI, Wellness & Compliance: Why Policy Drives Scale",
       metaDescription: "How AI-driven wellness platforms can turn compliance, privacy, and regulation into a growth advantage across the UK, EU, and global markets.",
@@ -75,6 +82,7 @@ const blogPosts: Record<string, {
     category: "Data",
     date: "Dec 8, 2024",
     readTime: "5 min read",
+    image: aiWellnessDataImg,
     seo: {
       metaTitle: "AI & Data in Wellness: Turning Insight into Action",
       metaDescription: "Why AI-powered data intelligence is transforming wellness, fitness, and hospitality platforms from reporting tools into decision engines.",
@@ -128,6 +136,7 @@ const blogPosts: Record<string, {
     category: "Wellness",
     date: "Dec 4, 2024",
     readTime: "5 min read",
+    image: aiPersonalisationImg,
     seo: {
       metaTitle: "AI Personalisation in Wellness: One-to-One at Scale",
       metaDescription: "How AI enables personalised wellness experiences at scale—without becoming intrusive, invasive, or operationally complex.",
@@ -283,6 +292,15 @@ const BlogPost = () => {
                 </span>
               </div>
             </header>
+
+            {/* Featured Image */}
+            <div className="mb-12 rounded-2xl overflow-hidden animate-fade-up" style={{ animationDelay: "50ms" }}>
+              <img 
+                src={post.image} 
+                alt={post.title}
+                className="w-full h-64 lg:h-96 object-cover"
+              />
+            </div>
 
             {/* Content */}
             <div className="prose-custom animate-fade-up" style={{ animationDelay: "100ms" }}>

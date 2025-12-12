@@ -4,8 +4,14 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Clock, Mail } from "lucide-react";
+import { useNewsletter } from "@/hooks/useNewsletter";
 
-const categories = ["All", "AI Agents", "Wellness", "Data", "Partnerships", "GTM"];
+// Blog images
+import aiComplianceImg from "@/assets/blog/ai-compliance.jpeg";
+import aiWellnessDataImg from "@/assets/blog/ai-wellness-data.webp";
+import aiPersonalisationImg from "@/assets/blog/ai-personalisation.jpeg";
+
+const categories = ["All", "AI Agents", "Wellness", "Data"];
 
 const posts = [
   {
@@ -17,6 +23,7 @@ const posts = [
     date: "Dec 12, 2024",
     readTime: "6 min read",
     featured: true,
+    image: aiComplianceImg,
   },
   {
     id: 2,
@@ -27,6 +34,7 @@ const posts = [
     date: "Dec 8, 2024",
     readTime: "5 min read",
     featured: false,
+    image: aiWellnessDataImg,
   },
   {
     id: 3,
@@ -37,11 +45,13 @@ const posts = [
     date: "Dec 4, 2024",
     readTime: "5 min read",
     featured: false,
+    image: aiPersonalisationImg,
   },
 ];
 
 const Insights = () => {
   const [activeCategory, setActiveCategory] = useState("All");
+  const { email, setEmail, isSubmitting, subscribe } = useNewsletter();
 
   const filteredPosts = activeCategory === "All" 
     ? posts 
@@ -119,8 +129,12 @@ const Insights = () => {
                       <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
-                  <div className="lg:w-80 h-48 lg:h-64 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
-                    <span className="text-6xl">🤖</span>
+                  <div className="lg:w-80 h-48 lg:h-64 rounded-xl overflow-hidden">
+                    <img 
+                      src={featuredPost.image} 
+                      alt={featuredPost.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   </div>
                 </div>
               </Link>
@@ -136,23 +150,32 @@ const Insights = () => {
                 <Link 
                   to={`/insights/${post.slug}`}
                   key={post.id} 
-                  className="card-tech p-6 flex flex-col animate-fade-up group hover:border-accent/30 transition-colors"
+                  className="card-tech p-0 flex flex-col animate-fade-up group hover:border-accent/30 transition-colors overflow-hidden"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <span className="inline-block px-3 py-1 rounded-full bg-secondary text-muted-foreground text-xs font-medium mb-4 w-fit">
-                    {post.category}
-                  </span>
-                  <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">{post.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">{post.excerpt}</p>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
-                    <span className="flex items-center gap-1.5">
-                      <Calendar size={12} />
-                      {post.date}
+                  <div className="h-40 overflow-hidden">
+                    <img 
+                      src={post.image} 
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-6 flex flex-col flex-1">
+                    <span className="inline-block px-3 py-1 rounded-full bg-secondary text-muted-foreground text-xs font-medium mb-4 w-fit">
+                      {post.category}
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <Clock size={12} />
-                      {post.readTime}
-                    </span>
+                    <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">{post.title}</h3>
+                    <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">{post.excerpt}</p>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar size={12} />
+                        {post.date}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Clock size={12} />
+                        {post.readTime}
+                      </span>
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -171,14 +194,19 @@ const Insights = () => {
               <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
                 One email per week. Practical AI insights, no hype. Unsubscribe anytime.
               </p>
-              <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+              <form 
+                onSubmit={(e) => subscribe(e, "insights-page")}
+                className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              >
                 <input
                   type="email"
                   placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="flex-1 px-4 py-3 rounded-full bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                 />
-                <Button variant="accent" type="submit">
-                  Subscribe
+                <Button variant="accent" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "..." : "Subscribe"}
                 </Button>
               </form>
               <p className="text-xs text-muted-foreground mt-4">
