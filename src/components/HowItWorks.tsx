@@ -50,10 +50,6 @@ const HowItWorks = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
           {steps.map((step, index) => (
             <div key={index} className="relative">
-              {/* Connector line */}
-              {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-primary-foreground/20 -translate-x-1/2" />
-              )}
 
               <div className="relative">
                 <div className="text-5xl lg:text-6xl font-heading text-accent/30 mb-4">
