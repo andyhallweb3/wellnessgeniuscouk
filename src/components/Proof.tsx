@@ -7,11 +7,6 @@ const clients = [
     url: "https://fitterstock.com",
   },
   {
-    name: "LIVE4WELL",
-    description: "Combines AI tech with health tracking and incentivised wellbeing experiences.",
-    url: "https://live4well.com",
-  },
-  {
     name: "The Leisure Experts",
     description: "Consultancy for leisure, sport and wellbeing operators, from strategy to execution.",
     url: "https://theleisureexperts.com",
@@ -20,16 +15,6 @@ const clients = [
     name: "Nuforma",
     description: "Pilates innovation geared towards superior movement results — studio and franchise model.",
     url: "https://nuformapilates.co.uk",
-  },
-  {
-    name: "Predict Mobile",
-    description: "Machine-assisted procurement analytics and mobile services optimisation.",
-    url: "https://predictmobile.com",
-  },
-  {
-    name: "reFIT",
-    description: "Converts real estate into automated wellness hubs for office/residential.",
-    url: "https://refit.io",
   },
   {
     name: "EqueSoul",
@@ -76,13 +61,6 @@ const testimonials = [
   },
 ];
 
-const metrics = [
-  { value: "£2M+", label: "Revenue generated" },
-  { value: "500+", label: "Automations deployed" },
-  { value: "40%", label: "Avg efficiency gain" },
-  { value: "15+", label: "Enterprise clients" },
-];
-
 const Proof = () => {
   return (
     <section id="proof" className="section-padding">
@@ -101,7 +79,7 @@ const Proof = () => {
         </div>
 
         {/* Client Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-16">
           {clients.map((client, index) => (
             <a
               key={index}
@@ -123,21 +101,6 @@ const Proof = () => {
                 {client.description}
               </p>
             </a>
-          ))}
-        </div>
-
-        {/* Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-16">
-          {metrics.map((metric, index) => (
-            <div
-              key={index}
-              className="text-center p-6 rounded-xl bg-secondary/50 border border-border/50"
-            >
-              <div className="text-3xl lg:text-4xl font-heading font-medium text-foreground mb-2">
-                {metric.value}
-              </div>
-              <p className="text-sm text-muted-foreground">{metric.label}</p>
-            </div>
           ))}
         </div>
 
