@@ -46,7 +46,7 @@ const Hero = () => {
             </Button>
           </div>
 
-          {/* AI Readiness CTA */}
+          {/* AI Readiness CTA - Free Product */}
           <div className="animate-fade-up animation-delay-350">
             <Link 
               to="/ai-readiness"
@@ -54,7 +54,7 @@ const Hero = () => {
             >
               <ClipboardCheck size={18} />
               <span className="underline underline-offset-4 decoration-accent/50 group-hover:decoration-accent">
-                Take the free AI Readiness Index assessment
+                Start with the free AI Readiness Index + 30-min strategy call
               </span>
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
