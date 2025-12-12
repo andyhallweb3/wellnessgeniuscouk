@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Mic, Users, Lightbulb, Bot, TrendingUp, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import andyHeadshot from "@/assets/andy-headshot.jpeg";
+import beyondRepsCover from "@/assets/beyond-reps-cover.jpeg";
 
 const topics = [
   {
@@ -113,9 +114,13 @@ const SpeakerKit = () => {
               Beyond Reps: The Rise of Wellbeing in the Fitness Industry
             </h2>
             <div className="bg-card rounded-2xl p-8 border border-border/50">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
-                  <BookOpen className="w-6 h-6 text-accent" />
+              <div className="flex flex-col sm:flex-row items-start gap-6">
+                <div className="w-32 sm:w-40 flex-shrink-0">
+                  <img 
+                    src={beyondRepsCover} 
+                    alt="Beyond Reps book cover" 
+                    className="w-full rounded-lg shadow-lg"
+                  />
                 </div>
                 <div>
                   <p className="text-lg font-semibold mb-2">Chapter 13: Proving The Shift</p>
