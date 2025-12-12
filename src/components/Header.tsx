@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import logo from "@/assets/wellness-genius-logo.png";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,9 +22,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl lg:text-2xl font-semibold tracking-tight text-foreground">
-              Wellness Genius
-            </span>
+            <img src={logo} alt="Wellness Genius" className="h-10 lg:h-12 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
