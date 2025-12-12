@@ -1,0 +1,69 @@
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles } from "lucide-react";
+
+const Hero = () => {
+  const credibilityMarkers = [
+    "Ex-Equinox, Peloton, Third Space",
+    "500+ automations deployed",
+    "£2M+ revenue generated for clients",
+  ];
+
+  return (
+    <section className="relative min-h-screen flex items-center pt-20 lg:pt-0">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/30 -z-10" />
+      
+      {/* Decorative elements */}
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-accent/5 rounded-full blur-3xl -z-10" />
+
+      <div className="container-wide px-6 lg:px-12 py-16 lg:py-24">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-8 animate-fade-up">
+            <Sparkles size={16} />
+            <span>AI-Powered Growth for Wellness Brands</span>
+          </div>
+
+          {/* Main Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-heading leading-[1.1] mb-6 animate-fade-up animation-delay-100">
+            AI agents that{" "}
+            <span className="italic">automate growth</span>{" "}
+            <br className="hidden sm:block" />
+            and operations
+          </h1>
+
+          {/* Subheadline */}
+          <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-up animation-delay-200">
+            I help wellness, fitness, and hospitality businesses scale faster with intelligent automation—without hiring more headcount.
+          </p>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-fade-up animation-delay-300">
+            <Button variant="hero" size="xl" asChild>
+              <a href="#contact">
+                Book a Call
+                <ArrowRight size={18} />
+              </a>
+            </Button>
+            <Button variant="heroOutline" size="xl" asChild>
+              <a href="#services">View Packages</a>
+            </Button>
+          </div>
+
+          {/* Credibility Markers */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-muted-foreground animate-fade-up animation-delay-400">
+            {credibilityMarkers.map((marker, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                <span>{marker}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Hero;
