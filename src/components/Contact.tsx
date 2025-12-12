@@ -4,12 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Calendar, Mail } from "lucide-react";
+import { ArrowRight, Calendar, Mail, MessageSquare } from "lucide-react";
 
 type InterestArea = "ai-agents" | "wellness-engagement" | "partnerships" | "";
+type ContactTab = "book" | "message";
 
 const Contact = () => {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<ContactTab>("book");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -92,157 +94,202 @@ const Contact = () => {
                 </div>
                 <div>
                   <h3 className="font-medium mb-1">Email Directly</h3>
-                  <p className="text-sm text-muted-foreground">
-                    hello@wellnessgenius.co
-                  </p>
+                  <a 
+                    href="mailto:andy@wellnessgenius.co.uk" 
+                    className="text-sm text-accent hover:underline"
+                  >
+                    andy@wellnessgenius.co.uk
+                  </a>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Form */}
-          <div className="bg-card rounded-2xl p-8 shadow-elevated border border-border/50">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    required
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Jane Smith"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder="jane@company.com"
-                  />
-                </div>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="company">Company *</Label>
-                  <Input
-                    id="company"
-                    required
-                    value={formData.company}
-                    onChange={(e) =>
-                      setFormData({ ...formData, company: e.target.value })
-                    }
-                    placeholder="Your company"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role *</Label>
-                  <Input
-                    id="role"
-                    required
-                    value={formData.role}
-                    onChange={(e) =>
-                      setFormData({ ...formData, role: e.target.value })
-                    }
-                    placeholder="Head of Operations"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="interest">Primary Interest *</Label>
-                <select
-                  id="interest"
-                  required
-                  value={formData.interestArea}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      interestArea: e.target.value as InterestArea,
-                    })
-                  }
-                  className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <option value="">Select an option</option>
-                  <option value="ai-agents">AI Agents & Automation</option>
-                  <option value="wellness-engagement">
-                    Wellness Engagement & Rewards
-                  </option>
-                  <option value="partnerships">Partnerships / Speaking</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="goal">What's your primary goal? *</Label>
-                <Textarea
-                  id="goal"
-                  required
-                  value={formData.goal}
-                  onChange={(e) =>
-                    setFormData({ ...formData, goal: e.target.value })
-                  }
-                  placeholder="Tell me about the challenges you're facing and what success looks like for you..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="timeline">Timeline</Label>
-                <select
-                  id="timeline"
-                  value={formData.timeline}
-                  onChange={(e) =>
-                    setFormData({ ...formData, timeline: e.target.value })
-                  }
-                  className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <option value="">Select timeline</option>
-                  <option value="asap">ASAP</option>
-                  <option value="1-3-months">1-3 months</option>
-                  <option value="3-6-months">3-6 months</option>
-                  <option value="exploring">Just exploring</option>
-                </select>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="consent"
-                  checked={formData.consent}
-                  onChange={(e) =>
-                    setFormData({ ...formData, consent: e.target.checked })
-                  }
-                  className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent"
-                />
-                <Label htmlFor="consent" className="text-sm text-muted-foreground font-normal">
-                  I agree to the{" "}
-                  <a href="/privacy" className="text-accent hover:underline">
-                    privacy policy
-                  </a>{" "}
-                  and consent to being contacted about my enquiry.
-                </Label>
-              </div>
-
-              <Button
-                type="submit"
-                variant="accent"
-                size="lg"
-                className="w-full"
-                disabled={isSubmitting}
+          {/* Right Column - Tabs */}
+          <div className="bg-card rounded-2xl shadow-elevated border border-border/50 overflow-hidden">
+            {/* Tab Navigation */}
+            <div className="flex border-b border-border">
+              <button
+                onClick={() => setActiveTab("book")}
+                className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
+                  activeTab === "book"
+                    ? "bg-accent/10 text-accent border-b-2 border-accent -mb-px"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                {isSubmitting ? "Sending..." : "Send Message"}
-                <ArrowRight size={18} />
-              </Button>
-            </form>
+                <Calendar size={18} />
+                Book a Call
+              </button>
+              <button
+                onClick={() => setActiveTab("message")}
+                className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
+                  activeTab === "message"
+                    ? "bg-accent/10 text-accent border-b-2 border-accent -mb-px"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <MessageSquare size={18} />
+                Send Message
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === "book" ? (
+              <div className="p-0">
+                <iframe
+                  src="https://calendly.com/andy-wellnessgenius/30min?hide_gdpr_banner=1&background_color=fdfcfa&text_color=1f2937&primary_color=2a9d8f"
+                  width="100%"
+                  height="650"
+                  frameBorder="0"
+                  title="Schedule a call with Andy Hall"
+                  className="w-full"
+                />
+              </div>
+            ) : (
+              <div className="p-8">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name *</Label>
+                      <Input
+                        id="name"
+                        required
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        placeholder="Jane Smith"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                        placeholder="jane@company.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="company">Company *</Label>
+                      <Input
+                        id="company"
+                        required
+                        value={formData.company}
+                        onChange={(e) =>
+                          setFormData({ ...formData, company: e.target.value })
+                        }
+                        placeholder="Your company"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Role *</Label>
+                      <Input
+                        id="role"
+                        required
+                        value={formData.role}
+                        onChange={(e) =>
+                          setFormData({ ...formData, role: e.target.value })
+                        }
+                        placeholder="Head of Operations"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="interest">Primary Interest *</Label>
+                    <select
+                      id="interest"
+                      required
+                      value={formData.interestArea}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          interestArea: e.target.value as InterestArea,
+                        })
+                      }
+                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="">Select an option</option>
+                      <option value="ai-agents">AI Agents & Automation</option>
+                      <option value="wellness-engagement">
+                        Wellness Engagement & Rewards
+                      </option>
+                      <option value="partnerships">Partnerships / Speaking</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="goal">What's your primary goal? *</Label>
+                    <Textarea
+                      id="goal"
+                      required
+                      value={formData.goal}
+                      onChange={(e) =>
+                        setFormData({ ...formData, goal: e.target.value })
+                      }
+                      placeholder="Tell me about the challenges you're facing..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="timeline">Timeline</Label>
+                    <select
+                      id="timeline"
+                      value={formData.timeline}
+                      onChange={(e) =>
+                        setFormData({ ...formData, timeline: e.target.value })
+                      }
+                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="">Select timeline</option>
+                      <option value="asap">ASAP</option>
+                      <option value="1-3-months">1-3 months</option>
+                      <option value="3-6-months">3-6 months</option>
+                      <option value="exploring">Just exploring</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="consent"
+                      checked={formData.consent}
+                      onChange={(e) =>
+                        setFormData({ ...formData, consent: e.target.checked })
+                      }
+                      className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent"
+                    />
+                    <Label htmlFor="consent" className="text-sm text-muted-foreground font-normal">
+                      I agree to the{" "}
+                      <a href="/privacy" className="text-accent hover:underline">
+                        privacy policy
+                      </a>{" "}
+                      and consent to being contacted.
+                    </Label>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    variant="accent"
+                    size="lg"
+                    className="w-full"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Sending..." : "Send Message"}
+                    <ArrowRight size={18} />
+                  </Button>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       </div>

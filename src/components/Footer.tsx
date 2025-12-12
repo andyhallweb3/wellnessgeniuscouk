@@ -74,9 +74,15 @@ const Footer = () => {
               <span className="text-xl font-heading font-medium mb-4 block">
                 Wellness Genius
               </span>
-              <p className="text-primary-foreground/70 text-sm mb-6">
+              <p className="text-primary-foreground/70 text-sm mb-4">
                 AI-powered growth and automation for wellness, fitness, and hospitality businesses.
               </p>
+              <a 
+                href="mailto:andy@wellnessgenius.co.uk" 
+                className="text-sm text-accent hover:underline mb-6 block"
+              >
+                andy@wellnessgenius.co.uk
+              </a>
               <div className="flex gap-4">
                 <a
                   href="https://linkedin.com"
