@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import AIReadinessIndex from "./pages/AIReadinessIndex";
 import SpeakerKit from "./pages/SpeakerKit";
 import Insights from "./pages/Insights";
+import BlogPost from "./pages/BlogPost";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/ai-readiness" element={<AIReadinessIndex />} />
           <Route path="/speaker-kit" element={<SpeakerKit />} />
           <Route path="/insights" element={<Insights />} />
+          <Route path="/insights/:slug" element={<BlogPost />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/cookies" element={<CookiePolicy />} />
