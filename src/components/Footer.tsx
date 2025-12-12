@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Linkedin, Twitter } from "lucide-react";
+import logo from "@/assets/wellness-genius-logo-teal.png";
 
 const Footer = () => {
   const { toast } = useToast();
@@ -71,9 +72,7 @@ const Footer = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
-              <span className="text-xl font-heading font-medium mb-4 block">
-                Wellness Genius
-              </span>
+              <img src={logo} alt="Wellness Genius" className="h-12 w-auto mb-4" />
               <p className="text-primary-foreground/70 text-sm mb-4">
                 AI-powered growth and automation for wellness, fitness, and hospitality businesses.
               </p>
