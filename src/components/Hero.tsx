@@ -30,7 +30,7 @@ const Hero = () => {
 
           {/* Subheadline */}
           <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-up animation-delay-200">
-            Helping wellness, fitness, and hospitality businesses scale faster with intelligent automation—without hiring more headcount.
+            Wellness Genius helps wellness, fitness, and hospitality businesses scale faster with intelligent automation—without hiring more headcount.
           </p>
 
           {/* CTAs - Apple style buttons */}
