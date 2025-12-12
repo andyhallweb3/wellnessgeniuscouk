@@ -6,36 +6,37 @@
 
 @layer base {
   :root {
-    /* Premium consultancy palette */
-    --background: 45 20% 98%;
-    --foreground: 220 20% 12%;
+    /* Modern consultancy palette - Clarity through restraint */
+    --background: 40 25% 97%;
+    --foreground: 220 25% 10%;
     
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 12%;
+    --card-foreground: 220 25% 10%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 12%;
+    --popover-foreground: 220 25% 10%;
     
-    --primary: 220 20% 12%;
-    --primary-foreground: 45 20% 98%;
+    --primary: 220 25% 10%;
+    --primary-foreground: 40 25% 97%;
     
-    --secondary: 45 15% 94%;
-    --secondary-foreground: 220 20% 12%;
+    --secondary: 40 20% 94%;
+    --secondary-foreground: 220 25% 10%;
     
-    --muted: 45 10% 92%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 40 15% 92%;
+    --muted-foreground: 220 10% 42%;
     
-    --accent: 168 60% 38%;
+    /* Sophisticated teal - Trust & expertise */
+    --accent: 170 50% 36%;
     --accent-foreground: 0 0% 100%;
     
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 220 10% 88%;
-    --input: 220 10% 88%;
-    --ring: 168 60% 38%;
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 170 50% 36%;
     
-    --radius: 0.625rem;
+    --radius: 0.5rem;
     
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
@@ -49,33 +50,33 @@
   }
 
   .dark {
-    --background: 220 20% 8%;
-    --foreground: 45 20% 98%;
+    --background: 220 25% 7%;
+    --foreground: 40 20% 96%;
     
-    --card: 220 18% 12%;
-    --card-foreground: 45 20% 98%;
+    --card: 220 22% 10%;
+    --card-foreground: 40 20% 96%;
     
-    --popover: 220 18% 12%;
-    --popover-foreground: 45 20% 98%;
+    --popover: 220 22% 10%;
+    --popover-foreground: 40 20% 96%;
     
-    --primary: 45 20% 98%;
-    --primary-foreground: 220 20% 12%;
+    --primary: 40 20% 96%;
+    --primary-foreground: 220 25% 10%;
     
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 45 20% 98%;
+    --secondary: 220 18% 14%;
+    --secondary-foreground: 40 20% 96%;
     
-    --muted: 220 15% 20%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 10% 55%;
     
-    --accent: 168 60% 45%;
-    --accent-foreground: 220 20% 8%;
+    --accent: 170 55% 42%;
+    --accent-foreground: 220 25% 7%;
     
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     
-    --border: 220 15% 22%;
-    --input: 220 15% 22%;
-    --ring: 168 60% 45%;
+    --border: 220 18% 18%;
+    --input: 220 18% 18%;
+    --ring: 170 55% 42%;
     
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -93,14 +94,40 @@
     @apply border-border;
   }
   
+  html {
+    scroll-behavior: smooth;
+  }
+  
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'DM Sans', sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1;
   }
   
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Instrument Serif', serif;
-    @apply tracking-tight;
+    @apply tracking-tight text-balance;
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl leading-[1.1];
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl leading-[1.15];
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl leading-[1.2];
+  }
+  
+  p {
+    @apply leading-relaxed;
+  }
+  
+  /* Selection styling */
+  ::selection {
+    @apply bg-accent/20 text-foreground;
   }
 }
 
@@ -116,38 +143,98 @@
   .container-wide {
     @apply max-w-7xl mx-auto;
   }
+  
+  /* Consultancy-grade card */
+  .card-consultancy {
+    @apply bg-card rounded-lg border border-border/50 p-6 lg:p-8;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:border-border hover:shadow-elegant;
+  }
+  
+  /* Subtle link underline animation */
+  .link-underline {
+    @apply relative inline-block;
+  }
+  
+  .link-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-px bg-current;
+    @apply origin-right scale-x-0 transition-transform duration-300 ease-out;
+  }
+  
+  .link-underline:hover::after {
+    @apply origin-left scale-x-100;
+  }
+  
+  /* Trust badge */
+  .trust-badge {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full;
+    @apply bg-accent/10 text-accent text-sm font-medium;
+    @apply border border-accent/20;
+  }
+  
+  /* Section divider */
+  .section-divider {
+    @apply w-12 h-px bg-accent/40 my-8;
+  }
 }
 
 @layer utilities {
+  /* Fade animations */
   .animate-fade-up {
-    animation: fadeUp 0.6s ease-out forwards;
+    animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
   
   .animate-fade-in {
-    animation: fadeIn 0.6s ease-out forwards;
+    animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
   
-  .animation-delay-100 {
-    animation-delay: 100ms;
+  .animate-scale-in {
+    animation: scaleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
   
-  .animation-delay-200 {
-    animation-delay: 200ms;
+  /* Stagger delays */
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
+  
+  /* Initial state for animations */
+  .animate-on-scroll {
+    opacity: 0;
+    transform: translateY(20px);
   }
   
-  .animation-delay-300 {
-    animation-delay: 300ms;
+  /* Text balance for headings */
+  .text-balance {
+    text-wrap: balance;
   }
   
-  .animation-delay-400 {
-    animation-delay: 400ms;
+  /* Gradient text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent;
+  }
+  
+  /* Subtle hover lift */
+  .hover-lift {
+    @apply transition-transform duration-300 ease-out;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-0.5;
+  }
+  
+  /* Focus ring */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background;
   }
 }
 
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -161,5 +248,28 @@
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-padding-top: 6rem;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
   }
 }

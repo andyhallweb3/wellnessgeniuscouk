@@ -67,15 +67,26 @@ export default {
         heading: ["'Instrument Serif'", "serif"],
         body: ["'DM Sans'", "sans-serif"],
       },
+      fontSize: {
+        'display': ['4.5rem', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
+      },
+      letterSpacing: {
+        'tighter': '-0.02em',
+        'tight': '-0.01em',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        'elegant': '0 4px 6px -1px hsl(220 20% 12% / 0.08), 0 2px 4px -2px hsl(220 20% 12% / 0.05)',
-        'elevated': '0 10px 15px -3px hsl(220 20% 12% / 0.08), 0 4px 6px -4px hsl(220 20% 12% / 0.05)',
-        'prominent': '0 20px 25px -5px hsl(220 20% 12% / 0.08), 0 8px 10px -6px hsl(220 20% 12% / 0.05)',
+        'elegant': '0 1px 2px 0 hsl(220 25% 10% / 0.03), 0 4px 8px -2px hsl(220 25% 10% / 0.05)',
+        'elevated': '0 4px 6px -1px hsl(220 25% 10% / 0.05), 0 10px 20px -4px hsl(220 25% 10% / 0.08)',
+        'prominent': '0 8px 16px -4px hsl(220 25% 10% / 0.06), 0 20px 40px -8px hsl(220 25% 10% / 0.1)',
+        'inner-subtle': 'inset 0 1px 2px 0 hsl(220 25% 10% / 0.05)',
+      },
+      transitionTimingFunction: {
+        'out-expo': 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
       keyframes: {
         "accordion-down": {
@@ -86,10 +97,25 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "fade-up": {
+          from: { opacity: "0", transform: "translateY(16px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.96)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+        "fade-up": "fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
+        "scale-in": "scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
       },
     },
   },
