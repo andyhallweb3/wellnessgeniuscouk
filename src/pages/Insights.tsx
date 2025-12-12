@@ -10,56 +10,32 @@ const categories = ["All", "AI Agents", "Wellness", "Data", "Partnerships", "GTM
 const posts = [
   {
     id: 1,
-    title: "Why Most AI Projects Fail Before They Start",
-    excerpt: "The hidden blockers that kill AI initiatives—and how to spot them in your organisation before you waste budget.",
+    slug: "ai-wellness-policy-compliance",
+    title: "AI, Wellness & Policy: Why Compliance Is Now a Competitive Advantage",
+    excerpt: "AI is moving faster than regulation — and that's exactly why wellness brands can't afford to ignore policy and compliance.",
     category: "AI Agents",
-    date: "Dec 10, 2024",
-    readTime: "5 min read",
+    date: "Dec 12, 2024",
+    readTime: "6 min read",
     featured: true,
   },
   {
     id: 2,
-    title: "The AI Readiness Gap in Wellness & Fitness",
-    excerpt: "Most wellness brands are sitting on goldmines of data they're not using. Here's what separates the leaders from the laggards.",
-    category: "Wellness",
-    date: "Dec 5, 2024",
-    readTime: "4 min read",
-    featured: false,
-  },
-  {
-    id: 3,
-    title: "Building Your First AI Agent: A Practical Guide",
-    excerpt: "Skip the hype. Here's what actually works when deploying task-specific AI agents in service businesses.",
-    category: "AI Agents",
-    date: "Nov 28, 2024",
-    readTime: "7 min read",
-    featured: false,
-  },
-  {
-    id: 4,
-    title: "Data Strategy for Non-Technical Leaders",
-    excerpt: "You don't need to understand SQL to make smart data decisions. Focus on these five questions instead.",
+    slug: "power-of-data-ai-wellness",
+    title: "The Power of Data and AI in Wellness: From Noise to Insight",
+    excerpt: "Most wellness businesses are sitting on data they don't understand, don't trust, and don't use. AI is what turns wellness data into decisions.",
     category: "Data",
-    date: "Nov 20, 2024",
-    readTime: "6 min read",
-    featured: false,
-  },
-  {
-    id: 5,
-    title: "Partnership Models That Actually Scale",
-    excerpt: "Revenue share, white-label, or equity? A framework for choosing the right partnership structure.",
-    category: "Partnerships",
-    date: "Nov 15, 2024",
+    date: "Dec 8, 2024",
     readTime: "5 min read",
     featured: false,
   },
   {
-    id: 6,
-    title: "Go-To-Market for AI Products in 2024",
-    excerpt: "The playbook has changed. Traditional SaaS GTM doesn't work for AI. Here's what does.",
-    category: "GTM",
-    date: "Nov 8, 2024",
-    readTime: "8 min read",
+    id: 3,
+    slug: "ai-wellness-personalisation",
+    title: "AI and Wellness Personalisation: From One-Size-Fits-All to One-to-One",
+    excerpt: "Personalisation is no longer a 'nice to have' — it's the baseline expectation. AI is what makes that possible at scale.",
+    category: "Wellness",
+    date: "Dec 4, 2024",
+    readTime: "5 min read",
     featured: false,
   },
 ];
@@ -120,13 +96,13 @@ const Insights = () => {
         {activeCategory === "All" && featuredPost && (
           <section className="px-6 lg:px-12 pb-16">
             <div className="container-wide">
-              <div className="card-tech p-8 lg:p-12">
+              <Link to={`/insights/${featuredPost.slug}`} className="card-tech p-8 lg:p-12 block group hover:border-accent/30 transition-colors">
                 <div className="flex flex-col lg:flex-row lg:items-center gap-8">
                   <div className="flex-1">
                     <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium mb-4">
                       Featured
                     </span>
-                    <h2 className="text-2xl lg:text-3xl mb-4">{featuredPost.title}</h2>
+                    <h2 className="text-2xl lg:text-3xl mb-4 group-hover:text-accent transition-colors">{featuredPost.title}</h2>
                     <p className="text-muted-foreground mb-6">{featuredPost.excerpt}</p>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
                       <span className="flex items-center gap-1.5">
@@ -138,16 +114,16 @@ const Insights = () => {
                         {featuredPost.readTime}
                       </span>
                     </div>
-                    <Button variant="accent" className="group">
+                    <span className="inline-flex items-center gap-2 text-accent font-medium">
                       Read Article
                       <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                    </Button>
+                    </span>
                   </div>
                   <div className="lg:w-80 h-48 lg:h-64 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
-                    <span className="text-accent/50 text-sm">Coming Soon</span>
+                    <span className="text-6xl">🤖</span>
                   </div>
                 </div>
-              </div>
+              </Link>
             </div>
           </section>
         )}
@@ -157,15 +133,16 @@ const Insights = () => {
           <div className="container-wide">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {regularPosts.map((post, index) => (
-                <article 
+                <Link 
+                  to={`/insights/${post.slug}`}
                   key={post.id} 
-                  className="card-tech p-6 flex flex-col animate-fade-up"
+                  className="card-tech p-6 flex flex-col animate-fade-up group hover:border-accent/30 transition-colors"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <span className="inline-block px-3 py-1 rounded-full bg-secondary text-muted-foreground text-xs font-medium mb-4 w-fit">
                     {post.category}
                   </span>
-                  <h3 className="text-lg font-semibold mb-3 line-clamp-2">{post.title}</h3>
+                  <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">{post.title}</h3>
                   <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">{post.excerpt}</p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
                     <span className="flex items-center gap-1.5">
@@ -177,7 +154,7 @@ const Insights = () => {
                       {post.readTime}
                     </span>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           </div>
