@@ -60,40 +60,40 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="section-padding">
+    <section id="contact" className="section-padding bg-background">
       <div className="container-wide">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Left Column - Info */}
           <div>
-            <p className="text-sm font-medium text-accent uppercase tracking-wider mb-3">
+            <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
               Get Started
             </p>
-            <h2 className="text-3xl lg:text-4xl xl:text-5xl font-heading mb-6">
+            <h2 className="text-3xl lg:text-4xl xl:text-5xl mb-6 tracking-tight">
               Let's discuss your automation goals
             </h2>
-            <p className="text-muted-foreground text-lg mb-8">
+            <p className="text-muted-foreground text-lg mb-10">
               Book a 30-minute discovery call to explore how AI agents can transform your operations and accelerate growth.
             </p>
 
-            <div className="space-y-6">
-              <div className="flex items-start gap-4 p-4 rounded-xl bg-secondary/50 border border-border/50">
-                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+            <div className="space-y-4">
+              <div className="flex items-start gap-4 p-5 rounded-2xl bg-card border border-border/50 hover:border-accent/30 transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
                   <Calendar className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">Book a Call</h3>
+                  <h3 className="font-semibold mb-1">Book a Call</h3>
                   <p className="text-sm text-muted-foreground">
                     30-minute video call to discuss your specific needs and opportunities.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-4 rounded-xl bg-secondary/50 border border-border/50">
-                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <div className="flex items-start gap-4 p-5 rounded-2xl bg-card border border-border/50 hover:border-accent/30 transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
                   <Mail className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">Email Directly</h3>
+                  <h3 className="font-semibold mb-1">Email Directly</h3>
                   <a 
                     href="mailto:andy@wellnessgenius.co.uk" 
                     className="text-sm text-accent hover:underline"
@@ -106,14 +106,14 @@ const Contact = () => {
           </div>
 
           {/* Right Column - Tabs */}
-          <div className="bg-card rounded-2xl shadow-elevated border border-border/50 overflow-hidden">
+          <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
             {/* Tab Navigation */}
-            <div className="flex border-b border-border">
+            <div className="flex border-b border-border/50">
               <button
                 onClick={() => setActiveTab("book")}
-                className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-semibold transition-all ${
                   activeTab === "book"
-                    ? "bg-accent/10 text-accent border-b-2 border-accent -mb-px"
+                    ? "text-accent border-b-2 border-accent -mb-px bg-accent/5"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -122,9 +122,9 @@ const Contact = () => {
               </button>
               <button
                 onClick={() => setActiveTab("message")}
-                className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-semibold transition-all ${
                   activeTab === "message"
-                    ? "bg-accent/10 text-accent border-b-2 border-accent -mb-px"
+                    ? "text-accent border-b-2 border-accent -mb-px bg-accent/5"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -137,7 +137,7 @@ const Contact = () => {
             {activeTab === "book" ? (
               <div className="p-0">
                 <iframe
-                  src="https://calendly.com/andy-wellnessgenius/30min?hide_gdpr_banner=1&background_color=fdfcfa&text_color=1f2937&primary_color=2a9d8f"
+                  src="https://calendly.com/andy-wellnessgenius/30min?hide_gdpr_banner=1&background_color=0f0f0f&text_color=fafafa&primary_color=1cd4a0"
                   width="100%"
                   height="650"
                   frameBorder="0"
@@ -159,6 +159,7 @@ const Contact = () => {
                           setFormData({ ...formData, name: e.target.value })
                         }
                         placeholder="Jane Smith"
+                        className="bg-secondary border-border/50"
                       />
                     </div>
                     <div className="space-y-2">
@@ -172,6 +173,7 @@ const Contact = () => {
                           setFormData({ ...formData, email: e.target.value })
                         }
                         placeholder="jane@company.com"
+                        className="bg-secondary border-border/50"
                       />
                     </div>
                   </div>
@@ -187,6 +189,7 @@ const Contact = () => {
                           setFormData({ ...formData, company: e.target.value })
                         }
                         placeholder="Your company"
+                        className="bg-secondary border-border/50"
                       />
                     </div>
                     <div className="space-y-2">
@@ -199,6 +202,7 @@ const Contact = () => {
                           setFormData({ ...formData, role: e.target.value })
                         }
                         placeholder="Head of Operations"
+                        className="bg-secondary border-border/50"
                       />
                     </div>
                   </div>
@@ -215,7 +219,7 @@ const Contact = () => {
                           interestArea: e.target.value as InterestArea,
                         })
                       }
-                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="flex h-11 w-full rounded-xl border border-border/50 bg-secondary px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <option value="">Select an option</option>
                       <option value="ai-agents">AI Agents & Automation</option>
@@ -237,6 +241,7 @@ const Contact = () => {
                       }
                       placeholder="Tell me about the challenges you're facing..."
                       rows={3}
+                      className="bg-secondary border-border/50"
                     />
                   </div>
 
@@ -248,7 +253,7 @@ const Contact = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, timeline: e.target.value })
                       }
-                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="flex h-11 w-full rounded-xl border border-border/50 bg-secondary px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <option value="">Select timeline</option>
                       <option value="asap">ASAP</option>
@@ -266,7 +271,7 @@ const Contact = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, consent: e.target.checked })
                       }
-                      className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent"
+                      className="mt-1 h-4 w-4 rounded border-border bg-secondary text-accent focus:ring-accent"
                     />
                     <Label htmlFor="consent" className="text-sm text-muted-foreground font-normal">
                       I agree to the{" "}

@@ -1,41 +1,41 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, ClipboardCheck } from "lucide-react";
+import { ArrowRight, Zap, ClipboardCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
-    <section className="relative min-h-[85vh] flex items-center pt-20 lg:pt-0">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/30 -z-10" />
+    <section className="relative min-h-[90vh] flex items-center pt-20 lg:pt-0 overflow-hidden">
+      {/* Background gradient - Apple style */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-card -z-10" />
       
-      {/* Decorative elements */}
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-accent/5 rounded-full blur-3xl -z-10" />
+      {/* Decorative glow orbs */}
+      <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px] -z-10 animate-pulse-glow" />
+      <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[100px] -z-10" />
 
       <div className="container-wide px-6 lg:px-12 py-12 lg:py-20">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-8 animate-fade-up">
-            <Sparkles size={16} />
-            <span>AI-Powered Growth for Wellness Brands</span>
+          {/* Badge - tech style */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium mb-8 animate-fade-up">
+            <Zap size={14} className="fill-accent" />
+            <span>AI-Powered Automation</span>
           </div>
 
-          {/* Main Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-heading leading-[1.1] mb-6 animate-fade-up animation-delay-100">
+          {/* Main Headline - Clean, bold */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.05] mb-6 animate-fade-up animation-delay-100 tracking-tight">
             AI agents that{" "}
-            <span className="italic">automate growth</span>{" "}
+            <span className="text-accent">automate growth</span>{" "}
             <br className="hidden sm:block" />
             and operations
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-up animation-delay-200">
-            I help wellness, fitness, and hospitality businesses scale faster with intelligent automation—without hiring more headcount.
+          <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-up animation-delay-200">
+            Helping wellness, fitness, and hospitality businesses scale faster with intelligent automation—without hiring more headcount.
           </p>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-fade-up animation-delay-300">
-            <Button variant="hero" size="xl" asChild>
+          {/* CTAs - Apple style buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10 animate-fade-up animation-delay-300">
+            <Button variant="accent" size="xl" asChild>
               <a href="#contact">
                 Book a Call
                 <ArrowRight size={18} />
@@ -50,13 +50,15 @@ const Hero = () => {
           <div className="animate-fade-up animation-delay-350">
             <Link 
               to="/ai-readiness"
-              className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors group"
+              className="inline-flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group"
             >
-              <ClipboardCheck size={18} />
-              <span className="underline underline-offset-4 decoration-accent/50 group-hover:decoration-accent">
+              <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+                <ClipboardCheck size={16} className="text-accent" />
+              </div>
+              <span className="text-sm">
                 Start with the free AI Readiness Index + 30-min strategy call
               </span>
-              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={14} className="text-accent group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>

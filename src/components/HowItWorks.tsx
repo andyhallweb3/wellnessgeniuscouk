@@ -31,40 +31,40 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section id="how-it-works" className="section-padding bg-primary text-primary-foreground">
+    <section id="how-it-works" className="section-padding bg-background">
       <div className="container-wide">
         {/* Header */}
         <div className="max-w-2xl mb-16">
-          <p className="text-sm font-medium text-accent uppercase tracking-wider mb-3">
+          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
             Process
           </p>
-          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-heading mb-4">
+          <h2 className="text-3xl lg:text-4xl xl:text-5xl mb-4 tracking-tight">
             How we work together
           </h2>
-          <p className="text-primary-foreground/70 text-lg">
+          <p className="text-muted-foreground text-lg">
             A proven process designed to deliver results quickly and efficiently. No fluff, just outcomes.
           </p>
         </div>
 
         {/* Steps */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {steps.map((step, index) => (
             <div 
               key={index} 
-              className="relative group p-6 -m-6 rounded-xl transition-all duration-300 hover:bg-primary-foreground/5"
+              className="relative group p-6 rounded-2xl bg-card border border-border/50 transition-all duration-300 hover:border-accent/30 hover:bg-card/80"
             >
               <div className="relative">
-                <div className="text-5xl lg:text-6xl font-heading text-accent/30 mb-4 transition-all duration-300 group-hover:text-accent/50 group-hover:translate-x-1">
+                <div className="text-5xl lg:text-6xl font-bold text-accent/20 mb-4 transition-all duration-300 group-hover:text-accent/40 tracking-tighter">
                   {step.number}
                 </div>
-                <h3 className="text-xl font-heading font-medium mb-3 transition-colors duration-300 group-hover:text-accent">
+                <h3 className="text-xl font-semibold mb-3 transition-colors duration-300 group-hover:text-accent tracking-tight">
                   {step.title}
                 </h3>
-                <p className="text-primary-foreground/70 text-sm mb-4 leading-relaxed">
+                <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
                   {step.description}
                 </p>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-foreground/10 text-xs transition-all duration-300 group-hover:bg-accent/20">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent transition-transform duration-300 group-hover:scale-125" />
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-xs font-medium transition-all duration-300 group-hover:bg-accent/10 group-hover:text-accent">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                   {step.duration}
                 </div>
               </div>

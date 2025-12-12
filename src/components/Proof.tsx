@@ -73,14 +73,14 @@ const testimonials = [
 
 const Proof = () => {
   return (
-    <section id="proof" className="section-padding">
+    <section id="proof" className="section-padding bg-card">
       <div className="container-wide">
         {/* Header */}
         <div className="max-w-2xl mb-16">
-          <p className="text-sm font-medium text-accent uppercase tracking-wider mb-3">
+          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
             Featured Clients & Partners
           </p>
-          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-heading mb-4">
+          <h2 className="text-3xl lg:text-4xl xl:text-5xl mb-4 tracking-tight">
             Trusted by organisations innovating in wellness
           </h2>
           <p className="text-muted-foreground text-lg">
@@ -89,26 +89,26 @@ const Proof = () => {
         </div>
 
         {/* Client Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-16">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-20">
           {clients.map((client, index) => (
             <a
               key={index}
               href={client.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group bg-card rounded-xl p-6 border border-border/50 hover:border-accent/30 hover:shadow-elegant transition-all duration-300"
+              className="group bg-secondary/50 rounded-2xl p-6 border border-border/30 hover:border-accent/30 hover:bg-secondary transition-all duration-300"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="h-12 flex items-center">
                   <img 
                     src={client.logo} 
                     alt={`${client.name} logo`}
-                    className="h-10 w-auto object-contain max-w-[120px]"
+                    className="h-10 w-auto object-contain max-w-[120px] rounded-lg"
                   />
                 </div>
                 <ExternalLink className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <h3 className="font-medium text-foreground mb-2 group-hover:text-accent transition-colors">
+              <h3 className="font-semibold text-foreground mb-2 group-hover:text-accent transition-colors">
                 {client.name}
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -119,33 +119,33 @@ const Proof = () => {
         </div>
 
         {/* Testimonials */}
-        <div className="max-w-2xl mb-8">
-          <p className="text-sm font-medium text-accent uppercase tracking-wider mb-3">
+        <div className="max-w-2xl mb-12">
+          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
             Testimonials
           </p>
-          <h3 className="text-2xl lg:text-3xl font-heading mb-2">
+          <h3 className="text-2xl lg:text-3xl mb-2 tracking-tight">
             Insight-led. Outcome-focused. No hype.
           </h3>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="bg-card rounded-xl p-8 shadow-elegant border border-border/50 hover:shadow-elevated transition-all duration-300"
+              className="bg-secondary/50 rounded-2xl p-8 border border-border/30 hover:border-accent/30 transition-all duration-300"
             >
               <Quote className="w-8 h-8 text-accent/30 mb-4" />
-              <blockquote className="text-foreground mb-6 leading-relaxed">
+              <blockquote className="text-foreground mb-6 leading-relaxed text-sm">
                 "{testimonial.quote}"
               </blockquote>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-accent font-medium">
+                <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-sm font-semibold">
                   {testimonial.author.charAt(0)}
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">
+                  <p className="font-medium text-foreground text-sm">
                     {testimonial.author}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {testimonial.role}, {testimonial.company}
                   </p>
                 </div>
