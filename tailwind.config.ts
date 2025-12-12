@@ -64,26 +64,29 @@ export default {
         },
       },
       fontFamily: {
-        heading: ["'Instrument Serif'", "serif"],
-        body: ["'DM Sans'", "sans-serif"],
+        heading: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        body: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
       },
       fontSize: {
-        'display': ['4.5rem', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
+        'display': ['4.5rem', { lineHeight: '1.05', letterSpacing: '-0.03em', fontWeight: '700' }],
       },
       letterSpacing: {
-        'tighter': '-0.02em',
-        'tight': '-0.01em',
+        'tighter': '-0.03em',
+        'tight': '-0.02em',
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        '2xl': '1rem',
+        '3xl': '1.5rem',
       },
       boxShadow: {
-        'elegant': '0 1px 2px 0 hsl(220 25% 10% / 0.03), 0 4px 8px -2px hsl(220 25% 10% / 0.05)',
-        'elevated': '0 4px 6px -1px hsl(220 25% 10% / 0.05), 0 10px 20px -4px hsl(220 25% 10% / 0.08)',
-        'prominent': '0 8px 16px -4px hsl(220 25% 10% / 0.06), 0 20px 40px -8px hsl(220 25% 10% / 0.1)',
-        'inner-subtle': 'inset 0 1px 2px 0 hsl(220 25% 10% / 0.05)',
+        'glow': '0 0 60px -15px hsl(var(--accent) / 0.5)',
+        'glow-sm': '0 0 30px -10px hsl(var(--accent) / 0.4)',
+        'elegant': '0 1px 3px 0 hsl(0 0% 0% / 0.1)',
+        'elevated': '0 4px 12px -2px hsl(0 0% 0% / 0.15)',
+        'prominent': '0 8px 24px -4px hsl(0 0% 0% / 0.2)',
       },
       transitionTimingFunction: {
         'out-expo': 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -109,6 +112,10 @@ export default {
           from: { opacity: "0", transform: "scale(0.96)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -116,6 +123,7 @@ export default {
         "fade-in": "fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
         "fade-up": "fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
         "scale-in": "scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
       },
     },
   },

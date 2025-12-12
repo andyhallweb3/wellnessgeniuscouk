@@ -74,14 +74,14 @@ const services = [
 
 const Services = () => {
   return (
-    <section id="services" className="section-padding bg-secondary/30">
+    <section id="services" className="section-padding bg-card">
       <div className="container-wide">
         {/* Header */}
-        <div className="max-w-2xl mb-12">
-          <p className="text-sm font-medium text-accent uppercase tracking-wider mb-3">
+        <div className="max-w-2xl mb-16">
+          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
             Services
           </p>
-          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-heading mb-4">
+          <h2 className="text-3xl lg:text-4xl xl:text-5xl mb-4 tracking-tight">
             A ladder, not a lucky dip
           </h2>
           <p className="text-muted-foreground text-lg">
@@ -90,21 +90,27 @@ const Services = () => {
         </div>
 
         {/* Progression indicator */}
-        <div className="hidden lg:flex items-center justify-center gap-4 mb-12">
-          <span className="text-sm text-muted-foreground">Diagnose</span>
-          <div className="h-px w-16 bg-accent/50" />
-          <span className="text-sm text-muted-foreground">Align</span>
-          <div className="h-px w-16 bg-accent/50" />
-          <span className="text-sm text-muted-foreground">Build</span>
+        <div className="hidden lg:flex items-center justify-center gap-6 mb-16">
+          {["Diagnose", "Align", "Build"].map((label, i) => (
+            <div key={label} className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-sm font-semibold">
+                  {i + 1}
+                </div>
+                <span className="text-sm text-foreground font-medium">{label}</span>
+              </div>
+              {i < 2 && <div className="h-px w-12 bg-border" />}
+            </div>
+          ))}
         </div>
 
         {/* Service Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service, index) => (
             <div
               key={index}
-              className={`relative bg-card rounded-xl p-8 shadow-elegant transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 ${
-                service.popular ? "ring-2 ring-accent" : "border border-border"
+              className={`relative bg-secondary/50 rounded-2xl p-8 transition-all duration-300 hover:bg-secondary group ${
+                service.popular ? "ring-1 ring-accent shadow-glow-sm" : "border border-border/50"
               }`}
             >
               {service.popular && (
@@ -114,15 +120,15 @@ const Services = () => {
               )}
 
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
                   <service.icon className="w-6 h-6 text-accent" />
                 </div>
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Step {service.step}
                 </span>
               </div>
 
-              <h3 className="text-xl font-heading font-medium mb-2">
+              <h3 className="text-xl font-semibold mb-2 tracking-tight">
                 {service.title}
               </h3>
               <p className="text-accent text-sm font-medium mb-3">
@@ -133,7 +139,7 @@ const Services = () => {
               </p>
 
               <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-2xl font-heading font-medium">
+                <span className="text-2xl font-semibold tracking-tight">
                   {service.price}
                 </span>
               </div>
@@ -143,7 +149,7 @@ const Services = () => {
 
               {/* Who it's for */}
               <div className="mb-4">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Who it's for
                 </p>
                 <ul className="space-y-1">
@@ -158,7 +164,7 @@ const Services = () => {
 
               {/* Deliverables */}
               <div className="mb-6">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   What you get
                 </p>
                 <ul className="space-y-2">
@@ -171,7 +177,7 @@ const Services = () => {
                 </ul>
               </div>
 
-              <p className="text-xs text-muted-foreground mb-6 border-t border-border pt-4">
+              <p className="text-xs text-muted-foreground mb-6 border-t border-border/50 pt-4">
                 {service.format}
               </p>
 
@@ -190,7 +196,7 @@ const Services = () => {
         </div>
 
         {/* Bottom note */}
-        <p className="text-center text-muted-foreground text-sm mt-12 max-w-2xl mx-auto">
+        <p className="text-center text-muted-foreground text-sm mt-16 max-w-2xl mx-auto">
           Not sure where to start? Most clients begin with the AI Readiness Sprint — it tells us exactly what to do next.
         </p>
       </div>

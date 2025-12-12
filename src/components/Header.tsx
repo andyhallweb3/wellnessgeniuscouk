@@ -14,12 +14,12 @@ const Header = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/30">
       <div className="container-wide px-6 lg:px-12">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl lg:text-2xl font-heading font-medium text-foreground">
+            <span className="text-xl lg:text-2xl font-semibold tracking-tight text-foreground">
               Wellness Genius
             </span>
           </Link>
@@ -48,7 +48,7 @@ const Header = () => {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
               <a href="#contact">Get Pricing</a>
             </Button>
@@ -59,7 +59,7 @@ const Header = () => {
 
           {/* Mobile Menu Toggle */}
           <button
-            className="lg:hidden p-2"
+            className="lg:hidden p-2 text-foreground"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -69,7 +69,7 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden py-6 border-t border-border/50 animate-fade-in">
+          <div className="lg:hidden py-6 border-t border-border/30 animate-fade-in">
             <nav className="flex flex-col gap-4">
               {navLinks.map((link) => (
                 link.isRoute ? (
