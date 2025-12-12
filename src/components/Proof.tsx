@@ -1,7 +1,7 @@
 import { Quote, ExternalLink } from "lucide-react";
-import fitterStockLogo from "@/assets/logos/fitter-stock.png";
+import fitterStockLogo from "@/assets/logos/fitter-stock.jpeg";
 import leisureExpertsLogo from "@/assets/logos/the-leisure-experts.jpeg";
-import nuformaLogo from "@/assets/logos/nuforma.svg";
+import nuformaLogo from "@/assets/logos/nuforma.png";
 import equesoulLogo from "@/assets/logos/equesoul.jpeg";
 import awakeMeditationLogo from "@/assets/logos/awake-meditation.jpeg";
 
