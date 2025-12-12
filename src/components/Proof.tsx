@@ -45,22 +45,34 @@ const clients = [
 
 const testimonials = [
   {
-    quote: "Andy's AI agents transformed our member engagement. We saw a 40% increase in retention within three months.",
-    author: "Sarah Mitchell",
-    role: "Head of Operations",
-    company: "Premium Wellness Group",
+    quote: "Wellness Genius quickly identified where we were losing time and value across content, data, and operations. The approach was practical, commercial, and execution-led — not theoretical. We came away with real clarity and momentum.",
+    author: "Founder",
+    role: "Digital fitness content & platform strategy",
+    company: "Fitter Stock",
   },
   {
-    quote: "The automation setup paid for itself in the first month. Our team now focuses on high-value work instead of manual tasks.",
-    author: "James Chen",
-    role: "Founder & CEO",
-    company: "FitTech Studios",
+    quote: "Wellness Genius brings a rare mix of strategic thinking and hands-on delivery. They don't just advise — they build, test, and challenge assumptions. That's what made the work genuinely valuable.",
+    author: "Partner",
+    role: "Wellness, hospitality & commercial strategy",
+    company: "The Leisure Experts",
   },
   {
-    quote: "Professional, strategic, and incredibly effective. Andy understood our industry nuances from day one.",
-    author: "Emma Roberts",
-    role: "Marketing Director",
-    company: "Hospitality Brands Co",
+    quote: "Wellness Genius helped us simplify our digital approach while staying true to the experience we wanted to create. Calm, structured, and focused on what actually matters.",
+    author: "Founder",
+    role: "Digital wellness & experience design",
+    company: "Awake Meditation",
+  },
+  {
+    quote: "Working with Wellness Genius brought clarity to both our product positioning and our next phase of growth. They ask the right questions and don't let you hide behind vague answers.",
+    author: "Director",
+    role: "Wellness, recovery & performance",
+    company: "Nuforma",
+  },
+  {
+    quote: "Wellness Genius brought structure and strategic thinking to a space that's often intuitive and fragmented. The result was clearer direction and better decision-making.",
+    author: "Founder",
+    role: "Equine & holistic wellbeing",
+    company: "Equesoul",
   },
 ];
 
@@ -132,8 +144,11 @@ const Proof = () => {
         {/* Testimonials */}
         <div className="max-w-2xl mb-8">
           <p className="text-sm font-medium text-accent uppercase tracking-wider mb-3">
-            What Clients Say
+            Testimonials
           </p>
+          <h3 className="text-2xl lg:text-3xl font-heading mb-2">
+            Insight-led. Outcome-focused. No hype.
+          </h3>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {testimonials.map((testimonial, index) => (
