@@ -1,30 +1,40 @@
 import { Quote, ExternalLink } from "lucide-react";
+import fitterStockLogo from "@/assets/logos/fitter-stock.png";
+import leisureExpertsLogo from "@/assets/logos/the-leisure-experts.jpeg";
+import nuformaLogo from "@/assets/logos/nuforma.svg";
+import equesoulLogo from "@/assets/logos/equesoul.jpeg";
+import awakeMeditationLogo from "@/assets/logos/awake-meditation.jpeg";
 
 const clients = [
   {
     name: "Fitter Stock",
     description: "B2B wellness media & exercise content provider supporting employee and member programmes.",
     url: "https://fitterstock.com",
+    logo: fitterStockLogo,
   },
   {
     name: "The Leisure Experts",
     description: "Consultancy for leisure, sport and wellbeing operators, from strategy to execution.",
     url: "https://theleisureexperts.com",
+    logo: leisureExpertsLogo,
   },
   {
     name: "Nuforma",
     description: "Pilates innovation geared towards superior movement results — studio and franchise model.",
     url: "https://nuformapilates.co.uk",
+    logo: nuformaLogo,
   },
   {
     name: "EqueSoul",
     description: "International equestrian fitness and performance programming.",
     url: "https://equesoul.com",
+    logo: equesoulLogo,
   },
   {
     name: "Awake Meditation",
     description: "Multimodal corporate and lifestyle wellbeing practice.",
     url: "https://awakemeditation.co.uk",
+    logo: awakeMeditationLogo,
   },
 ];
 
@@ -88,9 +98,13 @@ const Proof = () => {
               rel="noopener noreferrer"
               className="group bg-card rounded-xl p-6 border border-border/50 hover:border-accent/30 hover:shadow-elegant transition-all duration-300"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent font-heading font-medium text-lg">
-                  {client.name.charAt(0)}
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-12 flex items-center">
+                  <img 
+                    src={client.logo} 
+                    alt={`${client.name} logo`}
+                    className="h-10 w-auto object-contain max-w-[120px]"
+                  />
                 </div>
                 <ExternalLink className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
