@@ -49,20 +49,22 @@ const HowItWorks = () => {
         {/* Steps */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
           {steps.map((step, index) => (
-            <div key={index} className="relative">
-
+            <div 
+              key={index} 
+              className="relative group p-6 -m-6 rounded-xl transition-all duration-300 hover:bg-primary-foreground/5"
+            >
               <div className="relative">
-                <div className="text-5xl lg:text-6xl font-heading text-accent/30 mb-4">
+                <div className="text-5xl lg:text-6xl font-heading text-accent/30 mb-4 transition-all duration-300 group-hover:text-accent/50 group-hover:translate-x-1">
                   {step.number}
                 </div>
-                <h3 className="text-xl font-heading font-medium mb-3">
+                <h3 className="text-xl font-heading font-medium mb-3 transition-colors duration-300 group-hover:text-accent">
                   {step.title}
                 </h3>
                 <p className="text-primary-foreground/70 text-sm mb-4 leading-relaxed">
                   {step.description}
                 </p>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-foreground/10 text-xs">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-foreground/10 text-xs transition-all duration-300 group-hover:bg-accent/20">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent transition-transform duration-300 group-hover:scale-125" />
                   {step.duration}
                 </div>
               </div>
