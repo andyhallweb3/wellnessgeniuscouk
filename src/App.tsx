@@ -8,6 +8,7 @@ import AIReadinessIndex from "./pages/AIReadinessIndex";
 import SpeakerKit from "./pages/SpeakerKit";
 import Insights from "./pages/Insights";
 import BlogPost from "./pages/BlogPost";
+import LatestNews from "./pages/LatestNews";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/speaker-kit" element={<SpeakerKit />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/insights/:slug" element={<BlogPost />} />
+          <Route path="/news" element={<LatestNews />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/cookies" element={<CookiePolicy />} />

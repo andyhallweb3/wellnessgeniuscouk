@@ -1,30 +1,12 @@
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Linkedin, Twitter } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.png";
+import { useNewsletter } from "@/hooks/useNewsletter";
 
 const Footer = () => {
-  const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    toast({
-      title: "Subscribed",
-      description: "You'll receive insights on AI and automation for wellness brands.",
-    });
-
-    setEmail("");
-    setIsSubmitting(false);
-  };
+  const { email, setEmail, isSubmitting, subscribe } = useNewsletter();
 
   const currentYear = new Date().getFullYear();
 
@@ -41,7 +23,7 @@ const Footer = () => {
               Monthly insights on AI automation, wellness tech, and growth strategies. No spam, just value.
             </p>
             <form
-              onSubmit={handleNewsletterSubmit}
+              onSubmit={(e) => subscribe(e, "footer")}
               className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
             >
               <Input
@@ -130,19 +112,19 @@ const Footer = () => {
               <h3 className="font-medium mb-4">Resources</h3>
               <ul className="space-y-3 text-sm text-primary-foreground/70">
                 <li>
-                  <a href="#insights" className="hover:text-primary-foreground transition-colors">
+                  <Link to="/insights" className="hover:text-primary-foreground transition-colors">
                     Insights
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#proof" className="hover:text-primary-foreground transition-colors">
-                    Case Studies
-                  </a>
+                  <Link to="/news" className="hover:text-primary-foreground transition-colors">
+                    Latest News
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-primary-foreground transition-colors">
+                  <Link to="/speaker-kit" className="hover:text-primary-foreground transition-colors">
                     Speaker Kit
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
