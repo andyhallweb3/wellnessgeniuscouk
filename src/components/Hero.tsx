@@ -3,14 +3,8 @@ import { ArrowRight, Sparkles, ClipboardCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Hero = () => {
-  const credibilityMarkers = [
-    "Ex-Equinox, Peloton, Third Space",
-    "500+ automations deployed",
-    "£2M+ revenue generated for clients",
-  ];
-
   return (
-    <section className="relative min-h-screen flex items-center pt-20 lg:pt-0">
+    <section className="relative min-h-[85vh] flex items-center pt-20 lg:pt-0">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/30 -z-10" />
       
@@ -18,7 +12,7 @@ const Hero = () => {
       <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl -z-10" />
       <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-accent/5 rounded-full blur-3xl -z-10" />
 
-      <div className="container-wide px-6 lg:px-12 py-16 lg:py-24">
+      <div className="container-wide px-6 lg:px-12 py-12 lg:py-20">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-8 animate-fade-up">
@@ -53,7 +47,7 @@ const Hero = () => {
           </div>
 
           {/* AI Readiness CTA */}
-          <div className="animate-fade-up animation-delay-350 mb-12">
+          <div className="animate-fade-up animation-delay-350">
             <Link 
               to="/ai-readiness"
               className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors group"
@@ -64,16 +58,6 @@ const Hero = () => {
               </span>
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-          </div>
-
-          {/* Credibility Markers */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-muted-foreground animate-fade-up animation-delay-400">
-            {credibilityMarkers.map((marker, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                <span>{marker}</span>
-              </div>
-            ))}
           </div>
         </div>
       </div>
