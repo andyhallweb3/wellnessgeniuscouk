@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Download, Mic, Users, Lightbulb, Bot, TrendingUp } from "lucide-react";
+import { ArrowRight, Mic, Users, Lightbulb, Bot, TrendingUp, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
+import andyHeadshot from "@/assets/andy-headshot.jpeg";
 
 const topics = [
   {
@@ -48,32 +49,22 @@ const SpeakerKit = () => {
                 Practical, no-hype talks on AI, automation, and the future of wellness tech. 
                 Available for keynotes, workshops, panels, and executive briefings.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button variant="accent" size="lg" asChild>
-                  <a href="mailto:andy@wellnessgenius.co.uk?subject=Speaking%20Enquiry">
-                    Enquire About Speaking
-                    <ArrowRight size={18} />
-                  </a>
-                </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <a href="#assets">
-                    <Download size={18} />
-                    Download Assets
-                  </a>
-                </Button>
-              </div>
+              <Button variant="accent" size="lg" asChild>
+                <a href="mailto:andy@wellnessgenius.co.uk?subject=Speaking%20Enquiry">
+                  Enquire About Speaking
+                  <ArrowRight size={18} />
+                </a>
+              </Button>
             </div>
             
-            {/* Headshot placeholder */}
+            {/* Headshot */}
             <div className="relative">
-              <div className="aspect-square rounded-3xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-32 h-32 rounded-full bg-accent/10 border border-accent/20 mx-auto mb-4 flex items-center justify-center">
-                    <span className="text-4xl font-semibold text-accent">AH</span>
-                  </div>
-                  <p className="text-lg font-semibold">Andy Hall</p>
-                  <p className="text-sm text-muted-foreground">Founder, Wellness Genius</p>
-                </div>
+              <div className="aspect-square rounded-3xl overflow-hidden border border-accent/20">
+                <img 
+                  src={andyHeadshot} 
+                  alt="Andy Hall speaking" 
+                  className="w-full h-full object-cover object-top"
+                />
               </div>
               <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-accent/20 rounded-full blur-3xl -z-10" />
             </div>
@@ -111,8 +102,43 @@ const SpeakerKit = () => {
         </div>
       </section>
 
-      {/* Topics */}
+      {/* Published Work */}
       <section className="section-padding">
+        <div className="container-wide">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
+              Published Work
+            </p>
+            <h2 className="text-2xl lg:text-3xl mb-6 tracking-tight">
+              Beyond Reps: The Rise of Wellbeing in the Fitness Industry
+            </h2>
+            <div className="bg-card rounded-2xl p-8 border border-border/50">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="w-6 h-6 text-accent" />
+                </div>
+                <div>
+                  <p className="text-lg font-semibold mb-2">Chapter 13: Proving The Shift</p>
+                  <p className="text-muted-foreground mb-4">
+                    Andy contributed a chapter on data and AI in the wellness industry, exploring how 
+                    data-driven approaches are transforming the sector. Featured alongside 18 other 
+                    industry leaders sharing how they're creating a new story for fitness.
+                  </p>
+                  <blockquote className="border-l-2 border-accent pl-4 italic text-muted-foreground">
+                    "Wellness without data is just storytelling and the industry's ready for a new narrative."
+                  </blockquote>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    Edited by Dr Glenda Rivoallan & Casey Conrad
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Topics */}
+      <section className="section-padding bg-card">
         <div className="container-wide">
           <div className="max-w-2xl mb-12">
             <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
@@ -130,7 +156,7 @@ const SpeakerKit = () => {
             {topics.map((topic, index) => (
               <div
                 key={index}
-                className="bg-card rounded-2xl p-8 border border-border/50 hover:border-accent/30 transition-all duration-300"
+                className="bg-secondary/50 rounded-2xl p-8 border border-border/50 hover:border-accent/30 transition-all duration-300"
               >
                 <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-6">
                   <topic.icon className="w-6 h-6 text-accent" />
@@ -153,61 +179,6 @@ const SpeakerKit = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Downloadable Assets */}
-      <section id="assets" className="section-padding bg-card">
-        <div className="container-wide">
-          <div className="max-w-2xl mb-12">
-            <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
-              Media Assets
-            </p>
-            <h2 className="text-2xl lg:text-3xl mb-4 tracking-tight">
-              Downloadable assets
-            </h2>
-            <p className="text-muted-foreground">
-              High-resolution photos, logos, and bio text for event promotion.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-secondary/50 rounded-2xl p-6 border border-border/50">
-              <div className="aspect-square rounded-xl bg-accent/10 border border-accent/20 mb-4 flex items-center justify-center">
-                <span className="text-2xl font-semibold text-accent">AH</span>
-              </div>
-              <h3 className="font-semibold mb-1">Headshot</h3>
-              <p className="text-sm text-muted-foreground mb-4">High-resolution portrait photo</p>
-              <Button variant="outline" size="sm" className="w-full" disabled>
-                <Download size={14} />
-                Coming Soon
-              </Button>
-            </div>
-
-            <div className="bg-secondary/50 rounded-2xl p-6 border border-border/50">
-              <div className="aspect-square rounded-xl bg-accent/10 border border-accent/20 mb-4 flex items-center justify-center">
-                <span className="text-lg font-semibold text-accent">WG</span>
-              </div>
-              <h3 className="font-semibold mb-1">Logo Pack</h3>
-              <p className="text-sm text-muted-foreground mb-4">Wellness Genius logos (PNG, SVG)</p>
-              <Button variant="outline" size="sm" className="w-full" disabled>
-                <Download size={14} />
-                Coming Soon
-              </Button>
-            </div>
-
-            <div className="bg-secondary/50 rounded-2xl p-6 border border-border/50">
-              <div className="aspect-square rounded-xl bg-accent/10 border border-accent/20 mb-4 flex items-center justify-center p-4">
-                <p className="text-xs text-center text-muted-foreground">Speaker bio and credentials in text format</p>
-              </div>
-              <h3 className="font-semibold mb-1">Bio Text</h3>
-              <p className="text-sm text-muted-foreground mb-4">Short and long bio versions</p>
-              <Button variant="outline" size="sm" className="w-full" disabled>
-                <Download size={14} />
-                Coming Soon
-              </Button>
-            </div>
           </div>
         </div>
       </section>
