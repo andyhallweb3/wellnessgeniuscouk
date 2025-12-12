@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, ClipboardCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   const credibilityMarkers = [
@@ -39,7 +40,7 @@ const Hero = () => {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-fade-up animation-delay-300">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-fade-up animation-delay-300">
             <Button variant="hero" size="xl" asChild>
               <a href="#contact">
                 Book a Call
@@ -49,6 +50,20 @@ const Hero = () => {
             <Button variant="heroOutline" size="xl" asChild>
               <a href="#services">View Packages</a>
             </Button>
+          </div>
+
+          {/* AI Readiness CTA */}
+          <div className="animate-fade-up animation-delay-350 mb-12">
+            <Link 
+              to="/ai-readiness"
+              className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors group"
+            >
+              <ClipboardCheck size={18} />
+              <span className="underline underline-offset-4 decoration-accent/50 group-hover:decoration-accent">
+                Take the free AI Readiness Index assessment
+              </span>
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
 
           {/* Credibility Markers */}
