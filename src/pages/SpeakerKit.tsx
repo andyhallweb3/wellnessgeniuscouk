@@ -127,9 +127,15 @@ const SpeakerKit = () => {
                   <blockquote className="border-l-2 border-accent pl-4 italic text-muted-foreground">
                     "Wellness without data is just storytelling and the industry's ready for a new narrative."
                   </blockquote>
-                  <p className="text-sm text-muted-foreground mt-4">
+                  <p className="text-sm text-muted-foreground mt-4 mb-4">
                     Edited by Dr Glenda Rivoallan & Casey Conrad
                   </p>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href="https://www.amazon.co.uk/Beyond-Reps-Wellbeing-Fitness-Industry-ebook/dp/B0FQG9D2FP" target="_blank" rel="noopener noreferrer">
+                      Buy on Amazon
+                      <ArrowRight size={14} />
+                    </a>
+                  </Button>
                 </div>
               </div>
             </div>
