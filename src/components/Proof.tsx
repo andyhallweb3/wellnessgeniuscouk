@@ -1,4 +1,47 @@
-import { Quote } from "lucide-react";
+import { Quote, ExternalLink } from "lucide-react";
+
+const clients = [
+  {
+    name: "Fitter Stock",
+    description: "B2B wellness media & exercise content provider supporting employee and member programmes.",
+    url: "https://fitterstock.com",
+  },
+  {
+    name: "LIVE4WELL",
+    description: "Combines AI tech with health tracking and incentivised wellbeing experiences.",
+    url: "https://live4well.com",
+  },
+  {
+    name: "The Leisure Experts",
+    description: "Consultancy for leisure, sport and wellbeing operators, from strategy to execution.",
+    url: "https://theleisureexperts.com",
+  },
+  {
+    name: "Nuforma",
+    description: "Pilates innovation geared towards superior movement results — studio and franchise model.",
+    url: "https://nuformapilates.co.uk",
+  },
+  {
+    name: "Predict Mobile",
+    description: "Machine-assisted procurement analytics and mobile services optimisation.",
+    url: "https://predictmobile.com",
+  },
+  {
+    name: "reFIT",
+    description: "Converts real estate into automated wellness hubs for office/residential.",
+    url: "https://refit.io",
+  },
+  {
+    name: "EqueSoul",
+    description: "International equestrian fitness and performance programming.",
+    url: "https://equesoul.com",
+  },
+  {
+    name: "Awake Meditation",
+    description: "Multimodal corporate and lifestyle wellbeing practice.",
+    url: "https://awakemeditation.co.uk",
+  },
+];
 
 const testimonials = [
   {
@@ -35,14 +78,40 @@ const Proof = () => {
         {/* Header */}
         <div className="max-w-2xl mb-16">
           <p className="text-sm font-medium text-accent uppercase tracking-wider mb-3">
-            Results
+            Featured Clients & Partners
           </p>
           <h2 className="text-3xl lg:text-4xl xl:text-5xl font-heading mb-4">
-            Trusted by leading wellness brands
+            Trusted by organisations innovating in wellness
           </h2>
           <p className="text-muted-foreground text-lg">
-            Real outcomes from real partnerships. Here's what clients say about working together.
+            Strategy meets measurable wellbeing outcomes. Working with leaders in fitness, behavioural health and digital transformation.
           </p>
+        </div>
+
+        {/* Client Grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16">
+          {clients.map((client, index) => (
+            <a
+              key={index}
+              href={client.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group bg-card rounded-xl p-6 border border-border/50 hover:border-accent/30 hover:shadow-elegant transition-all duration-300"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent font-heading font-medium text-lg">
+                  {client.name.charAt(0)}
+                </div>
+                <ExternalLink className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <h3 className="font-medium text-foreground mb-2 group-hover:text-accent transition-colors">
+                {client.name}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {client.description}
+              </p>
+            </a>
+          ))}
         </div>
 
         {/* Metrics */}
@@ -61,6 +130,11 @@ const Proof = () => {
         </div>
 
         {/* Testimonials */}
+        <div className="max-w-2xl mb-8">
+          <p className="text-sm font-medium text-accent uppercase tracking-wider mb-3">
+            What Clients Say
+          </p>
+        </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {testimonials.map((testimonial, index) => (
             <div
