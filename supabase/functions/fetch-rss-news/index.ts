@@ -1,7 +1,11 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const CACHE_DURATION_MINUTES = 20;
 
 interface RSSFeed {
   url: string;
@@ -50,15 +54,12 @@ const RSS_FEEDS: RSSFeed[] = [
 ];
 
 function extractImageFromContent(content: string): string | null {
-  // Try to find image in content
   const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
   if (imgMatch) return imgMatch[1];
   
-  // Try media:content
   const mediaMatch = content.match(/<media:content[^>]+url=["']([^"']+)["']/i);
   if (mediaMatch) return mediaMatch[1];
   
-  // Try enclosure
   const enclosureMatch = content.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
   if (enclosureMatch && enclosureMatch[1].match(/\.(jpg|jpeg|png|gif|webp)/i)) {
     return enclosureMatch[1];
@@ -69,32 +70,27 @@ function extractImageFromContent(content: string): string | null {
 
 function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
   try {
-    // Extract title
     const titleMatch = item.match(/<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/is);
     const title = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
     
     if (!title) return null;
     
-    // Extract link
     const linkMatch = item.match(/<link[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>/is) ||
                       item.match(/<link[^>]+href=["']([^"']+)["']/i);
     const link = linkMatch ? linkMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
     
     if (!link) return null;
     
-    // Extract description/summary
     const descMatch = item.match(/<description[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/description>/is) ||
                       item.match(/<summary[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/summary>/is) ||
                       item.match(/<content:encoded[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/content:encoded>/is);
     let summary = descMatch ? descMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
     
-    // Strip HTML tags from summary and limit length
     summary = summary.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     if (summary.length > 300) {
       summary = summary.substring(0, 297) + '...';
     }
     
-    // Extract date
     const dateMatch = item.match(/<pubDate[^>]*>(.*?)<\/pubDate>/is) ||
                       item.match(/<published[^>]*>(.*?)<\/published>/is) ||
                       item.match(/<dc:date[^>]*>(.*?)<\/dc:date>/is) ||
@@ -108,16 +104,13 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
       publishedDate = new Date().toISOString();
     }
     
-    // Extract image
     let imageUrl = extractImageFromContent(item);
     
-    // Also check for media:thumbnail
     if (!imageUrl) {
       const thumbMatch = item.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i);
       if (thumbMatch) imageUrl = thumbMatch[1];
     }
     
-    // Check for image in content
     if (!imageUrl) {
       const contentMatch = item.match(/<content:encoded[^>]*>(.*?)<\/content:encoded>/is);
       if (contentMatch) {
@@ -146,7 +139,7 @@ async function fetchFeed(feed: RSSFeed): Promise<NewsItem[]> {
     console.log(`Fetching feed: ${feed.sourceName}`);
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     
     const response = await fetch(feed.url, {
       headers: {
@@ -165,20 +158,17 @@ async function fetchFeed(feed: RSSFeed): Promise<NewsItem[]> {
     
     const xml = await response.text();
     
-    // Extract items (RSS) or entries (Atom)
     const itemRegex = /<item[^>]*>(.*?)<\/item>/gis;
     const entryRegex = /<entry[^>]*>(.*?)<\/entry>/gis;
     
     const items: NewsItem[] = [];
     let match;
     
-    // Try RSS format first
     while ((match = itemRegex.exec(xml)) !== null && items.length < 5) {
       const parsed = parseRSSItem(match[1], feed);
       if (parsed) items.push(parsed);
     }
     
-    // Try Atom format if no RSS items found
     if (items.length === 0) {
       while ((match = entryRegex.exec(xml)) !== null && items.length < 5) {
         const parsed = parseRSSItem(match[1], feed);
@@ -198,49 +188,148 @@ async function fetchFeed(feed: RSSFeed): Promise<NewsItem[]> {
   }
 }
 
+async function fetchAllFeeds(): Promise<NewsItem[]> {
+  const results = await Promise.all(RSS_FEEDS.map(feed => fetchFeed(feed)));
+  
+  const allItems = results.flat();
+  const seen = new Set<string>();
+  const uniqueItems = allItems.filter(item => {
+    const key = item.title.toLowerCase().substring(0, 50);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  
+  return uniqueItems
+    .sort((a, b) => new Date(b.published_date).getTime() - new Date(a.published_date).getTime())
+    .slice(0, 50);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const url = new URL(req.url);
     const category = url.searchParams.get('category');
+    const forceRefresh = url.searchParams.get('refresh') === 'true' || 
+                         req.headers.get('x-force-refresh') === 'true';
     const limit = parseInt(url.searchParams.get('limit') || '30');
-    
-    console.log(`Fetching RSS feeds - category: ${category || 'all'}, limit: ${limit}`);
-    
-    // Filter feeds by category if specified
-    const feedsToFetch = category && category !== 'All'
-      ? RSS_FEEDS.filter(f => f.category === category)
-      : RSS_FEEDS;
-    
-    // Fetch all feeds concurrently
-    const results = await Promise.all(feedsToFetch.map(feed => fetchFeed(feed)));
-    
-    // Flatten and deduplicate by title
-    const allItems = results.flat();
-    const seen = new Set<string>();
-    const uniqueItems = allItems.filter(item => {
-      const key = item.title.toLowerCase().substring(0, 50);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    
-    // Sort by date (newest first) and limit
-    const sortedItems = uniqueItems
-      .sort((a, b) => new Date(b.published_date).getTime() - new Date(a.published_date).getTime())
-      .slice(0, limit);
-    
-    console.log(`Returning ${sortedItems.length} news items`);
-    
+
+    console.log(`Request - category: ${category || 'all'}, forceRefresh: ${forceRefresh}, limit: ${limit}`);
+
+    // Check cache metadata
+    const { data: metadata } = await supabase
+      .from('rss_cache_metadata')
+      .select('last_refresh, items_count')
+      .eq('id', 'global')
+      .single();
+
+    const lastRefresh = metadata?.last_refresh ? new Date(metadata.last_refresh) : new Date(0);
+    const minutesSinceRefresh = (Date.now() - lastRefresh.getTime()) / (1000 * 60);
+    const cacheIsStale = minutesSinceRefresh > CACHE_DURATION_MINUTES || metadata?.items_count === 0;
+
+    console.log(`Cache age: ${minutesSinceRefresh.toFixed(1)} minutes, stale: ${cacheIsStale}`);
+
+    // If cache is fresh and not forcing refresh, return cached data
+    if (!cacheIsStale && !forceRefresh) {
+      console.log('Returning cached data');
+      
+      let query = supabase
+        .from('rss_news_cache')
+        .select('news_id, title, summary, source_url, source_name, category, image_url, published_date')
+        .order('published_date', { ascending: false })
+        .limit(limit);
+
+      if (category && category !== 'All') {
+        query = query.eq('category', category);
+      }
+
+      const { data: cachedNews, error } = await query;
+
+      if (error) throw error;
+
+      const formattedNews = cachedNews?.map(item => ({
+        id: item.news_id,
+        title: item.title,
+        summary: item.summary,
+        source_url: item.source_url,
+        source_name: item.source_name,
+        category: item.category,
+        image_url: item.image_url,
+        published_date: item.published_date,
+      })) || [];
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: formattedNews,
+          count: formattedNews.length,
+          cached: true,
+          cache_age_minutes: Math.round(minutesSinceRefresh),
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Fetch fresh data from RSS feeds
+    console.log('Fetching fresh RSS data...');
+    const freshNews = await fetchAllFeeds();
+
+    if (freshNews.length > 0) {
+      // Clear old cache and insert new data
+      console.log(`Updating cache with ${freshNews.length} items`);
+      
+      await supabase.from('rss_news_cache').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+      const cacheItems = freshNews.map(item => ({
+        news_id: item.id,
+        title: item.title,
+        summary: item.summary,
+        source_url: item.source_url,
+        source_name: item.source_name,
+        category: item.category,
+        image_url: item.image_url,
+        published_date: item.published_date,
+        fetched_at: new Date().toISOString(),
+      }));
+
+      const { error: insertError } = await supabase
+        .from('rss_news_cache')
+        .insert(cacheItems);
+
+      if (insertError) {
+        console.error('Error inserting cache:', insertError);
+      }
+
+      // Update metadata
+      await supabase
+        .from('rss_cache_metadata')
+        .upsert({
+          id: 'global',
+          last_refresh: new Date().toISOString(),
+          items_count: freshNews.length,
+        });
+    }
+
+    // Filter by category if needed
+    let resultNews = freshNews;
+    if (category && category !== 'All') {
+      resultNews = freshNews.filter(item => item.category === category);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        data: sortedItems,
-        count: sortedItems.length,
-        sources: feedsToFetch.length,
+        data: resultNews.slice(0, limit),
+        count: resultNews.length,
+        cached: false,
+        sources: RSS_FEEDS.length,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

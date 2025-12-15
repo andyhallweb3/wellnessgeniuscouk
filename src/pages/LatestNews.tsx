@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNewsletter } from "@/hooks/useNewsletter";
-import { ExternalLink, Calendar, Mail, Rss, RefreshCw } from "lucide-react";
+import { ExternalLink, Calendar, Mail, Rss, RefreshCw, Clock } from "lucide-react";
 
 interface NewsItem {
   id: string;
@@ -26,22 +26,28 @@ const LatestNews = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const [error, setError] = useState<string | null>(null);
+  const [cacheInfo, setCacheInfo] = useState<{ cached: boolean; age?: number } | null>(null);
   const { email, setEmail, isSubmitting, subscribe } = useNewsletter();
 
-  const fetchNews = useCallback(async (showRefreshing = false) => {
+  const fetchNews = useCallback(async (forceRefresh = false) => {
     try {
-      if (showRefreshing) setRefreshing(true);
+      if (forceRefresh) setRefreshing(true);
       else setLoading(true);
       setError(null);
 
       const { data, error: fnError } = await supabase.functions.invoke('fetch-rss-news', {
         body: null,
+        headers: forceRefresh ? { 'x-force-refresh': 'true' } : undefined,
       });
 
       if (fnError) throw fnError;
       
       if (data?.success && data?.data) {
         setNews(data.data);
+        setCacheInfo({
+          cached: data.cached ?? false,
+          age: data.cache_age_minutes,
+        });
       } else {
         throw new Error(data?.error || 'Failed to fetch news');
       }
@@ -115,6 +121,14 @@ const LatestNews = () => {
                 {refreshing ? "Refreshing..." : "Refresh"}
               </button>
             </div>
+            {cacheInfo && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock size={12} />
+                {cacheInfo.cached 
+                  ? `Cached ${cacheInfo.age} min ago • Updates every 20 min`
+                  : 'Freshly fetched from sources'}
+              </div>
+            )}
           </div>
         </section>
 
