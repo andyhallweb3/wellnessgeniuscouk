@@ -41,16 +41,15 @@ export const useNewsletter = () => {
     localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
 
     try {
-      // Use upsert with ignoreDuplicates to prevent leaking whether email exists
-      // This prevents enumeration attacks via error messages or timing
+      // Use plain INSERT - RLS blocks SELECT so upsert doesn't work
+      // Handle duplicate error silently to prevent email enumeration
       const { error } = await supabase
         .from("newsletter_subscribers")
-        .upsert(
-          { email: validation.data, source },
-          { onConflict: 'email', ignoreDuplicates: true }
-        );
+        .insert({ email: validation.data, source });
 
-      if (error) {
+      // Ignore unique constraint violations (email already exists)
+      // Show success either way to prevent enumeration attacks
+      if (error && error.code !== '23505') {
         throw error;
       }
       
