@@ -117,9 +117,10 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
         imageUrl = extractImageFromContent(contentMatch[1]);
       }
     }
-    
+    // Generate a more unique ID using the full URL hash
+    const urlHash = btoa(link).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
     return {
-      id: `${feed.sourceName}-${btoa(link).substring(0, 20)}`,
+      id: `${feed.sourceName.replace(/\s+/g, '-')}-${urlHash}`,
       title,
       summary: summary || 'Read more at source...',
       source_url: link,
@@ -301,10 +302,12 @@ Deno.serve(async (req) => {
 
       const { error: insertError } = await supabase
         .from('rss_news_cache')
-        .insert(cacheItems);
+        .upsert(cacheItems, { onConflict: 'news_id', ignoreDuplicates: true });
 
       if (insertError) {
         console.error('Error inserting cache:', insertError);
+      } else {
+        console.log(`Successfully cached ${cacheItems.length} items`);
       }
 
       // Update metadata
