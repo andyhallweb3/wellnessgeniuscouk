@@ -219,7 +219,7 @@ function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false, su
                     <p style="margin: 0 0 16px 0; color: white; font-size: 16px; font-weight: 600;">
                       Ready to implement AI in your wellness business?
                     </p>
-                    <a href="https://wellnessgenius.co.uk/ai-readiness" style="display: inline-block; padding: 12px 24px; background: white; color: #0d9488; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                    <a href="https://www.wellnessgenius.co.uk/ai-readiness" style="display: inline-block; padding: 12px 24px; background: white; color: #0d9488; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
                       Take the AI Readiness Index
                     </a>
                   </td>
