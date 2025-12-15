@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -850,6 +851,63 @@ const NewsletterAdmin = () => {
             </Button>
             <Button variant="accent" onClick={handleSaveSubscriber} disabled={!subscriberForm.email}>
               {editingSubscriber ? 'Update' : 'Add'} Subscriber
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Import Modal */}
+      <Dialog open={showBulkImportModal} onOpenChange={setShowBulkImportModal}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download size={20} className="text-accent" />
+              Bulk Import Emails
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Paste email addresses below (one per line, or separated by commas/semicolons).
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="bulkEmails">Email addresses *</Label>
+              <Textarea
+                id="bulkEmails"
+                placeholder="email1@example.com\nemail2@example.com\nemail3@example.com"
+                value={bulkEmails}
+                onChange={(e) => setBulkEmails(e.target.value)}
+                className="bg-secondary border-border min-h-40"
+              />
+              <p className="text-xs text-muted-foreground">
+                {bulkEmails
+                  .split(/[\n,;]+/)
+                  .map((e) => e.trim())
+                  .filter((e) => e && e.includes('@')).length}{' '}
+                emails detected
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkImportModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="accent"
+              onClick={handleBulkImport}
+              disabled={!bulkEmails.trim() || bulkImporting}
+              className="gap-2"
+            >
+              {bulkImporting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Download size={16} />
+                  Import
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
