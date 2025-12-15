@@ -97,7 +97,19 @@ Respond in JSON format:
   }
 }
 
-function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false, subscriberEmail = ''): string {
+function generateEmailHTML(
+  articles: ProcessedArticle[], 
+  previewOnly = false, 
+  subscriberEmail = '',
+  sendId = '',
+  trackingBaseUrl = ''
+): string {
+  // Helper to create tracking URL for links
+  const trackLink = (url: string) => {
+    if (!sendId || !subscriberEmail || !trackingBaseUrl || previewOnly) return url;
+    return `${trackingBaseUrl}?sid=${sendId}&e=${encodeURIComponent(subscriberEmail)}&t=c&url=${encodeURIComponent(url)}`;
+  };
+
   const articleItems = articles.map((article, index) => `
     <tr>
       <td style="padding: 24px 0; border-bottom: 1px solid #e5e7eb;">
@@ -111,7 +123,7 @@ function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false, su
           </tr>
           <tr>
             <td style="padding-top: 8px;">
-              <a href="${article.url}" style="color: #0f172a; font-size: 18px; font-weight: 600; text-decoration: none; line-height: 1.4;">
+              <a href="${trackLink(article.url)}" style="color: #0f172a; font-size: 18px; font-weight: 600; text-decoration: none; line-height: 1.4;">
                 ${article.title}
               </a>
             </td>
@@ -157,7 +169,7 @@ function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false, su
           </tr>
           <tr>
             <td style="padding-top: 16px;">
-              <a href="${article.url}" style="display: inline-block; color: #0d9488; font-size: 14px; font-weight: 500; text-decoration: none;">
+              <a href="${trackLink(article.url)}" style="display: inline-block; color: #0d9488; font-size: 14px; font-weight: 500; text-decoration: none;">
                 Read full article →
               </a>
             </td>
@@ -166,6 +178,11 @@ function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false, su
       </td>
     </tr>
   `).join('');
+
+  // Tracking pixel for open tracking
+  const trackingPixel = sendId && subscriberEmail && trackingBaseUrl && !previewOnly
+    ? `<img src="${trackingBaseUrl}?sid=${sendId}&e=${encodeURIComponent(subscriberEmail)}&t=o" width="1" height="1" style="display:block;width:1px;height:1px;border:0;" alt="" />`
+    : '';
 
   return `
 <!DOCTYPE html>
@@ -219,7 +236,7 @@ function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false, su
                     <p style="margin: 0 0 16px 0; color: white; font-size: 16px; font-weight: 600;">
                       Ready to implement AI in your wellness business?
                     </p>
-                    <a href="https://www.wellnessgenius.co.uk/ai-readiness" style="display: inline-block; padding: 12px 24px; background: white; color: #0d9488; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                    <a href="${trackLink('https://www.wellnessgenius.co.uk/ai-readiness')}" style="display: inline-block; padding: 12px 24px; background: white; color: #0d9488; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
                       Take the AI Readiness Index
                     </a>
                   </td>
@@ -242,10 +259,11 @@ function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false, su
                   Unsubscribe
                 </a>
                 <span style="color: #94a3b8; font-size: 11px;"> • </span>
-                <a href="https://wellnessgenius.co.uk/privacy-policy" style="color: #64748b; font-size: 11px; text-decoration: underline;">
+                <a href="${trackLink('https://wellnessgenius.co.uk/privacy-policy')}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
                   Privacy Policy
                 </a>
               </p>
+              ${trackingPixel}
             </td>
           </tr>
         </table>
@@ -407,8 +425,8 @@ Deno.serve(async (req) => {
         .eq('id', article.id);
     }
 
-    // Generate email HTML
-    const emailHtml = generateEmailHTML(processedArticles, previewOnly);
+    // Generate preview email HTML (without tracking)
+    const previewEmailHtml = generateEmailHTML(processedArticles, true);
 
     // If preview only, return the HTML
     if (previewOnly) {
@@ -416,7 +434,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           preview: true,
-          html: emailHtml,
+          html: previewEmailHtml,
           articleCount: processedArticles.length,
           articles: processedArticles.map(a => ({
             id: a.id,
@@ -431,6 +449,25 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Create send record first to get the ID for tracking
+    const { data: sendRecord, error: sendRecordError } = await supabase
+      .from('newsletter_sends')
+      .insert({
+        recipient_count: 0,
+        article_count: processedArticles.length,
+        status: 'pending',
+        email_html: previewEmailHtml,
+      })
+      .select('id')
+      .single();
+
+    if (sendRecordError || !sendRecord) {
+      throw new Error('Failed to create send record: ' + sendRecordError?.message);
+    }
+
+    const sendId = sendRecord.id;
+    const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
 
     // Fetch active subscribers
     const { data: subscribers, error: subError } = await supabase
@@ -454,9 +491,15 @@ Deno.serve(async (req) => {
 
     console.log(`Sending to ${subscribers.length} subscribers`);
 
-    // Send emails via Resend with personalized unsubscribe links
+    // Send emails via Resend with personalized tracking links
     const emailPromises = subscribers.map(sub => {
-      const personalizedHtml = generateEmailHTML(processedArticles, false, sub.email);
+      const personalizedHtml = generateEmailHTML(
+        processedArticles, 
+        false, 
+        sub.email, 
+        sendId, 
+        trackingBaseUrl
+      );
       return resend.emails.send({
         from: 'Wellness Genius <newsletter@news.wellnessgenius.co.uk>',
         to: [sub.email],
@@ -478,16 +521,15 @@ Deno.serve(async (req) => {
       .update({ processed: true })
       .in('id', articleIds);
 
-    // Log the send
+    // Update the send record with final counts
     await supabase
       .from('newsletter_sends')
-      .insert({
+      .update({
         recipient_count: successCount,
-        article_count: processedArticles.length,
         status: failCount > 0 ? 'partial' : 'sent',
         error_message: failCount > 0 ? `${failCount} emails failed to send` : null,
-        email_html: emailHtml,
-      });
+      })
+      .eq('id', sendId);
 
     return new Response(
       JSON.stringify({ 

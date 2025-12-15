@@ -152,6 +152,47 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          link_url: string | null
+          send_id: string
+          subscriber_email: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          link_url?: string | null
+          send_id: string
+          subscriber_email: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          link_url?: string | null
+          send_id?: string
+          subscriber_email?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_events_send_id_fkey"
+            columns: ["send_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_sends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_sends: {
         Row: {
           article_count: number
@@ -161,6 +202,10 @@ export type Database = {
           recipient_count: number
           sent_at: string
           status: string
+          total_clicks: number | null
+          total_opens: number | null
+          unique_clicks: number | null
+          unique_opens: number | null
         }
         Insert: {
           article_count?: number
@@ -170,6 +215,10 @@ export type Database = {
           recipient_count?: number
           sent_at?: string
           status?: string
+          total_clicks?: number | null
+          total_opens?: number | null
+          unique_clicks?: number | null
+          unique_opens?: number | null
         }
         Update: {
           article_count?: number
@@ -179,6 +228,10 @@ export type Database = {
           recipient_count?: number
           sent_at?: string
           status?: string
+          total_clicks?: number | null
+          total_opens?: number | null
+          unique_clicks?: number | null
+          unique_opens?: number | null
         }
         Relationships: []
       }
