@@ -28,6 +28,13 @@ function cleanText(raw: string) {
   return el.value.replace(/\s+/g, " ").trim();
 }
 
+function getProxiedImageUrl(imageUrl: string | null): string | null {
+  if (!imageUrl) return null;
+  // Use the image proxy edge function to bypass hotlinking restrictions
+  const proxyBase = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy`;
+  return `${proxyBase}?url=${encodeURIComponent(imageUrl)}`;
+}
+
 const LatestNews = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -228,7 +235,7 @@ const LatestNews = () => {
                       {featuredNews.image_url && (
                         <div className="lg:w-80 h-48 lg:h-64 rounded-xl overflow-hidden bg-secondary">
                           <img 
-                            src={featuredNews.image_url} 
+                            src={getProxiedImageUrl(featuredNews.image_url) || ''}
                             alt={cleanText(featuredNews.title)}
                             loading="lazy"
                             className="w-full h-full object-cover"
@@ -262,7 +269,7 @@ const LatestNews = () => {
                       {item.image_url && (
                         <div className="h-40 rounded-lg overflow-hidden mb-4 -mx-2 -mt-2 bg-secondary">
                           <img 
-                            src={item.image_url} 
+                            src={getProxiedImageUrl(item.image_url) || ''}
                             alt={cleanText(item.title)}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
