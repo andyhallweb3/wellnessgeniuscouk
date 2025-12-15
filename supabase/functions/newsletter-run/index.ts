@@ -255,6 +255,12 @@ Deno.serve(async (req) => {
     const adminSecret = Deno.env.get('ADMIN_SECRET');
     const providedSecret = req.headers.get('x-admin-secret');
     
+    console.log('Admin secret check:', {
+      hasEnvSecret: !!adminSecret,
+      hasProvidedSecret: !!providedSecret,
+      secretLength: providedSecret?.length || 0,
+    });
+    
     if (!adminSecret || providedSecret !== adminSecret) {
       console.log('Unauthorized access attempt to newsletter-run');
       return new Response(
