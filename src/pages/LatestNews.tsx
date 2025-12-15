@@ -76,7 +76,7 @@ const LatestNews = () => {
   }, []);
 
   useEffect(() => {
-    document.title = "Latest AI & Wellness News | Wellness Genius";
+    document.title = "Weekly AI & Wellness Digest | Wellness Genius";
     fetchNews();
   }, [fetchNews]);
 
@@ -85,6 +85,11 @@ const LatestNews = () => {
     : news.filter(item => item.category === activeCategory);
 
   const featuredNews = filteredNews[0];
+
+  // Get date range for display
+  const today = new Date();
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const dateRange = `${weekAgo.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} - ${today.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
 
   return (
     <div className="min-h-screen bg-background dark">
@@ -97,14 +102,14 @@ const LatestNews = () => {
             <div className="max-w-3xl animate-fade-up">
               <span className="badge-tech mb-6">
                 <Rss size={14} className="mr-1" />
-                Live RSS Feeds
+                Weekly Digest • {dateRange}
               </span>
               <h1 className="mb-6">
-                AI & Wellness Industry News
+                This Week in Wellness & AI
               </h1>
               <p className="text-lg text-muted-foreground">
-                Live aggregated news from leading sources across artificial intelligence, 
-                wellness technology, fitness, and digital health.
+                Curated news and insights for wellness operators, facility managers, 
+                and senior teams across fitness, hospitality, and corporate wellness.
               </p>
             </div>
           </div>
@@ -140,8 +145,8 @@ const LatestNews = () => {
               <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                 <Clock size={12} />
                 {cacheInfo.cached 
-                  ? `Cached ${cacheInfo.age} min ago • Updates every 20 min`
-                  : 'Freshly fetched from sources'}
+                  ? `Updated ${cacheInfo.age} min ago`
+                  : 'Freshly curated'}
               </div>
             )}
           </div>
@@ -206,7 +211,7 @@ const LatestNews = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-4">
                           <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                            Latest
+                            Editor's Pick
                           </span>
                           <span className="text-xs text-muted-foreground">{featuredNews.source_name}</span>
                         </div>
@@ -318,9 +323,9 @@ const LatestNews = () => {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 text-accent mb-6">
                 <Mail size={24} />
               </div>
-              <h2 className="text-2xl lg:text-3xl mb-4">Stay informed</h2>
+              <h2 className="text-2xl lg:text-3xl mb-4">Get the weekly digest</h2>
               <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-                Get curated AI and wellness news delivered weekly. No spam, just the insights that matter.
+                The top stories delivered to your inbox every week. AI-curated insights for wellness operators.
               </p>
               <form 
                 onSubmit={(e) => subscribe(e, "news-page-bottom")}
