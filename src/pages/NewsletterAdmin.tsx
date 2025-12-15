@@ -164,29 +164,23 @@ const NewsletterAdmin = () => {
   };
 
   const fetchRecentSends = async () => {
-    // Fetch recent sends for display
-    const { data } = await supabase
-      .from('newsletter_sends')
-      .select('*')
-      .order('sent_at', { ascending: false })
-      .limit(5);
-    
-    setRecentSends(data || []);
-    
-    // Fetch total count and sum of recipients
-    const { count } = await supabase
-      .from('newsletter_sends')
-      .select('*', { count: 'exact', head: true });
-    
-    setTotalSends(count || 0);
-    
-    // Calculate total emails sent
-    const { data: allSends } = await supabase
-      .from('newsletter_sends')
-      .select('recipient_count');
-    
-    const total = (allSends || []).reduce((sum, send) => sum + (send.recipient_count || 0), 0);
-    setTotalEmailsSent(total);
+    try {
+      const { data, error } = await supabase.functions.invoke('newsletter-run', {
+        body: { action: 'history', limit: 10 },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      
+      setRecentSends(data.sends || []);
+      setTotalSends(data.totalCount || 0);
+      
+      // Calculate total emails sent from the fetched sends
+      const total = (data.sends || []).reduce((sum: number, send: NewsletterSend) => sum + (send.recipient_count || 0), 0);
+      setTotalEmailsSent(total);
+    } catch (error) {
+      console.error('Failed to fetch send history:', error);
+    }
   };
 
   const fetchSubscribers = async () => {
