@@ -938,7 +938,9 @@ const NewsletterAdmin = () => {
                         <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Recipients</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Opens</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Open Rate</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Clicks</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Click Rate</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
                       </tr>
                     </thead>
@@ -964,11 +966,15 @@ const NewsletterAdmin = () => {
                             <td className="px-4 py-3 text-sm">{send.recipient_count}</td>
                             <td className="px-4 py-3 text-sm">
                               <span className="text-green-400">{send.unique_opens || 0}</span>
-                              <span className="text-muted-foreground text-xs ml-1">({openRate}%)</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className="text-green-400 font-medium">{openRate}%</span>
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <span className="text-blue-400">{send.unique_clicks || 0}</span>
-                              <span className="text-muted-foreground text-xs ml-1">({clickRate}%)</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className="text-blue-400 font-medium">{clickRate}%</span>
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
