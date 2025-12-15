@@ -15,6 +15,9 @@ interface Article {
   category: string;
   excerpt: string | null;
   content: string | null;
+  ai_summary?: string | null;
+  ai_why_it_matters?: string[] | null;
+  ai_commercial_angle?: string | null;
 }
 
 interface ProcessedArticle extends Article {
@@ -283,49 +286,74 @@ Deno.serve(async (req) => {
 
     console.log(`Newsletter run - preview: ${previewOnly}, syncFromRss: ${syncFromRss}`);
 
-    // Optionally sync articles from RSS cache
+    // Optionally sync articles from RSS cache with category diversity
     if (syncFromRss) {
-      console.log('Syncing articles from RSS cache...');
-      const { data: rssItems } = await supabase
-        .from('rss_news_cache')
-        .select('*')
-        .order('published_date', { ascending: false })
-        .limit(50);
+      console.log('Syncing articles from RSS cache with category diversity...');
+      
+      const categories = ['AI', 'Wellness', 'Fitness', 'Technology', 'Investment'];
+      const articlesPerCategory = 4;
+      let totalSynced = 0;
 
-      if (rssItems && rssItems.length > 0) {
-        for (const item of rssItems) {
-          await supabase
-            .from('articles')
-            .upsert({
-              title: item.title,
-              source: item.source_name,
-              url: item.source_url,
-              published_at: item.published_date,
-              category: item.category,
-              excerpt: item.summary,
-              processed: false,
-            }, { onConflict: 'url' });
+      for (const category of categories) {
+        const { data: rssItems } = await supabase
+          .from('rss_news_cache')
+          .select('*')
+          .eq('category', category)
+          .order('published_date', { ascending: false })
+          .limit(articlesPerCategory);
+
+        if (rssItems && rssItems.length > 0) {
+          for (const item of rssItems) {
+            await supabase
+              .from('articles')
+              .upsert({
+                title: item.title,
+                source: item.source_name,
+                url: item.source_url,
+                published_at: item.published_date,
+                category: item.category,
+                excerpt: item.summary,
+                processed: false,
+              }, { onConflict: 'url' });
+          }
+          totalSynced += rssItems.length;
+          console.log(`Synced ${rssItems.length} ${category} articles`);
         }
-        console.log(`Synced ${rssItems.length} articles from RSS cache`);
+      }
+      console.log(`Total synced: ${totalSynced} articles across ${categories.length} categories`);
+    }
+
+    // Fetch unprocessed articles with category diversity
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const targetCategories = ['AI', 'Wellness', 'Fitness', 'Technology', 'Investment'];
+    const articlesPerCategoryForNewsletter = 2;
+    let allArticles: Article[] = [];
+
+    // Fetch 2 articles per category to ensure diversity
+    for (const category of targetCategories) {
+      const { data: categoryArticles } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('processed', false)
+        .eq('category', category)
+        .gte('published_at', oneDayAgo)
+        .order('published_at', { ascending: false })
+        .limit(articlesPerCategoryForNewsletter);
+
+      if (categoryArticles && categoryArticles.length > 0) {
+        allArticles = [...allArticles, ...categoryArticles];
+        console.log(`Found ${categoryArticles.length} ${category} articles`);
       }
     }
 
-    // Fetch unprocessed articles from last 24 hours
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    
-    const { data: articles, error: fetchError } = await supabase
-      .from('articles')
-      .select('*')
-      .eq('processed', false)
-      .gte('published_at', oneDayAgo)
-      .order('published_at', { ascending: false })
-      .limit(8);
+    // Sort by date and take top 8
+    const articles = allArticles
+      .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+      .slice(0, 8);
 
-    if (fetchError) throw fetchError;
+    console.log(`Selected ${articles.length} articles across categories`);
 
-    console.log(`Found ${articles?.length || 0} unprocessed articles`);
-
-    if (!articles || articles.length === 0) {
+    if (articles.length === 0) {
       return new Response(
         JSON.stringify({ 
           success: true, 
