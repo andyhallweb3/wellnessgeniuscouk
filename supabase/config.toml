@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.image-proxy]
 verify_jwt = false
+
+[functions.cleanup-image-cache]
+verify_jwt = false
