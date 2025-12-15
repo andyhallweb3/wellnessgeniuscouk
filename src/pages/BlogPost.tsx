@@ -233,27 +233,32 @@ const BlogPost = () => {
     .filter(([key]) => key !== slug)
     .slice(0, 2);
 
+  // Safe JSX rendering for markdown bold text - no dangerouslySetInnerHTML
+  const renderBoldText = (text: string) => {
+    const parts = text.split(/\*\*(.*?)\*\*/);
+    return parts.map((part, i) => 
+      i % 2 === 1 ? <strong key={i} className="text-foreground">{part}</strong> : part
+    );
+  };
+
   const renderContent = (content: string) => {
     if (content.startsWith("## ")) {
       return <h2 className="text-2xl font-heading mt-10 mb-4">{content.replace("## ", "")}</h2>;
     }
     if (content.startsWith("- ")) {
       return (
-        <li className="text-muted-foreground ml-6 mb-2" dangerouslySetInnerHTML={{ 
-          __html: content.replace("- ", "").replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') 
-        }} />
+        <li className="text-muted-foreground ml-6 mb-2">
+          {renderBoldText(content.replace("- ", ""))}
+        </li>
       );
     }
     if (content.startsWith("*") && content.endsWith("*")) {
       return <p className="text-muted-foreground italic mb-4">{content.replace(/\*/g, "")}</p>;
     }
     return (
-      <p 
-        className="text-muted-foreground mb-4 leading-relaxed" 
-        dangerouslySetInnerHTML={{ 
-          __html: content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') 
-        }} 
-      />
+      <p className="text-muted-foreground mb-4 leading-relaxed">
+        {renderBoldText(content)}
+      </p>
     );
   };
 
