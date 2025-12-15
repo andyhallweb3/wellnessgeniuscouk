@@ -82,7 +82,10 @@ function extractImageFromContent(content: string): string | null {
 function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
   try {
     const titleMatch = item.match(/<title[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/is);
-    const title = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
+    let title = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
+    
+    // Strip any HTML tags from title (some feeds include anchor tags)
+    title = title.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     
     if (!title) return null;
     
