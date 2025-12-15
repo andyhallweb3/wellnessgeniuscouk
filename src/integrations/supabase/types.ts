@@ -131,6 +131,66 @@ export type Database = {
         }
         Relationships: []
       }
+      rss_cache_metadata: {
+        Row: {
+          id: string
+          items_count: number
+          last_refresh: string
+        }
+        Insert: {
+          id?: string
+          items_count?: number
+          last_refresh?: string
+        }
+        Update: {
+          id?: string
+          items_count?: number
+          last_refresh?: string
+        }
+        Relationships: []
+      }
+      rss_news_cache: {
+        Row: {
+          category: string
+          created_at: string
+          fetched_at: string
+          id: string
+          image_url: string | null
+          news_id: string
+          published_date: string
+          source_name: string
+          source_url: string
+          summary: string
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          news_id: string
+          published_date: string
+          source_name: string
+          source_url: string
+          summary: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          news_id?: string
+          published_date?: string
+          source_name?: string
+          source_url?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
