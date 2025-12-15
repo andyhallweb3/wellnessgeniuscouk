@@ -364,6 +364,31 @@ const NewsletterAdmin = () => {
     }
   };
 
+  const updateSendStatus = async (sendId: string, newStatus: 'sent' | 'failed') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('newsletter-run', {
+        body: { action: 'updateStatus', sendId, newStatus },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      toast({
+        title: "Status Updated",
+        description: `Send marked as ${newStatus}.`,
+      });
+
+      fetchRecentSends();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const syncFromRss = async () => {
     setSyncing(true);
     try {
@@ -923,6 +948,83 @@ const NewsletterAdmin = () => {
                 </div>
               )}
             </div>
+
+            {/* Stuck Sends */}
+            {recentSends.filter(s => ['partial', 'pending', 'sending'].includes(s.status)).length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-yellow-400">
+                  <AlertCircle size={20} />
+                  Stuck Sends ({recentSends.filter(s => ['partial', 'pending', 'sending'].includes(s.status)).length})
+                </h2>
+                <div className="card-tech overflow-hidden border border-yellow-500/30">
+                  <table className="w-full">
+                    <thead className="bg-yellow-500/10">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Sent</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Opens</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentSends
+                        .filter(s => ['partial', 'pending', 'sending'].includes(s.status))
+                        .map((send) => (
+                          <tr key={send.id} className="border-t border-border">
+                            <td className="px-4 py-3 text-sm">
+                              {new Date(send.sent_at).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                            <td className="px-4 py-3 text-sm">{send.recipient_count}</td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className="text-green-400">{send.unique_opens || 0}</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                                send.status === 'partial'
+                                  ? 'bg-yellow-500/10 text-yellow-400'
+                                  : send.status === 'sending'
+                                  ? 'bg-blue-500/10 text-blue-400'
+                                  : 'bg-orange-500/10 text-orange-400'
+                              }`}>
+                                <AlertCircle size={12} />
+                                {send.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateSendStatus(send.id, 'sent')}
+                                  className="text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                >
+                                  <CheckCircle size={14} className="mr-1" />
+                                  Mark Complete
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateSendStatus(send.id, 'failed')}
+                                  className="text-red-400 border-red-500/30 hover:bg-red-500/10"
+                                >
+                                  <X size={14} className="mr-1" />
+                                  Mark Failed
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Recent Sends */}
             {recentSends.length > 0 && (
