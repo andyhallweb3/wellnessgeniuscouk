@@ -251,6 +251,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Verify admin secret
+    const adminSecret = Deno.env.get('ADMIN_SECRET');
+    const providedSecret = req.headers.get('x-admin-secret');
+    
+    if (!adminSecret || providedSecret !== adminSecret) {
+      console.log('Unauthorized access attempt to newsletter-run');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid admin secret' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const resendKey = Deno.env.get('RESEND_API_KEY')!;
