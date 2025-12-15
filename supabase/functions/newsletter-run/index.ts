@@ -97,7 +97,7 @@ Respond in JSON format:
   }
 }
 
-function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false): string {
+function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false, subscriberEmail = ''): string {
   const articleItems = articles.map((article, index) => `
     <tr>
       <td style="padding: 24px 0; border-bottom: 1px solid #e5e7eb;">
@@ -234,8 +234,17 @@ function generateEmailHTML(articles: ProcessedArticle[], previewOnly = false): s
               <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px;">
                 © ${new Date().getFullYear()} Wellness Genius. All rights reserved.
               </p>
-              <p style="margin: 0; color: #94a3b8; font-size: 11px;">
+              <p style="margin: 0 0 12px 0; color: #94a3b8; font-size: 11px;">
                 You're receiving this because you subscribed to Wellness Genius insights.
+              </p>
+              <p style="margin: 0;">
+                <a href="https://wellnessgenius.co.uk/unsubscribe${subscriberEmail ? `?email=${encodeURIComponent(subscriberEmail)}` : ''}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
+                  Unsubscribe
+                </a>
+                <span style="color: #94a3b8; font-size: 11px;"> • </span>
+                <a href="https://wellnessgenius.co.uk/privacy-policy" style="color: #64748b; font-size: 11px; text-decoration: underline;">
+                  Privacy Policy
+                </a>
               </p>
             </td>
           </tr>
@@ -445,15 +454,16 @@ Deno.serve(async (req) => {
 
     console.log(`Sending to ${subscribers.length} subscribers`);
 
-    // Send emails via Resend
-    const emailPromises = subscribers.map(sub => 
-      resend.emails.send({
+    // Send emails via Resend with personalized unsubscribe links
+    const emailPromises = subscribers.map(sub => {
+      const personalizedHtml = generateEmailHTML(processedArticles, false, sub.email);
+      return resend.emails.send({
         from: 'Wellness Genius <newsletter@news.wellnessgenius.co.uk>',
         to: [sub.email],
         subject: `AI & Wellness Weekly: ${processedArticles[0].title}`,
-        html: emailHtml,
-      })
-    );
+        html: personalizedHtml,
+      });
+    });
 
     const results = await Promise.allSettled(emailPromises);
     const successCount = results.filter(r => r.status === 'fulfilled').length;
