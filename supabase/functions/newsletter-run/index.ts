@@ -503,30 +503,65 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Sending to ${subscribers.length} subscribers`);
+    console.log(`Sending to ${subscribers.length} subscribers in batches`);
 
-    // Send emails via Resend with personalized tracking links
-    const emailPromises = subscribers.map(sub => {
-      const personalizedHtml = generateEmailHTML(
-        processedArticles, 
-        false, 
-        sub.email, 
-        sendId, 
-        trackingBaseUrl
-      );
-      return resend.emails.send({
-        from: 'Wellness Genius <newsletter@news.wellnessgenius.co.uk>',
-        to: [sub.email],
-        subject: `AI & Wellness Weekly: ${processedArticles[0].title}`,
-        html: personalizedHtml,
+    // Send emails in batches to avoid Resend rate limiting
+    const BATCH_SIZE = 10; // Send 10 emails at a time
+    const DELAY_MS = 1000; // Wait 1 second between batches
+    
+    let successCount = 0;
+    let failCount = 0;
+    const failedEmails: string[] = [];
+
+    for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
+      const batch = subscribers.slice(i, i + BATCH_SIZE);
+      console.log(`Sending batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(subscribers.length / BATCH_SIZE)} (${batch.length} emails)`);
+      
+      const batchPromises = batch.map(sub => {
+        const personalizedHtml = generateEmailHTML(
+          processedArticles, 
+          false, 
+          sub.email, 
+          sendId, 
+          trackingBaseUrl
+        );
+        return resend.emails.send({
+          from: 'Wellness Genius <newsletter@news.wellnessgenius.co.uk>',
+          to: [sub.email],
+          subject: `AI & Wellness Weekly: ${processedArticles[0].title}`,
+          html: personalizedHtml,
+        }).then(() => ({ success: true, email: sub.email }))
+          .catch((err) => ({ success: false, email: sub.email, error: err.message }));
       });
-    });
 
-    const results = await Promise.allSettled(emailPromises);
-    const successCount = results.filter(r => r.status === 'fulfilled').length;
-    const failCount = results.filter(r => r.status === 'rejected').length;
+      const batchResults = await Promise.all(batchPromises);
+      
+      for (const result of batchResults) {
+        if (result.success) {
+          successCount++;
+        } else {
+          failCount++;
+          failedEmails.push(result.email);
+          console.error(`Failed to send to ${result.email}: ${'error' in result ? result.error : 'Unknown error'}`);
+        }
+      }
 
-    console.log(`Sent ${successCount} emails, ${failCount} failed`);
+      // Update send record with progress
+      await supabase
+        .from('newsletter_sends')
+        .update({ recipient_count: successCount })
+        .eq('id', sendId);
+
+      // Delay between batches (except for last batch)
+      if (i + BATCH_SIZE < subscribers.length) {
+        await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+      }
+    }
+
+    console.log(`Completed: ${successCount} sent, ${failCount} failed`);
+    if (failedEmails.length > 0) {
+      console.log(`Failed emails (first 10): ${failedEmails.slice(0, 10).join(', ')}`);
+    }
 
     // Mark articles as processed
     const articleIds = processedArticles.map(a => a.id);
