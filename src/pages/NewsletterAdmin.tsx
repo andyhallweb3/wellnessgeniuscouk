@@ -24,7 +24,9 @@ import {
   Pencil,
   Trash2,
   X,
-  UserPlus
+  UserPlus,
+  Download,
+  Zap
 } from "lucide-react";
 import {
   Dialog,
@@ -84,6 +86,12 @@ const NewsletterAdmin = () => {
   const [showSubscriberModal, setShowSubscriberModal] = useState(false);
   const [editingSubscriber, setEditingSubscriber] = useState<Subscriber | null>(null);
   const [subscriberForm, setSubscriberForm] = useState({ email: '', name: '', source: 'admin-manual', is_active: true });
+  
+  // ZeroBounce import state
+  const [showZbImportModal, setShowZbImportModal] = useState(false);
+  const [zbFileId, setZbFileId] = useState('');
+  const [zbImporting, setZbImporting] = useState(false);
+  const [zbCredits, setZbCredits] = useState<number | null>(null);
 
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
@@ -267,6 +275,58 @@ const NewsletterAdmin = () => {
         description: error instanceof Error ? error.message : "Failed to update subscriber",
         variant: "destructive",
       });
+    }
+  };
+
+  const checkZbCredits = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('zerobounce-import', {
+        body: { action: 'check-credits' },
+        headers: getAuthHeaders(),
+      });
+      if (error) throw error;
+      setZbCredits(data.credits);
+    } catch (error) {
+      console.error('Failed to check ZeroBounce credits:', error);
+    }
+  };
+
+  const handleZbImport = async () => {
+    if (!zbFileId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a ZeroBounce file ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setZbImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('zerobounce-import', {
+        body: { action: 'import', fileId: zbFileId.trim() },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      toast({
+        title: "Import Complete",
+        description: data.message,
+      });
+
+      setShowZbImportModal(false);
+      setZbFileId('');
+      fetchSubscribers();
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: error instanceof Error ? error.message : "Failed to import from ZeroBounce",
+        variant: "destructive",
+      });
+    } finally {
+      setZbImporting(false);
     }
   };
 
@@ -601,10 +661,24 @@ const NewsletterAdmin = () => {
                   <Users size={20} />
                   Subscribers
                 </h2>
-                <Button onClick={openAddSubscriber} variant="accent" size="sm" className="gap-2">
-                  <UserPlus size={16} />
-                  Add Subscriber
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    onClick={() => {
+                      checkZbCredits();
+                      setShowZbImportModal(true);
+                    }} 
+                    variant="secondary" 
+                    size="sm" 
+                    className="gap-2"
+                  >
+                    <Download size={16} />
+                    Import from ZeroBounce
+                  </Button>
+                  <Button onClick={openAddSubscriber} variant="accent" size="sm" className="gap-2">
+                    <UserPlus size={16} />
+                    Add Subscriber
+                  </Button>
+                </div>
               </div>
               
               {loadingSubscribers ? (
@@ -789,6 +863,57 @@ const NewsletterAdmin = () => {
             </Button>
             <Button variant="accent" onClick={handleSaveSubscriber} disabled={!subscriberForm.email}>
               {editingSubscriber ? 'Update' : 'Add'} Subscriber
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ZeroBounce Import Modal */}
+      <Dialog open={showZbImportModal} onOpenChange={setShowZbImportModal}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap size={20} className="text-accent" />
+              Import from ZeroBounce
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Import validated email addresses from a ZeroBounce bulk validation file. 
+              Only valid and catch-all emails will be imported.
+            </p>
+            {zbCredits !== null && (
+              <div className="p-3 rounded-lg bg-accent/10 text-sm">
+                <span className="text-muted-foreground">ZeroBounce Credits: </span>
+                <span className="font-semibold text-accent">{zbCredits.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="fileId">File ID *</Label>
+              <Input
+                id="fileId"
+                placeholder="Enter ZeroBounce file ID"
+                value={zbFileId}
+                onChange={(e) => setZbFileId(e.target.value)}
+                className="bg-secondary border-border"
+              />
+              <p className="text-xs text-muted-foreground">
+                Find this in your ZeroBounce dashboard under Bulk Email Validation → History
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowZbImportModal(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="accent" 
+              onClick={handleZbImport} 
+              disabled={zbImporting || !zbFileId.trim()}
+              className="gap-2"
+            >
+              {zbImporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              {zbImporting ? 'Importing...' : 'Import Emails'}
             </Button>
           </DialogFooter>
         </DialogContent>
