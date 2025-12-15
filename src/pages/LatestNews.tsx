@@ -18,7 +18,7 @@ interface NewsItem {
   published_date: string;
 }
 
-const categories = ["All", "AI", "Wellness", "Fitness", "Technology", "Investment"];
+const categories = ["All", "AI", "Wellness", "Fitness", "Hospitality", "Corporate Wellness", "Technology", "Investment"];
 
 function cleanText(raw: string) {
   // Defensive UI-side cleanup in case any feed includes HTML in title/summary

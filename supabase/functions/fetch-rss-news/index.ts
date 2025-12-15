@@ -39,14 +39,14 @@ const RSS_FEEDS: RSSFeed[] = [
   { url: 'https://longevity.technology/news/feed/', category: 'Wellness', sourceName: 'Longevity Technology' },
   
   // Hospitality & Hotels
-  { url: 'https://skift.com/feed/', category: 'Technology', sourceName: 'Skift' },
-  { url: 'https://www.hotelmanagement.net/rss.xml', category: 'Technology', sourceName: 'Hotel Management' },
-  { url: 'https://www.phocuswire.com/rss.xml', category: 'Technology', sourceName: 'Phocuswire' },
+  { url: 'https://skift.com/feed/', category: 'Hospitality', sourceName: 'Skift' },
+  { url: 'https://www.hotelmanagement.net/rss.xml', category: 'Hospitality', sourceName: 'Hotel Management' },
+  { url: 'https://www.phocuswire.com/rss.xml', category: 'Hospitality', sourceName: 'Phocuswire' },
   
   // Corporate Wellness & HR
-  { url: 'https://www.benefitnews.com/feed', category: 'Wellness', sourceName: 'Employee Benefit News' },
-  { url: 'https://www.hrdive.com/feeds/news/', category: 'Wellness', sourceName: 'HR Dive' },
-  { url: 'https://www.shrm.org/rss/pages/rss.aspx', category: 'Wellness', sourceName: 'SHRM' },
+  { url: 'https://www.benefitnews.com/feed', category: 'Corporate Wellness', sourceName: 'Employee Benefit News' },
+  { url: 'https://www.hrdive.com/feeds/news/', category: 'Corporate Wellness', sourceName: 'HR Dive' },
+  { url: 'https://www.shrm.org/rss/pages/rss.aspx', category: 'Corporate Wellness', sourceName: 'SHRM' },
   
   // === AI & TECH (Curated for Business Value) ===
   { url: 'https://techcrunch.com/category/artificial-intelligence/feed/', category: 'AI', sourceName: 'TechCrunch' },
