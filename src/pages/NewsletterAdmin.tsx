@@ -29,7 +29,9 @@ import {
   Download,
   ChevronDown,
   ChevronRight,
-  Search
+  Search,
+  Copy,
+  FileDown
 } from "lucide-react";
 import {
   Dialog,
@@ -922,11 +924,51 @@ const NewsletterAdmin = () => {
 
                 {/* HTML Preview */}
                 <div className="border border-border rounded-xl overflow-hidden bg-white">
-                  <div className="bg-secondary px-4 py-2 flex items-center gap-2 border-b border-border">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="ml-2 text-xs text-muted-foreground">Email Preview</span>
+                  <div className="bg-secondary px-4 py-2 flex items-center justify-between border-b border-border">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span className="ml-2 text-xs text-muted-foreground">Email Preview</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-1 text-xs h-7"
+                        onClick={() => {
+                          navigator.clipboard.writeText(previewHtml);
+                          toast({
+                            title: "HTML Copied",
+                            description: "Newsletter HTML copied to clipboard. Paste into Resend's HTML editor.",
+                          });
+                        }}
+                      >
+                        <Copy size={14} />
+                        Copy HTML
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-1 text-xs h-7"
+                        onClick={() => {
+                          const blob = new Blob([previewHtml], { type: 'text/html' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `newsletter-${new Date().toISOString().split('T')[0]}.html`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast({
+                            title: "HTML Downloaded",
+                            description: "Newsletter HTML file saved.",
+                          });
+                        }}
+                      >
+                        <FileDown size={14} />
+                        Download
+                      </Button>
+                    </div>
                   </div>
                   <iframe
                     srcDoc={previewHtml}
