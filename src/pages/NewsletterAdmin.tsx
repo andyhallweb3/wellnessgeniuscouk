@@ -79,6 +79,8 @@ const NewsletterAdmin = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [unprocessedCount, setUnprocessedCount] = useState(0);
   const [recentSends, setRecentSends] = useState<NewsletterSend[]>([]);
+  const [totalSends, setTotalSends] = useState(0);
+  const [totalEmailsSent, setTotalEmailsSent] = useState(0);
   
   // Subscriber management state
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -149,6 +151,7 @@ const NewsletterAdmin = () => {
   };
 
   const fetchRecentSends = async () => {
+    // Fetch recent sends for display
     const { data } = await supabase
       .from('newsletter_sends')
       .select('*')
@@ -156,6 +159,21 @@ const NewsletterAdmin = () => {
       .limit(5);
     
     setRecentSends(data || []);
+    
+    // Fetch total count and sum of recipients
+    const { count } = await supabase
+      .from('newsletter_sends')
+      .select('*', { count: 'exact', head: true });
+    
+    setTotalSends(count || 0);
+    
+    // Calculate total emails sent
+    const { data: allSends } = await supabase
+      .from('newsletter_sends')
+      .select('recipient_count');
+    
+    const total = (allSends || []).reduce((sum, send) => sum + (send.recipient_count || 0), 0);
+    setTotalEmailsSent(total);
   };
 
   const fetchSubscribers = async () => {
@@ -557,9 +575,10 @@ const NewsletterAdmin = () => {
                   <div className="p-2 rounded-lg bg-green-500/10 text-green-400">
                     <Send size={20} />
                   </div>
-                  <span className="text-muted-foreground text-sm">Total Sends</span>
+                  <span className="text-muted-foreground text-sm">Newsletter Sends</span>
                 </div>
-                <p className="text-3xl font-bold">{recentSends.length}</p>
+                <p className="text-3xl font-bold">{totalSends}</p>
+                <p className="text-xs text-muted-foreground">{totalEmailsSent.toLocaleString()} emails delivered</p>
               </div>
             </div>
 
