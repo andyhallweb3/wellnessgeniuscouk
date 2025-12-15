@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      articles: {
+        Row: {
+          ai_commercial_angle: string | null
+          ai_summary: string | null
+          ai_why_it_matters: string[] | null
+          category: string
+          content: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          processed: boolean
+          published_at: string
+          source: string
+          title: string
+          url: string
+        }
+        Insert: {
+          ai_commercial_angle?: string | null
+          ai_summary?: string | null
+          ai_why_it_matters?: string[] | null
+          category?: string
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          processed?: boolean
+          published_at?: string
+          source: string
+          title: string
+          url: string
+        }
+        Update: {
+          ai_commercial_angle?: string | null
+          ai_summary?: string | null
+          ai_why_it_matters?: string[] | null
+          category?: string
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          processed?: boolean
+          published_at?: string
+          source?: string
+          title?: string
+          url?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           category: string
@@ -101,6 +149,36 @@ export type Database = {
           source_url?: string
           summary?: string
           title?: string
+        }
+        Relationships: []
+      }
+      newsletter_sends: {
+        Row: {
+          article_count: number
+          email_html: string | null
+          error_message: string | null
+          id: string
+          recipient_count: number
+          sent_at: string
+          status: string
+        }
+        Insert: {
+          article_count?: number
+          email_html?: string | null
+          error_message?: string | null
+          id?: string
+          recipient_count?: number
+          sent_at?: string
+          status?: string
+        }
+        Update: {
+          article_count?: number
+          email_html?: string | null
+          error_message?: string | null
+          id?: string
+          recipient_count?: number
+          sent_at?: string
+          status?: string
         }
         Relationships: []
       }
