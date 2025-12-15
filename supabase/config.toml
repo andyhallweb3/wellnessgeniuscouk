@@ -2,3 +2,6 @@ project_id = "hiayegpvrsxhhemyxghz"
 
 [functions.fetch-rss-news]
 verify_jwt = false
+
+[functions.newsletter-run]
+verify_jwt = false
