@@ -120,14 +120,51 @@ const NewsletterAdmin = () => {
 
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
-    // Check for stored admin secret in sessionStorage
-    const storedSecret = sessionStorage.getItem("admin_secret");
-    if (storedSecret) {
-      setAdminSecret(storedSecret);
-      setIsAuthenticated(true);
-    }
-    setAuthLoading(false);
+
+    const bootstrapAuth = async () => {
+      // Check for stored admin secret in sessionStorage
+      const storedSecret = sessionStorage.getItem("admin_secret");
+      if (!storedSecret) {
+        setAuthLoading(false);
+        return;
+      }
+
+      // Validate the secret before treating the user as authenticated
+      const isValid = await validateAdminSecret(storedSecret);
+      if (isValid) {
+        setAdminSecret(storedSecret);
+        setIsAuthenticated(true);
+      } else {
+        sessionStorage.removeItem("admin_secret");
+        setAdminSecret("");
+        setIsAuthenticated(false);
+      }
+
+      setAuthLoading(false);
+    };
+
+    bootstrapAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const validateAdminSecret = async (secret: string) => {
+    try {
+      // Lightweight auth check: fetch 1 item from send history
+      const { error } = await supabase.functions.invoke('newsletter-run', {
+        body: { action: 'history', limit: 1 },
+        headers: { 'x-admin-secret': secret },
+      });
+
+      if (error) {
+        const msg = error.message || '';
+        return !(msg.includes('401') || msg.toLowerCase().includes('unauthorized'));
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -149,17 +186,31 @@ const NewsletterAdmin = () => {
     return () => clearInterval(interval);
   }, [isAuthenticated, activeSend]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (secretInput.trim()) {
-      sessionStorage.setItem("admin_secret", secretInput.trim());
-      setAdminSecret(secretInput.trim());
-      setIsAuthenticated(true);
+    const candidate = secretInput.trim();
+    if (!candidate) return;
+
+    setAuthLoading(true);
+    const isValid = await validateAdminSecret(candidate);
+    setAuthLoading(false);
+
+    if (!isValid) {
       toast({
-        title: "Access Granted",
-        description: "Admin secret accepted. You can now manage newsletters.",
+        title: "Authentication Failed",
+        description: "Invalid admin secret. Please try again.",
+        variant: "destructive",
       });
+      return;
     }
+
+    sessionStorage.setItem("admin_secret", candidate);
+    setAdminSecret(candidate);
+    setIsAuthenticated(true);
+    toast({
+      title: "Access Granted",
+      description: "Admin secret accepted. You can now manage newsletters.",
+    });
   };
 
   const handleLogout = () => {
@@ -174,7 +225,7 @@ const NewsletterAdmin = () => {
   };
 
   const getAuthHeaders = () => ({
-    'x-admin-secret': sessionStorage.getItem('admin_secret') || adminSecret,
+    'x-admin-secret': adminSecret || sessionStorage.getItem('admin_secret') || '',
   });
 
   const fetchStats = async () => {
