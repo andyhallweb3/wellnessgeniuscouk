@@ -127,6 +127,18 @@ const NewsletterAdmin = () => {
     }
   }, [isAuthenticated]);
 
+  // Auto-refresh send history every 15 seconds while a send is in progress
+  useEffect(() => {
+    if (!isAuthenticated || !activeSend) return;
+
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing send history...');
+      fetchRecentSends();
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, activeSend]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (secretInput.trim()) {
