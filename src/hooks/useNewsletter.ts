@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const emailSchema = z.string().trim().email({ message: "Please enter a valid email address" });
@@ -41,7 +42,7 @@ export const useNewsletter = () => {
     localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
 
     try {
-      console.log('[Newsletter] Attempting signup for:', validation.data, 'source:', source);
+      logger.log('[Newsletter] Attempting signup for:', validation.data, 'source:', source);
       
       // Use plain INSERT - RLS blocks SELECT so upsert doesn't work
       // Handle duplicate error silently to prevent email enumeration
@@ -52,11 +53,11 @@ export const useNewsletter = () => {
       // Ignore unique constraint violations (email already exists)
       // Show success either way to prevent enumeration attacks
       if (error && error.code !== '23505') {
-        console.error('[Newsletter] Insert error:', error);
+        logger.error('[Newsletter] Insert error:', error);
         throw error;
       }
       
-      console.log('[Newsletter] Signup successful for:', validation.data, error?.code === '23505' ? '(already existed)' : '(new)');
+      logger.log('[Newsletter] Signup successful for:', validation.data, error?.code === '23505' ? '(already existed)' : '(new)');
       
       // Always show same message regardless of whether email was new or existing
       toast({
@@ -65,7 +66,7 @@ export const useNewsletter = () => {
       });
       setEmail("");
     } catch (error) {
-      console.error("Newsletter subscription error:", error);
+      logger.error("Newsletter subscription error:", error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

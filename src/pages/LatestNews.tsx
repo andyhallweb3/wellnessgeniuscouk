@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNewsletter } from "@/hooks/useNewsletter";
+import { logger } from "@/lib/logger";
 import { ExternalLink, Calendar, Mail, Rss, RefreshCw, Clock } from "lucide-react";
 
 interface NewsItem {
@@ -68,7 +69,7 @@ const LatestNews = () => {
         throw new Error(data?.error || 'Failed to fetch news');
       }
     } catch (err) {
-      console.error("Error fetching news:", err);
+      logger.error("Error fetching news:", err);
       setError("Unable to load news. Please try again.");
     } finally {
       setLoading(false);
