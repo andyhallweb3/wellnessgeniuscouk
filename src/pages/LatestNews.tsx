@@ -40,6 +40,7 @@ const LatestNews = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [sortMode, setSortMode] = useState<"latest" | "popular">("popular");
   const [error, setError] = useState<string | null>(null);
   const [cacheInfo, setCacheInfo] = useState<{ cached: boolean; age?: number } | null>(null);
   const { email, setEmail, isSubmitting, subscribe } = useNewsletter();
@@ -84,7 +85,16 @@ const LatestNews = () => {
     ? news 
     : news.filter(item => item.category === activeCategory);
 
-  const featuredNews = filteredNews[0];
+  // Sort by mode - "popular" prioritizes diverse sources, "latest" is chronological
+  const sortedNews = [...filteredNews].sort((a, b) => {
+    if (sortMode === "latest") {
+      return new Date(b.published_date).getTime() - new Date(a.published_date).getTime();
+    }
+    // For "popular" - prioritize category diversity and source variety
+    return 0; // Keep original order which has category diversity from the backend
+  });
+
+  const featuredNews = sortedNews[0];
 
   // Get date range for display
   const today = new Date();
@@ -118,7 +128,7 @@ const LatestNews = () => {
         {/* Category Filters */}
         <section className="px-6 lg:px-12 pb-12">
           <div className="container-wide">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
               {categories.map((category) => (
                 <button
                   key={category}
@@ -141,14 +151,40 @@ const LatestNews = () => {
                 {refreshing ? "Refreshing..." : "Refresh"}
               </button>
             </div>
-            {cacheInfo && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock size={12} />
-                {cacheInfo.cached 
-                  ? `Updated ${cacheInfo.age} min ago`
-                  : 'Freshly curated'}
+            
+            {/* Sort Toggle */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1 bg-secondary rounded-full p-1">
+                <button
+                  onClick={() => setSortMode("popular")}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                    sortMode === "popular"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Most Popular
+                </button>
+                <button
+                  onClick={() => setSortMode("latest")}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                    sortMode === "latest"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Latest
+                </button>
               </div>
-            )}
+              {cacheInfo && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock size={12} />
+                  {cacheInfo.cached 
+                    ? `Updated ${cacheInfo.age} min ago`
+                    : 'Freshly curated'}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
@@ -180,7 +216,7 @@ const LatestNews = () => {
               </div>
             </div>
           </section>
-        ) : filteredNews.length === 0 ? (
+        ) : sortedNews.length === 0 ? (
           <section className="px-6 lg:px-12 pb-20">
             <div className="container-wide">
               <div className="card-glass p-12 text-center">
@@ -260,7 +296,7 @@ const LatestNews = () => {
             <section className="px-6 lg:px-12 pb-20">
               <div className="container-wide">
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredNews
+                  {sortedNews
                     .slice(activeCategory === "All" ? 1 : 0)
                     .map((item, index) => (
                     <a
