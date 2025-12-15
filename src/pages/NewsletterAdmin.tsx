@@ -972,6 +972,55 @@ const NewsletterAdmin = () => {
                   Email Preview
                 </h2>
                 
+                {/* Subject Line & Preview Text */}
+                {articles.length > 0 && (() => {
+                  const topArticle = articles[0];
+                  const subjectLine = `Wellness Genius Weekly: ${topArticle.title.length > 50 ? topArticle.title.substring(0, 50) + '...' : topArticle.title}`;
+                  const previewText = topArticle.ai_summary || `This week's top stories from AI, wellness, and fitness—with insights for your business.`;
+                  
+                  return (
+                    <div className="card-tech p-4 mb-4 space-y-4">
+                      <h3 className="font-medium text-accent">📧 Email Copy (click to copy)</h3>
+                      
+                      {/* Subject Line */}
+                      <div>
+                        <label className="text-xs text-muted-foreground uppercase tracking-wide">Subject Line</label>
+                        <div 
+                          className="mt-1 p-3 bg-secondary rounded-lg cursor-pointer hover:bg-secondary/80 transition-colors flex items-center justify-between group"
+                          onClick={() => {
+                            navigator.clipboard.writeText(subjectLine);
+                            toast({
+                              title: "Subject copied",
+                              description: "Subject line copied to clipboard.",
+                            });
+                          }}
+                        >
+                          <span className="font-medium">{subjectLine}</span>
+                          <Copy size={14} className="text-muted-foreground group-hover:text-accent" />
+                        </div>
+                      </div>
+                      
+                      {/* Preview Text */}
+                      <div>
+                        <label className="text-xs text-muted-foreground uppercase tracking-wide">Preview Text</label>
+                        <div 
+                          className="mt-1 p-3 bg-secondary rounded-lg cursor-pointer hover:bg-secondary/80 transition-colors flex items-start justify-between gap-3 group"
+                          onClick={() => {
+                            navigator.clipboard.writeText(previewText);
+                            toast({
+                              title: "Preview text copied",
+                              description: "Preview text copied to clipboard.",
+                            });
+                          }}
+                        >
+                          <span className="text-sm text-muted-foreground">{previewText}</span>
+                          <Copy size={14} className="text-muted-foreground group-hover:text-accent flex-shrink-0 mt-0.5" />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Article Summary */}
                 {articles.length > 0 && (
                   <div className="card-tech p-4 mb-4">
