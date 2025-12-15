@@ -19,8 +19,22 @@ import {
   Loader2,
   ArrowLeft,
   Newspaper,
-  Lock
+  Lock,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  UserPlus
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface Article {
   id: string;
@@ -40,6 +54,15 @@ interface NewsletterSend {
   status: string;
 }
 
+interface Subscriber {
+  id: string;
+  email: string;
+  name: string | null;
+  source: string | null;
+  is_active: boolean;
+  subscribed_at: string;
+}
+
 const NewsletterAdmin = () => {
   const { toast } = useToast();
   const [adminSecret, setAdminSecret] = useState<string>("");
@@ -52,9 +75,15 @@ const NewsletterAdmin = () => {
   const [sending, setSending] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
-  const [subscriberCount, setSubscriberCount] = useState(0);
   const [unprocessedCount, setUnprocessedCount] = useState(0);
   const [recentSends, setRecentSends] = useState<NewsletterSend[]>([]);
+  
+  // Subscriber management state
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [loadingSubscribers, setLoadingSubscribers] = useState(false);
+  const [showSubscriberModal, setShowSubscriberModal] = useState(false);
+  const [editingSubscriber, setEditingSubscriber] = useState<Subscriber | null>(null);
+  const [subscriberForm, setSubscriberForm] = useState({ email: '', name: '', source: 'admin-manual', is_active: true });
 
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
@@ -71,6 +100,7 @@ const NewsletterAdmin = () => {
     if (isAuthenticated) {
       fetchStats();
       fetchRecentSends();
+      fetchSubscribers();
     }
   }, [isAuthenticated]);
 
@@ -119,6 +149,125 @@ const NewsletterAdmin = () => {
       .limit(5);
     
     setRecentSends(data || []);
+  };
+
+  const fetchSubscribers = async () => {
+    setLoadingSubscribers(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-subscribers', {
+        body: { action: 'list' },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      setSubscribers(data.subscribers || []);
+    } catch (error) {
+      console.error('Failed to fetch subscribers:', error);
+    } finally {
+      setLoadingSubscribers(false);
+    }
+  };
+
+  const openAddSubscriber = () => {
+    setEditingSubscriber(null);
+    setSubscriberForm({ email: '', name: '', source: 'admin-manual', is_active: true });
+    setShowSubscriberModal(true);
+  };
+
+  const openEditSubscriber = (subscriber: Subscriber) => {
+    setEditingSubscriber(subscriber);
+    setSubscriberForm({
+      email: subscriber.email,
+      name: subscriber.name || '',
+      source: subscriber.source || 'admin-manual',
+      is_active: subscriber.is_active,
+    });
+    setShowSubscriberModal(true);
+  };
+
+  const handleSaveSubscriber = async () => {
+    try {
+      const action = editingSubscriber ? 'update' : 'add';
+      const { data, error } = await supabase.functions.invoke('manage-subscribers', {
+        body: {
+          action,
+          subscriber: editingSubscriber
+            ? { ...subscriberForm, id: editingSubscriber.id }
+            : subscriberForm,
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      toast({
+        title: editingSubscriber ? "Subscriber Updated" : "Subscriber Added",
+        description: `${subscriberForm.email} has been ${editingSubscriber ? 'updated' : 'added'}.`,
+      });
+
+      setShowSubscriberModal(false);
+      fetchSubscribers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save subscriber",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteSubscriber = async (subscriber: Subscriber) => {
+    if (!confirm(`Are you sure you want to delete ${subscriber.email}?`)) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-subscribers', {
+        body: { action: 'delete', subscriber: { id: subscriber.id } },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Subscriber Deleted",
+        description: `${subscriber.email} has been removed.`,
+      });
+
+      fetchSubscribers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete subscriber",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleSubscriberActive = async (subscriber: Subscriber) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-subscribers', {
+        body: {
+          action: 'update',
+          subscriber: { id: subscriber.id, ...subscriber, is_active: !subscriber.is_active },
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: subscriber.is_active ? "Subscriber Deactivated" : "Subscriber Activated",
+        description: `${subscriber.email} is now ${subscriber.is_active ? 'inactive' : 'active'}.`,
+      });
+
+      fetchSubscribers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update subscriber",
+        variant: "destructive",
+      });
+    }
   };
 
   const syncFromRss = async () => {
@@ -348,8 +497,8 @@ const NewsletterAdmin = () => {
                   </div>
                   <span className="text-muted-foreground text-sm">Active Subscribers</span>
                 </div>
-                <p className="text-3xl font-bold">—</p>
-                <p className="text-xs text-muted-foreground">Protected by RLS</p>
+                <p className="text-3xl font-bold">{subscribers.filter(s => s.is_active).length}</p>
+                <p className="text-xs text-muted-foreground">{subscribers.length} total</p>
               </div>
 
               <div className="card-tech p-6">
@@ -445,6 +594,92 @@ const NewsletterAdmin = () => {
               </div>
             )}
 
+            {/* Subscribers Management */}
+            <div className="card-glass p-6 mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Users size={20} />
+                  Subscribers
+                </h2>
+                <Button onClick={openAddSubscriber} variant="accent" size="sm" className="gap-2">
+                  <UserPlus size={16} />
+                  Add Subscriber
+                </Button>
+              </div>
+              
+              {loadingSubscribers ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                </div>
+              ) : subscribers.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No subscribers yet.</p>
+              ) : (
+                <div className="card-tech overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-secondary">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Source</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Subscribed</th>
+                        <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subscribers.map((subscriber) => (
+                        <tr key={subscriber.id} className="border-t border-border">
+                          <td className="px-4 py-3 text-sm font-medium">{subscriber.email}</td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">{subscriber.name || '—'}</td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">{subscriber.source || '—'}</td>
+                          <td className="px-4 py-3 text-sm">
+                            <button
+                              onClick={() => toggleSubscriberActive(subscriber)}
+                              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 ${
+                                subscriber.is_active 
+                                  ? 'bg-green-500/10 text-green-400' 
+                                  : 'bg-red-500/10 text-red-400'
+                              }`}
+                            >
+                              {subscriber.is_active ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                              {subscriber.is_active ? 'Active' : 'Inactive'}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {new Date(subscriber.subscribed_at).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditSubscriber(subscriber)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Pencil size={14} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteSubscriber(subscriber)}
+                                className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
             {/* Recent Sends */}
             {recentSends.length > 0 && (
               <div>
@@ -500,6 +735,64 @@ const NewsletterAdmin = () => {
       </main>
 
       <Footer />
+
+      {/* Subscriber Modal */}
+      <Dialog open={showSubscriberModal} onOpenChange={setShowSubscriberModal}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle>{editingSubscriber ? 'Edit Subscriber' : 'Add Subscriber'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="email@example.com"
+                value={subscriberForm.email}
+                onChange={(e) => setSubscriberForm({ ...subscriberForm, email: e.target.value })}
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                placeholder="John Doe"
+                value={subscriberForm.name}
+                onChange={(e) => setSubscriberForm({ ...subscriberForm, name: e.target.value })}
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="source">Source</Label>
+              <Input
+                id="source"
+                placeholder="admin-manual"
+                value={subscriberForm.source}
+                onChange={(e) => setSubscriberForm({ ...subscriberForm, source: e.target.value })}
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                id="is_active"
+                checked={subscriberForm.is_active}
+                onCheckedChange={(checked) => setSubscriberForm({ ...subscriberForm, is_active: checked })}
+              />
+              <Label htmlFor="is_active">Active</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSubscriberModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="accent" onClick={handleSaveSubscriber} disabled={!subscriberForm.email}>
+              {editingSubscriber ? 'Update' : 'Add'} Subscriber
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
