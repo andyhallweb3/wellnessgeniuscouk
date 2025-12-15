@@ -327,6 +327,241 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const resend = new Resend(resendKey);
 
+    // Core send workflow: idempotent + resumable using newsletter_send_recipients
+    const BATCH_SIZE = 50;
+    const DELAY_MS = 2000;
+
+    const runSendWorkflow = async (opts: {
+      sendId: string;
+      articles: Article[];
+      trackingBaseUrl: string;
+    }) => {
+      const { sendId, articles, trackingBaseUrl } = opts;
+
+      let sentTotal = 0;
+      let failedTotal = 0;
+
+      try {
+        // 1) Ensure articles have AI content
+        const processedArticles: ProcessedArticle[] = [];
+        for (const article of articles) {
+          if (article.ai_summary && article.ai_why_it_matters && article.ai_commercial_angle) {
+            processedArticles.push(article as ProcessedArticle);
+            continue;
+          }
+
+          const aiContent = await generateAISummary(article, lovableKey);
+          const processed: ProcessedArticle = {
+            ...article,
+            ai_summary: aiContent.summary,
+            ai_why_it_matters: aiContent.whyItMatters,
+            ai_commercial_angle: aiContent.commercialAngle,
+          };
+          processedArticles.push(processed);
+
+          await supabase
+            .from('articles')
+            .update({
+              ai_summary: aiContent.summary,
+              ai_why_it_matters: aiContent.whyItMatters,
+              ai_commercial_angle: aiContent.commercialAngle,
+            })
+            .eq('id', article.id);
+        }
+
+        // 2) Store the preview HTML for history/auditing
+        const emailHtml = generateEmailHTML(processedArticles, true);
+        await supabase
+          .from('newsletter_sends')
+          .update({ email_html: emailHtml })
+          .eq('id', sendId);
+
+        // 3) Ensure recipient queue exists (for new sends) and is deduped per send
+        const { count: existingQueued } = await supabase
+          .from('newsletter_send_recipients')
+          .select('*', { count: 'exact', head: true })
+          .eq('send_id', sendId);
+
+        if (!existingQueued || existingQueued === 0) {
+          // Fetch ALL active subscribers (override default 1000 limit)
+          let allSubscribers: { email: string }[] = [];
+          let page = 0;
+          const pageSize = 1000;
+
+          while (true) {
+            const { data: batch, error: batchError } = await supabase
+              .from('newsletter_subscribers')
+              .select('email')
+              .eq('is_active', true)
+              .range(page * pageSize, (page + 1) * pageSize - 1);
+
+            if (batchError) throw batchError;
+            if (!batch || batch.length === 0) break;
+
+            allSubscribers = [...allSubscribers, ...batch];
+            if (batch.length < pageSize) break;
+            page++;
+          }
+
+          if (allSubscribers.length === 0) {
+            await supabase
+              .from('newsletter_sends')
+              .update({ status: 'failed', error_message: 'No active subscribers' })
+              .eq('id', sendId);
+            return;
+          }
+
+          // Deduplicate by email (case-insensitive)
+          const seen = new Set<string>();
+          const uniqueEmails = allSubscribers
+            .map((s) => s.email.trim())
+            .filter((e) => {
+              const lower = e.toLowerCase();
+              if (!lower) return false;
+              if (seen.has(lower)) return false;
+              seen.add(lower);
+              return true;
+            });
+
+          // Insert as pending (unique index prevents duplicates on retries)
+          const chunkSize = 500;
+          for (let i = 0; i < uniqueEmails.length; i += chunkSize) {
+            const chunk = uniqueEmails.slice(i, i + chunkSize).map((email) => ({
+              send_id: sendId,
+              email,
+              status: 'pending',
+            }));
+
+            const { error: insertErr } = await supabase
+              .from('newsletter_send_recipients')
+              .insert(chunk);
+
+            if (insertErr) {
+              // Unique conflicts are expected if this is re-run; ignore by continuing
+              console.warn('Recipient insert warning:', insertErr.message);
+            }
+          }
+
+          console.log(`Queued ${uniqueEmails.length} recipients for send ${sendId}`);
+        }
+
+        // 4) Compute current sent total (for resume)
+        const { count: sentCount } = await supabase
+          .from('newsletter_send_recipients')
+          .select('*', { count: 'exact', head: true })
+          .eq('send_id', sendId)
+          .eq('status', 'sent');
+
+        sentTotal = sentCount || 0;
+
+        // 5) Process pending recipients in batches; claim them by flipping to 'sending'
+        while (true) {
+          const { data: pendingRows, error: pendingError } = await supabase
+            .from('newsletter_send_recipients')
+            .select('id, email')
+            .eq('send_id', sendId)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: true })
+            .limit(BATCH_SIZE);
+
+          if (pendingError) throw pendingError;
+          if (!pendingRows || pendingRows.length === 0) break;
+
+          const ids = pendingRows.map((r) => r.id);
+
+          // Claim the batch
+          await supabase
+            .from('newsletter_send_recipients')
+            .update({ status: 'sending' })
+            .eq('send_id', sendId)
+            .in('id', ids)
+            .eq('status', 'pending');
+
+          console.log(`Sending batch (claimed ${ids.length}) for send ${sendId}`);
+
+          const results = await Promise.all(
+            pendingRows.map(async (row) => {
+              const personalizedHtml = generateEmailHTML(
+                processedArticles,
+                false,
+                row.email,
+                sendId,
+                trackingBaseUrl
+              );
+
+              try {
+                await resend.emails.send({
+                  from: 'Wellness Genius <newsletter@news.wellnessgenius.co.uk>',
+                  to: [row.email],
+                  subject: `AI & Wellness Weekly: ${processedArticles[0].title}`,
+                  html: personalizedHtml,
+                });
+
+                await supabase
+                  .from('newsletter_send_recipients')
+                  .update({ status: 'sent', sent_at: new Date().toISOString(), error_message: null })
+                  .eq('id', row.id);
+
+                return { ok: true } as const;
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : 'Unknown error';
+                await supabase
+                  .from('newsletter_send_recipients')
+                  .update({ status: 'failed', error_message: msg })
+                  .eq('id', row.id);
+
+                console.error(`Failed to send to ${row.email}: ${msg}`);
+                return { ok: false } as const;
+              }
+            })
+          );
+
+          const ok = results.filter((r) => r.ok).length;
+          const bad = results.length - ok;
+          sentTotal += ok;
+          failedTotal += bad;
+
+          await supabase
+            .from('newsletter_sends')
+            .update({ recipient_count: sentTotal })
+            .eq('id', sendId);
+
+          console.log(`Progress for ${sendId}: sent=${sentTotal}, failed=${failedTotal}`);
+
+          // Delay between batches
+          const remainingDelay = pendingRows.length === BATCH_SIZE;
+          if (remainingDelay) {
+            await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+          }
+        }
+
+        // Mark articles as processed (only when finishing a full send)
+        const articleIds = processedArticles.map((a) => a.id);
+        await supabase.from('articles').update({ processed: true }).in('id', articleIds);
+
+        await supabase
+          .from('newsletter_sends')
+          .update({
+            recipient_count: sentTotal,
+            status: failedTotal > 0 ? 'partial' : 'sent',
+            error_message: failedTotal > 0 ? `${failedTotal} emails failed to send` : null,
+          })
+          .eq('id', sendId);
+
+        console.log(`Send ${sendId} completed: sent=${sentTotal}, failed=${failedTotal}`);
+      } catch (err) {
+        console.error('Send workflow failed:', err);
+        await supabase
+          .from('newsletter_sends')
+          .update({
+            status: 'failed',
+            error_message: err instanceof Error ? err.message : 'Send workflow failed',
+            recipient_count: sentTotal,
+          })
+          .eq('id', sendId);
+      }
+    };
+
     const body = await req.json().catch(() => ({}));
     const previewOnly = body.preview === true;
     const syncFromRss = body.syncFromRss === true;
@@ -403,6 +638,66 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, sendId: body.sendId, newStatus: body.newStatus }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Resume sending to unsent recipients for an existing send
+    if (body.action === 'resume' && body.sendId) {
+      const sendId = body.sendId as string;
+
+      const { data: sendRow, error: sendRowError } = await supabase
+        .from('newsletter_sends')
+        .select('id, status, article_ids')
+        .eq('id', sendId)
+        .single();
+
+      if (sendRowError || !sendRow) {
+        return new Response(
+          JSON.stringify({ success: false, error: sendRowError?.message || 'Send not found' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const articleIds = (sendRow.article_ids || []) as string[];
+      if (!articleIds.length) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Cannot resume: this send has no stored article_ids (older send).'}),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: sendArticles, error: sendArticlesError } = await supabase
+        .from('articles')
+        .select('*')
+        .in('id', articleIds);
+
+      if (sendArticlesError || !sendArticles || sendArticles.length === 0) {
+        return new Response(
+          JSON.stringify({ success: false, error: sendArticlesError?.message || 'Failed to load send articles' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Mark send as sending again
+      await supabase
+        .from('newsletter_sends')
+        .update({ status: 'sending', error_message: null })
+        .eq('id', sendId);
+
+      const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
+
+      console.log(`Resuming send ${sendId}: will deliver to pending recipients only`);
+
+      // @ts-ignore
+      EdgeRuntime.waitUntil(runSendWorkflow({
+        sendId,
+        articles: sendArticles as Article[],
+        trackingBaseUrl,
+      }));
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Resume started', sendId }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -550,12 +845,15 @@ Deno.serve(async (req) => {
       .select('*', { count: 'exact', head: true })
       .eq('is_active', true);
 
-    // Create send record first to get the ID for tracking
+    const articleIdsForSend = articles.map((a) => a.id);
+
+    // Create send record first to get the ID for tracking/resume
     const { data: sendRecord, error: sendRecordError } = await supabase
       .from('newsletter_sends')
       .insert({
         recipient_count: 0,
         article_count: articles.length,
+        article_ids: articleIdsForSend,
         status: 'sending',
         email_html: null,
         error_message: null,
@@ -567,185 +865,19 @@ Deno.serve(async (req) => {
       throw new Error('Failed to create send record: ' + sendRecordError?.message);
     }
 
-    const sendId = sendRecord.id;
+    const sendId = sendRecord.id as string;
     const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
 
-    console.log(`Queued send ${sendId}: starting background processing + sending`);
-
-    // Start sending in the background to avoid request timeouts
-    // Increased batch size and reduced delay for faster completion
-    const BATCH_SIZE = 50;
-    const DELAY_MS = 2000;
-
-    const backgroundSend = async () => {
-      let successCount = 0;
-      let failCount = 0;
-      const failedEmails: string[] = [];
-
-      try {
-        // 1) Ensure articles have AI content
-        const processedArticles: ProcessedArticle[] = [];
-        for (const article of articles) {
-          if (article.ai_summary && article.ai_why_it_matters && article.ai_commercial_angle) {
-            processedArticles.push(article as ProcessedArticle);
-            continue;
-          }
-
-          const aiContent = await generateAISummary(article, lovableKey);
-
-          const processed: ProcessedArticle = {
-            ...article,
-            ai_summary: aiContent.summary,
-            ai_why_it_matters: aiContent.whyItMatters,
-            ai_commercial_angle: aiContent.commercialAngle,
-          };
-
-          processedArticles.push(processed);
-
-          await supabase
-            .from('articles')
-            .update({
-              ai_summary: aiContent.summary,
-              ai_why_it_matters: aiContent.whyItMatters,
-              ai_commercial_angle: aiContent.commercialAngle,
-            })
-            .eq('id', article.id);
-        }
-
-        // 2) Store the email HTML for history/auditing
-        const emailHtml = generateEmailHTML(processedArticles, true);
-        await supabase
-          .from('newsletter_sends')
-          .update({ email_html: emailHtml })
-          .eq('id', sendId);
-
-        // 3) Fetch ALL active subscribers (override default 1000 limit)
-        let allSubscribers: { email: string }[] = [];
-        let page = 0;
-        const pageSize = 1000;
-
-        while (true) {
-          const { data: batch, error: batchError } = await supabase
-            .from('newsletter_subscribers')
-            .select('email')
-            .eq('is_active', true)
-            .range(page * pageSize, (page + 1) * pageSize - 1);
-
-          if (batchError) throw batchError;
-          if (!batch || batch.length === 0) break;
-
-          allSubscribers = [...allSubscribers, ...batch];
-          if (batch.length < pageSize) break;
-          page++;
-        }
-
-        if (allSubscribers.length === 0) {
-          await supabase
-            .from('newsletter_sends')
-            .update({ status: 'failed', error_message: 'No active subscribers' })
-            .eq('id', sendId);
-          return;
-        }
-
-        // Deduplicate subscribers by email (case-insensitive)
-        const seenEmails = new Set<string>();
-        const uniqueSubscribers = allSubscribers.filter((sub) => {
-          const emailLower = sub.email.toLowerCase().trim();
-          if (seenEmails.has(emailLower)) return false;
-          seenEmails.add(emailLower);
-          return true;
-        });
-
-        console.log(
-          `Sending ${uniqueSubscribers.length} unique subscribers (${allSubscribers.length - uniqueSubscribers.length} duplicates removed)`
-        );
-
-        // 4) Send in batches
-        for (let i = 0; i < uniqueSubscribers.length; i += BATCH_SIZE) {
-          const batch = uniqueSubscribers.slice(i, i + BATCH_SIZE);
-          console.log(
-            `Sending batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(
-              uniqueSubscribers.length / BATCH_SIZE
-            )} (${batch.length} emails)`
-          );
-
-          const batchPromises = batch.map((sub) => {
-            const personalizedHtml = generateEmailHTML(
-              processedArticles,
-              false,
-              sub.email,
-              sendId,
-              trackingBaseUrl
-            );
-
-            return resend.emails
-              .send({
-                from: 'Wellness Genius <newsletter@news.wellnessgenius.co.uk>',
-                to: [sub.email],
-                subject: `AI & Wellness Weekly: ${processedArticles[0].title}`,
-                html: personalizedHtml,
-              })
-              .then(() => ({ success: true, email: sub.email }))
-              .catch((err) => ({ success: false, email: sub.email, error: err.message }));
-          });
-
-          const batchResults = await Promise.all(batchPromises);
-
-          for (const result of batchResults) {
-            if (result.success) {
-              successCount++;
-            } else {
-              failCount++;
-              failedEmails.push(result.email);
-              console.error(
-                `Failed to send to ${result.email}: ${'error' in result ? result.error : 'Unknown error'}`
-              );
-            }
-          }
-
-          await supabase
-            .from('newsletter_sends')
-            .update({ recipient_count: successCount })
-            .eq('id', sendId);
-
-          if (i + BATCH_SIZE < uniqueSubscribers.length) {
-            console.log(`Waiting ${DELAY_MS / 1000} seconds before next batch...`);
-            await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
-          }
-        }
-
-        console.log(`Completed: ${successCount} sent, ${failCount} failed`);
-        if (failedEmails.length > 0) {
-          console.log(`Failed emails (first 10): ${failedEmails.slice(0, 10).join(', ')}`);
-        }
-
-        // Mark articles as processed
-        const articleIds = processedArticles.map((a) => a.id);
-        await supabase.from('articles').update({ processed: true }).in('id', articleIds);
-
-        await supabase
-          .from('newsletter_sends')
-          .update({
-            recipient_count: successCount,
-            status: failCount > 0 ? 'partial' : 'sent',
-            error_message: failCount > 0 ? `${failCount} emails failed to send` : null,
-          })
-          .eq('id', sendId);
-      } catch (bgError) {
-        console.error('Background send failed:', bgError);
-        await supabase
-          .from('newsletter_sends')
-          .update({
-            status: 'failed',
-            error_message: bgError instanceof Error ? bgError.message : 'Background send failed',
-            recipient_count: successCount,
-          })
-          .eq('id', sendId);
-      }
-    };
+    console.log(`Queued send ${sendId}: starting background send workflow`);
 
     // @ts-ignore - EdgeRuntime exists in the edge environment
-    EdgeRuntime.waitUntil(backgroundSend());
+    EdgeRuntime.waitUntil(
+      runSendWorkflow({
+        sendId,
+        articles,
+        trackingBaseUrl,
+      })
+    );
 
     return new Response(
       JSON.stringify({
