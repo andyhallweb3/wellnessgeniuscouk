@@ -54,6 +54,10 @@ interface NewsletterSend {
   recipient_count: number;
   article_count: number;
   status: string;
+  unique_opens: number;
+  total_opens: number;
+  unique_clicks: number;
+  total_clicks: number;
 }
 
 interface Subscriber {
@@ -774,38 +778,56 @@ const NewsletterAdmin = () => {
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Recipients</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Articles</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Opens</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Clicks</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {recentSends.map((send) => (
-                        <tr key={send.id} className="border-t border-border">
-                          <td className="px-4 py-3 text-sm">
-                            {new Date(send.sent_at).toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </td>
-                          <td className="px-4 py-3 text-sm">{send.recipient_count}</td>
-                          <td className="px-4 py-3 text-sm">{send.article_count}</td>
-                          <td className="px-4 py-3 text-sm">
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
-                              send.status === 'sent' 
-                                ? 'bg-green-500/10 text-green-400' 
-                                : send.status === 'partial'
-                                ? 'bg-yellow-500/10 text-yellow-400'
-                                : 'bg-red-500/10 text-red-400'
-                            }`}>
-                              {send.status === 'sent' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
-                              {send.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {recentSends.map((send) => {
+                        const openRate = send.recipient_count > 0 
+                          ? ((send.unique_opens || 0) / send.recipient_count * 100).toFixed(1)
+                          : '0.0';
+                        const clickRate = send.recipient_count > 0 
+                          ? ((send.unique_clicks || 0) / send.recipient_count * 100).toFixed(1)
+                          : '0.0';
+                        return (
+                          <tr key={send.id} className="border-t border-border">
+                            <td className="px-4 py-3 text-sm">
+                              {new Date(send.sent_at).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                            <td className="px-4 py-3 text-sm">{send.recipient_count}</td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className="text-green-400">{send.unique_opens || 0}</span>
+                              <span className="text-muted-foreground text-xs ml-1">({openRate}%)</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className="text-blue-400">{send.unique_clicks || 0}</span>
+                              <span className="text-muted-foreground text-xs ml-1">({clickRate}%)</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                                send.status === 'sent' 
+                                  ? 'bg-green-500/10 text-green-400' 
+                                  : send.status === 'partial'
+                                  ? 'bg-yellow-500/10 text-yellow-400'
+                                  : send.status === 'pending'
+                                  ? 'bg-blue-500/10 text-blue-400'
+                                  : 'bg-red-500/10 text-red-400'
+                              }`}>
+                                {send.status === 'sent' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                {send.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
