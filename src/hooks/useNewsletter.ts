@@ -5,6 +5,9 @@ import { z } from "zod";
 
 const emailSchema = z.string().trim().email({ message: "Please enter a valid email address" });
 
+const RATE_LIMIT_KEY = 'newsletter_last_attempt';
+const RATE_LIMIT_MS = 60000; // 1 minute between attempts
+
 export const useNewsletter = () => {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
@@ -13,6 +16,17 @@ export const useNewsletter = () => {
   const subscribe = async (e: React.FormEvent, source: string = "website") => {
     e.preventDefault();
     
+    // Client-side rate limiting
+    const lastAttempt = localStorage.getItem(RATE_LIMIT_KEY);
+    if (lastAttempt && Date.now() - parseInt(lastAttempt) < RATE_LIMIT_MS) {
+      toast({
+        title: "Please wait",
+        description: "You can only subscribe once per minute. Please try again shortly.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const validation = emailSchema.safeParse(email);
     if (!validation.success) {
       toast({
@@ -24,6 +38,7 @@ export const useNewsletter = () => {
     }
 
     setIsSubmitting(true);
+    localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
 
     try {
       const { error } = await supabase
