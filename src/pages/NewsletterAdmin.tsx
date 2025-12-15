@@ -31,7 +31,8 @@ import {
   ChevronRight,
   Search,
   Copy,
-  FileDown
+  FileDown,
+  Zap
 } from "lucide-react";
 import {
   Dialog,
@@ -83,6 +84,8 @@ const NewsletterAdmin = () => {
   
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [scoring, setScoring] = useState(false);
+  const [scoringResults, setScoringResults] = useState<{ scored: number; qualified: number } | null>(null);
   const [sending, setSending] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
@@ -490,6 +493,46 @@ const NewsletterAdmin = () => {
     }
   };
 
+  const scoreArticles = async () => {
+    setScoring(true);
+    setScoringResults(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('score-articles', {
+        body: null,
+        headers: getAuthHeaders(),
+      });
+
+      if (error) {
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          handleLogout();
+          toast({
+            title: "Authentication Failed",
+            description: "Invalid admin secret. Please re-enter.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
+
+      setScoringResults({ scored: data.scored, qualified: data.qualified });
+      toast({
+        title: "Scoring Complete",
+        description: `Scored ${data.scored} articles. ${data.qualified} qualified (score ≥65) for newsletter.`,
+      });
+
+      fetchStats();
+    } catch (error) {
+      toast({
+        title: "Scoring Failed",
+        description: error instanceof Error ? error.message : "Failed to score articles",
+        variant: "destructive",
+      });
+    } finally {
+      setScoring(false);
+    }
+  };
+
   const generatePreview = async () => {
     setLoading(true);
     setPreviewHtml(null);
@@ -817,6 +860,16 @@ const NewsletterAdmin = () => {
                 </Button>
 
                 <Button 
+                  onClick={scoreArticles} 
+                  disabled={scoring}
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  {scoring ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+                  Score Articles
+                </Button>
+
+                <Button 
                   onClick={generatePreview} 
                   disabled={loading}
                   variant="secondary"
@@ -836,6 +889,21 @@ const NewsletterAdmin = () => {
                   Send Newsletter
                 </Button>
               </div>
+
+              {/* Scoring Results */}
+              {scoringResults && (
+                <div className="mt-4 p-4 bg-accent/10 border border-accent/20 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Zap className="h-5 w-5 text-accent" />
+                    <div>
+                      <p className="font-medium text-accent">Scoring Complete</p>
+                      <p className="text-sm text-muted-foreground">
+                        Scored {scoringResults.scored} articles. <strong>{scoringResults.qualified} qualified</strong> (score ≥65) for newsletter.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Active Send Warning */}
               {activeSend && !sendProgress && (

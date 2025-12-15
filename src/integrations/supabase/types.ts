@@ -26,6 +26,15 @@ export type Database = {
           id: string
           processed: boolean
           published_at: string
+          score_commercial_impact: number | null
+          score_novelty: number | null
+          score_operator_relevance: number | null
+          score_reasoning: string | null
+          score_source_authority: number | null
+          score_timeliness: number | null
+          score_total: number | null
+          score_wg_fit: number | null
+          scored_at: string | null
           source: string
           title: string
           url: string
@@ -41,6 +50,15 @@ export type Database = {
           id?: string
           processed?: boolean
           published_at?: string
+          score_commercial_impact?: number | null
+          score_novelty?: number | null
+          score_operator_relevance?: number | null
+          score_reasoning?: string | null
+          score_source_authority?: number | null
+          score_timeliness?: number | null
+          score_total?: number | null
+          score_wg_fit?: number | null
+          scored_at?: string | null
           source: string
           title: string
           url: string
@@ -56,6 +74,15 @@ export type Database = {
           id?: string
           processed?: boolean
           published_at?: string
+          score_commercial_impact?: number | null
+          score_novelty?: number | null
+          score_operator_relevance?: number | null
+          score_reasoning?: string | null
+          score_source_authority?: number | null
+          score_timeliness?: number | null
+          score_total?: number | null
+          score_wg_fit?: number | null
+          scored_at?: string | null
           source?: string
           title?: string
           url?: string
