@@ -86,6 +86,15 @@ const NewsletterAdmin = () => {
   const [totalSends, setTotalSends] = useState(0);
   const [totalEmailsSent, setTotalEmailsSent] = useState(0);
   
+  // Send progress tracking
+  const [sendProgress, setSendProgress] = useState<{
+    totalSubscribers: number;
+    sentCount: number;
+    currentBatch: number;
+    totalBatches: number;
+    sendId: string | null;
+  } | null>(null);
+  
   // Subscriber management state
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loadingSubscribers, setLoadingSubscribers] = useState(false);
@@ -436,11 +445,46 @@ const NewsletterAdmin = () => {
     }
 
     setSending(true);
+    
+    // Get active subscriber count for progress tracking
+    const activeSubscribers = subscribers.filter(s => s.is_active).length;
+    const BATCH_SIZE = 10;
+    const DELAY_SECONDS = 20;
+    const totalBatches = Math.ceil(activeSubscribers / BATCH_SIZE);
+    
+    setSendProgress({
+      totalSubscribers: activeSubscribers,
+      sentCount: 0,
+      currentBatch: 1,
+      totalBatches,
+      sendId: null,
+    });
+    
+    // Simulate progress based on timing (10 emails every ~20 seconds)
+    const startTime = Date.now();
+    const progressInterval = setInterval(() => {
+      const elapsedSeconds = (Date.now() - startTime) / 1000;
+      // Each batch takes ~20 seconds after the first
+      const estimatedBatchesComplete = Math.min(
+        Math.floor(elapsedSeconds / DELAY_SECONDS) + 1,
+        totalBatches
+      );
+      const estimatedSent = Math.min(estimatedBatchesComplete * BATCH_SIZE, activeSubscribers);
+      
+      setSendProgress(prev => prev ? {
+        ...prev,
+        sentCount: estimatedSent,
+        currentBatch: Math.min(estimatedBatchesComplete + 1, totalBatches),
+      } : null);
+    }, 1000);
+    
     try {
       const { data, error } = await supabase.functions.invoke('newsletter-run', {
         body: { preview: false },
         headers: getAuthHeaders(),
       });
+
+      clearInterval(progressInterval);
 
       if (error) {
         if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
@@ -455,6 +499,13 @@ const NewsletterAdmin = () => {
         throw error;
       }
 
+      // Show complete progress briefly before clearing
+      setSendProgress(prev => prev ? {
+        ...prev,
+        sentCount: activeSubscribers,
+        currentBatch: totalBatches,
+      } : null);
+
       toast({
         title: "Newsletter Sent!",
         description: `Sent to ${data.subscriberCount} subscribers with ${data.articleCount} articles`,
@@ -464,13 +515,17 @@ const NewsletterAdmin = () => {
       fetchStats();
       fetchRecentSends();
     } catch (error) {
+      clearInterval(progressInterval);
       toast({
         title: "Send Failed",
         description: error instanceof Error ? error.message : "Failed to send newsletter",
         variant: "destructive",
       });
     } finally {
-      setSending(false);
+      setTimeout(() => {
+        setSending(false);
+        setSendProgress(null);
+      }, 1000); // Brief delay to show completion
     }
   };
 
@@ -623,6 +678,39 @@ const NewsletterAdmin = () => {
                   Send Newsletter
                 </Button>
               </div>
+
+              {/* Send Progress Indicator */}
+              {sendProgress && (
+                <div className="mt-4 p-4 bg-accent/10 border border-accent/20 rounded-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                    <span className="font-medium text-accent">Sending Newsletter...</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Batch {sendProgress.currentBatch} of {sendProgress.totalBatches}
+                      </span>
+                      <span className="text-foreground font-medium">
+                        {sendProgress.sentCount} / {sendProgress.totalSubscribers} sent
+                      </span>
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-accent h-full transition-all duration-500 ease-out"
+                        style={{ 
+                          width: `${sendProgress.totalSubscribers > 0 
+                            ? (sendProgress.sentCount / sendProgress.totalSubscribers * 100) 
+                            : 0}%` 
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Sending 10 emails per batch with 20 second delays between batches
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Preview */}
