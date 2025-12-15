@@ -192,29 +192,59 @@ function getSourceAuthorityScore(source: string): number {
 }
 
 Deno.serve(async (req) => {
+  console.log('Score-articles function called');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     const adminSecret = Deno.env.get('ADMIN_SECRET');
+    
+    console.log('Env check:', { 
+      hasSupabaseUrl: !!supabaseUrl, 
+      hasServiceKey: !!supabaseKey, 
+      hasLovableKey: !!lovableApiKey,
+      hasAdminSecret: !!adminSecret 
+    });
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase configuration');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Server configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!lovableApiKey) {
+      console.error('Missing LOVABLE_API_KEY');
+      return new Response(
+        JSON.stringify({ success: false, error: 'AI service not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Check admin auth
     const authHeader = req.headers.get('x-admin-secret');
+    console.log('Auth check:', { hasAuthHeader: !!authHeader, secretLength: authHeader?.length });
+    
     if (adminSecret && authHeader !== adminSecret) {
+      console.log('Auth failed - secrets do not match');
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('Auth passed');
 
     const url = new URL(req.url);
-    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const limit = parseInt(url.searchParams.get('limit') || '5'); // Reduced from 20 to avoid timeout
     const forceRescore = url.searchParams.get('force') === 'true';
 
     console.log(`Scoring articles - limit: ${limit}, force: ${forceRescore}`);
