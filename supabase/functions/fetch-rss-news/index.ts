@@ -1,8 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { validateAdminAuth } from '../_shared/admin-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-secret, x-force-refresh',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-force-refresh',
 };
 
 const CACHE_DURATION_MINUTES = 20;
@@ -240,16 +241,15 @@ Deno.serve(async (req) => {
     const limit = parseInt(url.searchParams.get('limit') || '30');
     
     // Force refresh requires admin authentication to prevent abuse
-    const adminSecret = Deno.env.get('ADMIN_SECRET');
-    const providedSecret = req.headers.get('x-admin-secret');
-    const isAdmin = adminSecret && providedSecret === adminSecret;
+    const authResult = await validateAdminAuth(req);
+    const isAdmin = authResult.isAdmin;
     
     const forceRefreshRequested = url.searchParams.get('refresh') === 'true' || 
                                   req.headers.get('x-force-refresh') === 'true';
     const forceRefresh = forceRefreshRequested && isAdmin;
     
     if (forceRefreshRequested && !isAdmin) {
-      console.log('Force refresh requested but admin auth missing or invalid');
+      console.log('Force refresh requested but admin auth missing or invalid:', authResult.error);
     }
 
     console.log(`Request - category: ${category || 'all'}, forceRefresh: ${forceRefresh}, limit: ${limit}`);

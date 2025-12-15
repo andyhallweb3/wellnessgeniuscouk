@@ -1,9 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { validateAdminAuth, unauthorizedResponse } from '../_shared/admin-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  // Include x-admin-secret so browser preflight doesn't fail when calling from admin UI
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-secret',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 // Source authority tiers
@@ -230,16 +230,13 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check admin auth
-    const authHeader = req.headers.get('x-admin-secret');
-    console.log('Auth check:', { hasAuthHeader: !!authHeader, secretLength: authHeader?.length });
+    // Check admin auth via JWT
+    const authResult = await validateAdminAuth(req);
+    console.log('Admin auth check:', { isAdmin: authResult.isAdmin, userId: authResult.userId });
     
-    if (adminSecret && authHeader !== adminSecret) {
-      console.log('Auth failed - secrets do not match');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!authResult.isAdmin) {
+      console.log('Auth failed - not admin');
+      return unauthorizedResponse(authResult.error || 'Unauthorized', corsHeaders);
     }
     
     console.log('Auth passed');

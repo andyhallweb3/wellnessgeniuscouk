@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { 
   Mail, 
   Send, 
@@ -32,7 +33,8 @@ import {
   Search,
   Copy,
   FileDown,
-  Zap
+  Zap,
+  LogOut
 } from "lucide-react";
 import {
   Dialog,
@@ -77,10 +79,19 @@ interface Subscriber {
 
 const NewsletterAdmin = () => {
   const { toast } = useToast();
-  const [adminSecret, setAdminSecret] = useState<string>("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [secretInput, setSecretInput] = useState("");
+  const { 
+    user, 
+    isAdmin, 
+    isLoading: authLoading, 
+    isAuthenticated, 
+    signIn, 
+    signOut, 
+    getAuthHeaders,
+    error: authError 
+  } = useAdminAuth();
+  
+  const [emailInput, setEmailInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
   
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -125,51 +136,7 @@ const NewsletterAdmin = () => {
 
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
-
-    const bootstrapAuth = async () => {
-      // Check for stored admin secret in sessionStorage
-      const storedSecret = sessionStorage.getItem("admin_secret");
-      if (!storedSecret) {
-        setAuthLoading(false);
-        return;
-      }
-
-      // Validate the secret before treating the user as authenticated
-      const isValid = await validateAdminSecret(storedSecret);
-      if (isValid) {
-        setAdminSecret(storedSecret);
-        setIsAuthenticated(true);
-      } else {
-        sessionStorage.removeItem("admin_secret");
-        setAdminSecret("");
-        setIsAuthenticated(false);
-      }
-
-      setAuthLoading(false);
-    };
-
-    bootstrapAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const validateAdminSecret = async (secret: string) => {
-    try {
-      // Lightweight auth check: fetch 1 item from send history
-      const { error } = await supabase.functions.invoke('newsletter-run', {
-        body: { action: 'history', limit: 1 },
-        headers: { 'x-admin-secret': secret },
-      });
-
-      if (error) {
-        const msg = error.message || '';
-        return !(msg.includes('401') || msg.toLowerCase().includes('unauthorized'));
-      }
-
-      return true;
-    } catch {
-      return false;
-    }
-  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -193,45 +160,36 @@ const NewsletterAdmin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const candidate = secretInput.trim();
-    if (!candidate) return;
+    const email = emailInput.trim();
+    const password = passwordInput.trim();
+    if (!email || !password) return;
 
-    setAuthLoading(true);
-    const isValid = await validateAdminSecret(candidate);
-    setAuthLoading(false);
-
-    if (!isValid) {
+    const { error } = await signIn(email, password);
+    
+    if (error) {
       toast({
         title: "Authentication Failed",
-        description: "Invalid admin secret. Please try again.",
+        description: error.message,
         variant: "destructive",
       });
       return;
     }
 
-    sessionStorage.setItem("admin_secret", candidate);
-    setAdminSecret(candidate);
-    setIsAuthenticated(true);
     toast({
       title: "Access Granted",
-      description: "Admin secret accepted. You can now manage newsletters.",
+      description: "Welcome to the newsletter admin panel.",
     });
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("admin_secret");
-    setAdminSecret("");
-    setIsAuthenticated(false);
-    setSecretInput("");
+  const handleLogout = async () => {
+    await signOut();
+    setEmailInput("");
+    setPasswordInput("");
     toast({
       title: "Logged Out",
       description: "Admin session ended.",
     });
   };
-
-  const getAuthHeaders = () => ({
-    'x-admin-secret': adminSecret || sessionStorage.getItem('admin_secret') || '',
-  });
 
   const fetchStats = async () => {
     const { count: articleCount } = await supabase
@@ -753,19 +711,39 @@ const NewsletterAdmin = () => {
                 </div>
                 <h1 className="text-2xl font-bold mb-2">Newsletter Admin</h1>
                 <p className="text-muted-foreground mb-6">
-                  Enter your admin secret to access the newsletter management panel.
+                  Sign in with your admin account to access the newsletter management panel.
                 </p>
+                {authError && (
+                  <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                    {authError}
+                  </div>
+                )}
                 <form onSubmit={handleLogin} className="space-y-4">
                   <Input
-                    type="password"
-                    placeholder="Admin Secret"
-                    value={secretInput}
-                    onChange={(e) => setSecretInput(e.target.value)}
+                    type="email"
+                    placeholder="Email address"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
                     className="bg-secondary border-border"
-                    autoComplete="off"
+                    autoComplete="email"
                   />
-                  <Button type="submit" variant="accent" className="w-full">
-                    Access Admin Panel
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    className="bg-secondary border-border"
+                    autoComplete="current-password"
+                  />
+                  <Button type="submit" variant="accent" className="w-full" disabled={authLoading}>
+                    {authLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      'Sign In'
+                    )}
                   </Button>
                 </form>
                 <Link 
@@ -801,10 +779,15 @@ const NewsletterAdmin = () => {
                   <p className="text-muted-foreground">Manage and send AI-powered wellness newsletters</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
-                <Lock size={14} />
-                Logout
-              </Button>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground hidden sm:inline">
+                  {user?.email}
+                </span>
+                <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+                  <LogOut size={14} />
+                  Sign Out
+                </Button>
+              </div>
             </div>
 
             {/* Stats Cards */}

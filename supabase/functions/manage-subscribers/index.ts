@@ -1,8 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { validateAdminAuth, unauthorizedResponse } from '../_shared/admin-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-secret',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 interface Subscriber {
@@ -20,24 +21,18 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify admin secret
-    const adminSecret = req.headers.get('x-admin-secret');
-    const expectedSecret = Deno.env.get('ADMIN_SECRET');
+    // Verify admin auth via JWT
+    const authResult = await validateAdminAuth(req);
     
-    console.log('Admin secret check:', {
-      hasEnvSecret: !!expectedSecret,
-      hasProvidedSecret: !!adminSecret,
-      providedLength: adminSecret?.length,
-      expectedLength: expectedSecret?.length,
-      match: adminSecret === expectedSecret
+    console.log('Admin auth check:', {
+      isAdmin: authResult.isAdmin,
+      userId: authResult.userId,
+      error: authResult.error,
     });
     
-    if (!adminSecret || adminSecret !== expectedSecret) {
+    if (!authResult.isAdmin) {
       console.log('Unauthorized access attempt to manage-subscribers');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return unauthorizedResponse(authResult.error || 'Unauthorized', corsHeaders);
     }
 
     const supabase = createClient(
