@@ -352,6 +352,33 @@ Deno.serve(async (req) => {
       );
     }
 
+    // History endpoint to fetch recent sends
+    if (body.action === 'history') {
+      const limit = body.limit || 10;
+      const { data: sends, error: sendsError } = await supabase
+        .from('newsletter_sends')
+        .select('id, sent_at, recipient_count, article_count, status, unique_opens, total_opens, unique_clicks, total_clicks, error_message')
+        .order('sent_at', { ascending: false })
+        .limit(limit);
+
+      if (sendsError) {
+        return new Response(
+          JSON.stringify({ success: false, error: sendsError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get total count
+      const { count: totalCount } = await supabase
+        .from('newsletter_sends')
+        .select('*', { count: 'exact', head: true });
+
+      return new Response(
+        JSON.stringify({ success: true, sends, totalCount: totalCount || 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log(`Newsletter run - preview: ${previewOnly}, syncFromRss: ${syncFromRss}`);
 
     // Optionally sync articles from RSS cache with category diversity
