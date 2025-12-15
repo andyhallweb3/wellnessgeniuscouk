@@ -379,6 +379,34 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Update send status endpoint
+    if (body.action === 'updateStatus' && body.sendId && body.newStatus) {
+      const validStatuses = ['sent', 'partial', 'failed', 'pending'];
+      if (!validStatuses.includes(body.newStatus)) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid status' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { error: updateError } = await supabase
+        .from('newsletter_sends')
+        .update({ status: body.newStatus })
+        .eq('id', body.sendId);
+
+      if (updateError) {
+        return new Response(
+          JSON.stringify({ success: false, error: updateError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, sendId: body.sendId, newStatus: body.newStatus }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log(`Newsletter run - preview: ${previewOnly}, syncFromRss: ${syncFromRss}`);
 
     // Optionally sync articles from RSS cache with category diversity
