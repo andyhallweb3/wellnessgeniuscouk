@@ -402,7 +402,7 @@ Deno.serve(async (req) => {
     // Send emails via Resend
     const emailPromises = subscribers.map(sub => 
       resend.emails.send({
-        from: 'Wellness Genius <newsletter@wellnessgenius.co.uk>',
+        from: 'Wellness Genius <newsletter@send.news>',
         to: [sub.email],
         subject: `AI & Wellness Weekly: ${processedArticles[0].title}`,
         html: emailHtml,
