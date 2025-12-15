@@ -25,43 +25,49 @@ interface NewsItem {
 }
 
 const RSS_FEEDS: RSSFeed[] = [
-  // AI & Tech Feeds (wide signal)
+  // === OPERATOR & B2B FOCUSED (Priority Sources) ===
+  
+  // Fitness Industry Trade (Gyms, Health Clubs, Studios)
+  { url: 'https://clubindustry.com/rss.xml', category: 'Fitness', sourceName: 'Club Industry' },
+  { url: 'https://athletechnews.com/feed/', category: 'Fitness', sourceName: 'Athletech News' },
+  { url: 'https://www.athleticbusiness.com/rss', category: 'Fitness', sourceName: 'Athletic Business' },
+  { url: 'https://insider.fitt.co/rss/', category: 'Fitness', sourceName: 'Fitt Insider' },
+  
+  // Spa & Wellness Industry Trade
+  { url: 'https://www.spabusiness.com/rss', category: 'Wellness', sourceName: 'Spa Business' },
+  { url: 'https://globalwellnessinstitute.org/feed/', category: 'Wellness', sourceName: 'Global Wellness Institute' },
+  { url: 'https://longevity.technology/news/feed/', category: 'Wellness', sourceName: 'Longevity Technology' },
+  
+  // Hospitality & Hotels
+  { url: 'https://skift.com/feed/', category: 'Technology', sourceName: 'Skift' },
+  { url: 'https://www.hotelmanagement.net/rss.xml', category: 'Technology', sourceName: 'Hotel Management' },
+  { url: 'https://www.phocuswire.com/rss.xml', category: 'Technology', sourceName: 'Phocuswire' },
+  
+  // Corporate Wellness & HR
+  { url: 'https://www.benefitnews.com/feed', category: 'Wellness', sourceName: 'Employee Benefit News' },
+  { url: 'https://www.hrdive.com/feeds/news/', category: 'Wellness', sourceName: 'HR Dive' },
+  { url: 'https://www.shrm.org/rss/pages/rss.aspx', category: 'Wellness', sourceName: 'SHRM' },
+  
+  // === AI & TECH (Curated for Business Value) ===
   { url: 'https://techcrunch.com/category/artificial-intelligence/feed/', category: 'AI', sourceName: 'TechCrunch' },
-  { url: 'https://www.wired.com/feed/tag/ai/latest/rss', category: 'AI', sourceName: 'Wired' },
-  { url: 'https://www.technologyreview.com/feed/', category: 'Technology', sourceName: 'MIT Tech Review' },
   { url: 'https://venturebeat.com/category/ai/feed/', category: 'AI', sourceName: 'VentureBeat' },
-  { url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml', category: 'AI', sourceName: 'The Verge' },
-  { url: 'https://feeds.arstechnica.com/arstechnica/index', category: 'Technology', sourceName: 'Ars Technica' },
-  { url: 'https://hnrss.org/frontpage', category: 'Technology', sourceName: 'Hacker News' },
+  { url: 'https://www.technologyreview.com/feed/', category: 'Technology', sourceName: 'MIT Tech Review' },
+  { url: 'https://blog.google/technology/ai/rss/', category: 'AI', sourceName: 'Google AI' },
   
   // Health Tech & Digital Health
   { url: 'https://www.mobihealthnews.com/feed', category: 'Technology', sourceName: 'MobiHealthNews' },
   { url: 'https://www.healthcareitnews.com/rss.xml', category: 'Technology', sourceName: 'Healthcare IT News' },
   { url: 'https://www.statnews.com/feed/', category: 'Technology', sourceName: 'STAT News' },
-  { url: 'https://www.cbinsights.com/research/feed/', category: 'Technology', sourceName: 'CB Insights' },
   { url: 'https://www.fiercehealthcare.com/rss/xml', category: 'Technology', sourceName: 'Fierce Healthcare' },
   
-  // Wellness & Wellness Industry
-  { url: 'https://globalwellnessinstitute.org/feed/', category: 'Wellness', sourceName: 'Global Wellness Institute' },
-  { url: 'https://www.wellandgood.com/feed/', category: 'Wellness', sourceName: 'Well+Good' },
-  { url: 'https://www.mindbodygreen.com/rss.xml', category: 'Wellness', sourceName: 'MindBodyGreen' },
-  { url: 'https://longevity.technology/news/feed/', category: 'Wellness', sourceName: 'Longevity Technology' },
-  
-  // Fitness Industry & Operator
-  { url: 'https://www.acefitness.org/about-ace/rss/', category: 'Fitness', sourceName: 'ACE Fitness' },
-  { url: 'https://insider.fitt.co/rss/', category: 'Fitness', sourceName: 'Fitt Insider' },
-  { url: 'https://thegym.blog/feed', category: 'Fitness', sourceName: 'The Gym Blog' },
-  
-  // Business, Strategy & Investment
-  { url: 'https://www.fastcompany.com/rss', category: 'Technology', sourceName: 'Fast Company' },
+  // Investment & Funding
   { url: 'https://news.crunchbase.com/sections/health-wellness-biotech/rss/', category: 'Investment', sourceName: 'Crunchbase Health' },
   { url: 'https://news.crunchbase.com/feed/', category: 'Investment', sourceName: 'Crunchbase' },
   { url: 'https://sifted.eu/feed', category: 'Investment', sourceName: 'Sifted' },
-  { url: 'https://www.forbes.com/health/feed/', category: 'Wellness', sourceName: 'Forbes Health' },
   
-  // AI & Research Labs
-  { url: 'https://blog.google/technology/ai/rss/', category: 'AI', sourceName: 'Google AI' },
-  { url: 'https://www.nature.com/npjdigitalmed.rss', category: 'Technology', sourceName: 'npj Digital Medicine' },
+  // Business Strategy
+  { url: 'https://www.fastcompany.com/section/health/rss', category: 'Technology', sourceName: 'Fast Company' },
+  { url: 'https://www.forbes.com/health/feed/', category: 'Wellness', sourceName: 'Forbes Health' },
 ];
 
 function extractImageFromContent(content: string): string | null {
