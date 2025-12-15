@@ -503,19 +503,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Sending to ${subscribers.length} subscribers in batches`);
+    // Deduplicate subscribers by email (case-insensitive)
+    const seenEmails = new Set<string>();
+    const uniqueSubscribers = subscribers.filter(sub => {
+      const emailLower = sub.email.toLowerCase().trim();
+      if (seenEmails.has(emailLower)) {
+        console.log(`Skipping duplicate email: ${sub.email}`);
+        return false;
+      }
+      seenEmails.add(emailLower);
+      return true;
+    });
+
+    console.log(`Sending to ${uniqueSubscribers.length} unique subscribers (${subscribers.length - uniqueSubscribers.length} duplicates removed)`);
 
     // Send emails in batches to avoid Resend rate limiting
     const BATCH_SIZE = 10; // Send 10 emails at a time
-    const DELAY_MS = 1000; // Wait 1 second between batches
+    const DELAY_MS = 20000; // Wait 20 seconds between batches
     
     let successCount = 0;
     let failCount = 0;
     const failedEmails: string[] = [];
 
-    for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
-      const batch = subscribers.slice(i, i + BATCH_SIZE);
-      console.log(`Sending batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(subscribers.length / BATCH_SIZE)} (${batch.length} emails)`);
+    for (let i = 0; i < uniqueSubscribers.length; i += BATCH_SIZE) {
+      const batch = uniqueSubscribers.slice(i, i + BATCH_SIZE);
+      console.log(`Sending batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(uniqueSubscribers.length / BATCH_SIZE)} (${batch.length} emails)`);
       
       const batchPromises = batch.map(sub => {
         const personalizedHtml = generateEmailHTML(
@@ -553,7 +565,8 @@ Deno.serve(async (req) => {
         .eq('id', sendId);
 
       // Delay between batches (except for last batch)
-      if (i + BATCH_SIZE < subscribers.length) {
+      if (i + BATCH_SIZE < uniqueSubscribers.length) {
+        console.log(`Waiting ${DELAY_MS / 1000} seconds before next batch...`);
         await new Promise(resolve => setTimeout(resolve, DELAY_MS));
       }
     }
