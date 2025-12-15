@@ -85,6 +85,7 @@ const NewsletterAdmin = () => {
   const [recentSends, setRecentSends] = useState<NewsletterSend[]>([]);
   const [totalSends, setTotalSends] = useState(0);
   const [totalEmailsSent, setTotalEmailsSent] = useState(0);
+  const [activeSend, setActiveSend] = useState<NewsletterSend | null>(null);
   
   // Send progress tracking
   const [sendProgress, setSendProgress] = useState<{
@@ -172,11 +173,16 @@ const NewsletterAdmin = () => {
 
       if (error) throw error;
       
-      setRecentSends(data.sends || []);
+      const sends = data.sends || [];
+      setRecentSends(sends);
       setTotalSends(data.totalCount || 0);
       
+      // Check for any active sends (status = 'sending')
+      const active = sends.find((s: NewsletterSend) => s.status === 'sending');
+      setActiveSend(active || null);
+      
       // Calculate total emails sent from the fetched sends
-      const total = (data.sends || []).reduce((sum: number, send: NewsletterSend) => sum + (send.recipient_count || 0), 0);
+      const total = sends.reduce((sum: number, send: NewsletterSend) => sum + (send.recipient_count || 0), 0);
       setTotalEmailsSent(total);
     } catch (error) {
       console.error('Failed to fetch send history:', error);
@@ -434,6 +440,16 @@ const NewsletterAdmin = () => {
   };
 
   const sendNewsletter = async () => {
+    // Check for active sends first
+    if (activeSend) {
+      toast({
+        title: "Send in Progress",
+        description: `A newsletter send is already in progress (${activeSend.recipient_count} recipients). Please wait for it to complete.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!confirm("Are you sure you want to send this newsletter to all active subscribers?")) {
       return;
     }
@@ -688,7 +704,7 @@ const NewsletterAdmin = () => {
 
                 <Button 
                   onClick={sendNewsletter} 
-                  disabled={sending || !previewHtml}
+                  disabled={sending || !previewHtml || !!activeSend}
                   variant="accent"
                   className="gap-2"
                 >
@@ -696,6 +712,31 @@ const NewsletterAdmin = () => {
                   Send Newsletter
                 </Button>
               </div>
+
+              {/* Active Send Warning */}
+              {activeSend && !sendProgress && (
+                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="h-5 w-5 text-yellow-500" />
+                    <div>
+                      <p className="font-medium text-yellow-500">Send in Progress</p>
+                      <p className="text-sm text-muted-foreground">
+                        A newsletter is currently being sent to {activeSend.recipient_count} recipients. 
+                        Started {new Date(activeSend.sent_at).toLocaleTimeString()}.
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={fetchRecentSends} 
+                      variant="ghost" 
+                      size="sm"
+                      className="ml-auto"
+                    >
+                      <RefreshCw size={14} className="mr-1" />
+                      Refresh
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* Send Progress Indicator */}
               {sendProgress && (
