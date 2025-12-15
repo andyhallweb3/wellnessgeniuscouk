@@ -150,13 +150,13 @@ function generateEmailHTML(
   const editorChoiceHTML = topStory ? `
     <tr>
       <td style="padding: 24px 32px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; overflow: hidden;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%); border-radius: 12px; overflow: hidden;">
           <tr>
             <td style="padding: 20px 24px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <span style="display: inline-block; padding: 4px 10px; background: #92400e; color: white; font-size: 11px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span style="display: inline-block; padding: 4px 10px; background: #0f766e; color: white; font-size: 11px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
                       ⭐ Editor's Choice
                     </span>
                   </td>
@@ -169,12 +169,12 @@ function generateEmailHTML(
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding-top: 8px; color: #78350f; font-size: 12px; font-weight: 500;">
+                  <td style="padding-top: 8px; color: #115e59; font-size: 12px; font-weight: 500;">
                     ${topStory.source} • ${topStory.category} • ${new Date(topStory.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding-top: 12px; color: #451a03; font-size: 15px; line-height: 1.6;">
+                  <td style="padding-top: 12px; color: #134e4a; font-size: 15px; line-height: 1.6;">
                     ${topStory.ai_summary}
                   </td>
                 </tr>
@@ -183,10 +183,10 @@ function generateEmailHTML(
                     <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(255,255,255,0.7); border-radius: 8px;">
                       <tr>
                         <td style="padding: 14px;">
-                          <p style="margin: 0 0 8px 0; color: #92400e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                          <p style="margin: 0 0 8px 0; color: #0f766e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
                             Why it matters
                           </p>
-                          <ul style="margin: 0; padding-left: 18px; color: #78350f; font-size: 14px; line-height: 1.7;">
+                          <ul style="margin: 0; padding-left: 18px; color: #115e59; font-size: 14px; line-height: 1.7;">
                             ${topStory.ai_why_it_matters.map(point => `<li>${point}</li>`).join('')}
                           </ul>
                         </td>
@@ -196,14 +196,14 @@ function generateEmailHTML(
                 </tr>
                 <tr>
                   <td style="padding-top: 12px;">
-                    <p style="margin: 0; color: #78350f; font-size: 13px; background: rgba(255,255,255,0.5); padding: 10px 14px; border-radius: 6px;">
+                    <p style="margin: 0; color: #115e59; font-size: 13px; background: rgba(255,255,255,0.5); padding: 10px 14px; border-radius: 6px;">
                       <strong>💡 Commercial angle:</strong> ${topStory.ai_commercial_angle}
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding-top: 16px;">
-                    <a href="${trackLink(topStory.url)}" style="display: inline-block; padding: 10px 20px; background: #92400e; color: white; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px;">
+                    <a href="${trackLink(topStory.url)}" style="display: inline-block; padding: 10px 20px; background: #0f766e; color: white; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px;">
                       Read full story →
                     </a>
                   </td>
