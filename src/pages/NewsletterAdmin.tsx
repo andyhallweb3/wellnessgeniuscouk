@@ -26,7 +26,10 @@ import {
   Trash2,
   X,
   UserPlus,
-  Download
+  Download,
+  ChevronDown,
+  ChevronRight,
+  Search
 } from "lucide-react";
 import {
   Dialog,
@@ -107,6 +110,13 @@ const NewsletterAdmin = () => {
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [bulkEmails, setBulkEmails] = useState('');
   const [bulkImporting, setBulkImporting] = useState(false);
+  
+  // Subscriber list state
+  const [subscribersExpanded, setSubscribersExpanded] = useState(false);
+  const [subscriberSearch, setSubscriberSearch] = useState('');
+  const [subscriberStatusFilter, setSubscriberStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [subscriberPage, setSubscriberPage] = useState(1);
+  const [subscribersPerPage, setSubscribersPerPage] = useState(25);
 
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
@@ -854,12 +864,16 @@ const NewsletterAdmin = () => {
 
             {/* Subscribers Management */}
             <div className="card-glass p-6 mb-8">
-              <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => setSubscribersExpanded(!subscribersExpanded)}
+                className="w-full flex items-center justify-between"
+              >
                 <h2 className="text-xl font-semibold flex items-center gap-2">
+                  {subscribersExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                   <Users size={20} />
-                  Subscribers
+                  Subscribers ({subscribers.length})
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   <Button 
                     onClick={() => setShowBulkImportModal(true)} 
                     variant="secondary" 
@@ -874,77 +888,171 @@ const NewsletterAdmin = () => {
                     Add Subscriber
                   </Button>
                 </div>
-              </div>
+              </button>
               
-              {loadingSubscribers ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-accent" />
-                </div>
-              ) : subscribers.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No subscribers yet.</p>
-              ) : (
-                <div className="card-tech overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-secondary">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Source</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Subscribed</th>
-                        <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {subscribers.map((subscriber) => (
-                        <tr key={subscriber.id} className="border-t border-border">
-                          <td className="px-4 py-3 text-sm font-medium">{subscriber.email}</td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">{subscriber.name || '—'}</td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">{subscriber.source || '—'}</td>
-                          <td className="px-4 py-3 text-sm">
-                            <button
-                              onClick={() => toggleSubscriberActive(subscriber)}
-                              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 ${
-                                subscriber.is_active 
-                                  ? 'bg-green-500/10 text-green-400' 
-                                  : 'bg-red-500/10 text-red-400'
-                              }`}
-                            >
-                              {subscriber.is_active ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
-                              {subscriber.is_active ? 'Active' : 'Inactive'}
-                            </button>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {new Date(subscriber.subscribed_at).toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-right">
-                            <div className="flex items-center justify-end gap-2">
+              {subscribersExpanded && (
+                <div className="mt-4">
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-4 mb-4">
+                    <div className="relative flex-1 min-w-[200px]">
+                      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by email..."
+                        value={subscriberSearch}
+                        onChange={(e) => {
+                          setSubscriberSearch(e.target.value);
+                          setSubscriberPage(1);
+                        }}
+                        className="pl-9 bg-secondary border-border"
+                      />
+                    </div>
+                    <select
+                      value={subscriberStatusFilter}
+                      onChange={(e) => {
+                        setSubscriberStatusFilter(e.target.value as 'all' | 'active' | 'inactive');
+                        setSubscriberPage(1);
+                      }}
+                      className="px-3 py-2 rounded-md bg-secondary border border-border text-sm"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="active">Active Only</option>
+                      <option value="inactive">Inactive Only</option>
+                    </select>
+                    <select
+                      value={subscribersPerPage}
+                      onChange={(e) => {
+                        setSubscribersPerPage(Number(e.target.value));
+                        setSubscriberPage(1);
+                      }}
+                      className="px-3 py-2 rounded-md bg-secondary border border-border text-sm"
+                    >
+                      <option value={25}>25 per page</option>
+                      <option value={50}>50 per page</option>
+                      <option value={100}>100 per page</option>
+                    </select>
+                  </div>
+
+                  {loadingSubscribers ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                    </div>
+                  ) : subscribers.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No subscribers yet.</p>
+                  ) : (() => {
+                    const filteredSubscribers = subscribers.filter(sub => {
+                      const matchesSearch = subscriberSearch === '' || 
+                        sub.email.toLowerCase().includes(subscriberSearch.toLowerCase()) ||
+                        (sub.name && sub.name.toLowerCase().includes(subscriberSearch.toLowerCase()));
+                      const matchesStatus = subscriberStatusFilter === 'all' ||
+                        (subscriberStatusFilter === 'active' && sub.is_active) ||
+                        (subscriberStatusFilter === 'inactive' && !sub.is_active);
+                      return matchesSearch && matchesStatus;
+                    });
+                    const totalPages = Math.ceil(filteredSubscribers.length / subscribersPerPage);
+                    const paginatedSubscribers = filteredSubscribers.slice(
+                      (subscriberPage - 1) * subscribersPerPage,
+                      subscriberPage * subscribersPerPage
+                    );
+
+                    return (
+                      <>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          Showing {paginatedSubscribers.length} of {filteredSubscribers.length} subscribers
+                          {filteredSubscribers.length !== subscribers.length && ` (filtered from ${subscribers.length})`}
+                        </div>
+                        <div className="card-tech overflow-hidden">
+                          <table className="w-full">
+                            <thead className="bg-secondary">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Source</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Subscribed</th>
+                                <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {paginatedSubscribers.map((subscriber) => (
+                                <tr key={subscriber.id} className="border-t border-border">
+                                  <td className="px-4 py-3 text-sm font-medium">{subscriber.email}</td>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">{subscriber.name || '—'}</td>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">{subscriber.source || '—'}</td>
+                                  <td className="px-4 py-3 text-sm">
+                                    <button
+                                      onClick={() => toggleSubscriberActive(subscriber)}
+                                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 ${
+                                        subscriber.is_active 
+                                          ? 'bg-green-500/10 text-green-400' 
+                                          : 'bg-red-500/10 text-red-400'
+                                      }`}
+                                    >
+                                      {subscriber.is_active ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                      {subscriber.is_active ? 'Active' : 'Inactive'}
+                                    </button>
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                                    {new Date(subscriber.subscribed_at).toLocaleDateString('en-GB', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => openEditSubscriber(subscriber)}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Pencil size={14} />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteSubscriber(subscriber)}
+                                        className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                                      >
+                                        <Trash2 size={14} />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-between mt-4">
+                            <div className="text-sm text-muted-foreground">
+                              Page {subscriberPage} of {totalPages}
+                            </div>
+                            <div className="flex items-center gap-2">
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => openEditSubscriber(subscriber)}
-                                className="h-8 w-8 p-0"
+                                onClick={() => setSubscriberPage(p => Math.max(1, p - 1))}
+                                disabled={subscriberPage === 1}
                               >
-                                <Pencil size={14} />
+                                Previous
                               </Button>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => handleDeleteSubscriber(subscriber)}
-                                className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                                onClick={() => setSubscriberPage(p => Math.min(totalPages, p + 1))}
+                                disabled={subscriberPage === totalPages}
                               >
-                                <Trash2 size={14} />
+                                Next
                               </Button>
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>
