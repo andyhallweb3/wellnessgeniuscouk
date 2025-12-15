@@ -117,10 +117,9 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
         imageUrl = extractImageFromContent(contentMatch[1]);
       }
     }
-    // Generate a more unique ID using the full URL hash
-    const urlHash = btoa(link).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+    // Use the canonical URL as a stable unique id (avoids collisions across similar URLs)
     return {
-      id: `${feed.sourceName.replace(/\s+/g, '-')}-${urlHash}`,
+      id: link,
       title,
       summary: summary || 'Read more at source...',
       source_url: link,
@@ -237,10 +236,10 @@ Deno.serve(async (req) => {
 
     console.log(`Cache age: ${minutesSinceRefresh.toFixed(1)} minutes, stale: ${cacheIsStale}`);
 
-    // If cache is fresh and not forcing refresh, return cached data
+    // If cache is fresh and not forcing refresh, try to return cached data
     if (!cacheIsStale && !forceRefresh) {
       console.log('Returning cached data');
-      
+
       let query = supabase
         .from('rss_news_cache')
         .select('news_id, title, summary, source_url, source_name, category, image_url, published_date')
@@ -266,16 +265,21 @@ Deno.serve(async (req) => {
         published_date: item.published_date,
       })) || [];
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: formattedNews,
-          count: formattedNews.length,
-          cached: true,
-          cache_age_minutes: Math.round(minutesSinceRefresh),
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Safety: if cache table is empty but metadata says it's fresh, treat as stale and refetch
+      if (formattedNews.length > 0) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            data: formattedNews,
+            count: formattedNews.length,
+            cached: true,
+            cache_age_minutes: Math.round(minutesSinceRefresh),
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.warn('Cache metadata says fresh but table is empty; refetching');
     }
 
     // Fetch fresh data from RSS feeds
@@ -283,10 +287,7 @@ Deno.serve(async (req) => {
     const freshNews = await fetchAllFeeds();
 
     if (freshNews.length > 0) {
-      // Clear old cache and insert new data
       console.log(`Updating cache with ${freshNews.length} items`);
-      
-      await supabase.from('rss_news_cache').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
       const cacheItems = freshNews.map(item => ({
         news_id: item.id,
@@ -300,24 +301,30 @@ Deno.serve(async (req) => {
         fetched_at: new Date().toISOString(),
       }));
 
-      const { error: insertError } = await supabase
+      // Deduplicate within the batch to avoid unique-constraint errors
+      const uniqueCacheItems = Array.from(
+        new Map(cacheItems.map(i => [i.news_id, i])).values()
+      );
+
+      const { error: upsertError } = await supabase
         .from('rss_news_cache')
-        .upsert(cacheItems, { onConflict: 'news_id', ignoreDuplicates: true });
+        .upsert(uniqueCacheItems, { onConflict: 'news_id' });
 
-      if (insertError) {
-        console.error('Error inserting cache:', insertError);
+      if (upsertError) {
+        console.error('Error writing cache:', upsertError);
+        // Don't update metadata if cache write failed; this forces a retry on next request
       } else {
-        console.log(`Successfully cached ${cacheItems.length} items`);
-      }
+        console.log(`Successfully cached ${uniqueCacheItems.length} items`);
 
-      // Update metadata
-      await supabase
-        .from('rss_cache_metadata')
-        .upsert({
-          id: 'global',
-          last_refresh: new Date().toISOString(),
-          items_count: freshNews.length,
-        });
+        // Update metadata ONLY after a successful cache write
+        await supabase
+          .from('rss_cache_metadata')
+          .upsert({
+            id: 'global',
+            last_refresh: new Date().toISOString(),
+            items_count: uniqueCacheItems.length,
+          });
+      }
     }
 
     // Filter by category if needed
