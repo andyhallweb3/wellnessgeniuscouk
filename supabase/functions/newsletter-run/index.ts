@@ -545,8 +545,9 @@ Deno.serve(async (req) => {
     console.log(`Queued send ${sendId}: starting background processing + sending`);
 
     // Start sending in the background to avoid request timeouts
-    const BATCH_SIZE = 10;
-    const DELAY_MS = 20000;
+    // Increased batch size and reduced delay for faster completion
+    const BATCH_SIZE = 50;
+    const DELAY_MS = 2000;
 
     const backgroundSend = async () => {
       let successCount = 0;
