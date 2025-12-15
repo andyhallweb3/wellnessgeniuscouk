@@ -53,11 +53,11 @@ const RSS_FEEDS: RSSFeed[] = [
   { url: 'https://thegym.blog/feed', category: 'Fitness', sourceName: 'The Gym Blog' },
   
   // Business, Strategy & Investment
-  { url: 'https://feeds.hbr.org/harvardbusiness', category: 'Technology', sourceName: 'Harvard Business Review' },
   { url: 'https://www.fastcompany.com/rss', category: 'Technology', sourceName: 'Fast Company' },
   { url: 'https://news.crunchbase.com/sections/health-wellness-biotech/rss/', category: 'Investment', sourceName: 'Crunchbase Health' },
   { url: 'https://news.crunchbase.com/feed/', category: 'Investment', sourceName: 'Crunchbase' },
   { url: 'https://sifted.eu/feed', category: 'Investment', sourceName: 'Sifted' },
+  { url: 'https://www.forbes.com/health/feed/', category: 'Wellness', sourceName: 'Forbes Health' },
   
   // AI & Research Labs
   { url: 'https://blog.google/technology/ai/rss/', category: 'AI', sourceName: 'Google AI' },
