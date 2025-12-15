@@ -32,13 +32,12 @@ const Unsubscribe = () => {
     setError(null);
 
     try {
-      // Update the subscriber to inactive
-      const { error: updateError } = await supabase
-        .from("newsletter_subscribers")
-        .update({ is_active: false })
-        .eq("email", email.toLowerCase().trim());
+      // Use edge function to unsubscribe securely
+      const { error: fnError } = await supabase.functions.invoke('unsubscribe', {
+        body: { email: email.toLowerCase().trim() },
+      });
 
-      if (updateError) throw updateError;
+      if (fnError) throw fnError;
 
       setUnsubscribed(true);
       toast({

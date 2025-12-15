@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.manage-subscribers]
 verify_jwt = false
+
+[functions.unsubscribe]
+verify_jwt = false
