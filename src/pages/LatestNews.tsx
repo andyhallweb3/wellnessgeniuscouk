@@ -20,6 +20,14 @@ interface NewsItem {
 
 const categories = ["All", "AI", "Wellness", "Fitness", "Technology", "Investment"];
 
+function cleanText(raw: string) {
+  // Defensive UI-side cleanup in case any feed includes HTML in title/summary
+  const withoutTags = raw.replace(/<[^>]*>/g, " ");
+  const el = document.createElement("textarea");
+  el.innerHTML = withoutTags;
+  return el.value.replace(/\s+/g, " ").trim();
+}
+
 const LatestNews = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,7 +204,7 @@ const LatestNews = () => {
                           <span className="text-xs text-muted-foreground">{featuredNews.source_name}</span>
                         </div>
                         <h2 className="text-2xl lg:text-3xl mb-4 group-hover:text-accent transition-colors">
-                          {featuredNews.title}
+                          {cleanText(featuredNews.title)}
                         </h2>
                         <p className="text-muted-foreground mb-6">{featuredNews.summary}</p>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
@@ -221,7 +229,8 @@ const LatestNews = () => {
                         <div className="lg:w-80 h-48 lg:h-64 rounded-xl overflow-hidden bg-secondary">
                           <img 
                             src={featuredNews.image_url} 
-                            alt={featuredNews.title}
+                            alt={cleanText(featuredNews.title)}
+                            loading="lazy"
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none';
@@ -254,7 +263,8 @@ const LatestNews = () => {
                         <div className="h-40 rounded-lg overflow-hidden mb-4 -mx-2 -mt-2 bg-secondary">
                           <img 
                             src={item.image_url} 
-                            alt={item.title}
+                            alt={cleanText(item.title)}
+                            loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             onError={(e) => {
                               (e.target as HTMLImageElement).parentElement!.style.display = 'none';
@@ -269,7 +279,7 @@ const LatestNews = () => {
                         <span className="text-xs text-muted-foreground">{item.source_name}</span>
                       </div>
                       <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">
-                        {item.title}
+                        {cleanText(item.title)}
                       </h3>
                       <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">
                         {item.summary}
