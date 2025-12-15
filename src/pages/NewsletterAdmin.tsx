@@ -445,46 +445,14 @@ const NewsletterAdmin = () => {
     }
 
     setSending(true);
-    
-    // Get active subscriber count for progress tracking
-    const activeSubscribers = subscribers.filter(s => s.is_active).length;
+
     const BATCH_SIZE = 10;
-    const DELAY_SECONDS = 20;
-    const totalBatches = Math.ceil(activeSubscribers / BATCH_SIZE);
-    
-    setSendProgress({
-      totalSubscribers: activeSubscribers,
-      sentCount: 0,
-      currentBatch: 1,
-      totalBatches,
-      sendId: null,
-    });
-    
-    // Simulate progress based on timing (10 emails every ~20 seconds)
-    const startTime = Date.now();
-    const progressInterval = setInterval(() => {
-      const elapsedSeconds = (Date.now() - startTime) / 1000;
-      // Each batch takes ~20 seconds after the first
-      const estimatedBatchesComplete = Math.min(
-        Math.floor(elapsedSeconds / DELAY_SECONDS) + 1,
-        totalBatches
-      );
-      const estimatedSent = Math.min(estimatedBatchesComplete * BATCH_SIZE, activeSubscribers);
-      
-      setSendProgress(prev => prev ? {
-        ...prev,
-        sentCount: estimatedSent,
-        currentBatch: Math.min(estimatedBatchesComplete + 1, totalBatches),
-      } : null);
-    }, 1000);
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('newsletter-run', {
         body: { preview: false },
         headers: getAuthHeaders(),
       });
-
-      clearInterval(progressInterval);
 
       if (error) {
         if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
@@ -499,33 +467,89 @@ const NewsletterAdmin = () => {
         throw error;
       }
 
-      // Show complete progress briefly before clearing
-      setSendProgress(prev => prev ? {
-        ...prev,
-        sentCount: activeSubscribers,
-        currentBatch: totalBatches,
-      } : null);
+      const totalSubscribers = data?.subscriberCount || 0;
+      const sendId = data?.sendId as string | undefined;
 
-      toast({
-        title: "Newsletter Sent!",
-        description: `Sent to ${data.subscriberCount} subscribers with ${data.articleCount} articles`,
+      if (!sendId) {
+        throw new Error('Send started but no sendId returned');
+      }
+
+      const totalBatches = Math.max(1, Math.ceil(totalSubscribers / BATCH_SIZE));
+
+      setSendProgress({
+        totalSubscribers,
+        sentCount: 0,
+        currentBatch: 1,
+        totalBatches,
+        sendId,
       });
 
-      setPreviewHtml(null);
-      fetchStats();
-      fetchRecentSends();
-    } catch (error) {
-      clearInterval(progressInterval);
+      toast({
+        title: "Sending started",
+        description: `Queued ${totalSubscribers} emails. This will run in the background.`,
+      });
+
+      // Poll DB for real progress (via admin-authenticated backend function)
+      const poll = setInterval(async () => {
+        const { data: statusData, error: statusError } = await supabase.functions.invoke('newsletter-run', {
+          body: { action: 'status', sendId },
+          headers: getAuthHeaders(),
+        });
+
+        if (statusError) {
+          return;
+        }
+
+        const sendRow = statusData?.send;
+        const sentCount = sendRow?.recipient_count || 0;
+        const status = sendRow?.status || 'sending';
+
+        setSendProgress((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            sentCount,
+            currentBatch: Math.min(totalBatches, Math.max(1, Math.ceil(sentCount / BATCH_SIZE))),
+          };
+        });
+
+        if (status === 'sent' || status === 'partial' || status === 'failed') {
+          clearInterval(poll);
+          setSending(false);
+
+          if (status === 'sent') {
+            toast({
+              title: "Newsletter sent",
+              description: `Sent ${sentCount} emails successfully.`,
+            });
+          } else if (status === 'partial') {
+            toast({
+              title: "Partially sent",
+              description: sendRow?.error_message || `Sent ${sentCount} emails with some failures.`,
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Send failed",
+              description: sendRow?.error_message || "Newsletter send failed.",
+              variant: "destructive",
+            });
+          }
+
+          setTimeout(() => setSendProgress(null), 1500);
+          setPreviewHtml(null);
+          fetchStats();
+          fetchRecentSends();
+        }
+      }, 2000);
+    } catch (err) {
       toast({
         title: "Send Failed",
-        description: error instanceof Error ? error.message : "Failed to send newsletter",
+        description: err instanceof Error ? err.message : "Failed to start sending",
         variant: "destructive",
       });
-    } finally {
-      setTimeout(() => {
-        setSending(false);
-        setSendProgress(null);
-      }, 1000); // Brief delay to show completion
+      setSending(false);
+      setSendProgress(null);
     }
   };
 
