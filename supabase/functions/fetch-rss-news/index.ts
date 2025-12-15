@@ -25,38 +25,46 @@ interface NewsItem {
 }
 
 const RSS_FEEDS: RSSFeed[] = [
-  // AI & Technology
+  // AI & Tech Feeds (wide signal)
   { url: 'https://techcrunch.com/category/artificial-intelligence/feed/', category: 'AI', sourceName: 'TechCrunch' },
   { url: 'https://www.wired.com/feed/tag/ai/latest/rss', category: 'AI', sourceName: 'Wired' },
   { url: 'https://www.technologyreview.com/feed/', category: 'Technology', sourceName: 'MIT Tech Review' },
   { url: 'https://venturebeat.com/category/ai/feed/', category: 'AI', sourceName: 'VentureBeat' },
   { url: 'https://www.theverge.com/artificial-intelligence/rss/index.xml', category: 'AI', sourceName: 'The Verge' },
+  { url: 'https://feeds.arstechnica.com/arstechnica/index', category: 'Technology', sourceName: 'Ars Technica' },
+  { url: 'https://hnrss.org/frontpage', category: 'Technology', sourceName: 'Hacker News' },
   
-  // Health Tech
+  // Health Tech & Digital Health
   { url: 'https://www.mobihealthnews.com/feed', category: 'Technology', sourceName: 'MobiHealthNews' },
+  { url: 'https://www.healthcareitnews.com/rss.xml', category: 'Technology', sourceName: 'Healthcare IT News' },
   { url: 'https://www.statnews.com/feed/', category: 'Technology', sourceName: 'STAT News' },
+  { url: 'https://www.cbinsights.com/research/feed/', category: 'Technology', sourceName: 'CB Insights' },
   { url: 'https://rockhealth.com/insights/feed/', category: 'Technology', sourceName: 'Rock Health' },
   
-  // Wellness & Fitness
+  // Wellness & Wellness Industry
   { url: 'https://globalwellnessinstitute.org/feed/', category: 'Wellness', sourceName: 'Global Wellness Institute' },
+  { url: 'https://www.globalwellnesssummit.com/global-wellness-news/rss/', category: 'Wellness', sourceName: 'Global Wellness Summit' },
   { url: 'https://www.wellandgood.com/feed/', category: 'Wellness', sourceName: 'Well+Good' },
+  { url: 'https://www.mindbodygreen.com/rss.xml', category: 'Wellness', sourceName: 'MindBodyGreen' },
   { url: 'https://longevity.technology/feed/', category: 'Wellness', sourceName: 'Longevity Technology' },
+  
+  // Fitness Industry & Operator
+  { url: 'https://www.acefitness.org/about-ace/rss/', category: 'Fitness', sourceName: 'ACE Fitness' },
   { url: 'https://insider.fitt.co/rss/', category: 'Fitness', sourceName: 'Fitt Insider' },
+  { url: 'https://thegym.blog/feed', category: 'Fitness', sourceName: 'The Gym Blog' },
   
-  // Fitness Industry
-  { url: 'https://www.sportstechie.com/feed/', category: 'Fitness', sourceName: 'SportsTechie' },
-  
-  // Investment & Funding (Wellness/Fitness focused)
-  { url: 'https://www.crunchbase.com/news/rss', category: 'Investment', sourceName: 'Crunchbase News' },
-  { url: 'https://pitchbook.com/news/feed', category: 'Investment', sourceName: 'PitchBook' },
-  { url: 'https://sifted.eu/feed', category: 'Investment', sourceName: 'Sifted' },
-  { url: 'https://news.crunchbase.com/feed/', category: 'Investment', sourceName: 'Crunchbase' },
-  
-  // Business & Strategy
+  // Business, Strategy & Investment
   { url: 'https://hbr.org/feed', category: 'Technology', sourceName: 'Harvard Business Review' },
+  { url: 'https://www.mckinsey.com/featured-insights/rss', category: 'Technology', sourceName: 'McKinsey' },
+  { url: 'https://www.fastcompany.com/rss', category: 'Technology', sourceName: 'Fast Company' },
+  { url: 'https://news.crunchbase.com/sections/health-wellness-biotech/rss/', category: 'Investment', sourceName: 'Crunchbase Health' },
+  { url: 'https://news.crunchbase.com/feed/', category: 'Investment', sourceName: 'Crunchbase' },
+  { url: 'https://sifted.eu/feed', category: 'Investment', sourceName: 'Sifted' },
   
-  // AI Labs
+  // AI & Research Labs
   { url: 'https://openai.com/blog/rss/', category: 'AI', sourceName: 'OpenAI' },
+  { url: 'https://ai.googleblog.com/feeds/posts/default', category: 'AI', sourceName: 'Google AI' },
+  { url: 'https://www.nature.com/subjects/digital-health.rss', category: 'Technology', sourceName: 'Nature Digital Health' },
 ];
 
 function extractImageFromContent(content: string): string | null {
