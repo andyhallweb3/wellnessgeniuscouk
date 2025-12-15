@@ -129,7 +129,7 @@ const NewsletterAdmin = () => {
   };
 
   const getAuthHeaders = () => ({
-    'x-admin-secret': adminSecret,
+    'x-admin-secret': sessionStorage.getItem('admin_secret') || adminSecret,
   });
 
   const fetchStats = async () => {
