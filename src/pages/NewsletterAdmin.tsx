@@ -486,6 +486,31 @@ const NewsletterAdmin = () => {
     }
   };
 
+  const resumeSend = async (sendId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('newsletter-run', {
+        body: { action: 'resume', sendId },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "Resend started",
+        description: "Resuming delivery to unsent recipients.",
+      });
+
+      fetchRecentSends();
+    } catch (error) {
+      toast({
+        title: "Resume failed",
+        description: error instanceof Error ? error.message : "Failed to resume send",
+        variant: "destructive",
+      });
+    }
+  };
+
   const sendNewsletter = async () => {
     // Check for active sends first
     if (activeSend) {
@@ -502,8 +527,6 @@ const NewsletterAdmin = () => {
     }
 
     setSending(true);
-
-    const BATCH_SIZE = 10;
 
     try {
       const { data, error } = await supabase.functions.invoke('newsletter-run', {
@@ -526,12 +549,13 @@ const NewsletterAdmin = () => {
 
       const totalSubscribers = data?.subscriberCount || 0;
       const sendId = data?.sendId as string | undefined;
+      const batchSize = data?.batchSize || 50;
 
       if (!sendId) {
         throw new Error('Send started but no sendId returned');
       }
 
-      const totalBatches = Math.max(1, Math.ceil(totalSubscribers / BATCH_SIZE));
+      const totalBatches = Math.max(1, Math.ceil(totalSubscribers / batchSize));
 
       setSendProgress({
         totalSubscribers,
@@ -566,7 +590,7 @@ const NewsletterAdmin = () => {
           return {
             ...prev,
             sentCount,
-            currentBatch: Math.min(totalBatches, Math.max(1, Math.ceil(sentCount / BATCH_SIZE))),
+            currentBatch: Math.min(totalBatches, Math.max(1, Math.ceil(sentCount / batchSize))),
           };
         });
 
@@ -1105,7 +1129,16 @@ const NewsletterAdmin = () => {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              <div className="flex gap-2">
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => resumeSend(send.id)}
+                                  className="border-border hover:bg-secondary"
+                                >
+                                  <RefreshCw size={14} className="mr-1" />
+                                  Resend Unsent
+                                </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"

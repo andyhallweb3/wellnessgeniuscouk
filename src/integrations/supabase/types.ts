@@ -193,9 +193,51 @@ export type Database = {
           },
         ]
       }
+      newsletter_send_recipients: {
+        Row: {
+          created_at: string
+          email: string
+          error_message: string | null
+          id: string
+          send_id: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          error_message?: string | null
+          id?: string
+          send_id: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          error_message?: string | null
+          id?: string
+          send_id?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_send_recipients_send_id_fkey"
+            columns: ["send_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_sends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_sends: {
         Row: {
           article_count: number
+          article_ids: string[] | null
           email_html: string | null
           error_message: string | null
           id: string
@@ -209,6 +251,7 @@ export type Database = {
         }
         Insert: {
           article_count?: number
+          article_ids?: string[] | null
           email_html?: string | null
           error_message?: string | null
           id?: string
@@ -222,6 +265,7 @@ export type Database = {
         }
         Update: {
           article_count?: number
+          article_ids?: string[] | null
           email_html?: string | null
           error_message?: string | null
           id?: string
