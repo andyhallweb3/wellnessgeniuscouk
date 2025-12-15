@@ -24,7 +24,16 @@ Deno.serve(async (req) => {
     const adminSecret = req.headers.get('x-admin-secret');
     const expectedSecret = Deno.env.get('ADMIN_SECRET');
     
+    console.log('Admin secret check:', {
+      hasEnvSecret: !!expectedSecret,
+      hasProvidedSecret: !!adminSecret,
+      providedLength: adminSecret?.length,
+      expectedLength: expectedSecret?.length,
+      match: adminSecret === expectedSecret
+    });
+    
     if (!adminSecret || adminSecret !== expectedSecret) {
+      console.log('Unauthorized access attempt to manage-subscribers');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
