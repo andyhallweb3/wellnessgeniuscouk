@@ -459,52 +459,50 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Process articles with AI
-    const processedArticles: ProcessedArticle[] = [];
-    
-    for (const article of articles) {
-      console.log(`Processing article: ${article.title}`);
-      
-      // Check if already has AI content
-      if (article.ai_summary && article.ai_why_it_matters && article.ai_commercial_angle) {
-        processedArticles.push(article as ProcessedArticle);
-        continue;
-      }
+    // If preview only: process articles with AI + return HTML (can be slower)
+    if (previewOnly) {
+      const processedArticles: ProcessedArticle[] = [];
 
-      const aiContent = await generateAISummary(article, lovableKey);
-      
-      const processedArticle: ProcessedArticle = {
-        ...article,
-        ai_summary: aiContent.summary,
-        ai_why_it_matters: aiContent.whyItMatters,
-        ai_commercial_angle: aiContent.commercialAngle,
-      };
-      
-      processedArticles.push(processedArticle);
+      for (const article of articles) {
+        console.log(`Processing article: ${article.title}`);
 
-      // Update article with AI content
-      await supabase
-        .from('articles')
-        .update({
+        // Check if already has AI content
+        if (article.ai_summary && article.ai_why_it_matters && article.ai_commercial_angle) {
+          processedArticles.push(article as ProcessedArticle);
+          continue;
+        }
+
+        const aiContent = await generateAISummary(article, lovableKey);
+
+        const processedArticle: ProcessedArticle = {
+          ...article,
           ai_summary: aiContent.summary,
           ai_why_it_matters: aiContent.whyItMatters,
           ai_commercial_angle: aiContent.commercialAngle,
-        })
-        .eq('id', article.id);
-    }
+        };
 
-    // Generate preview email HTML (without tracking)
-    const previewEmailHtml = generateEmailHTML(processedArticles, true);
+        processedArticles.push(processedArticle);
 
-    // If preview only, return the HTML
-    if (previewOnly) {
+        // Update article with AI content
+        await supabase
+          .from('articles')
+          .update({
+            ai_summary: aiContent.summary,
+            ai_why_it_matters: aiContent.whyItMatters,
+            ai_commercial_angle: aiContent.commercialAngle,
+          })
+          .eq('id', article.id);
+      }
+
+      const previewEmailHtml = generateEmailHTML(processedArticles, true);
+
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           preview: true,
           html: previewEmailHtml,
           articleCount: processedArticles.length,
-          articles: processedArticles.map(a => ({
+          articles: processedArticles.map((a) => ({
             id: a.id,
             title: a.title,
             source: a.source,
@@ -512,20 +510,26 @@ Deno.serve(async (req) => {
             ai_summary: a.ai_summary,
             ai_why_it_matters: a.ai_why_it_matters,
             ai_commercial_angle: a.ai_commercial_angle,
-          }))
+          })),
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // SEND path: respond quickly; do heavy work in background to avoid timeouts
+    const { count: subscriberCount } = await supabase
+      .from('newsletter_subscribers')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true);
 
     // Create send record first to get the ID for tracking
     const { data: sendRecord, error: sendRecordError } = await supabase
       .from('newsletter_sends')
       .insert({
         recipient_count: 0,
-        article_count: processedArticles.length,
+        article_count: articles.length,
         status: 'sending',
-        email_html: previewEmailHtml,
+        email_html: null,
         error_message: null,
       })
       .select('id')
@@ -538,61 +542,7 @@ Deno.serve(async (req) => {
     const sendId = sendRecord.id;
     const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
 
-    // Fetch ALL active subscribers (override default 1000 limit)
-    let allSubscribers: { email: string }[] = [];
-    let page = 0;
-    const pageSize = 1000;
-
-    while (true) {
-      const { data: batch, error: batchError } = await supabase
-        .from('newsletter_subscribers')
-        .select('email')
-        .eq('is_active', true)
-        .range(page * pageSize, (page + 1) * pageSize - 1);
-
-      if (batchError) throw batchError;
-      if (!batch || batch.length === 0) break;
-
-      allSubscribers = [...allSubscribers, ...batch];
-      if (batch.length < pageSize) break;
-      page++;
-    }
-
-    const subscribers = allSubscribers;
-
-    if (!subscribers || subscribers.length === 0) {
-      await supabase
-        .from('newsletter_sends')
-        .update({ status: 'failed', error_message: 'No active subscribers' })
-        .eq('id', sendId);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'No active subscribers',
-          articleCount: processedArticles.length,
-          subscriberCount: 0,
-          sendId,
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Deduplicate subscribers by email (case-insensitive)
-    const seenEmails = new Set<string>();
-    const uniqueSubscribers = subscribers.filter((sub) => {
-      const emailLower = sub.email.toLowerCase().trim();
-      if (seenEmails.has(emailLower)) {
-        console.log(`Skipping duplicate email: ${sub.email}`);
-        return false;
-      }
-      seenEmails.add(emailLower);
-      return true;
-    });
-
-    console.log(
-      `Queued send ${sendId}: ${uniqueSubscribers.length} unique subscribers (${subscribers.length - uniqueSubscribers.length} duplicates removed)`
-    );
+    console.log(`Queued send ${sendId}: starting background processing + sending`);
 
     // Start sending in the background to avoid request timeouts
     const BATCH_SIZE = 10;
@@ -604,6 +554,84 @@ Deno.serve(async (req) => {
       const failedEmails: string[] = [];
 
       try {
+        // 1) Ensure articles have AI content
+        const processedArticles: ProcessedArticle[] = [];
+        for (const article of articles) {
+          if (article.ai_summary && article.ai_why_it_matters && article.ai_commercial_angle) {
+            processedArticles.push(article as ProcessedArticle);
+            continue;
+          }
+
+          const aiContent = await generateAISummary(article, lovableKey);
+
+          const processed: ProcessedArticle = {
+            ...article,
+            ai_summary: aiContent.summary,
+            ai_why_it_matters: aiContent.whyItMatters,
+            ai_commercial_angle: aiContent.commercialAngle,
+          };
+
+          processedArticles.push(processed);
+
+          await supabase
+            .from('articles')
+            .update({
+              ai_summary: aiContent.summary,
+              ai_why_it_matters: aiContent.whyItMatters,
+              ai_commercial_angle: aiContent.commercialAngle,
+            })
+            .eq('id', article.id);
+        }
+
+        // 2) Store the email HTML for history/auditing
+        const emailHtml = generateEmailHTML(processedArticles, true);
+        await supabase
+          .from('newsletter_sends')
+          .update({ email_html: emailHtml })
+          .eq('id', sendId);
+
+        // 3) Fetch ALL active subscribers (override default 1000 limit)
+        let allSubscribers: { email: string }[] = [];
+        let page = 0;
+        const pageSize = 1000;
+
+        while (true) {
+          const { data: batch, error: batchError } = await supabase
+            .from('newsletter_subscribers')
+            .select('email')
+            .eq('is_active', true)
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+
+          if (batchError) throw batchError;
+          if (!batch || batch.length === 0) break;
+
+          allSubscribers = [...allSubscribers, ...batch];
+          if (batch.length < pageSize) break;
+          page++;
+        }
+
+        if (allSubscribers.length === 0) {
+          await supabase
+            .from('newsletter_sends')
+            .update({ status: 'failed', error_message: 'No active subscribers' })
+            .eq('id', sendId);
+          return;
+        }
+
+        // Deduplicate subscribers by email (case-insensitive)
+        const seenEmails = new Set<string>();
+        const uniqueSubscribers = allSubscribers.filter((sub) => {
+          const emailLower = sub.email.toLowerCase().trim();
+          if (seenEmails.has(emailLower)) return false;
+          seenEmails.add(emailLower);
+          return true;
+        });
+
+        console.log(
+          `Sending ${uniqueSubscribers.length} unique subscribers (${allSubscribers.length - uniqueSubscribers.length} duplicates removed)`
+        );
+
+        // 4) Send in batches
         for (let i = 0; i < uniqueSubscribers.length; i += BATCH_SIZE) {
           const batch = uniqueSubscribers.slice(i, i + BATCH_SIZE);
           console.log(
@@ -694,8 +722,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Newsletter sending started',
-        articleCount: processedArticles.length,
-        subscriberCount: uniqueSubscribers.length,
+        articleCount: articles.length,
+        subscriberCount: subscriberCount || 0,
         sendId,
         batchSize: BATCH_SIZE,
         delaySeconds: Math.floor(DELAY_MS / 1000),
