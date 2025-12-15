@@ -41,26 +41,25 @@ export const useNewsletter = () => {
     localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
 
     try {
+      // Use upsert with ignoreDuplicates to prevent leaking whether email exists
+      // This prevents enumeration attacks via error messages or timing
       const { error } = await supabase
         .from("newsletter_subscribers")
-        .insert({ email: validation.data, source });
+        .upsert(
+          { email: validation.data, source },
+          { onConflict: 'email', ignoreDuplicates: true }
+        );
 
       if (error) {
-        if (error.code === "23505") {
-          toast({
-            title: "Already subscribed",
-            description: "This email is already on our list.",
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        toast({
-          title: "Subscribed!",
-          description: "You'll receive insights on AI and automation for wellness brands.",
-        });
-        setEmail("");
+        throw error;
       }
+      
+      // Always show same message regardless of whether email was new or existing
+      toast({
+        title: "You're on the list!",
+        description: "You'll receive insights on AI and automation for wellness brands.",
+      });
+      setEmail("");
     } catch (error) {
       console.error("Newsletter subscription error:", error);
       toast({
