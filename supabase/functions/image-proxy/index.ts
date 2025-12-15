@@ -5,9 +5,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple in-memory cache for the function instance lifetime
-const imageCache = new Map<string, { data: ArrayBuffer; contentType: string; timestamp: number }>();
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const BUCKET_NAME = 'image-cache';
+const CACHE_MAX_AGE_DAYS = 7;
+
+// Generate a deterministic filename from URL
+async function hashUrl(url: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(url);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getExtension(contentType: string): string {
+  const map: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/svg+xml': 'svg',
+  };
+  return map[contentType] || 'jpg';
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,6 +34,10 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const url = new URL(req.url);
     const imageUrl = url.searchParams.get('url');
 
@@ -39,21 +62,44 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check in-memory cache
-    const cached = imageCache.get(imageUrl);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      console.log(`Cache hit for: ${imageUrl.substring(0, 80)}...`);
-      return new Response(cached.data, {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': cached.contentType,
-          'Cache-Control': 'public, max-age=86400', // 24 hours client cache
-          'X-Proxy-Cache': 'HIT',
-        },
-      });
+    // Generate hash-based filename
+    const urlHash = await hashUrl(imageUrl);
+
+    // Check if image exists in storage cache
+    const { data: existingFiles } = await supabase.storage
+      .from(BUCKET_NAME)
+      .list('', { search: urlHash, limit: 1 });
+
+    if (existingFiles && existingFiles.length > 0) {
+      const cachedFile = existingFiles[0];
+      
+      // Check if cache is still fresh (within CACHE_MAX_AGE_DAYS)
+      const createdAt = new Date(cachedFile.created_at);
+      const ageMs = Date.now() - createdAt.getTime();
+      const maxAgeMs = CACHE_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+
+      if (ageMs < maxAgeMs) {
+        // Return redirect to cached file
+        const publicUrl = `${supabaseUrl}/storage/v1/object/public/${BUCKET_NAME}/${cachedFile.name}`;
+        console.log(`Cache HIT: ${imageUrl.substring(0, 60)}... -> ${cachedFile.name}`);
+        
+        return new Response(null, {
+          status: 302,
+          headers: {
+            ...corsHeaders,
+            'Location': publicUrl,
+            'Cache-Control': 'public, max-age=86400',
+            'X-Proxy-Cache': 'HIT',
+          },
+        });
+      } else {
+        // Cache expired, delete old file
+        console.log(`Cache EXPIRED: ${cachedFile.name}`);
+        await supabase.storage.from(BUCKET_NAME).remove([cachedFile.name]);
+      }
     }
 
-    console.log(`Fetching image: ${imageUrl.substring(0, 80)}...`);
+    console.log(`Cache MISS, fetching: ${imageUrl.substring(0, 80)}...`);
 
     // Fetch the image with browser-like headers to avoid hotlink blocking
     const controller = new AbortController();
@@ -102,30 +148,30 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Store in cache (only if reasonable size, < 1MB)
-    if (arrayBuffer.byteLength < 1024 * 1024) {
-      imageCache.set(imageUrl, {
-        data: arrayBuffer,
+    // Store in Supabase Storage
+    const extension = getExtension(contentType);
+    const fileName = `${urlHash}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, arrayBuffer, {
         contentType,
-        timestamp: Date.now(),
+        upsert: true,
       });
-      
-      // Evict old entries if cache gets too large
-      if (imageCache.size > 100) {
-        const oldest = [...imageCache.entries()]
-          .sort((a, b) => a[1].timestamp - b[1].timestamp)
-          .slice(0, 20);
-        oldest.forEach(([key]) => imageCache.delete(key));
-      }
+
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      // Still return the image even if caching failed
+    } else {
+      console.log(`Cached to storage: ${fileName} (${arrayBuffer.byteLength} bytes)`);
     }
 
-    console.log(`Successfully proxied image: ${arrayBuffer.byteLength} bytes`);
-
+    // Return the image directly
     return new Response(arrayBuffer, {
       headers: {
         ...corsHeaders,
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400', // 24 hours
+        'Cache-Control': 'public, max-age=86400',
         'X-Proxy-Cache': 'MISS',
       },
     });
