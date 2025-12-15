@@ -41,6 +41,8 @@ export const useNewsletter = () => {
     localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
 
     try {
+      console.log('[Newsletter] Attempting signup for:', validation.data, 'source:', source);
+      
       // Use plain INSERT - RLS blocks SELECT so upsert doesn't work
       // Handle duplicate error silently to prevent email enumeration
       const { error } = await supabase
@@ -50,8 +52,11 @@ export const useNewsletter = () => {
       // Ignore unique constraint violations (email already exists)
       // Show success either way to prevent enumeration attacks
       if (error && error.code !== '23505') {
+        console.error('[Newsletter] Insert error:', error);
         throw error;
       }
+      
+      console.log('[Newsletter] Signup successful for:', validation.data, error?.code === '23505' ? '(already existed)' : '(new)');
       
       // Always show same message regardless of whether email was new or existing
       toast({
