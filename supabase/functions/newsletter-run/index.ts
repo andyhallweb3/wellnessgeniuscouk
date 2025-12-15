@@ -1,9 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from 'https://esm.sh/resend@4.0.0';
+import { validateAdminAuth, unauthorizedResponse } from '../_shared/admin-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-secret',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 interface Article {
@@ -402,22 +403,18 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify admin secret
-    const adminSecret = Deno.env.get('ADMIN_SECRET');
-    const providedSecret = req.headers.get('x-admin-secret');
+    // Verify admin auth via JWT
+    const authResult = await validateAdminAuth(req);
     
-    console.log('Admin secret check:', {
-      hasEnvSecret: !!adminSecret,
-      hasProvidedSecret: !!providedSecret,
-      secretLength: providedSecret?.length || 0,
+    console.log('Admin auth check:', {
+      isAdmin: authResult.isAdmin,
+      userId: authResult.userId,
+      error: authResult.error,
     });
     
-    if (!adminSecret || providedSecret !== adminSecret) {
+    if (!authResult.isAdmin) {
       console.log('Unauthorized access attempt to newsletter-run');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid admin secret' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return unauthorizedResponse(authResult.error || 'Unauthorized', corsHeaders);
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
