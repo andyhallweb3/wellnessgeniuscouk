@@ -46,6 +46,12 @@ const RSS_FEEDS: RSSFeed[] = [
   // Fitness Industry
   { url: 'https://www.sportstechie.com/feed/', category: 'Fitness', sourceName: 'SportsTechie' },
   
+  // Investment & Funding (Wellness/Fitness focused)
+  { url: 'https://www.crunchbase.com/news/rss', category: 'Investment', sourceName: 'Crunchbase News' },
+  { url: 'https://pitchbook.com/news/feed', category: 'Investment', sourceName: 'PitchBook' },
+  { url: 'https://sifted.eu/feed', category: 'Investment', sourceName: 'Sifted' },
+  { url: 'https://news.crunchbase.com/feed/', category: 'Investment', sourceName: 'Crunchbase' },
+  
   // Business & Strategy
   { url: 'https://hbr.org/feed', category: 'Technology', sourceName: 'Harvard Business Review' },
   

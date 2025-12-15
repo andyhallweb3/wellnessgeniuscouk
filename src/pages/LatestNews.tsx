@@ -18,7 +18,7 @@ interface NewsItem {
   published_date: string;
 }
 
-const categories = ["All", "AI", "Wellness", "Fitness", "Technology"];
+const categories = ["All", "AI", "Wellness", "Fitness", "Technology", "Investment"];
 
 const LatestNews = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
