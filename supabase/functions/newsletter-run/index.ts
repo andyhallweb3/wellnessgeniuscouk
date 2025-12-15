@@ -75,18 +75,38 @@ Respond in JSON format:
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || '';
     
-    // Parse JSON from response
+    // Parse JSON from response with cleanup
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        summary: parsed.summary || 'Summary unavailable',
-        whyItMatters: parsed.whyItMatters || ['Analysis pending'],
-        commercialAngle: parsed.commercialAngle || 'Commercial angle pending',
-      };
+      try {
+        // Clean up common JSON issues from AI responses
+        let jsonStr = jsonMatch[0]
+          .replace(/[\u0000-\u001F]+/g, ' ') // Remove control characters
+          .replace(/,\s*}/g, '}') // Remove trailing commas before }
+          .replace(/,\s*]/g, ']') // Remove trailing commas before ]
+          .replace(/'/g, '"') // Replace single quotes with double quotes
+          .replace(/(\w+):/g, '"$1":') // Quote unquoted keys
+          .replace(/""+/g, '"'); // Fix double-double quotes
+        
+        const parsed = JSON.parse(jsonStr);
+        return {
+          summary: parsed.summary || 'Summary unavailable',
+          whyItMatters: Array.isArray(parsed.whyItMatters) ? parsed.whyItMatters : ['Analysis pending'],
+          commercialAngle: parsed.commercialAngle || 'Commercial angle pending',
+        };
+      } catch (parseError) {
+        console.error('JSON parse error, using fallback:', parseError);
+        // Fall through to fallback response below
+      }
     }
     
-    throw new Error('Could not parse AI response');
+    // Fallback: try to extract content even if JSON is malformed
+    console.log('Using fallback extraction for AI response');
+    return {
+      summary: article.excerpt?.substring(0, 150) || 'Summary unavailable',
+      whyItMatters: ['Industry development worth monitoring', 'Potential impact on wellness sector', 'Stay informed on emerging trends'],
+      commercialAngle: 'Monitor for potential business applications',
+    };
   } catch (error) {
     console.error('Error generating AI summary:', error);
     return {
