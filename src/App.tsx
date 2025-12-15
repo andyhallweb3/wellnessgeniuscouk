@@ -10,6 +10,7 @@ import Insights from "./pages/Insights";
 import BlogPost from "./pages/BlogPost";
 import LatestNews from "./pages/LatestNews";
 import NewsletterAdmin from "./pages/NewsletterAdmin";
+import Unsubscribe from "./pages/Unsubscribe";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/insights/:slug" element={<BlogPost />} />
           <Route path="/news" element={<LatestNews />} />
           <Route path="/news/admin" element={<NewsletterAdmin />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/cookies" element={<CookiePolicy />} />
