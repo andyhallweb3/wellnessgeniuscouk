@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -17,7 +18,8 @@ import {
   AlertCircle,
   Loader2,
   ArrowLeft,
-  Newspaper
+  Newspaper,
+  Lock
 } from "lucide-react";
 
 interface Article {
@@ -40,6 +42,11 @@ interface NewsletterSend {
 
 const NewsletterAdmin = () => {
   const { toast } = useToast();
+  const [adminSecret, setAdminSecret] = useState<string>("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [secretInput, setSecretInput] = useState("");
+  
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [sending, setSending] = useState(false);
@@ -51,12 +58,51 @@ const NewsletterAdmin = () => {
 
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
-    fetchStats();
-    fetchRecentSends();
+    // Check for stored admin secret in sessionStorage
+    const storedSecret = sessionStorage.getItem("admin_secret");
+    if (storedSecret) {
+      setAdminSecret(storedSecret);
+      setIsAuthenticated(true);
+    }
+    setAuthLoading(false);
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchStats();
+      fetchRecentSends();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (secretInput.trim()) {
+      sessionStorage.setItem("admin_secret", secretInput.trim());
+      setAdminSecret(secretInput.trim());
+      setIsAuthenticated(true);
+      toast({
+        title: "Access Granted",
+        description: "Admin secret accepted. You can now manage newsletters.",
+      });
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("admin_secret");
+    setAdminSecret("");
+    setIsAuthenticated(false);
+    setSecretInput("");
+    toast({
+      title: "Logged Out",
+      description: "Admin session ended.",
+    });
+  };
+
+  const getAuthHeaders = () => ({
+    'x-admin-secret': adminSecret,
+  });
+
   const fetchStats = async () => {
-    // Note: We can't directly count subscribers due to RLS, but we can get unprocessed articles
     const { count: articleCount } = await supabase
       .from('articles')
       .select('*', { count: 'exact', head: true })
@@ -79,10 +125,22 @@ const NewsletterAdmin = () => {
     setSyncing(true);
     try {
       const { data, error } = await supabase.functions.invoke('newsletter-run', {
-        body: { syncFromRss: true, preview: true }
+        body: { syncFromRss: true, preview: true },
+        headers: getAuthHeaders(),
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          handleLogout();
+          toast({
+            title: "Authentication Failed",
+            description: "Invalid admin secret. Please re-enter.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "RSS Sync Complete",
@@ -106,10 +164,22 @@ const NewsletterAdmin = () => {
     setPreviewHtml(null);
     try {
       const { data, error } = await supabase.functions.invoke('newsletter-run', {
-        body: { preview: true }
+        body: { preview: true },
+        headers: getAuthHeaders(),
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          handleLogout();
+          toast({
+            title: "Authentication Failed",
+            description: "Invalid admin secret. Please re-enter.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       if (data.articleCount === 0) {
         toast({
@@ -146,10 +216,22 @@ const NewsletterAdmin = () => {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke('newsletter-run', {
-        body: { preview: false }
+        body: { preview: false },
+        headers: getAuthHeaders(),
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          handleLogout();
+          toast({
+            title: "Authentication Failed",
+            description: "Invalid admin secret. Please re-enter.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Newsletter Sent!",
@@ -170,6 +252,59 @@ const NewsletterAdmin = () => {
     }
   };
 
+  // Show loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background dark flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  // Show login form if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background dark">
+        <Header />
+        <main className="pt-24 lg:pt-32 pb-20">
+          <section className="section-padding">
+            <div className="container-wide max-w-md mx-auto">
+              <div className="card-glass p-8 text-center">
+                <div className="p-4 rounded-full bg-accent/10 w-fit mx-auto mb-6">
+                  <Lock className="h-8 w-8 text-accent" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">Newsletter Admin</h1>
+                <p className="text-muted-foreground mb-6">
+                  Enter your admin secret to access the newsletter management panel.
+                </p>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <Input
+                    type="password"
+                    placeholder="Admin Secret"
+                    value={secretInput}
+                    onChange={(e) => setSecretInput(e.target.value)}
+                    className="bg-secondary border-border"
+                    autoComplete="off"
+                  />
+                  <Button type="submit" variant="accent" className="w-full">
+                    Access Admin Panel
+                  </Button>
+                </form>
+                <Link 
+                  to="/" 
+                  className="inline-block mt-4 text-sm text-muted-foreground hover:text-accent transition-colors"
+                >
+                  ← Back to Home
+                </Link>
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background dark">
       <Header />
@@ -178,14 +313,20 @@ const NewsletterAdmin = () => {
         <section className="section-padding">
           <div className="container-wide">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
-              <Link to="/news" className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-                <ArrowLeft size={20} />
-              </Link>
-              <div>
-                <h1 className="text-3xl font-bold">Newsletter Admin</h1>
-                <p className="text-muted-foreground">Manage and send AI-powered wellness newsletters</p>
+            <div className="flex items-center justify-between gap-4 mb-8">
+              <div className="flex items-center gap-4">
+                <Link to="/news" className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                  <ArrowLeft size={20} />
+                </Link>
+                <div>
+                  <h1 className="text-3xl font-bold">Newsletter Admin</h1>
+                  <p className="text-muted-foreground">Manage and send AI-powered wellness newsletters</p>
+                </div>
               </div>
+              <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+                <Lock size={14} />
+                Logout
+              </Button>
             </div>
 
             {/* Stats Cards */}
