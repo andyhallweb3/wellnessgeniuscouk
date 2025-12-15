@@ -14,6 +14,3 @@ verify_jwt = false
 
 [functions.manage-subscribers]
 verify_jwt = false
-
-[functions.zerobounce-import]
-verify_jwt = false

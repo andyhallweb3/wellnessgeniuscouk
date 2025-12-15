@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { action, subscriber } = await req.json();
+    const { action, subscriber, emails } = await req.json();
 
     switch (action) {
       case 'list': {
@@ -84,6 +84,43 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ subscriber: data }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'bulk-add': {
+        if (!emails || !Array.isArray(emails) || emails.length === 0) {
+          return new Response(
+            JSON.stringify({ error: 'Emails array is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        let added = 0;
+        let skipped = 0;
+
+        for (const email of emails) {
+          const { error } = await supabase
+            .from('newsletter_subscribers')
+            .insert({
+              email: email.toLowerCase().trim(),
+              source: 'bulk-import',
+              is_active: true,
+            });
+
+          if (error) {
+            if (error.code === '23505') {
+              skipped++;
+            } else {
+              console.error('Failed to insert email:', email, error);
+            }
+          } else {
+            added++;
+          }
+        }
+
+        return new Response(
+          JSON.stringify({ added, skipped, total: emails.length }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
