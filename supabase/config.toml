@@ -1,1 +1,4 @@
 project_id = "hiayegpvrsxhhemyxghz"
+
+[functions.fetch-rss-news]
+verify_jwt = false
