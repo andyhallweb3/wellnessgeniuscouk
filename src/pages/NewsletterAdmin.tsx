@@ -34,7 +34,10 @@ import {
   Copy,
   FileDown,
   Zap,
-  LogOut
+  LogOut,
+  Shield,
+  ShieldCheck,
+  ShieldX
 } from "lucide-react";
 import {
   Dialog,
@@ -138,6 +141,19 @@ const NewsletterAdmin = () => {
   const [subscriberPage, setSubscriberPage] = useState(1);
   const [subscribersPerPage, setSubscribersPerPage] = useState(25);
 
+  // Admin user management state
+  interface AdminUser {
+    id: string;
+    email: string;
+    created_at: string;
+    email_confirmed_at: string | null;
+    is_admin: boolean;
+  }
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [loadingAdminUsers, setLoadingAdminUsers] = useState(false);
+  const [adminUsersExpanded, setAdminUsersExpanded] = useState(false);
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
   }, []);
@@ -147,6 +163,7 @@ const NewsletterAdmin = () => {
       fetchStats();
       fetchRecentSends();
       fetchSubscribers();
+      fetchAdminUsers();
     }
   }, [isAuthenticated]);
 
@@ -298,6 +315,76 @@ const NewsletterAdmin = () => {
       console.error('Failed to fetch subscribers:', error);
     } finally {
       setLoadingSubscribers(false);
+    }
+  };
+
+  const fetchAdminUsers = async () => {
+    setLoadingAdminUsers(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-admins', {
+        body: { action: 'list' },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      setAdminUsers(data.users || []);
+    } catch (error) {
+      console.error('Failed to fetch admin users:', error);
+    } finally {
+      setLoadingAdminUsers(false);
+    }
+  };
+
+  const grantAdminAccess = async (userId?: string, email?: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-admins', {
+        body: { action: 'grant', userId, email },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      toast({
+        title: "Admin Access Granted",
+        description: data.message || "User now has admin privileges.",
+      });
+
+      setNewAdminEmail('');
+      fetchAdminUsers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to grant admin access",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const revokeAdminAccess = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to revoke admin access for ${userEmail}?`)) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-admins', {
+        body: { action: 'revoke', userId },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      toast({
+        title: "Admin Access Revoked",
+        description: `${userEmail} no longer has admin privileges.`,
+      });
+
+      fetchAdminUsers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to revoke admin access",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1457,6 +1544,129 @@ const NewsletterAdmin = () => {
                       </>
                     );
                   })()}
+                </div>
+              )}
+            </div>
+
+            {/* Admin User Management */}
+            <div className="card-glass p-6 mb-8">
+              <button
+                onClick={() => setAdminUsersExpanded(!adminUsersExpanded)}
+                className="w-full flex items-center justify-between text-left"
+              >
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Shield size={20} />
+                  Admin Users ({adminUsers.filter(u => u.is_admin).length})
+                </h2>
+                {adminUsersExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+              </button>
+              
+              {adminUsersExpanded && (
+                <div className="mt-4">
+                  {/* Add admin form */}
+                  <div className="flex gap-2 mb-4">
+                    <Input
+                      placeholder="Email of user to grant admin access..."
+                      value={newAdminEmail}
+                      onChange={(e) => setNewAdminEmail(e.target.value)}
+                      className="bg-secondary border-border flex-1"
+                    />
+                    <Button
+                      variant="accent"
+                      onClick={() => grantAdminAccess(undefined, newAdminEmail)}
+                      disabled={!newAdminEmail.trim()}
+                    >
+                      <ShieldCheck size={16} className="mr-2" />
+                      Grant Admin
+                    </Button>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Users must sign up first before you can grant them admin access.
+                  </p>
+
+                  {loadingAdminUsers ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                    </div>
+                  ) : adminUsers.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No users found.</p>
+                  ) : (
+                    <div className="card-tech overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-secondary">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Verified</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Joined</th>
+                            <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adminUsers.map((adminUser) => (
+                            <tr key={adminUser.id} className="border-t border-border">
+                              <td className="px-4 py-3 text-sm font-medium">{adminUser.email}</td>
+                              <td className="px-4 py-3 text-sm">
+                                {adminUser.is_admin ? (
+                                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent">
+                                    <ShieldCheck size={12} />
+                                    Admin
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-secondary text-muted-foreground">
+                                    User
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                {adminUser.email_confirmed_at ? (
+                                  <span className="text-green-400">✓ Verified</span>
+                                ) : (
+                                  <span className="text-yellow-400">Pending</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-muted-foreground">
+                                {new Date(adminUser.created_at).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right">
+                                {adminUser.is_admin ? (
+                                  adminUser.id === user?.id ? (
+                                    <span className="text-xs text-muted-foreground">You</span>
+                                  ) : (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => revokeAdminAccess(adminUser.id, adminUser.email)}
+                                      className="h-8 text-red-400 hover:text-red-300 gap-1"
+                                    >
+                                      <ShieldX size={14} />
+                                      Revoke
+                                    </Button>
+                                  )
+                                ) : (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => grantAdminAccess(adminUser.id)}
+                                    className="h-8 text-accent hover:text-accent/80 gap-1"
+                                    disabled={!adminUser.email_confirmed_at}
+                                  >
+                                    <ShieldCheck size={14} />
+                                    Grant Admin
+                                  </Button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
