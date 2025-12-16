@@ -78,7 +78,25 @@ const LatestNews = () => {
   }, []);
 
   useEffect(() => {
-    document.title = "Weekly AI & Wellness Digest | Wellness Genius";
+    document.title = "Wellness Genius Daily — AI & Wellness Industry Intelligence";
+    
+    // Set Open Graph meta tags
+    const setMeta = (property: string, content: string) => {
+      let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('property', property);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    setMeta('og:title', 'Wellness Genius Daily — AI & Wellness Industry Intelligence');
+    setMeta('og:description', 'Curated weekly insight at the intersection of wellness, fitness, AI, and behaviour. No fluff. Just signal.');
+    setMeta('og:image', 'https://www.wellnessgenius.co.uk/images/wellness-genius-news-og.png');
+    setMeta('og:url', 'https://www.wellnessgenius.co.uk/news');
+    setMeta('og:type', 'website');
+
     fetchNews();
   }, [fetchNews]);
 
