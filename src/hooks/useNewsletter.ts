@@ -57,7 +57,24 @@ export const useNewsletter = () => {
         throw error;
       }
       
-      logger.log('[Newsletter] Signup successful for:', validation.data, error?.code === '23505' ? '(already existed)' : '(new)');
+      const isNewSubscriber = !error || error.code !== '23505';
+      logger.log('[Newsletter] Signup successful for:', validation.data, isNewSubscriber ? '(new)' : '(already existed)');
+      
+      // Send confirmation email only for new subscribers
+      if (isNewSubscriber) {
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-newsletter-confirmation', {
+            body: { email: validation.data }
+          });
+          if (emailError) {
+            logger.error('[Newsletter] Confirmation email error:', emailError);
+          } else {
+            logger.log('[Newsletter] Confirmation email sent to:', validation.data);
+          }
+        } catch (emailErr) {
+          logger.error('[Newsletter] Failed to send confirmation:', emailErr);
+        }
+      }
       
       // Always show same message regardless of whether email was new or existing
       toast({
