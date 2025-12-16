@@ -361,10 +361,48 @@ const AssessmentResults = ({ answers, questions, userInfo }: AssessmentResultsPr
 
   const content = getBandContent(results.overallScore, results.weakestPillar.pillar, userInfo.role);
 
-  // Send email report once on mount
+  // Send email report and save completion once on mount
   useEffect(() => {
     if (emailSentRef.current) return;
     emailSentRef.current = true;
+
+    const getScoreBand = (score: number) => {
+      if (score < 40) return 'AI-Unready';
+      if (score < 60) return 'AI-Curious';
+      if (score < 80) return 'AI-Ready';
+      return 'AI-Native';
+    };
+
+    const getPillarScore = (pillarName: string) => {
+      const pillar = results.pillarResults.find(p => p.pillar === pillarName);
+      return pillar?.score || 0;
+    };
+
+    const saveCompletion = async () => {
+      try {
+        await supabase.functions.invoke('manage-readiness-completions', {
+          body: {
+            action: 'save',
+            email: userInfo.email,
+            name: userInfo.name,
+            company: userInfo.company,
+            role: userInfo.role,
+            industry: userInfo.industry,
+            companySize: userInfo.companySize,
+            overallScore: results.overallScore,
+            leadershipScore: getPillarScore('Leadership & Strategy'),
+            dataScore: getPillarScore('Data & Infrastructure'),
+            peopleScore: getPillarScore('People & Skills'),
+            processScore: getPillarScore('Process & Operations'),
+            riskScore: getPillarScore('Risk, Ethics & Governance'),
+            scoreBand: getScoreBand(results.overallScore),
+          },
+        });
+        console.log('AI Readiness completion saved');
+      } catch (err) {
+        console.error('Failed to save completion:', err);
+      }
+    };
 
     const sendReport = async () => {
       setEmailStatus('sending');
@@ -402,6 +440,8 @@ const AssessmentResults = ({ answers, questions, userInfo }: AssessmentResultsPr
       }
     };
 
+    // Save completion and send email in parallel
+    saveCompletion();
     sendReport();
   }, [userInfo, results, content, toast]);
 

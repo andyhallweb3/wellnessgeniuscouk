@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.manage-admins]
 verify_jwt = false
+
+[functions.manage-readiness-completions]
+verify_jwt = false
