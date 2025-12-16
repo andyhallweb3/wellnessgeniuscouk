@@ -2,6 +2,8 @@ interface Question {
   id: string;
   pillar: string;
   text: string;
+  context?: string;
+  examples?: string[];
 }
 
 interface AssessmentQuestionProps {
@@ -24,9 +26,31 @@ const AssessmentQuestion = ({ question, currentAnswer, onAnswer }: AssessmentQue
       <p className="text-xs font-medium text-accent uppercase tracking-wider mb-4">
         {question.pillar}
       </p>
-      <h2 className="text-xl lg:text-2xl font-heading mb-8">
-        "{question.text}"
+      <h2 className="text-xl lg:text-2xl font-heading mb-4">
+        {question.text}
       </h2>
+      
+      {question.context && (
+        <p className="text-muted-foreground text-sm mb-4">
+          {question.context}
+        </p>
+      )}
+      
+      {question.examples && question.examples.length > 0 && (
+        <div className="bg-secondary/50 rounded-lg p-4 mb-6">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            Examples to consider
+          </p>
+          <ul className="text-sm text-muted-foreground space-y-1">
+            {question.examples.map((example, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <span className="text-accent">•</span>
+                <span>{example}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="space-y-3">
         {scoreLabels.map(({ score, label }) => (
