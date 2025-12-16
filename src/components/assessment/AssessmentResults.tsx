@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, AlertTriangle, TrendingUp, CheckCircle, Sparkles, X, Check } from "lucide-react";
+import { ArrowRight, AlertTriangle, TrendingUp, CheckCircle, Sparkles, X, Check, Mail, Loader2 } from "lucide-react";
 import { AssessmentAnswers, UserInfo } from "@/pages/AIReadinessIndex";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Question {
   id: string;
@@ -325,6 +327,10 @@ const statusConfig: Record<PillarStatus, { icon: string; color: string; bgColor:
 };
 
 const AssessmentResults = ({ answers, questions, userInfo }: AssessmentResultsProps) => {
+  const { toast } = useToast();
+  const emailSentRef = useRef(false);
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
   const results = useMemo(() => {
     const pillarScores: { [key: string]: { total: number; count: number } } = {};
     
@@ -355,8 +361,80 @@ const AssessmentResults = ({ answers, questions, userInfo }: AssessmentResultsPr
 
   const content = getBandContent(results.overallScore, results.weakestPillar.pillar, userInfo.role);
 
+  // Send email report once on mount
+  useEffect(() => {
+    if (emailSentRef.current) return;
+    emailSentRef.current = true;
+
+    const sendReport = async () => {
+      setEmailStatus('sending');
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('send-readiness-report', {
+          body: {
+            userInfo,
+            overallScore: results.overallScore,
+            pillarResults: results.pillarResults.map(p => ({
+              pillar: p.pillar,
+              score: p.score,
+              status: p.score < 40 ? 'Critical' : p.score < 60 ? 'Needs Work' : p.score < 80 ? 'Healthy' : 'Strong',
+            })),
+            headline: content.headline,
+            recommendation: content.recommendation,
+          },
+        });
+
+        if (error) throw error;
+
+        setEmailStatus('sent');
+        toast({
+          title: "Report sent!",
+          description: `Your AI Readiness Report has been emailed to ${userInfo.email}`,
+        });
+      } catch (err) {
+        console.error('Failed to send report email:', err);
+        setEmailStatus('error');
+        toast({
+          title: "Email delivery issue",
+          description: "We couldn't send your report by email, but your results are shown below.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    sendReport();
+  }, [userInfo, results, content, toast]);
+
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Email status indicator */}
+      {emailStatus !== 'idle' && (
+        <div className={`mb-6 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm ${
+          emailStatus === 'sending' ? 'bg-blue-500/10 text-blue-400' :
+          emailStatus === 'sent' ? 'bg-green-500/10 text-green-400' :
+          'bg-red-500/10 text-red-400'
+        }`}>
+          {emailStatus === 'sending' && (
+            <>
+              <Loader2 size={14} className="animate-spin" />
+              Sending your report to {userInfo.email}...
+            </>
+          )}
+          {emailStatus === 'sent' && (
+            <>
+              <Mail size={14} />
+              Report sent to {userInfo.email}
+            </>
+          )}
+          {emailStatus === 'error' && (
+            <>
+              <X size={14} />
+              Couldn't send email — view results below
+            </>
+          )}
+        </div>
+      )}
+
       {/* Insight-Led Headline */}
       <div className="text-center mb-12">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary text-muted-foreground text-sm mb-6">
