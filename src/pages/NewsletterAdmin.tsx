@@ -85,6 +85,7 @@ const NewsletterAdmin = () => {
     isLoading: authLoading, 
     isAuthenticated, 
     signIn, 
+    signUp,
     signOut, 
     getAuthHeaders,
     error: authError 
@@ -92,6 +93,9 @@ const NewsletterAdmin = () => {
   
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -181,10 +185,65 @@ const NewsletterAdmin = () => {
     });
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = emailInput.trim();
+    const password = passwordInput.trim();
+    const confirmPassword = confirmPasswordInput.trim();
+    
+    if (!email || !password || !confirmPassword) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Weak Password",
+        description: "Password must be at least 6 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error, needsEmailConfirmation } = await signUp(email, password);
+    
+    if (error) {
+      toast({
+        title: "Sign Up Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (needsEmailConfirmation) {
+      setShowEmailConfirmation(true);
+      toast({
+        title: "Verification Email Sent",
+        description: "Please check your email to verify your account.",
+      });
+    }
+  };
+
   const handleLogout = async () => {
     await signOut();
     setEmailInput("");
     setPasswordInput("");
+    setConfirmPasswordInput("");
+    setShowEmailConfirmation(false);
     toast({
       title: "Logged Out",
       description: "Admin session ended.",
@@ -697,7 +756,62 @@ const NewsletterAdmin = () => {
     );
   }
 
-  // Show login form if not authenticated
+  // Show email confirmation message
+  if (showEmailConfirmation) {
+    return (
+      <div className="min-h-screen bg-background dark">
+        <Header />
+        <main className="pt-24 lg:pt-32 pb-20">
+          <section className="section-padding">
+            <div className="container-wide max-w-md mx-auto">
+              <div className="card-glass p-8 text-center">
+                <div className="p-4 rounded-full bg-green-500/10 w-fit mx-auto mb-6">
+                  <Mail className="h-8 w-8 text-green-400" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">Check Your Email</h1>
+                <p className="text-muted-foreground mb-6">
+                  We've sent a verification link to <strong className="text-foreground">{emailInput}</strong>. 
+                  Click the link in the email to verify your account.
+                </p>
+                <div className="p-4 rounded-lg bg-secondary/50 border border-border text-sm text-muted-foreground mb-6">
+                  <p className="mb-2">
+                    <strong className="text-foreground">Note:</strong> After verification, an administrator 
+                    must grant you admin access before you can use this panel.
+                  </p>
+                  <p>
+                    Contact your admin to add your role:
+                  </p>
+                  <code className="block mt-2 p-2 bg-background rounded text-xs text-left overflow-x-auto">
+                    INSERT INTO user_roles (user_id, role)<br />
+                    VALUES ('your-user-id', 'admin');
+                  </code>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowEmailConfirmation(false);
+                    setAuthMode('login');
+                  }}
+                  className="w-full"
+                >
+                  Back to Sign In
+                </Button>
+                <Link 
+                  to="/" 
+                  className="inline-block mt-4 text-sm text-muted-foreground hover:text-accent transition-colors"
+                >
+                  ← Back to Home
+                </Link>
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show login/signup form if not authenticated
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background dark">
@@ -711,41 +825,114 @@ const NewsletterAdmin = () => {
                 </div>
                 <h1 className="text-2xl font-bold mb-2">Newsletter Admin</h1>
                 <p className="text-muted-foreground mb-6">
-                  Sign in with your admin account to access the newsletter management panel.
+                  {authMode === 'login' 
+                    ? 'Sign in with your admin account to access the newsletter management panel.'
+                    : 'Create an admin account. Email verification required.'}
                 </p>
+                
+                {/* Auth mode tabs */}
+                <div className="flex mb-6 bg-secondary rounded-lg p-1">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('login')}
+                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                      authMode === 'login' 
+                        ? 'bg-accent text-accent-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('signup')}
+                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                      authMode === 'signup' 
+                        ? 'bg-accent text-accent-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+
                 {authError && (
                   <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                     {authError}
                   </div>
                 )}
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <Input
-                    type="email"
-                    placeholder="Email address"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    className="bg-secondary border-border"
-                    autoComplete="email"
-                  />
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    className="bg-secondary border-border"
-                    autoComplete="current-password"
-                  />
-                  <Button type="submit" variant="accent" className="w-full" disabled={authLoading}>
-                    {authLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
-                      </>
-                    ) : (
-                      'Sign In'
-                    )}
-                  </Button>
-                </form>
+                
+                {authMode === 'login' ? (
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <Input
+                      type="email"
+                      placeholder="Email address"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      className="bg-secondary border-border"
+                      autoComplete="email"
+                    />
+                    <Input
+                      type="password"
+                      placeholder="Password"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      className="bg-secondary border-border"
+                      autoComplete="current-password"
+                    />
+                    <Button type="submit" variant="accent" className="w-full" disabled={authLoading}>
+                      {authLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Signing in...
+                        </>
+                      ) : (
+                        'Sign In'
+                      )}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <Input
+                      type="email"
+                      placeholder="Email address"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      className="bg-secondary border-border"
+                      autoComplete="email"
+                    />
+                    <Input
+                      type="password"
+                      placeholder="Password (min 6 characters)"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      className="bg-secondary border-border"
+                      autoComplete="new-password"
+                    />
+                    <Input
+                      type="password"
+                      placeholder="Confirm password"
+                      value={confirmPasswordInput}
+                      onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                      className="bg-secondary border-border"
+                      autoComplete="new-password"
+                    />
+                    <Button type="submit" variant="accent" className="w-full" disabled={authLoading}>
+                      {authLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating account...
+                        </>
+                      ) : (
+                        'Create Account'
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      After signup, you'll need to verify your email and have an admin grant you access.
+                    </p>
+                  </form>
+                )}
+                
                 <Link 
                   to="/" 
                   className="inline-block mt-4 text-sm text-muted-foreground hover:text-accent transition-colors"

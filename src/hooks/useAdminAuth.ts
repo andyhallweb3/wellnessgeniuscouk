@@ -133,6 +133,37 @@ export function useAdminAuth() {
     }
   };
 
+  const signUp = async (email: string, password: string) => {
+    setState(prev => ({ ...prev, error: null, isLoading: true }));
+    
+    try {
+      const redirectUrl = `${window.location.origin}/news/admin`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
+      });
+
+      if (error) {
+        setState(prev => ({ ...prev, error: error.message, isLoading: false }));
+        return { error, needsEmailConfirmation: false };
+      }
+
+      // Check if email confirmation is required
+      const needsEmailConfirmation = data.user && !data.session;
+      
+      setState(prev => ({ ...prev, isLoading: false }));
+      return { error: null, needsEmailConfirmation, user: data.user };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Sign up failed';
+      setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
+      return { error: { message: errorMessage }, needsEmailConfirmation: false };
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setState({
@@ -154,6 +185,7 @@ export function useAdminAuth() {
   return {
     ...state,
     signIn,
+    signUp,
     signOut,
     getAuthHeaders,
     isAuthenticated: !!state.user && state.isAdmin,
