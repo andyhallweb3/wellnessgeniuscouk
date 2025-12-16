@@ -37,7 +37,9 @@ import {
   LogOut,
   Shield,
   ShieldCheck,
-  ShieldX
+  ShieldX,
+  Activity,
+  TrendingUp
 } from "lucide-react";
 import {
   Dialog,
@@ -168,6 +170,34 @@ const NewsletterAdmin = () => {
   const [adminUsersExpanded, setAdminUsersExpanded] = useState(false);
   const [newAdminEmail, setNewAdminEmail] = useState('');
 
+  // AI Readiness completions state
+  interface ReadinessCompletion {
+    id: string;
+    email: string;
+    name: string | null;
+    company: string | null;
+    role: string | null;
+    industry: string | null;
+    company_size: string | null;
+    overall_score: number;
+    leadership_score: number | null;
+    data_score: number | null;
+    people_score: number | null;
+    process_score: number | null;
+    risk_score: number | null;
+    score_band: string | null;
+    completed_at: string;
+  }
+  interface ReadinessStats {
+    totalCompletions: number;
+    completionsThisWeek: number;
+    avgScoreThisWeek: number;
+  }
+  const [readinessCompletions, setReadinessCompletions] = useState<ReadinessCompletion[]>([]);
+  const [readinessStats, setReadinessStats] = useState<ReadinessStats | null>(null);
+  const [loadingReadiness, setLoadingReadiness] = useState(false);
+  const [readinessExpanded, setReadinessExpanded] = useState(false);
+
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
   }, []);
@@ -178,6 +208,7 @@ const NewsletterAdmin = () => {
       fetchRecentSends();
       fetchSubscribers();
       fetchAdminUsers();
+      fetchReadinessCompletions();
     }
   }, [isAuthenticated]);
 
@@ -434,6 +465,24 @@ const NewsletterAdmin = () => {
       console.error('Failed to fetch admin users:', error);
     } finally {
       setLoadingAdminUsers(false);
+    }
+  };
+
+  const fetchReadinessCompletions = async () => {
+    setLoadingReadiness(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-readiness-completions', {
+        body: { action: 'list', limit: 50 },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      setReadinessCompletions(data.completions || []);
+      setReadinessStats(data.stats || null);
+    } catch (error) {
+      console.error('Failed to fetch readiness completions:', error);
+    } finally {
+      setLoadingReadiness(false);
     }
   };
 
@@ -1942,7 +1991,104 @@ const NewsletterAdmin = () => {
               )}
             </div>
 
-            {/* Stuck Sends */}
+            {/* AI Readiness Index Usage */}
+            <div className="card-glass p-6 mb-8">
+              <button
+                onClick={() => setReadinessExpanded(!readinessExpanded)}
+                className="w-full flex items-center justify-between text-left"
+              >
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Activity size={20} className="text-purple-400" />
+                  AI Readiness Index ({readinessStats?.totalCompletions || 0} completions)
+                </h2>
+                {readinessExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+              </button>
+
+              {/* Quick Stats */}
+              {readinessStats && (
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                  <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-purple-400">{readinessStats.totalCompletions}</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                  </div>
+                  <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-accent">{readinessStats.completionsThisWeek}</p>
+                    <p className="text-xs text-muted-foreground">This Week</p>
+                  </div>
+                  <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-blue-400">{readinessStats.avgScoreThisWeek}%</p>
+                    <p className="text-xs text-muted-foreground">Avg Score</p>
+                  </div>
+                </div>
+              )}
+              
+              {readinessExpanded && (
+                <div className="mt-4">
+                  {loadingReadiness ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                    </div>
+                  ) : readinessCompletions.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No completions yet.</p>
+                  ) : (
+                    <div className="card-tech overflow-x-auto">
+                      <table className="w-full min-w-[800px]">
+                        <thead className="bg-secondary">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Company</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Role</th>
+                            <th className="px-4 py-3 text-center text-sm font-medium">Score</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Band</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {readinessCompletions.map((completion) => (
+                            <tr key={completion.id} className="border-t border-border">
+                              <td className="px-4 py-3 text-sm text-muted-foreground">
+                                {new Date(completion.completed_at).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </td>
+                              <td className="px-4 py-3 text-sm font-medium">{completion.email}</td>
+                              <td className="px-4 py-3 text-sm">{completion.name || '-'}</td>
+                              <td className="px-4 py-3 text-sm">{completion.company || '-'}</td>
+                              <td className="px-4 py-3 text-sm text-muted-foreground">{completion.role || '-'}</td>
+                              <td className="px-4 py-3 text-sm text-center">
+                                <span className={`inline-flex items-center justify-center w-12 h-8 rounded font-bold ${
+                                  completion.overall_score >= 80 ? 'bg-green-500/10 text-green-400' :
+                                  completion.overall_score >= 60 ? 'bg-accent/10 text-accent' :
+                                  completion.overall_score >= 40 ? 'bg-yellow-500/10 text-yellow-400' :
+                                  'bg-red-500/10 text-red-400'
+                                }`}>
+                                  {completion.overall_score}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                                  completion.score_band === 'AI-Native' ? 'bg-green-500/10 text-green-400' :
+                                  completion.score_band === 'AI-Ready' ? 'bg-accent/10 text-accent' :
+                                  completion.score_band === 'AI-Curious' ? 'bg-yellow-500/10 text-yellow-400' :
+                                  'bg-red-500/10 text-red-400'
+                                }`}>
+                                  {completion.score_band || 'Unknown'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {recentSends.filter(s => ['partial', 'pending', 'sending'].includes(s.status)).length > 0 && (
               <div>
                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-yellow-400">

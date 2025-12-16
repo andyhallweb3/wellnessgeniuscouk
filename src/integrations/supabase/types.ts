@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_readiness_completions: {
+        Row: {
+          company: string | null
+          company_size: string | null
+          completed_at: string
+          data_score: number | null
+          email: string
+          id: string
+          industry: string | null
+          ip_address: string | null
+          leadership_score: number | null
+          name: string | null
+          overall_score: number
+          people_score: number | null
+          process_score: number | null
+          risk_score: number | null
+          role: string | null
+          score_band: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          company?: string | null
+          company_size?: string | null
+          completed_at?: string
+          data_score?: number | null
+          email: string
+          id?: string
+          industry?: string | null
+          ip_address?: string | null
+          leadership_score?: number | null
+          name?: string | null
+          overall_score: number
+          people_score?: number | null
+          process_score?: number | null
+          risk_score?: number | null
+          role?: string | null
+          score_band?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          company?: string | null
+          company_size?: string | null
+          completed_at?: string
+          data_score?: number | null
+          email?: string
+          id?: string
+          industry?: string | null
+          ip_address?: string | null
+          leadership_score?: number | null
+          name?: string | null
+          overall_score?: number
+          people_score?: number | null
+          process_score?: number | null
+          risk_score?: number | null
+          role?: string | null
+          score_band?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       articles: {
         Row: {
           ai_commercial_angle: string | null
