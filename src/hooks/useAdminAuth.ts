@@ -164,6 +164,52 @@ export function useAdminAuth() {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    setState(prev => ({ ...prev, error: null, isLoading: true }));
+    
+    try {
+      const redirectUrl = `${window.location.origin}/news/admin?reset=true`;
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) {
+        setState(prev => ({ ...prev, error: error.message, isLoading: false }));
+        return { error };
+      }
+
+      setState(prev => ({ ...prev, isLoading: false }));
+      return { error: null };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Password reset failed';
+      setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
+      return { error: { message: errorMessage } };
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    setState(prev => ({ ...prev, error: null, isLoading: true }));
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        setState(prev => ({ ...prev, error: error.message, isLoading: false }));
+        return { error };
+      }
+
+      setState(prev => ({ ...prev, isLoading: false }));
+      return { error: null };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Password update failed';
+      setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
+      return { error: { message: errorMessage } };
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setState({
@@ -187,6 +233,8 @@ export function useAdminAuth() {
     signIn,
     signUp,
     signOut,
+    resetPassword,
+    updatePassword,
     getAuthHeaders,
     isAuthenticated: !!state.user && state.isAdmin,
   };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -82,14 +82,20 @@ interface Subscriber {
 
 const NewsletterAdmin = () => {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const isResetMode = searchParams.get('reset') === 'true';
+  
   const { 
     user, 
+    session,
     isAdmin, 
     isLoading: authLoading, 
     isAuthenticated, 
     signIn, 
     signUp,
     signOut, 
+    resetPassword,
+    updatePassword,
     getAuthHeaders,
     error: authError 
   } = useAdminAuth();
@@ -97,8 +103,16 @@ const NewsletterAdmin = () => {
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot' | 'reset'>('login');
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+
+  // Check if user arrived via password reset link
+  useEffect(() => {
+    if (isResetMode && session && !isAdmin) {
+      setAuthMode('reset');
+    }
+  }, [isResetMode, session, isAdmin]);
   
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -255,12 +269,100 @@ const NewsletterAdmin = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = emailInput.trim();
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await resetPassword(email);
+    
+    if (error) {
+      toast({
+        title: "Request Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResetEmailSent(true);
+    toast({
+      title: "Reset Email Sent",
+      description: "Check your email for a password reset link.",
+    });
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const password = passwordInput.trim();
+    const confirmPassword = confirmPasswordInput.trim();
+
+    if (!password || !confirmPassword) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Weak Password",
+        description: "Password must be at least 6 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await updatePassword(password);
+    
+    if (error) {
+      toast({
+        title: "Reset Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Password Updated",
+      description: "Your password has been changed. Please sign in.",
+    });
+
+    // Clear form and redirect to login
+    setPasswordInput("");
+    setConfirmPasswordInput("");
+    setAuthMode('login');
+    await signOut();
+    window.history.replaceState({}, '', '/news/admin');
+  };
+
   const handleLogout = async () => {
     await signOut();
     setEmailInput("");
     setPasswordInput("");
     setConfirmPasswordInput("");
     setShowEmailConfirmation(false);
+    setResetEmailSent(false);
+    setAuthMode('login');
     toast({
       title: "Logged Out",
       description: "Admin session ended.",
@@ -898,8 +1000,170 @@ const NewsletterAdmin = () => {
     );
   }
 
-  // Show login/signup form if not authenticated
+  // Show password reset form (when user clicked reset link)
+  if (authMode === 'reset' && session) {
+    return (
+      <div className="min-h-screen bg-background dark">
+        <Header />
+        <main className="pt-24 lg:pt-32 pb-20">
+          <section className="section-padding">
+            <div className="container-wide max-w-md mx-auto">
+              <div className="card-glass p-8 text-center">
+                <div className="p-4 rounded-full bg-accent/10 w-fit mx-auto mb-6">
+                  <Lock className="h-8 w-8 text-accent" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">Set New Password</h1>
+                <p className="text-muted-foreground mb-6">
+                  Enter your new password below.
+                </p>
+                {authError && (
+                  <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                    {authError}
+                  </div>
+                )}
+                <form onSubmit={handlePasswordReset} className="space-y-4">
+                  <Input
+                    type="password"
+                    placeholder="New password (min 6 characters)"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    className="bg-secondary border-border"
+                    autoComplete="new-password"
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmPasswordInput}
+                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                    className="bg-secondary border-border"
+                    autoComplete="new-password"
+                  />
+                  <Button type="submit" variant="accent" className="w-full" disabled={authLoading}>
+                    {authLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating password...
+                      </>
+                    ) : (
+                      'Update Password'
+                    )}
+                  </Button>
+                </form>
+                <Link 
+                  to="/" 
+                  className="inline-block mt-4 text-sm text-muted-foreground hover:text-accent transition-colors"
+                >
+                  ← Back to Home
+                </Link>
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show login/signup/forgot form if not authenticated
   if (!isAuthenticated) {
+    // Password reset email sent confirmation
+    if (resetEmailSent) {
+      return (
+        <div className="min-h-screen bg-background dark">
+          <Header />
+          <main className="pt-24 lg:pt-32 pb-20">
+            <section className="section-padding">
+              <div className="container-wide max-w-md mx-auto">
+                <div className="card-glass p-8 text-center">
+                  <div className="p-4 rounded-full bg-green-500/10 w-fit mx-auto mb-6">
+                    <Mail className="h-8 w-8 text-green-400" />
+                  </div>
+                  <h1 className="text-2xl font-bold mb-2">Check Your Email</h1>
+                  <p className="text-muted-foreground mb-6">
+                    We've sent a password reset link to <strong className="text-foreground">{emailInput}</strong>. 
+                    Click the link in the email to reset your password.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setResetEmailSent(false);
+                      setAuthMode('login');
+                    }}
+                    className="w-full"
+                  >
+                    Back to Sign In
+                  </Button>
+                  <Link 
+                    to="/" 
+                    className="inline-block mt-4 text-sm text-muted-foreground hover:text-accent transition-colors"
+                  >
+                    ← Back to Home
+                  </Link>
+                </div>
+              </div>
+            </section>
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
+    // Forgot password form
+    if (authMode === 'forgot') {
+      return (
+        <div className="min-h-screen bg-background dark">
+          <Header />
+          <main className="pt-24 lg:pt-32 pb-20">
+            <section className="section-padding">
+              <div className="container-wide max-w-md mx-auto">
+                <div className="card-glass p-8 text-center">
+                  <div className="p-4 rounded-full bg-accent/10 w-fit mx-auto mb-6">
+                    <Mail className="h-8 w-8 text-accent" />
+                  </div>
+                  <h1 className="text-2xl font-bold mb-2">Reset Password</h1>
+                  <p className="text-muted-foreground mb-6">
+                    Enter your email address and we'll send you a link to reset your password.
+                  </p>
+                  {authError && (
+                    <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                      {authError}
+                    </div>
+                  )}
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <Input
+                      type="email"
+                      placeholder="Email address"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      className="bg-secondary border-border"
+                      autoComplete="email"
+                    />
+                    <Button type="submit" variant="accent" className="w-full" disabled={authLoading}>
+                      {authLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        'Send Reset Link'
+                      )}
+                    </Button>
+                  </form>
+                  <button 
+                    onClick={() => setAuthMode('login')}
+                    className="inline-block mt-4 text-sm text-muted-foreground hover:text-accent transition-colors"
+                  >
+                    ← Back to Sign In
+                  </button>
+                </div>
+              </div>
+            </section>
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-background dark">
         <Header />
@@ -977,6 +1241,13 @@ const NewsletterAdmin = () => {
                         'Sign In'
                       )}
                     </Button>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('forgot')}
+                      className="text-sm text-muted-foreground hover:text-accent transition-colors"
+                    >
+                      Forgot your password?
+                    </button>
                   </form>
                 ) : (
                   <form onSubmit={handleSignUp} className="space-y-4">
