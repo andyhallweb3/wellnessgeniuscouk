@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.manage-readiness-completions]
 verify_jwt = false
+
+[functions.send-newsletter-confirmation]
+verify_jwt = false
