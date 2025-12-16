@@ -360,9 +360,10 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Wellness Genius <hello@news.wellnessgenius.co.uk>",
+        from: "Wellness Genius <reports@news.wellnessgenius.co.uk>",
+        reply_to: "andy@wellnessgenius.co.uk",
         to: [userInfo.email],
-        subject: `Your AI Readiness Score: ${overallScore}/100 — ${scoreBand.label}`,
+        subject: `Your AI Readiness Report from Wellness Genius`,
         html: emailHtml,
       }),
     });
