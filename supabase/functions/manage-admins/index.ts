@@ -30,24 +30,23 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 
-    // Create client with user's JWT to verify identity
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    // Extract token and verify user identity
+    const token = authHeader.replace('Bearer ', '');
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    const { data: { user }, error: userError } = await serviceClient.auth.getUser(token);
     if (userError || !user) {
+      console.log("JWT validation failed:", userError?.message);
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    // Use service role client for admin operations
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    // Use service role client for admin operations (already created above)
+    const adminClient = serviceClient;
 
     // Check if requesting user is admin
     const { data: roleCheck } = await adminClient
