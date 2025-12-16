@@ -1686,6 +1686,16 @@ const NewsletterAdmin = () => {
                 </h2>
                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   <Button 
+                    onClick={() => fetchSubscribers()} 
+                    variant="ghost" 
+                    size="sm" 
+                    className="gap-2"
+                    disabled={loadingSubscribers}
+                  >
+                    <RefreshCw size={16} className={loadingSubscribers ? 'animate-spin' : ''} />
+                    Refresh
+                  </Button>
+                  <Button 
                     onClick={() => setShowBulkImportModal(true)} 
                     variant="secondary" 
                     size="sm" 
