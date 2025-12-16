@@ -28,6 +28,50 @@ function getExtension(contentType: string): string {
   return map[contentType] || 'jpg';
 }
 
+// SSRF protection: validate URLs before fetching
+function isAllowedUrl(urlString: string): { allowed: boolean; reason?: string } {
+  const url = new URL(urlString);
+  
+  // Block non-HTTP(S) protocols
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    return { allowed: false, reason: 'Invalid protocol' };
+  }
+  
+  // Block cloud metadata endpoints
+  const blockedHosts = [
+    '169.254.169.254',        // AWS/Azure metadata
+    '169.254.170.2',          // AWS ECS metadata  
+    'metadata.google.internal', // GCP metadata
+    'metadata',
+  ];
+  
+  if (blockedHosts.some(blocked => url.hostname === blocked || url.hostname.endsWith('.' + blocked))) {
+    return { allowed: false, reason: 'Blocked hostname' };
+  }
+  
+  // Block private IP ranges
+  const hostname = url.hostname;
+  const privateIPv4Patterns = [
+    /^10\./,                    // 10.0.0.0/8
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16.0.0/12
+    /^192\.168\./,              // 192.168.0.0/16
+    /^127\./,                   // 127.0.0.0/8 (loopback)
+    /^0\./,                     // 0.0.0.0/8
+    /^169\.254\./,              // 169.254.0.0/16 (link-local)
+  ];
+  
+  if (privateIPv4Patterns.some(pattern => pattern.test(hostname))) {
+    return { allowed: false, reason: 'Private IP address not allowed' };
+  }
+  
+  // Block localhost variants
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+    return { allowed: false, reason: 'Localhost not allowed' };
+  }
+  
+  return { allowed: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -59,6 +103,16 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Invalid URL' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // SSRF protection: validate destination before fetching
+    const validation = isAllowedUrl(imageUrl);
+    if (!validation.allowed) {
+      console.warn(`Blocked SSRF attempt: ${imageUrl.substring(0, 80)} - ${validation.reason}`);
+      return new Response(
+        JSON.stringify({ error: validation.reason || 'URL not allowed' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
