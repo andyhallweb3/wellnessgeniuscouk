@@ -386,15 +386,26 @@ const LatestNews = () => {
                   </div>
                   
                   {(() => {
-                    const techTrends = sortedNews.filter(item => 
-                      item.category === "Technology" || 
-                      item.category === "AI" ||
-                      item.business_lens === "technology_enablement" ||
-                      item.title.toLowerCase().includes("tech") ||
-                      item.title.toLowerCase().includes("digital") ||
-                      item.title.toLowerCase().includes("app") ||
-                      item.title.toLowerCase().includes("platform")
-                    ).slice(0, 4);
+                    // Filter for wellness/fitness tech specifically
+                    const titleLower = (t: string) => t.toLowerCase();
+                    const techTrends = sortedNews.filter(item => {
+                      const title = titleLower(item.title);
+                      const summary = titleLower(item.summary);
+                      const isWellnessFitnessCategory = ["Wellness", "Fitness", "Corporate Wellness"].includes(item.category);
+                      const hasTechKeywords = 
+                        title.includes("tech") || title.includes("digital") || 
+                        title.includes("app") || title.includes("platform") ||
+                        title.includes("ai") || title.includes("wearable") ||
+                        title.includes("software") || title.includes("data") ||
+                        summary.includes("technology") || summary.includes("digital");
+                      const isTechWithWellnessKeywords = 
+                        (item.category === "Technology" || item.category === "AI") &&
+                        (title.includes("wellness") || title.includes("fitness") || 
+                         title.includes("health") || title.includes("gym") ||
+                         summary.includes("wellness") || summary.includes("fitness"));
+                      
+                      return (isWellnessFitnessCategory && hasTechKeywords) || isTechWithWellnessKeywords;
+                    }).slice(0, 4);
 
                     if (techTrends.length === 0) return null;
 
