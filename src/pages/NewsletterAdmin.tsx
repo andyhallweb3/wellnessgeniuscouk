@@ -43,7 +43,9 @@ import {
   ShieldX,
   Activity,
   TrendingUp,
-  Sparkles
+  Sparkles,
+  Save,
+  FolderOpen
 } from "lucide-react";
 import {
   Dialog,
@@ -186,7 +188,18 @@ const NewsletterAdmin = () => {
   const [newsCategoryFilter, setNewsCategoryFilter] = useState<string>('all');
   const [newsDaysBack, setNewsDaysBack] = useState(7);
 
-  // Admin user management state
+  // Newsletter templates state
+  interface NewsletterTemplate {
+    id: string;
+    name: string;
+    article_ids: string[];
+    created_at: string;
+  }
+  const [templates, setTemplates] = useState<NewsletterTemplate[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [showSaveTemplateInput, setShowSaveTemplateInput] = useState(false);
+
   interface AdminUser {
     id: string;
     email: string;
@@ -291,6 +304,7 @@ const NewsletterAdmin = () => {
       fetchAdminUsers();
       fetchReadinessCompletions();
       fetchBlogPosts();
+      fetchTemplates();
     }
   }, [isAuthenticated]);
 
@@ -1049,6 +1063,87 @@ const NewsletterAdmin = () => {
       });
     } finally {
       setLoadingNews(false);
+    }
+  };
+
+  const fetchTemplates = async () => {
+    setLoadingTemplates(true);
+    try {
+      const { data, error } = await supabase
+        .from('newsletter_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Failed to fetch templates:', error);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  const saveTemplate = async () => {
+    if (!templateName.trim() || selectedArticleIds.length === 0) {
+      toast({
+        title: "Cannot Save",
+        description: "Please enter a name and select at least one article",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('newsletter_templates')
+        .insert({ name: templateName.trim(), article_ids: selectedArticleIds });
+
+      if (error) throw error;
+      
+      toast({
+        title: "Template Saved",
+        description: `"${templateName}" saved with ${selectedArticleIds.length} articles`,
+      });
+      setTemplateName('');
+      setShowSaveTemplateInput(false);
+      fetchTemplates();
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "Failed to save template",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadTemplate = (template: NewsletterTemplate) => {
+    setSelectedArticleIds(template.article_ids);
+    toast({
+      title: "Template Loaded",
+      description: `Loaded "${template.name}" with ${template.article_ids.length} articles`,
+    });
+  };
+
+  const deleteTemplate = async (id: string, name: string) => {
+    try {
+      const { error } = await supabase
+        .from('newsletter_templates')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Template Deleted",
+        description: `"${name}" has been deleted`,
+      });
+      fetchTemplates();
+    } catch (error) {
+      toast({
+        title: "Delete Failed",
+        description: error instanceof Error ? error.message : "Failed to delete template",
+        variant: "destructive",
+      });
     }
   };
 
@@ -2152,6 +2247,74 @@ const NewsletterAdmin = () => {
                     onReorder={(reordered) => setSelectedArticleIds(reordered.map(a => a.id))}
                     onRemove={(id) => setSelectedArticleIds(selectedArticleIds.filter(i => i !== id))}
                   />
+
+                  {/* Save/Load Templates */}
+                  {selectedArticleIds.length > 0 && (
+                    <div className="flex items-center gap-2 mt-3">
+                      {showSaveTemplateInput ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            placeholder="Template name..."
+                            value={templateName}
+                            onChange={(e) => setTemplateName(e.target.value)}
+                            className="max-w-xs"
+                            onKeyDown={(e) => e.key === 'Enter' && saveTemplate()}
+                          />
+                          <Button size="sm" onClick={saveTemplate} className="gap-1">
+                            <Save size={14} />
+                            Save
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setShowSaveTemplateInput(false)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => setShowSaveTemplateInput(true)}
+                          className="gap-1"
+                        >
+                          <Save size={14} />
+                          Save as Template
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Saved Templates */}
+                  {templates.length > 0 && (
+                    <div className="mt-4 p-3 bg-secondary/30 border border-border rounded-lg">
+                      <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                        <FolderOpen size={14} />
+                        Saved Templates ({templates.length})
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {templates.map(template => (
+                          <div 
+                            key={template.id}
+                            className="flex items-center gap-1 px-2 py-1 bg-background border border-border rounded-lg text-sm"
+                          >
+                            <button
+                              onClick={() => loadTemplate(template)}
+                              className="hover:text-accent"
+                              title={`Load "${template.name}" (${template.article_ids.length} articles)`}
+                            >
+                              {template.name}
+                            </button>
+                            <span className="text-muted-foreground text-xs">({template.article_ids.length})</span>
+                            <button
+                              onClick={() => deleteTemplate(template.id, template.name)}
+                              className="text-muted-foreground hover:text-destructive ml-1"
+                              title="Delete template"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
