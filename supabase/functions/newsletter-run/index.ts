@@ -834,115 +834,65 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Newsletter run - preview: ${previewOnly}, syncFromRss: ${syncFromRss}`);
+    console.log(`Newsletter run - preview: ${previewOnly}`);
 
-    // Optionally sync articles from RSS cache with category diversity
-    if (syncFromRss) {
-      console.log('Syncing articles from RSS cache with category diversity...');
-      
-      const categories = ['AI', 'Wellness', 'Fitness', 'Technology', 'Investment', 'Hospitality', 'Corporate Wellness'];
-      const articlesPerCategory = 10; // Increased from 4 to capture more fresh content
-      let totalSynced = 0;
-
-      for (const category of categories) {
-        const { data: rssItems } = await supabase
-          .from('rss_news_cache')
-          .select('*')
-          .eq('category', category)
-          .order('published_date', { ascending: false })
-          .limit(articlesPerCategory);
-
-        if (rssItems && rssItems.length > 0) {
-          for (const item of rssItems) {
-            await supabase
-              .from('articles')
-              .upsert({
-                title: item.title,
-                source: item.source_name,
-                url: item.source_url,
-                published_at: item.published_date,
-                category: item.category,
-                excerpt: item.summary,
-                processed: false,
-              }, { onConflict: 'url' });
-          }
-          totalSynced += rssItems.length;
-          console.log(`Synced ${rssItems.length} ${category} articles`);
-        }
-      }
-      console.log(`Total synced: ${totalSynced} articles across ${categories.length} categories`);
-    }
-
-    // SCORE-BASED SELECTION: Prioritize articles with score >= 55 (lowered threshold for more fresh content)
-    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    // ========================================
+    // ARTICLE SELECTION (directly from RSS cache - the news page)
+    // ========================================
     
-    // First, try to get scored articles (score >= 55, unprocessed, from last 3 days for freshness)
-    const { data: scoredArticles } = await supabase
-      .from('articles')
-      .select('*')
-      .eq('processed', false)
-      .gte('score_total', 55)
-      .gte('published_at', threeDaysAgo)
-      .order('score_total', { ascending: false })
-      .limit(8);
-
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const targetCategories = ['AI', 'Wellness', 'Fitness', 'Technology', 'Investment', 'Hospitality', 'Corporate Wellness'];
+    
+    console.log('Fetching articles directly from rss_news_cache (news page)...');
+    
+    // Fetch recent articles from rss_news_cache with category diversity
     let articles: Article[] = [];
-
-    if (scoredArticles && scoredArticles.length >= 5) {
-      // Use scored articles - we have enough qualified content
-      articles = scoredArticles.slice(0, 8);
-      console.log(`Using ${articles.length} score-qualified articles (score >= 55, last 3 days)`);
-    } else {
-      // Fallback: mix scored with category-diverse unscored articles
-      console.log(`Only ${scoredArticles?.length || 0} scored articles found, falling back to category diversity`);
+    
+    for (const category of targetCategories) {
+      if (articles.length >= 8) break;
       
-      const targetCategories = ['AI', 'Wellness', 'Fitness', 'Technology', 'Investment', 'Hospitality', 'Corporate Wellness'];
-      const articlesPerCategoryForNewsletter = 2;
-      let allArticles: Article[] = scoredArticles || [];
-
-      // Add category-diverse articles to fill gaps
-      for (const category of targetCategories) {
-        if (allArticles.length >= 8) break;
-        
-        const existingInCategory = allArticles.filter(a => a.category === category).length;
-        if (existingInCategory >= articlesPerCategoryForNewsletter) continue;
-
-        const needed = articlesPerCategoryForNewsletter - existingInCategory;
-        const existingIds = allArticles.map(a => a.id);
-        
-        const { data: categoryArticles } = await supabase
-          .from('articles')
-          .select('*')
-          .eq('processed', false)
-          .eq('category', category)
-          .not('id', 'in', `(${existingIds.join(',')})`)
-          .gte('published_at', oneWeekAgo)
-          .order('score_total', { ascending: false, nullsFirst: false })
-          .limit(needed);
-
-        if (categoryArticles && categoryArticles.length > 0) {
-          allArticles = [...allArticles, ...categoryArticles];
-          console.log(`Added ${categoryArticles.length} ${category} articles`);
-        }
+      const { data: categoryArticles, error } = await supabase
+        .from('rss_news_cache')
+        .select('*')
+        .eq('category', category)
+        .gte('published_date', threeDaysAgo)
+        .order('published_date', { ascending: false })
+        .limit(2);
+      
+      if (error) {
+        console.error(`Error fetching ${category} articles:`, error);
+        continue;
       }
-
-      // Sort by score (nulls last), then by date
-      articles = allArticles
-        .sort((a, b) => {
-          const scoreA = (a as any).score_total || 0;
-          const scoreB = (b as any).score_total || 0;
-          if (scoreB !== scoreA) return scoreB - scoreA;
-          return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
-        })
-        .slice(0, 8);
+      
+      if (categoryArticles && categoryArticles.length > 0) {
+        // Map rss_news_cache format to Article format
+        const mapped: Article[] = categoryArticles.map(item => ({
+          id: item.id,
+          title: item.title,
+          ai_summary: item.summary,
+          source: item.source_name,
+          url: item.source_url,
+          category: item.category,
+          published_at: item.published_date,
+          business_lens: item.business_lens,
+          ai_why_it_matters: null,
+          ai_commercial_angle: null,
+          processed: false,
+          created_at: item.created_at,
+          excerpt: item.summary,
+          content: null
+        }));
+        articles = [...articles, ...mapped];
+        console.log(`Added ${categoryArticles.length} ${category} articles from news cache`);
+      }
     }
-
-    console.log(`Selected ${articles.length} articles for newsletter`);
-    if (articles.length > 0) {
-      const avgScore = articles.reduce((sum, a) => sum + ((a as any).score_total || 0), 0) / articles.length;
-      console.log(`Average score: ${avgScore.toFixed(1)}`);
-    }
+    
+    // Sort by date (most recent first) and limit to 8
+    articles = articles
+      .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+      .slice(0, 8);
+    
+    console.log(`Selected ${articles.length} articles from news page for newsletter`);
 
     if (articles.length === 0) {
       return new Response(
