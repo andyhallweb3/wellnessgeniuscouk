@@ -30,6 +30,7 @@ const RSS_FEEDS: RSSFeed[] = [
   // === OPERATOR & B2B FOCUSED (Priority Sources) ===
   
   // Fitness Industry Trade (Gyms, Health Clubs, Studios)
+  { url: 'https://www.hcmmag.com/feed/', category: 'Fitness', sourceName: 'HCM Magazine' },
   { url: 'https://clubindustry.com/rss.xml', category: 'Fitness', sourceName: 'Club Industry' },
   { url: 'https://athletechnews.com/feed/', category: 'Fitness', sourceName: 'Athletech News' },
   { url: 'https://www.athleticbusiness.com/rss', category: 'Fitness', sourceName: 'Athletic Business' },
