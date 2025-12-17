@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNewsletter } from "@/hooks/useNewsletter";
 import { logger } from "@/lib/logger";
-import { ExternalLink, Calendar, Mail, Rss, RefreshCw, Clock } from "lucide-react";
+import { ExternalLink, Calendar, Mail, Rss, RefreshCw, Clock, Building2, Package, TrendingUp, Users, Zap, DollarSign } from "lucide-react";
 
 interface NewsItem {
   id: string;
@@ -21,54 +21,112 @@ interface NewsItem {
   business_lens?: string | null;
 }
 
-// Business lens configuration with colors and labels
-const BUSINESS_LENSES: Record<string, { label: string; color: string; bg: string }> = {
+// Operator-centric business lenses with icons and styling
+const BUSINESS_LENSES: Record<string, { label: string; color: string; bg: string; icon: typeof TrendingUp }> = {
   revenue_growth: { 
-    label: "Revenue Growth", 
+    label: "Revenue & Growth", 
     color: "text-emerald-400", 
-    bg: "bg-emerald-500/20 border-emerald-500/30" 
+    bg: "bg-emerald-500/20 border-emerald-500/30",
+    icon: TrendingUp
   },
   cost_efficiency: { 
-    label: "Cost & Efficiency", 
+    label: "Operational Efficiency", 
     color: "text-blue-400", 
-    bg: "bg-blue-500/20 border-blue-500/30" 
+    bg: "bg-blue-500/20 border-blue-500/30",
+    icon: Zap
   },
   retention_engagement: { 
-    label: "Retention & Engagement", 
+    label: "Member Behaviour", 
     color: "text-purple-400", 
-    bg: "bg-purple-500/20 border-purple-500/30" 
+    bg: "bg-purple-500/20 border-purple-500/30",
+    icon: Users
   },
   risk_regulation: { 
     label: "Risk & Regulation", 
     color: "text-orange-400", 
-    bg: "bg-orange-500/20 border-orange-500/30" 
+    bg: "bg-orange-500/20 border-orange-500/30",
+    icon: Building2
   },
   investment_ma: { 
     label: "Investment & M&A", 
     color: "text-amber-400", 
-    bg: "bg-amber-500/20 border-amber-500/30" 
+    bg: "bg-amber-500/20 border-amber-500/30",
+    icon: DollarSign
   },
   technology_enablement: { 
-    label: "Technology Enablement", 
+    label: "AI & Automation", 
     color: "text-cyan-400", 
-    bg: "bg-cyan-500/20 border-cyan-500/30" 
+    bg: "bg-cyan-500/20 border-cyan-500/30",
+    icon: Zap
   },
 };
+
+// Audience tags for who should care
+const AUDIENCE_TAGS: Record<string, { label: string; icon: typeof Building2; color: string }> = {
+  operator: { label: "Operators", icon: Building2, color: "text-emerald-400" },
+  supplier: { label: "Suppliers", icon: Package, color: "text-blue-400" },
+  investor: { label: "Investors", icon: DollarSign, color: "text-amber-400" },
+};
+
+function getAudienceTag(item: NewsItem): keyof typeof AUDIENCE_TAGS {
+  const titleLower = item.title.toLowerCase();
+  const summaryLower = item.summary.toLowerCase();
+  
+  // Investment signals
+  if (item.business_lens === "investment_ma" || item.category === "Investment" ||
+      titleLower.includes("funding") || titleLower.includes("acquisition") ||
+      titleLower.includes("ipo") || titleLower.includes("valuation") ||
+      titleLower.includes("series a") || titleLower.includes("series b")) {
+    return "investor";
+  }
+  
+  // Supplier/platform signals
+  if (titleLower.includes("platform") || titleLower.includes("software") ||
+      titleLower.includes("launches") || titleLower.includes("partnership") ||
+      summaryLower.includes("vendor") || summaryLower.includes("supplier")) {
+    return "supplier";
+  }
+  
+  // Default to operator
+  return "operator";
+}
 
 function BusinessLensPill({ lens }: { lens: string | null | undefined }) {
   if (!lens || !BUSINESS_LENSES[lens]) return null;
   const config = BUSINESS_LENSES[lens];
+  const Icon = config.icon;
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.bg} ${config.color}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.bg} ${config.color}`}>
+      <Icon size={12} />
       {config.label}
     </span>
   );
 }
 
-const categories = ["All", "AI", "Wellness", "Fitness", "Hospitality", "Corporate Wellness", "Technology", "Investment"];
+function AudienceTag({ audience }: { audience: keyof typeof AUDIENCE_TAGS }) {
+  const config = AUDIENCE_TAGS[audience];
+  const Icon = config.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs ${config.color}`}>
+      <Icon size={12} />
+      {config.label}
+    </span>
+  );
+}
+
+// Operator-centric filter categories
+const FILTER_CATEGORIES = [
+  { key: "All", label: "All Stories" },
+  { key: "operators", label: "For Operators" },
+  { key: "revenue", label: "Revenue & Growth" },
+  { key: "efficiency", label: "Operational Efficiency" },
+  { key: "ai", label: "AI & Automation" },
+  { key: "member", label: "Member Trends" },
+  { key: "investment", label: "Investment Signals" },
+  { key: "supplier", label: "Supplier Moves" },
+];
 
 function cleanText(raw: string) {
-  // Defensive UI-side cleanup in case any feed includes HTML in title/summary
   const withoutTags = raw.replace(/<[^>]*>/g, " ");
   const el = document.createElement("textarea");
   el.innerHTML = withoutTags;
@@ -77,17 +135,98 @@ function cleanText(raw: string) {
 
 function getProxiedImageUrl(imageUrl: string | null): string | null {
   if (!imageUrl) return null;
-  // Use the image proxy edge function to bypass hotlinking restrictions
   const proxyBase = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy`;
   return `${proxyBase}?url=${encodeURIComponent(imageUrl)}`;
+}
+
+// Calculate operator relevance score
+function calculateRelevanceScore(item: NewsItem): number {
+  let score = 0;
+  const titleLower = item.title.toLowerCase();
+  const summaryLower = item.summary.toLowerCase();
+  
+  // Business lens scoring
+  if (item.business_lens === "revenue_growth") score += 10;
+  if (item.business_lens === "cost_efficiency") score += 8;
+  if (item.business_lens === "retention_engagement") score += 8;
+  if (item.business_lens === "investment_ma") score += 6;
+  if (item.business_lens === "technology_enablement") score += 6;
+  if (item.business_lens === "risk_regulation") score += 4;
+  
+  // Operator keywords
+  if (titleLower.includes("gym") || titleLower.includes("studio") || 
+      titleLower.includes("operator") || titleLower.includes("club")) score += 8;
+  if (titleLower.includes("member") || titleLower.includes("retention")) score += 6;
+  if (titleLower.includes("revenue") || titleLower.includes("margin")) score += 6;
+  
+  // Category boost
+  if (item.category === "Fitness") score += 5;
+  if (item.category === "Wellness") score += 4;
+  if (item.category === "Investment") score += 3;
+  
+  // Penalize generic healthcare/politics
+  if (titleLower.includes("politics") || titleLower.includes("election")) score -= 4;
+  if (titleLower.includes("hospital") && !titleLower.includes("hospitality")) score -= 2;
+  
+  // Recency boost (within 3 days)
+  const daysSincePublished = (Date.now() - new Date(item.published_date).getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSincePublished <= 3) score += 3;
+  
+  return score;
+}
+
+// Filter function based on selected category
+function filterByCategory(items: NewsItem[], category: string): NewsItem[] {
+  if (category === "All") return items;
+  
+  return items.filter(item => {
+    const titleLower = item.title.toLowerCase();
+    const summaryLower = item.summary.toLowerCase();
+    
+    switch (category) {
+      case "operators":
+        return item.category === "Fitness" || 
+               titleLower.includes("gym") || titleLower.includes("studio") ||
+               titleLower.includes("operator") || titleLower.includes("club") ||
+               titleLower.includes("facility") || titleLower.includes("member");
+      case "revenue":
+        return item.business_lens === "revenue_growth" ||
+               titleLower.includes("revenue") || titleLower.includes("growth") ||
+               titleLower.includes("pricing") || titleLower.includes("sales");
+      case "efficiency":
+        return item.business_lens === "cost_efficiency" ||
+               titleLower.includes("cost") || titleLower.includes("efficiency") ||
+               titleLower.includes("operation") || titleLower.includes("staff");
+      case "ai":
+        return item.business_lens === "technology_enablement" ||
+               item.category === "AI" || item.category === "Technology" ||
+               titleLower.includes("ai") || titleLower.includes("automation") ||
+               titleLower.includes("tech");
+      case "member":
+        return item.business_lens === "retention_engagement" ||
+               titleLower.includes("member") || titleLower.includes("retention") ||
+               titleLower.includes("engagement") || titleLower.includes("behaviour");
+      case "investment":
+        return item.business_lens === "investment_ma" ||
+               item.category === "Investment" ||
+               titleLower.includes("funding") || titleLower.includes("acquisition") ||
+               titleLower.includes("investment") || titleLower.includes("valuation");
+      case "supplier":
+        return titleLower.includes("platform") || titleLower.includes("software") ||
+               titleLower.includes("partnership") || titleLower.includes("launches") ||
+               summaryLower.includes("vendor") || summaryLower.includes("supplier");
+      default:
+        return true;
+    }
+  });
 }
 
 const LatestNews = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [sortMode, setSortMode] = useState<"latest" | "popular">("popular");
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [sortMode, setSortMode] = useState<"relevant" | "latest">("relevant");
   const [error, setError] = useState<string | null>(null);
   const [cacheInfo, setCacheInfo] = useState<{ cached: boolean; age?: number } | null>(null);
   const { email, setEmail, isSubmitting, subscribe } = useNewsletter();
@@ -124,9 +263,8 @@ const LatestNews = () => {
   }, []);
 
   useEffect(() => {
-    document.title = "Wellness Genius Daily — AI & Wellness Industry Intelligence";
+    document.title = "Wellness Genius Daily — Operator Intelligence";
     
-    // Set Open Graph meta tags
     const setMeta = (property: string, content: string) => {
       let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
       if (!meta) {
@@ -137,8 +275,8 @@ const LatestNews = () => {
       meta.setAttribute('content', content);
     };
 
-    setMeta('og:title', 'Wellness Genius Daily — AI & Wellness Industry Intelligence');
-    setMeta('og:description', 'Curated weekly insight at the intersection of wellness, fitness, AI, and behaviour. No fluff. Just signal.');
+    setMeta('og:title', 'Wellness Genius Daily — Operator Intelligence');
+    setMeta('og:description', 'Weekly intelligence for wellness operators. Revenue signals, operational insights, and market moves that matter.');
     setMeta('og:image', 'https://www.wellnessgenius.co.uk/images/wellness-genius-news-og.png');
     setMeta('og:url', 'https://www.wellnessgenius.co.uk/news');
     setMeta('og:type', 'website');
@@ -146,18 +284,21 @@ const LatestNews = () => {
     fetchNews();
   }, [fetchNews]);
 
-  const filteredNews = activeCategory === "All" 
-    ? news 
-    : news.filter(item => item.category === activeCategory);
-
-  // Sort by mode - "popular" prioritizes diverse sources, "latest" is chronological
+  // Filter and sort
+  const filteredNews = filterByCategory(news, activeFilter);
+  
   const sortedNews = [...filteredNews].sort((a, b) => {
     if (sortMode === "latest") {
       return new Date(b.published_date).getTime() - new Date(a.published_date).getTime();
     }
-    // For "popular" - prioritize category diversity and source variety
-    return 0; // Keep original order which has category diversity from the backend
+    // Sort by operator relevance score
+    return calculateRelevanceScore(b) - calculateRelevanceScore(a);
   });
+
+  // Get top 3 signals for the week (highest relevance scores)
+  const topSignals = [...news]
+    .sort((a, b) => calculateRelevanceScore(b) - calculateRelevanceScore(a))
+    .slice(0, 3);
 
   const featuredNews = sortedNews[0];
 
@@ -169,50 +310,99 @@ const LatestNews = () => {
   return (
     <div className="min-h-screen bg-background dark">
       <Helmet>
-        <title>Wellness & Fitness Industry News | Wellness Genius</title>
-        <meta name="description" content="Curated news and insights for wellness operators, facility managers, and senior teams across fitness, hospitality, and corporate wellness." />
-        <meta name="keywords" content="wellness news, fitness industry, gym news, HCM, health club management, UK Active, Sport England, NHS fitness, PureGym, Xponential Fitness, The Gym Group, Huw Edwards, HCM Summit, Everyone Active, Les Mills, wellness technology, AI fitness, health tech, operator insights, boutique fitness, franchise gyms" />
-        <meta property="og:title" content="Wellness & Fitness Industry News | Wellness Genius" />
-        <meta property="og:description" content="Curated news and insights for wellness operators, facility managers, and senior teams across fitness, hospitality, and corporate wellness." />
+        <title>Operator Intelligence | Wellness Genius</title>
+        <meta name="description" content="Weekly intelligence for wellness operators. Revenue signals, operational insights, and market moves that matter for gyms, studios, and fitness facilities." />
+        <meta name="keywords" content="wellness operators, fitness industry intelligence, gym business news, HCM, health club management, UK Active, Sport England, operator insights, fitness revenue, gym operations, boutique fitness, franchise gyms, member retention" />
+        <meta property="og:title" content="Operator Intelligence | Wellness Genius" />
+        <meta property="og:description" content="Weekly intelligence for wellness operators. Revenue signals, operational insights, and market moves that matter." />
         <meta property="og:type" content="website" />
       </Helmet>
       <Header />
       
       <main className="pt-24 lg:pt-32">
         {/* Hero Section */}
-        <section className="section-padding pb-12">
+        <section className="section-padding pb-8">
           <div className="container-wide">
             <div className="max-w-3xl animate-fade-up">
               <span className="badge-tech mb-6">
                 <Rss size={14} className="mr-1" />
-                Weekly Digest • {dateRange}
+                Weekly Intelligence • {dateRange}
               </span>
               <h1 className="mb-6">
-                This Week in Wellness & AI
+                Operator Intelligence
               </h1>
               <p className="text-lg text-muted-foreground">
-                Curated news and insights for wellness operators, facility managers, 
-                and senior teams across fitness, hospitality, and corporate wellness.
+                What you need to think about this week — with clear commercial context.
+                Revenue signals, operational insights, and market moves that matter.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Category Filters */}
-        <section className="px-6 lg:px-12 pb-12">
+        {/* This Week's Top Signals */}
+        {!loading && !error && topSignals.length > 0 && activeFilter === "All" && (
+          <section className="px-6 lg:px-12 pb-12">
+            <div className="container-wide">
+              <div className="card-glass p-6 lg:p-8 border-accent/20">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-accent/20 border border-accent/30">
+                    <Zap className="w-5 h-5 text-accent" />
+                  </span>
+                  <div>
+                    <h2 className="text-xl font-heading">This Week&apos;s Top Signals</h2>
+                    <p className="text-sm text-muted-foreground">3 things operators should pay attention to</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  {topSignals.map((item, index) => (
+                    <a
+                      key={`signal-${item.id}`}
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-4 p-4 rounded-xl bg-background/50 hover:bg-background/80 border border-border/50 hover:border-accent/30 transition-all group"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-sm">
+                        {index + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          {item.business_lens && <BusinessLensPill lens={item.business_lens} />}
+                          <AudienceTag audience={getAudienceTag(item)} />
+                          <span className="text-xs text-muted-foreground">• {item.source_name}</span>
+                        </div>
+                        <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                          {cleanText(item.title)}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {item.summary}
+                        </p>
+                      </div>
+                      <ExternalLink size={16} className="flex-shrink-0 text-muted-foreground group-hover:text-accent mt-1" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Filter Tabs */}
+        <section className="px-6 lg:px-12 pb-8">
           <div className="container-wide">
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              {categories.map((category) => (
+              {FILTER_CATEGORIES.map((cat) => (
                 <button
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
+                  key={cat.key}
+                  onClick={() => setActiveFilter(cat.key)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                    activeCategory === category
+                    activeFilter === cat.key
                       ? "bg-accent text-accent-foreground"
                       : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"
                   }`}
                 >
-                  {category}
+                  {cat.label}
                 </button>
               ))}
               <button
@@ -229,14 +419,14 @@ const LatestNews = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1 bg-secondary rounded-full p-1">
                 <button
-                  onClick={() => setSortMode("popular")}
+                  onClick={() => setSortMode("relevant")}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                    sortMode === "popular"
+                    sortMode === "relevant"
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  Most Popular
+                  Most Relevant
                 </button>
                 <button
                   onClick={() => setSortMode("latest")}
@@ -294,12 +484,12 @@ const LatestNews = () => {
             <div className="container-wide">
               <div className="card-glass p-12 text-center">
                 <Rss size={48} className="mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-2xl font-heading mb-4">No News in This Category</h2>
+                <h2 className="text-2xl font-heading mb-4">No Stories Match This Filter</h2>
                 <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-                  Try selecting a different category or refresh the feed.
+                  Try a different filter or view all stories.
                 </p>
-                <Button variant="accent" onClick={() => setActiveCategory("All")}>
-                  View All News
+                <Button variant="accent" onClick={() => setActiveFilter("All")}>
+                  View All Stories
                 </Button>
               </div>
             </div>
@@ -307,23 +497,24 @@ const LatestNews = () => {
         ) : (
           <>
             {/* Featured News */}
-            {activeCategory === "All" && featuredNews && (
-              <section className="px-6 lg:px-12 pb-16">
+            {activeFilter === "All" && featuredNews && (
+              <section className="px-6 lg:px-12 pb-12">
                 <div className="container-wide">
                   <a 
                     href={featuredNews.source_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="card-tech p-8 lg:p-12 block group hover:border-accent/30 transition-colors"
+                    className="card-tech p-8 lg:p-10 block group hover:border-accent/30 transition-colors"
                   >
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-8">
+                    <div className="flex flex-col lg:flex-row lg:items-start gap-8">
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-3 mb-4">
                           {featuredNews.business_lens && (
                             <BusinessLensPill lens={featuredNews.business_lens} />
                           )}
+                          <AudienceTag audience={getAudienceTag(featuredNews)} />
                           <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                            Editor's Pick
+                            Top Story
                           </span>
                           <span className="text-xs text-muted-foreground">{featuredNews.source_name}</span>
                         </div>
@@ -340,9 +531,6 @@ const LatestNews = () => {
                               year: "numeric"
                             })}
                           </span>
-                          <span className="px-2 py-0.5 rounded bg-secondary text-xs">
-                            {featuredNews.category}
-                          </span>
                         </div>
                         <span className="inline-flex items-center gap-2 text-accent font-medium">
                           Read Full Article
@@ -350,7 +538,7 @@ const LatestNews = () => {
                         </span>
                       </div>
                       {featuredNews.image_url && (
-                        <div className="lg:w-80 h-48 lg:h-64 rounded-xl overflow-hidden bg-secondary">
+                        <div className="lg:w-80 h-48 lg:h-56 rounded-xl overflow-hidden bg-secondary flex-shrink-0">
                           <img 
                             src={getProxiedImageUrl(featuredNews.image_url) || ''}
                             alt={cleanText(featuredNews.title)}
@@ -368,252 +556,74 @@ const LatestNews = () => {
               </section>
             )}
 
-            {/* Wellness Tech Trends Section */}
-            {activeCategory === "All" && (
-              <section className="px-6 lg:px-12 pb-16">
-                <div className="container-wide">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-2xl font-heading mb-2 flex items-center gap-3">
-                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30">
-                          <svg className="w-5 h-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        </span>
-                        Wellness Tech Trends
-                      </h2>
-                      <p className="text-muted-foreground text-sm">
-                        Technology-driven insights shaping the future of wellness
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setActiveCategory("Technology")}
-                      className="text-sm text-accent hover:underline"
-                    >
-                      View all tech →
-                    </button>
-                  </div>
-                  
-                  {(() => {
-                    // Filter for wellness/fitness tech specifically
-                    const titleLower = (t: string) => t.toLowerCase();
-                    const techTrends = sortedNews.filter(item => {
-                      const title = titleLower(item.title);
-                      const summary = titleLower(item.summary);
-                      const isWellnessFitnessCategory = ["Wellness", "Fitness", "Corporate Wellness"].includes(item.category);
-                      const hasTechKeywords = 
-                        title.includes("tech") || title.includes("digital") || 
-                        title.includes("app") || title.includes("platform") ||
-                        title.includes("ai") || title.includes("wearable") ||
-                        title.includes("software") || title.includes("data") ||
-                        summary.includes("technology") || summary.includes("digital");
-                      const isTechWithWellnessKeywords = 
-                        (item.category === "Technology" || item.category === "AI") &&
-                        (title.includes("wellness") || title.includes("fitness") || 
-                         title.includes("health") || title.includes("gym") ||
-                         summary.includes("wellness") || summary.includes("fitness"));
-                      
-                      return (isWellnessFitnessCategory && hasTechKeywords) || isTechWithWellnessKeywords;
-                    }).slice(0, 4);
-
-                    if (techTrends.length === 0) return null;
-
-                    return (
-                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {techTrends.map((item, index) => (
-                          <a
-                            key={`trend-${item.id}`}
-                            href={item.source_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="card-glass p-4 group hover:border-teal-500/30 transition-colors animate-fade-up"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                          >
-                            {item.image_url && (
-                              <div className="h-28 rounded-lg overflow-hidden mb-3 -mx-1 -mt-1 bg-secondary">
-                                <img 
-                                  src={getProxiedImageUrl(item.image_url) || ''}
-                                  alt={cleanText(item.title)}
-                                  loading="lazy"
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="inline-block px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 text-xs font-medium border border-teal-500/20">
-                                {item.category}
-                              </span>
-                            </div>
-                            <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-teal-400 transition-colors">
-                              {cleanText(item.title)}
-                            </h3>
-                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                              {item.summary}
-                            </p>
-                          </a>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </section>
-            )}
-
-            {/* Fitness Industry News Section */}
-            {activeCategory === "All" && (
-              <section className="px-6 lg:px-12 pb-16">
-                <div className="container-wide">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-2xl font-heading mb-2 flex items-center gap-3">
-                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-orange-500/20 to-rose-500/20 border border-orange-500/30">
-                          <svg className="w-5 h-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                        </span>
-                        Fitness Industry News
-                      </h2>
-                      <p className="text-muted-foreground text-sm">
-                        Operator insights for gyms, studios, and fitness facilities
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setActiveCategory("Fitness")}
-                      className="text-sm text-accent hover:underline"
-                    >
-                      View all fitness →
-                    </button>
-                  </div>
-                  
-                  {(() => {
-                    const titleLower = (t: string) => t.toLowerCase();
-                    const fitnessNews = sortedNews.filter(item => {
-                      const title = titleLower(item.title);
-                      const summary = titleLower(item.summary);
-                      const isFitnessCategory = item.category === "Fitness";
-                      const hasOperatorKeywords = 
-                        title.includes("gym") || title.includes("studio") || 
-                        title.includes("club") || title.includes("operator") ||
-                        title.includes("member") || title.includes("facility") ||
-                        title.includes("boutique") || title.includes("franchise") ||
-                        summary.includes("gym") || summary.includes("studio") ||
-                        summary.includes("fitness club") || summary.includes("operator");
-                      const isBusinessLensRelevant = 
-                        item.business_lens === "revenue_growth" || 
-                        item.business_lens === "retention_engagement";
-                      
-                      return isFitnessCategory || hasOperatorKeywords || 
-                        (isBusinessLensRelevant && (title.includes("fitness") || summary.includes("fitness")));
-                    }).slice(0, 4);
-
-                    if (fitnessNews.length === 0) return null;
-
-                    return (
-                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {fitnessNews.map((item, index) => (
-                          <a
-                            key={`fitness-${item.id}`}
-                            href={item.source_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="card-glass p-4 group hover:border-orange-500/30 transition-colors animate-fade-up"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                          >
-                            {item.image_url && (
-                              <div className="h-28 rounded-lg overflow-hidden mb-3 -mx-1 -mt-1 bg-secondary">
-                                <img 
-                                  src={getProxiedImageUrl(item.image_url) || ''}
-                                  alt={cleanText(item.title)}
-                                  loading="lazy"
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="inline-block px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 text-xs font-medium border border-orange-500/20">
-                                {item.category}
-                              </span>
-                            </div>
-                            <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-orange-400 transition-colors">
-                              {cleanText(item.title)}
-                            </h3>
-                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                              {item.summary}
-                            </p>
-                          </a>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </section>
-            )}
-
             {/* News Grid */}
             <section className="px-6 lg:px-12 pb-20">
               <div className="container-wide">
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {sortedNews
-                    .slice(activeCategory === "All" ? 1 : 0)
-                    .map((item, index) => (
-                    <a
-                      key={item.id}
-                      href={item.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="card-tech p-6 flex flex-col animate-fade-up group hover:border-accent/30 transition-colors"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      {item.image_url && (
-                        <div className="h-40 rounded-lg overflow-hidden mb-4 -mx-2 -mt-2 bg-secondary">
-                          <img 
-                            src={getProxiedImageUrl(item.image_url) || ''}
-                            alt={cleanText(item.title)}
-                            loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).parentElement!.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-                      {item.business_lens && (
-                        <div className="mb-2">
-                          <BusinessLensPill lens={item.business_lens} />
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="inline-block px-3 py-1 rounded-full bg-secondary text-muted-foreground text-xs font-medium">
-                          {item.category}
-                        </span>
-                        <span className="text-xs text-muted-foreground">{item.source_name}</span>
-                      </div>
-                      <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">
-                        {cleanText(item.title)}
-                      </h3>
-                      <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">
-                        {item.summary}
-                      </p>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
-                        <span className="flex items-center gap-1.5">
-                          <Calendar size={12} />
-                          {new Date(item.published_date).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short"
-                          })}
-                        </span>
-                        <span className="flex items-center gap-1 text-accent">
-                          Read <ExternalLink size={12} />
-                        </span>
-                      </div>
-                    </a>
-                  ))}
+                    .slice(activeFilter === "All" ? 1 : 0)
+                    .map((item, index) => {
+                      const relevanceScore = calculateRelevanceScore(item);
+                      const isHighRelevance = relevanceScore >= 15;
+                      
+                      return (
+                        <a
+                          key={item.id}
+                          href={item.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`card-tech p-6 flex flex-col animate-fade-up group transition-colors ${
+                            isHighRelevance 
+                              ? "hover:border-accent/40 border-accent/20" 
+                              : "hover:border-accent/30"
+                          }`}
+                          style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                          {item.image_url && (
+                            <div className="h-40 rounded-lg overflow-hidden mb-4 -mx-2 -mt-2 bg-secondary">
+                              <img 
+                                src={getProxiedImageUrl(item.image_url) || ''}
+                                alt={cleanText(item.title)}
+                                loading="lazy"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Business lens and audience tags */}
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            {item.business_lens && <BusinessLensPill lens={item.business_lens} />}
+                            <AudienceTag audience={getAudienceTag(item)} />
+                          </div>
+                          
+                          <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
+                            <span>{item.source_name}</span>
+                          </div>
+                          
+                          <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">
+                            {cleanText(item.title)}
+                          </h3>
+                          <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">
+                            {item.summary}
+                          </p>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
+                            <span className="flex items-center gap-1.5">
+                              <Calendar size={12} />
+                              {new Date(item.published_date).toLocaleDateString("en-GB", {
+                                day: "numeric",
+                                month: "short"
+                              })}
+                            </span>
+                            <span className="flex items-center gap-1 text-accent">
+                              Read <ExternalLink size={12} />
+                            </span>
+                          </div>
+                        </a>
+                      );
+                    })}
                 </div>
               </div>
             </section>
@@ -627,9 +637,9 @@ const LatestNews = () => {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 text-accent mb-6">
                 <Mail size={24} />
               </div>
-              <h2 className="text-2xl lg:text-3xl mb-4">Get the weekly digest</h2>
+              <h2 className="text-2xl lg:text-3xl mb-4">Get the weekly intelligence digest</h2>
               <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-                The top stories delivered to your inbox every week. AI-curated insights for wellness operators.
+                The top operator signals delivered to your inbox every week. Commercial context included.
               </p>
               <form 
                 onSubmit={(e) => subscribe(e, "news-page-bottom")}
