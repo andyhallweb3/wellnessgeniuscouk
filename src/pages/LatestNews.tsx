@@ -453,6 +453,99 @@ const LatestNews = () => {
               </section>
             )}
 
+            {/* Fitness Industry News Section */}
+            {activeCategory === "All" && (
+              <section className="px-6 lg:px-12 pb-16">
+                <div className="container-wide">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-heading mb-2 flex items-center gap-3">
+                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-orange-500/20 to-rose-500/20 border border-orange-500/30">
+                          <svg className="w-5 h-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                        </span>
+                        Fitness Industry News
+                      </h2>
+                      <p className="text-muted-foreground text-sm">
+                        Operator insights for gyms, studios, and fitness facilities
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setActiveCategory("Fitness")}
+                      className="text-sm text-accent hover:underline"
+                    >
+                      View all fitness →
+                    </button>
+                  </div>
+                  
+                  {(() => {
+                    const titleLower = (t: string) => t.toLowerCase();
+                    const fitnessNews = sortedNews.filter(item => {
+                      const title = titleLower(item.title);
+                      const summary = titleLower(item.summary);
+                      const isFitnessCategory = item.category === "Fitness";
+                      const hasOperatorKeywords = 
+                        title.includes("gym") || title.includes("studio") || 
+                        title.includes("club") || title.includes("operator") ||
+                        title.includes("member") || title.includes("facility") ||
+                        title.includes("boutique") || title.includes("franchise") ||
+                        summary.includes("gym") || summary.includes("studio") ||
+                        summary.includes("fitness club") || summary.includes("operator");
+                      const isBusinessLensRelevant = 
+                        item.business_lens === "revenue_growth" || 
+                        item.business_lens === "retention_engagement";
+                      
+                      return isFitnessCategory || hasOperatorKeywords || 
+                        (isBusinessLensRelevant && (title.includes("fitness") || summary.includes("fitness")));
+                    }).slice(0, 4);
+
+                    if (fitnessNews.length === 0) return null;
+
+                    return (
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {fitnessNews.map((item, index) => (
+                          <a
+                            key={`fitness-${item.id}`}
+                            href={item.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="card-glass p-4 group hover:border-orange-500/30 transition-colors animate-fade-up"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                          >
+                            {item.image_url && (
+                              <div className="h-28 rounded-lg overflow-hidden mb-3 -mx-1 -mt-1 bg-secondary">
+                                <img 
+                                  src={getProxiedImageUrl(item.image_url) || ''}
+                                  alt={cleanText(item.title)}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 text-xs font-medium border border-orange-500/20">
+                                {item.category}
+                              </span>
+                            </div>
+                            <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-orange-400 transition-colors">
+                              {cleanText(item.title)}
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                              {item.summary}
+                            </p>
+                          </a>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </section>
+            )}
+
             {/* News Grid */}
             <section className="px-6 lg:px-12 pb-20">
               <div className="container-wide">
