@@ -166,6 +166,25 @@ const NewsletterAdmin = () => {
   const [selectedNewSubscribers, setSelectedNewSubscribers] = useState<Set<string>>(new Set());
   const [loadingNewSubscribers, setLoadingNewSubscribers] = useState(false);
 
+  // Article picker state
+  interface NewsArticle {
+    id: string;
+    title: string;
+    summary: string;
+    source_name: string;
+    source_url: string;
+    category: string;
+    published_date: string;
+    image_url: string | null;
+    business_lens: string | null;
+  }
+  const [availableNews, setAvailableNews] = useState<NewsArticle[]>([]);
+  const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
+  const [loadingNews, setLoadingNews] = useState(false);
+  const [newsSearchQuery, setNewsSearchQuery] = useState('');
+  const [newsCategoryFilter, setNewsCategoryFilter] = useState<string>('all');
+  const [newsDaysBack, setNewsDaysBack] = useState(7);
+
   // Admin user management state
   interface AdminUser {
     id: string;
@@ -1007,12 +1026,44 @@ const NewsletterAdmin = () => {
     }
   };
 
+  const fetchAvailableNews = async () => {
+    setLoadingNews(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('newsletter-run', {
+        body: { action: 'list-news', daysBack: newsDaysBack, limit: 100 },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      setAvailableNews(data.articles || []);
+      toast({
+        title: "News Loaded",
+        description: `Found ${data.articles?.length || 0} articles from the last ${newsDaysBack} days`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to Load News",
+        description: error instanceof Error ? error.message : "Failed to fetch news articles",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingNews(false);
+    }
+  };
+
   const generatePreview = async () => {
     setLoading(true);
     setPreviewHtml(null);
     try {
+      const requestBody: { preview: boolean; selectedArticleIds?: string[] } = { preview: true };
+      
+      // If articles are manually selected, use those
+      if (selectedArticles.size > 0) {
+        requestBody.selectedArticleIds = Array.from(selectedArticles);
+      }
+      
       const { data, error } = await supabase.functions.invoke('newsletter-run', {
-        body: { preview: true },
+        body: requestBody,
         headers: getAuthHeaders(),
       });
 
@@ -1032,7 +1083,9 @@ const NewsletterAdmin = () => {
       if (data.articleCount === 0) {
         toast({
           title: "No Articles",
-          description: "No unprocessed articles found. Try syncing from RSS first.",
+          description: selectedArticles.size > 0 
+            ? "Selected articles could not be loaded."
+            : "No articles found. Try loading news first.",
           variant: "destructive",
         });
         return;
@@ -1931,6 +1984,199 @@ const NewsletterAdmin = () => {
                       Sending 10 emails per batch with 20 second delays between batches
                     </p>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Article Picker Section */}
+            <div className="card-glass p-6 mb-8">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Newspaper size={20} />
+                Select Articles for Newsletter
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Manually pick which articles to include. Leave empty to auto-select recent articles.
+              </p>
+              
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground">From last</label>
+                  <select
+                    value={newsDaysBack}
+                    onChange={(e) => setNewsDaysBack(Number(e.target.value))}
+                    className="bg-secondary border border-border rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value={3}>3 days</option>
+                    <option value={7}>7 days</option>
+                    <option value={14}>14 days</option>
+                    <option value={30}>30 days</option>
+                  </select>
+                </div>
+                
+                <Button 
+                  onClick={fetchAvailableNews} 
+                  disabled={loadingNews}
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  {loadingNews ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                  Load News
+                </Button>
+
+                {selectedArticles.size > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setSelectedArticles(new Set())}
+                    className="gap-2 text-muted-foreground"
+                  >
+                    <X size={14} />
+                    Clear Selection ({selectedArticles.size})
+                  </Button>
+                )}
+              </div>
+
+              {availableNews.length > 0 && (
+                <div className="space-y-4">
+                  {/* Filters */}
+                  <div className="flex flex-wrap gap-4">
+                    <Input
+                      placeholder="Search articles..."
+                      value={newsSearchQuery}
+                      onChange={(e) => setNewsSearchQuery(e.target.value)}
+                      className="w-64 bg-secondary border-border"
+                    />
+                    <select
+                      value={newsCategoryFilter}
+                      onChange={(e) => setNewsCategoryFilter(e.target.value)}
+                      className="bg-secondary border border-border rounded-lg px-3 py-2 text-sm"
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="AI">AI</option>
+                      <option value="Wellness">Wellness</option>
+                      <option value="Fitness">Fitness</option>
+                      <option value="Technology">Technology</option>
+                      <option value="Investment">Investment</option>
+                      <option value="Hospitality">Hospitality</option>
+                      <option value="Corporate Wellness">Corporate Wellness</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      {availableNews.filter(a => 
+                        (newsCategoryFilter === 'all' || a.category === newsCategoryFilter) &&
+                        (newsSearchQuery === '' || a.title.toLowerCase().includes(newsSearchQuery.toLowerCase()))
+                      ).length} articles • 
+                      <strong className="text-accent"> {selectedArticles.size} selected</strong>
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const filtered = availableNews
+                            .filter(a => 
+                              (newsCategoryFilter === 'all' || a.category === newsCategoryFilter) &&
+                              (newsSearchQuery === '' || a.title.toLowerCase().includes(newsSearchQuery.toLowerCase()))
+                            )
+                            .slice(0, 8)
+                            .map(a => a.id);
+                          setSelectedArticles(new Set(filtered));
+                        }}
+                      >
+                        Select Top 8
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="max-h-80 overflow-y-auto border border-border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead className="bg-secondary/50 sticky top-0">
+                        <tr>
+                          <th className="text-left p-3 font-medium w-10">Select</th>
+                          <th className="text-left p-3 font-medium">Article</th>
+                          <th className="text-left p-3 font-medium w-28">Category</th>
+                          <th className="text-left p-3 font-medium w-28">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {availableNews
+                          .filter(article => 
+                            (newsCategoryFilter === 'all' || article.category === newsCategoryFilter) &&
+                            (newsSearchQuery === '' || article.title.toLowerCase().includes(newsSearchQuery.toLowerCase()))
+                          )
+                          .map((article) => (
+                          <tr 
+                            key={article.id} 
+                            className={`border-t border-border hover:bg-secondary/30 cursor-pointer ${selectedArticles.has(article.id) ? 'bg-accent/10' : ''}`}
+                            onClick={() => {
+                              const newSet = new Set(selectedArticles);
+                              if (newSet.has(article.id)) {
+                                newSet.delete(article.id);
+                              } else {
+                                newSet.add(article.id);
+                              }
+                              setSelectedArticles(newSet);
+                            }}
+                          >
+                            <td className="p-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedArticles.has(article.id)}
+                                onChange={() => {}}
+                                className="rounded"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <div className="font-medium text-sm line-clamp-1">{article.title}</div>
+                              <div className="text-xs text-muted-foreground line-clamp-1">{article.source_name}</div>
+                            </td>
+                            <td className="p-3">
+                              <span className="px-2 py-1 text-xs rounded-full bg-secondary">
+                                {article.category}
+                              </span>
+                            </td>
+                            <td className="p-3 text-muted-foreground text-xs">
+                              {new Date(article.published_date).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {selectedArticles.size > 0 && (
+                    <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                      <p className="text-sm font-medium text-accent mb-2">
+                        Selected Articles ({selectedArticles.size}):
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from(selectedArticles).map(id => {
+                          const article = availableNews.find(a => a.id === id);
+                          return article ? (
+                            <span 
+                              key={id} 
+                              className="px-2 py-1 text-xs bg-accent/20 text-accent rounded-full flex items-center gap-1"
+                            >
+                              {article.title.length > 40 ? article.title.substring(0, 40) + '...' : article.title}
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newSet = new Set(selectedArticles);
+                                  newSet.delete(id);
+                                  setSelectedArticles(newSet);
+                                }}
+                                className="hover:text-foreground"
+                              >
+                                <X size={12} />
+                              </button>
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
