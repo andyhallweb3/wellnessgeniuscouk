@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AIArticleGenerator from "@/components/admin/AIArticleGenerator";
+import { SortableArticleList } from "@/components/admin/SortableArticleList";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { 
   Mail, 
@@ -179,7 +180,7 @@ const NewsletterAdmin = () => {
     business_lens: string | null;
   }
   const [availableNews, setAvailableNews] = useState<NewsArticle[]>([]);
-  const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
+  const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
   const [loadingNews, setLoadingNews] = useState(false);
   const [newsSearchQuery, setNewsSearchQuery] = useState('');
   const [newsCategoryFilter, setNewsCategoryFilter] = useState<string>('all');
@@ -1058,8 +1059,8 @@ const NewsletterAdmin = () => {
       const requestBody: { preview: boolean; selectedArticleIds?: string[] } = { preview: true };
       
       // If articles are manually selected, use those
-      if (selectedArticles.size > 0) {
-        requestBody.selectedArticleIds = Array.from(selectedArticles);
+      if (selectedArticleIds.length > 0) {
+        requestBody.selectedArticleIds = selectedArticleIds;
       }
       
       const { data, error } = await supabase.functions.invoke('newsletter-run', {
@@ -1083,7 +1084,7 @@ const NewsletterAdmin = () => {
       if (data.articleCount === 0) {
         toast({
           title: "No Articles",
-          description: selectedArticles.size > 0 
+          description: selectedArticleIds.length > 0 
             ? "Selected articles could not be loaded."
             : "No articles found. Try loading news first.",
           variant: "destructive",
@@ -2023,15 +2024,15 @@ const NewsletterAdmin = () => {
                   Load News
                 </Button>
 
-                {selectedArticles.size > 0 && (
+                {selectedArticleIds.length > 0 && (
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={() => setSelectedArticles(new Set())}
+                    onClick={() => setSelectedArticleIds([])}
                     className="gap-2 text-muted-foreground"
                   >
                     <X size={14} />
-                    Clear Selection ({selectedArticles.size})
+                    Clear Selection ({selectedArticleIds.length})
                   </Button>
                 )}
               </div>
@@ -2068,7 +2069,7 @@ const NewsletterAdmin = () => {
                         (newsCategoryFilter === 'all' || a.category === newsCategoryFilter) &&
                         (newsSearchQuery === '' || a.title.toLowerCase().includes(newsSearchQuery.toLowerCase()))
                       ).length} articles • 
-                      <strong className="text-accent"> {selectedArticles.size} selected</strong>
+                      <strong className="text-accent"> {selectedArticleIds.length} selected</strong>
                     </p>
                     <div className="flex gap-2">
                       <Button
@@ -2082,7 +2083,7 @@ const NewsletterAdmin = () => {
                             )
                             .slice(0, 8)
                             .map(a => a.id);
-                          setSelectedArticles(new Set(filtered));
+                          setSelectedArticleIds(filtered);
                         }}
                       >
                         Select Top 8
@@ -2109,21 +2110,19 @@ const NewsletterAdmin = () => {
                           .map((article) => (
                           <tr 
                             key={article.id} 
-                            className={`border-t border-border hover:bg-secondary/30 cursor-pointer ${selectedArticles.has(article.id) ? 'bg-accent/10' : ''}`}
+                            className={`border-t border-border hover:bg-secondary/30 cursor-pointer ${selectedArticleIds.includes(article.id) ? 'bg-accent/10' : ''}`}
                             onClick={() => {
-                              const newSet = new Set(selectedArticles);
-                              if (newSet.has(article.id)) {
-                                newSet.delete(article.id);
+                              if (selectedArticleIds.includes(article.id)) {
+                                setSelectedArticleIds(selectedArticleIds.filter(id => id !== article.id));
                               } else {
-                                newSet.add(article.id);
+                                setSelectedArticleIds([...selectedArticleIds, article.id]);
                               }
-                              setSelectedArticles(newSet);
                             }}
                           >
                             <td className="p-3">
                               <input
                                 type="checkbox"
-                                checked={selectedArticles.has(article.id)}
+                                checked={selectedArticleIds.includes(article.id)}
                                 onChange={() => {}}
                                 className="rounded"
                               />
@@ -2146,37 +2145,13 @@ const NewsletterAdmin = () => {
                     </table>
                   </div>
 
-                  {selectedArticles.size > 0 && (
-                    <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg">
-                      <p className="text-sm font-medium text-accent mb-2">
-                        Selected Articles ({selectedArticles.size}):
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {Array.from(selectedArticles).map(id => {
-                          const article = availableNews.find(a => a.id === id);
-                          return article ? (
-                            <span 
-                              key={id} 
-                              className="px-2 py-1 text-xs bg-accent/20 text-accent rounded-full flex items-center gap-1"
-                            >
-                              {article.title.length > 40 ? article.title.substring(0, 40) + '...' : article.title}
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const newSet = new Set(selectedArticles);
-                                  newSet.delete(id);
-                                  setSelectedArticles(newSet);
-                                }}
-                                className="hover:text-foreground"
-                              >
-                                <X size={12} />
-                              </button>
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  <SortableArticleList
+                    articles={selectedArticleIds
+                      .map(id => availableNews.find(a => a.id === id))
+                      .filter((a): a is NewsArticle => a !== undefined)}
+                    onReorder={(reordered) => setSelectedArticleIds(reordered.map(a => a.id))}
+                    onRemove={(id) => setSelectedArticleIds(selectedArticleIds.filter(i => i !== id))}
+                  />
                 </div>
               )}
             </div>
