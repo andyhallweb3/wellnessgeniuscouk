@@ -127,25 +127,32 @@ Respond in JSON format:
 }
 
 // Generate HMAC-signed unsubscribe token
-function generateUnsubscribeToken(email: string, secret: string): string {
+async function generateUnsubscribeToken(email: string, secret: string): Promise<string> {
   const expiry = Date.now() + (90 * 24 * 60 * 60 * 1000); // 90 days
   const payload = `${email}|${expiry}`;
-  const signature = generateSignature(payload, secret);
+  const signature = await generateSignature(payload, secret);
   const combined = `${payload}|${signature}`;
   // Base64url encode
   return btoa(combined).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
-// Simple signature generation
-function generateSignature(payload: string, secret: string): string {
-  let hash = 0;
-  const combined = payload + secret;
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16).padStart(8, '0');
+// Cryptographically secure HMAC-SHA256 signature
+async function generateSignature(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const data = encoder.encode(payload);
+  
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign('HMAC', key, data);
+  const hashArray = Array.from(new Uint8Array(signature));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 function generateEmailHTML(
@@ -154,7 +161,7 @@ function generateEmailHTML(
   subscriberEmail = '',
   sendId = '',
   trackingBaseUrl = '',
-  unsubscribeSecret = ''
+  unsubscribeToken = ''
 ): string {
   // Helper to create tracking URL for links
   const trackLink = (url: string) => {
@@ -400,7 +407,7 @@ function generateEmailHTML(
                 You're receiving this because you subscribed to Wellness Genius insights.
               </p>
               <p style="margin: 0;">
-                <a href="https://wellnessgenius.co.uk/unsubscribe${subscriberEmail && unsubscribeSecret ? `?token=${generateUnsubscribeToken(subscriberEmail, unsubscribeSecret)}` : ''}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
+                <a href="https://wellnessgenius.co.uk/unsubscribe${unsubscribeToken ? `?token=${unsubscribeToken}` : ''}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
                   Unsubscribe
                 </a>
                 <span style="color: #94a3b8; font-size: 11px;"> • </span>
@@ -611,13 +618,16 @@ Deno.serve(async (req) => {
 
           const results = await Promise.all(
             pendingRows.map(async (row) => {
+              const unsubscribeToken = unsubscribeSecret 
+                ? await generateUnsubscribeToken(row.email, unsubscribeSecret) 
+                : '';
               const personalizedHtml = generateEmailHTML(
                 processedArticles,
                 false,
                 row.email,
                 sendId,
                 trackingBaseUrl,
-                unsubscribeSecret
+                unsubscribeToken
               );
 
               try {
