@@ -19,6 +19,7 @@ interface BlogPostInput {
   meta_description?: string;
   keywords?: string[];
   read_time?: string;
+  image_url?: string;
 }
 
 Deno.serve(async (req) => {
@@ -107,6 +108,7 @@ Deno.serve(async (req) => {
             meta_description: post.meta_description || post.excerpt?.substring(0, 160),
             keywords: post.keywords || [],
             read_time: post.read_time || '5 min read',
+            image_url: post.image_url || null,
           })
           .select()
           .single();
@@ -141,6 +143,7 @@ Deno.serve(async (req) => {
         if (post.meta_description !== undefined) updateData.meta_description = post.meta_description;
         if (post.keywords !== undefined) updateData.keywords = post.keywords;
         if (post.read_time !== undefined) updateData.read_time = post.read_time;
+        if (post.image_url !== undefined) updateData.image_url = post.image_url;
 
         const { data, error } = await supabase
           .from('blog_posts')
@@ -207,6 +210,7 @@ Deno.serve(async (req) => {
             meta_description: post.meta_description || post.summary?.substring(0, 160),
             keywords: post.keywords || [],
             read_time: post.read_time || '3 min read',
+            image_url: post.image_url || null,
           })
           .select()
           .single();

@@ -221,6 +221,7 @@ const NewsletterAdmin = () => {
     meta_description: string | null;
     keywords: string[] | null;
     read_time: string | null;
+    image_url: string | null;
     created_at: string;
     updated_at: string;
   }
@@ -241,6 +242,7 @@ const NewsletterAdmin = () => {
     meta_description: '',
     keywords: '',
     read_time: '5 min read',
+    image_url: '',
   });
 
   // AI Article Generator state
@@ -577,6 +579,7 @@ const NewsletterAdmin = () => {
       meta_description: '',
       keywords: '',
       read_time: '5 min read',
+      image_url: '',
     });
     setShowBlogPostModal(true);
   };
@@ -595,6 +598,7 @@ const NewsletterAdmin = () => {
       meta_description: post.meta_description || '',
       keywords: post.keywords?.join(', ') || '',
       read_time: post.read_time || '5 min read',
+      image_url: post.image_url || '',
     });
     setShowBlogPostModal(true);
   };
@@ -3070,6 +3074,31 @@ const NewsletterAdmin = () => {
                   className="bg-secondary border-border"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="post-image">Featured Image URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="post-image"
+                  placeholder="https://example.com/image.jpg"
+                  value={blogPostForm.image_url}
+                  onChange={(e) => setBlogPostForm({ ...blogPostForm, image_url: e.target.value })}
+                  className="bg-secondary border-border flex-1"
+                />
+              </div>
+              {blogPostForm.image_url && (
+                <div className="mt-2 relative w-full h-32 rounded-lg overflow-hidden border border-border">
+                  <img 
+                    src={blogPostForm.image_url} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
