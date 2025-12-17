@@ -359,6 +359,89 @@ const LatestNews = () => {
               </section>
             )}
 
+            {/* Wellness Tech Trends Section */}
+            {activeCategory === "All" && (
+              <section className="px-6 lg:px-12 pb-16">
+                <div className="container-wide">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-heading mb-2 flex items-center gap-3">
+                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30">
+                          <svg className="w-5 h-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        </span>
+                        Wellness Tech Trends
+                      </h2>
+                      <p className="text-muted-foreground text-sm">
+                        Technology-driven insights shaping the future of wellness
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setActiveCategory("Technology")}
+                      className="text-sm text-accent hover:underline"
+                    >
+                      View all tech →
+                    </button>
+                  </div>
+                  
+                  {(() => {
+                    const techTrends = sortedNews.filter(item => 
+                      item.category === "Technology" || 
+                      item.category === "AI" ||
+                      item.business_lens === "technology_enablement" ||
+                      item.title.toLowerCase().includes("tech") ||
+                      item.title.toLowerCase().includes("digital") ||
+                      item.title.toLowerCase().includes("app") ||
+                      item.title.toLowerCase().includes("platform")
+                    ).slice(0, 4);
+
+                    if (techTrends.length === 0) return null;
+
+                    return (
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {techTrends.map((item, index) => (
+                          <a
+                            key={`trend-${item.id}`}
+                            href={item.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="card-glass p-4 group hover:border-teal-500/30 transition-colors animate-fade-up"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                          >
+                            {item.image_url && (
+                              <div className="h-28 rounded-lg overflow-hidden mb-3 -mx-1 -mt-1 bg-secondary">
+                                <img 
+                                  src={getProxiedImageUrl(item.image_url) || ''}
+                                  alt={cleanText(item.title)}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 text-xs font-medium border border-teal-500/20">
+                                {item.category}
+                              </span>
+                            </div>
+                            <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-teal-400 transition-colors">
+                              {cleanText(item.title)}
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                              {item.summary}
+                            </p>
+                          </a>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </section>
+            )}
+
             {/* News Grid */}
             <section className="px-6 lg:px-12 pb-20">
               <div className="container-wide">
