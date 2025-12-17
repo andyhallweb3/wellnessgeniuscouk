@@ -17,6 +17,51 @@ interface NewsItem {
   category: string;
   image_url: string | null;
   published_date: string;
+  business_lens?: string | null;
+}
+
+// Business lens configuration with colors and labels
+const BUSINESS_LENSES: Record<string, { label: string; color: string; bg: string }> = {
+  revenue_growth: { 
+    label: "Revenue Growth", 
+    color: "text-emerald-400", 
+    bg: "bg-emerald-500/20 border-emerald-500/30" 
+  },
+  cost_efficiency: { 
+    label: "Cost & Efficiency", 
+    color: "text-blue-400", 
+    bg: "bg-blue-500/20 border-blue-500/30" 
+  },
+  retention_engagement: { 
+    label: "Retention & Engagement", 
+    color: "text-purple-400", 
+    bg: "bg-purple-500/20 border-purple-500/30" 
+  },
+  risk_regulation: { 
+    label: "Risk & Regulation", 
+    color: "text-orange-400", 
+    bg: "bg-orange-500/20 border-orange-500/30" 
+  },
+  investment_ma: { 
+    label: "Investment & M&A", 
+    color: "text-amber-400", 
+    bg: "bg-amber-500/20 border-amber-500/30" 
+  },
+  technology_enablement: { 
+    label: "Technology Enablement", 
+    color: "text-cyan-400", 
+    bg: "bg-cyan-500/20 border-cyan-500/30" 
+  },
+};
+
+function BusinessLensPill({ lens }: { lens: string | null | undefined }) {
+  if (!lens || !BUSINESS_LENSES[lens]) return null;
+  const config = BUSINESS_LENSES[lens];
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.bg} ${config.color}`}>
+      {config.label}
+    </span>
+  );
 }
 
 const categories = ["All", "AI", "Wellness", "Fitness", "Hospitality", "Corporate Wellness", "Technology", "Investment"];
@@ -264,7 +309,10 @@ const LatestNews = () => {
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center gap-8">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-4">
+                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                          {featuredNews.business_lens && (
+                            <BusinessLensPill lens={featuredNews.business_lens} />
+                          )}
                           <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
                             Editor's Pick
                           </span>
@@ -337,6 +385,11 @@ const LatestNews = () => {
                               (e.target as HTMLImageElement).parentElement!.style.display = 'none';
                             }}
                           />
+                        </div>
+                      )}
+                      {item.business_lens && (
+                        <div className="mb-2">
+                          <BusinessLensPill lens={item.business_lens} />
                         </div>
                       )}
                       <div className="flex items-center gap-2 mb-3">
