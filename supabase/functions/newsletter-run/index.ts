@@ -841,7 +841,7 @@ Deno.serve(async (req) => {
       console.log('Syncing articles from RSS cache with category diversity...');
       
       const categories = ['AI', 'Wellness', 'Fitness', 'Technology', 'Investment', 'Hospitality', 'Corporate Wellness'];
-      const articlesPerCategory = 4;
+      const articlesPerCategory = 10; // Increased from 4 to capture more fresh content
       let totalSynced = 0;
 
       for (const category of categories) {
@@ -873,16 +873,17 @@ Deno.serve(async (req) => {
       console.log(`Total synced: ${totalSynced} articles across ${categories.length} categories`);
     }
 
-    // SCORE-BASED SELECTION: Prioritize articles with score >= 65
+    // SCORE-BASED SELECTION: Prioritize articles with score >= 55 (lowered threshold for more fresh content)
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     
-    // First, try to get scored articles (score >= 65, unprocessed, from last week)
+    // First, try to get scored articles (score >= 55, unprocessed, from last 3 days for freshness)
     const { data: scoredArticles } = await supabase
       .from('articles')
       .select('*')
       .eq('processed', false)
-      .gte('score_total', 65)
-      .gte('published_at', oneWeekAgo)
+      .gte('score_total', 55)
+      .gte('published_at', threeDaysAgo)
       .order('score_total', { ascending: false })
       .limit(8);
 
@@ -891,7 +892,7 @@ Deno.serve(async (req) => {
     if (scoredArticles && scoredArticles.length >= 5) {
       // Use scored articles - we have enough qualified content
       articles = scoredArticles.slice(0, 8);
-      console.log(`Using ${articles.length} score-qualified articles (score >= 65)`);
+      console.log(`Using ${articles.length} score-qualified articles (score >= 55, last 3 days)`);
     } else {
       // Fallback: mix scored with category-diverse unscored articles
       console.log(`Only ${scoredArticles?.length || 0} scored articles found, falling back to category diversity`);
