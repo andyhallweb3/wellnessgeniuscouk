@@ -3,7 +3,6 @@ import { useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
@@ -11,20 +10,26 @@ import { Mail, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 const Unsubscribe = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [loading, setLoading] = useState(false);
   const [unsubscribed, setUnsubscribed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const token = searchParams.get("token");
 
   useEffect(() => {
     document.title = "Unsubscribe | Wellness Genius";
   }, []);
 
-  const handleUnsubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email.trim()) {
-      setError("Please enter your email address");
+  // Auto-unsubscribe if token is present
+  useEffect(() => {
+    if (token && !unsubscribed && !loading) {
+      handleUnsubscribe();
+    }
+  }, [token]);
+
+  const handleUnsubscribe = async () => {
+    if (!token) {
+      setError("Invalid unsubscribe link. Please use the link from your newsletter email.");
       return;
     }
 
@@ -32,12 +37,18 @@ const Unsubscribe = () => {
     setError(null);
 
     try {
-      // Use edge function to unsubscribe securely
-      const { error: fnError } = await supabase.functions.invoke('unsubscribe', {
-        body: { email: email.toLowerCase().trim() },
+      const { data, error: fnError } = await supabase.functions.invoke('unsubscribe', {
+        body: { token },
       });
 
       if (fnError) throw fnError;
+      
+      // Check if response indicates an error
+      if (data?.error) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
 
       setUnsubscribed(true);
       toast({
@@ -46,8 +57,7 @@ const Unsubscribe = () => {
       });
     } catch (err) {
       console.error("Unsubscribe error:", err);
-      // Show success anyway to prevent email enumeration
-      setUnsubscribed(true);
+      setError("An error occurred. Please try again or contact support.");
     } finally {
       setLoading(false);
     }
@@ -61,7 +71,17 @@ const Unsubscribe = () => {
         <section className="section-padding">
           <div className="container-wide max-w-md mx-auto">
             <div className="card-glass p-8 text-center">
-              {unsubscribed ? (
+              {loading ? (
+                <>
+                  <div className="p-4 rounded-full bg-accent/10 w-fit mx-auto mb-6">
+                    <Loader2 className="h-8 w-8 text-accent animate-spin" />
+                  </div>
+                  <h1 className="text-2xl font-bold mb-2">Processing...</h1>
+                  <p className="text-muted-foreground">
+                    Please wait while we process your unsubscribe request.
+                  </p>
+                </>
+              ) : unsubscribed ? (
                 <>
                   <div className="p-4 rounded-full bg-green-500/10 w-fit mx-auto mb-6">
                     <CheckCircle className="h-8 w-8 text-green-400" />
@@ -80,6 +100,25 @@ const Unsubscribe = () => {
                     <Button variant="accent">Back to Home</Button>
                   </Link>
                 </>
+              ) : error ? (
+                <>
+                  <div className="p-4 rounded-full bg-red-500/10 w-fit mx-auto mb-6">
+                    <AlertCircle className="h-8 w-8 text-red-400" />
+                  </div>
+                  <h1 className="text-2xl font-bold mb-2">Unable to Unsubscribe</h1>
+                  <p className="text-muted-foreground mb-6">
+                    {error}
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    If you continue to have issues, please contact us at{" "}
+                    <a href="mailto:andy@wellnessgenius.co.uk" className="text-accent hover:underline">
+                      andy@wellnessgenius.co.uk
+                    </a>
+                  </p>
+                  <Link to="/">
+                    <Button variant="accent">Back to Home</Button>
+                  </Link>
+                </>
               ) : (
                 <>
                   <div className="p-4 rounded-full bg-accent/10 w-fit mx-auto mb-6">
@@ -87,46 +126,11 @@ const Unsubscribe = () => {
                   </div>
                   <h1 className="text-2xl font-bold mb-2">Unsubscribe</h1>
                   <p className="text-muted-foreground mb-6">
-                    Enter your email address to unsubscribe from our newsletter.
+                    To unsubscribe, please click the unsubscribe link in your most recent newsletter email.
                   </p>
-                  
-                  <form onSubmit={handleUnsubscribe} className="space-y-4">
-                    <Input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-secondary border-border"
-                      required
-                    />
-                    
-                    {error && (
-                      <div className="flex items-center gap-2 text-red-400 text-sm">
-                        <AlertCircle size={16} />
-                        {error}
-                      </div>
-                    )}
-                    
-                    <Button 
-                      type="submit" 
-                      variant="destructive" 
-                      className="w-full"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Unsubscribing...
-                        </>
-                      ) : (
-                        "Unsubscribe"
-                      )}
-                    </Button>
-                  </form>
-                  
                   <Link 
                     to="/" 
-                    className="inline-block mt-4 text-sm text-muted-foreground hover:text-accent transition-colors"
+                    className="inline-block text-sm text-muted-foreground hover:text-accent transition-colors"
                   >
                     ← Back to Home
                   </Link>
