@@ -127,10 +127,9 @@ const FILTER_CATEGORIES = [
 ];
 
 function cleanText(raw: string) {
-  const withoutTags = raw.replace(/<[^>]*>/g, " ");
-  const el = document.createElement("textarea");
-  el.innerHTML = withoutTags;
-  return el.value.replace(/\s+/g, " ").trim();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(raw, 'text/html');
+  return doc.body.textContent?.replace(/\s+/g, " ").trim() || '';
 }
 
 function getProxiedImageUrl(imageUrl: string | null): string | null {

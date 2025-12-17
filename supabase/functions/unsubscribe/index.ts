@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 // Verify HMAC-signed unsubscribe token
-function verifyUnsubscribeToken(token: string, secret: string): { valid: boolean; email?: string } {
+async function verifyUnsubscribeToken(token: string, secret: string): Promise<{ valid: boolean; email?: string }> {
   try {
     // Decode base64url token
     const decoded = atob(token.replace(/-/g, '+').replace(/_/g, '/'));
@@ -27,12 +27,8 @@ function verifyUnsubscribeToken(token: string, secret: string): { valid: boolean
     }
     
     // Verify signature using Web Crypto API
-    const encoder = new TextEncoder();
     const payload = `${email}|${expiry}`;
-    
-    // We need to verify synchronously, so we'll use a simple comparison
-    // Generate expected signature
-    const expectedSignature = generateSignature(payload, secret);
+    const expectedSignature = await generateSignature(payload, secret);
     
     if (signature !== expectedSignature) {
       console.log('Signature mismatch');
@@ -46,18 +42,23 @@ function verifyUnsubscribeToken(token: string, secret: string): { valid: boolean
   }
 }
 
-// Simple signature generation (matching the one in newsletter-run)
-function generateSignature(payload: string, secret: string): string {
-  // Use a simple hash-based approach that works synchronously in Deno
-  let hash = 0;
-  const combined = payload + secret;
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  // Convert to hex and pad
-  return Math.abs(hash).toString(16).padStart(8, '0');
+// Cryptographically secure HMAC-SHA256 signature (matching newsletter-run)
+async function generateSignature(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const data = encoder.encode(payload);
+  
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign('HMAC', key, data);
+  const hashArray = Array.from(new Uint8Array(signature));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 Deno.serve(async (req) => {
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
     
     // If token is provided, verify it (secure method)
     if (token && UNSUBSCRIBE_SECRET) {
-      const result = verifyUnsubscribeToken(token, UNSUBSCRIBE_SECRET);
+      const result = await verifyUnsubscribeToken(token, UNSUBSCRIBE_SECRET);
       
       if (!result.valid) {
         return new Response(
