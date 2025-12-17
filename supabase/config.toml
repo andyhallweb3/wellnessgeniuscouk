@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.send-newsletter-confirmation]
 verify_jwt = false
+
+[functions.manage-blog-posts]
+verify_jwt = false
+
+[functions.generate-article-content]
+verify_jwt = false
