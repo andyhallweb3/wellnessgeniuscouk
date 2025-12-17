@@ -40,14 +40,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { action, subscriber, emails } = await req.json();
+    const { action, subscriber, emails, since } = await req.json();
 
     switch (action) {
       case 'list': {
-        const { data, error } = await supabase
+        let query = supabase
           .from('newsletter_subscribers')
           .select('*')
           .order('subscribed_at', { ascending: false });
+        
+        // Filter by date if 'since' parameter is provided
+        if (since) {
+          query = query.gte('subscribed_at', since);
+        }
+        
+        const { data, error } = await query;
 
         if (error) throw error;
 

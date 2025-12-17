@@ -159,6 +159,12 @@ const NewsletterAdmin = () => {
   const [subscriberStatusFilter, setSubscriberStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [subscriberPage, setSubscriberPage] = useState(1);
   const [subscribersPerPage, setSubscribersPerPage] = useState(25);
+  
+  // New subscribers targeting state
+  const [newSubscribersDays, setNewSubscribersDays] = useState(7);
+  const [newSubscribers, setNewSubscribers] = useState<Subscriber[]>([]);
+  const [selectedNewSubscribers, setSelectedNewSubscribers] = useState<Set<string>>(new Set());
+  const [loadingNewSubscribers, setLoadingNewSubscribers] = useState(false);
 
   // Admin user management state
   interface AdminUser {
@@ -1194,7 +1200,172 @@ const NewsletterAdmin = () => {
     }
   };
 
-  // Show loading state
+  // Fetch new subscribers (joined in the last X days)
+  const fetchNewSubscribers = async () => {
+    setLoadingNewSubscribers(true);
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - newSubscribersDays);
+      
+      const { data, error } = await supabase.functions.invoke('manage-subscribers', {
+        body: { 
+          action: 'list',
+          since: cutoffDate.toISOString(),
+        },
+        headers: getAuthHeaders(),
+      });
+      
+      if (error) throw error;
+      
+      const activeNew = (data?.subscribers || []).filter((s: Subscriber) => s.is_active);
+      setNewSubscribers(activeNew);
+      setSelectedNewSubscribers(new Set(activeNew.map((s: Subscriber) => s.email)));
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch new subscribers",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingNewSubscribers(false);
+    }
+  };
+
+  // Send newsletter to selected new subscribers
+  const sendToNewSubscribers = async () => {
+    if (selectedNewSubscribers.size === 0) {
+      toast({
+        title: "No subscribers selected",
+        description: "Please select at least one subscriber to send to.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!previewHtml) {
+      toast({
+        title: "No preview generated",
+        description: "Please generate a preview first before sending.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to send this newsletter to ${selectedNewSubscribers.size} new subscriber(s)?`)) {
+      return;
+    }
+
+    setSending(true);
+
+    try {
+      const targetEmails = Array.from(selectedNewSubscribers);
+      
+      const { data, error } = await supabase.functions.invoke('newsletter-run', {
+        body: { 
+          preview: false,
+          targetEmails,
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) {
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          handleLogout();
+          toast({
+            title: "Authentication Failed",
+            description: "Invalid admin secret. Please re-enter.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
+
+      const totalSubscribers = data?.subscriberCount || targetEmails.length;
+      const sendId = data?.sendId as string | undefined;
+      const batchSize = data?.batchSize || 50;
+
+      if (!sendId) {
+        throw new Error('Send started but no sendId returned');
+      }
+
+      const totalBatches = Math.max(1, Math.ceil(totalSubscribers / batchSize));
+
+      setSendProgress({
+        totalSubscribers,
+        sentCount: 0,
+        currentBatch: 1,
+        totalBatches,
+        sendId,
+      });
+
+      toast({
+        title: "Sending started",
+        description: `Queued ${totalSubscribers} emails to new subscribers. This will run in the background.`,
+      });
+
+      // Poll DB for real progress
+      const poll = setInterval(async () => {
+        const { data: statusData, error: statusError } = await supabase.functions.invoke('newsletter-run', {
+          body: { action: 'status', sendId },
+          headers: getAuthHeaders(),
+        });
+
+        if (statusError) {
+          console.error('Status poll error:', statusError);
+          return;
+        }
+
+        const sendRow = statusData?.send;
+        if (!sendRow) return;
+
+        const sentCount = sendRow.recipient_count || 0;
+        const currentBatch = Math.min(totalBatches, Math.ceil(sentCount / batchSize) + 1);
+
+        setSendProgress({
+          totalSubscribers,
+          sentCount,
+          currentBatch,
+          totalBatches,
+          sendId,
+        });
+
+        if (sendRow.status === 'sent' || sendRow.status === 'partial' || sendRow.status === 'failed') {
+          clearInterval(poll);
+          setSending(false);
+          
+          if (sendRow.status === 'sent' || sendRow.status === 'partial') {
+            toast({
+              title: "Newsletter Sent",
+              description: `Successfully sent to ${sentCount} new subscribers.`,
+            });
+          } else {
+            toast({
+              title: "Send failed",
+              description: sendRow?.error_message || "Newsletter send failed.",
+              variant: "destructive",
+            });
+          }
+
+          setTimeout(() => setSendProgress(null), 1500);
+          setPreviewHtml(null);
+          setNewSubscribers([]);
+          setSelectedNewSubscribers(new Set());
+          fetchStats();
+          fetchRecentSends();
+        }
+      }, 2000);
+    } catch (err) {
+      toast({
+        title: "Send Failed",
+        description: err instanceof Error ? err.message : "Failed to start sending",
+        variant: "destructive",
+      });
+      setSending(false);
+      setSendProgress(null);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background dark flex items-center justify-center">
@@ -1756,6 +1927,121 @@ const NewsletterAdmin = () => {
                       Sending 10 emails per batch with 20 second delays between batches
                     </p>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Send to New Subscribers Section */}
+            <div className="card-glass p-6 mb-8">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <UserPlus size={20} />
+                Send to New Subscribers
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Select recent subscribers to send a welcome or catch-up newsletter.
+              </p>
+              
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground">Subscribers from last</label>
+                  <select
+                    value={newSubscribersDays}
+                    onChange={(e) => setNewSubscribersDays(Number(e.target.value))}
+                    className="bg-secondary border border-border rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value={7}>7 days</option>
+                    <option value={14}>14 days</option>
+                    <option value={30}>30 days</option>
+                    <option value={60}>60 days</option>
+                    <option value={90}>90 days</option>
+                  </select>
+                </div>
+                
+                <Button 
+                  onClick={fetchNewSubscribers} 
+                  disabled={loadingNewSubscribers}
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  {loadingNewSubscribers ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                  Find New Subscribers
+                </Button>
+              </div>
+
+              {newSubscribers.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Found <strong className="text-foreground">{newSubscribers.length}</strong> new subscriber(s) • 
+                      <strong className="text-foreground"> {selectedNewSubscribers.size}</strong> selected
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedNewSubscribers(new Set(newSubscribers.map(s => s.email)))}
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedNewSubscribers(new Set())}
+                      >
+                        Deselect All
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="max-h-48 overflow-y-auto border border-border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead className="bg-secondary/50 sticky top-0">
+                        <tr>
+                          <th className="text-left p-3 font-medium">Select</th>
+                          <th className="text-left p-3 font-medium">Email</th>
+                          <th className="text-left p-3 font-medium">Source</th>
+                          <th className="text-left p-3 font-medium">Joined</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {newSubscribers.map((sub) => (
+                          <tr key={sub.id} className="border-t border-border hover:bg-secondary/30">
+                            <td className="p-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedNewSubscribers.has(sub.email)}
+                                onChange={(e) => {
+                                  const newSet = new Set(selectedNewSubscribers);
+                                  if (e.target.checked) {
+                                    newSet.add(sub.email);
+                                  } else {
+                                    newSet.delete(sub.email);
+                                  }
+                                  setSelectedNewSubscribers(newSet);
+                                }}
+                                className="rounded"
+                              />
+                            </td>
+                            <td className="p-3 font-mono text-xs">{sub.email}</td>
+                            <td className="p-3 text-muted-foreground">{sub.source || '-'}</td>
+                            <td className="p-3 text-muted-foreground">
+                              {new Date(sub.subscribed_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <Button 
+                    onClick={sendToNewSubscribers} 
+                    disabled={sending || !previewHtml || selectedNewSubscribers.size === 0 || !!activeSend}
+                    variant="accent"
+                    className="gap-2"
+                  >
+                    {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    Send to {selectedNewSubscribers.size} New Subscriber(s)
+                  </Button>
                 </div>
               )}
             </div>
