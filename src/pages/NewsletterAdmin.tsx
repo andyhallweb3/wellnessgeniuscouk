@@ -198,6 +198,42 @@ const NewsletterAdmin = () => {
   const [loadingReadiness, setLoadingReadiness] = useState(false);
   const [readinessExpanded, setReadinessExpanded] = useState(false);
 
+  // Blog posts management state
+  interface BlogPost {
+    id: string;
+    title: string;
+    slug: string;
+    excerpt: string;
+    content: string;
+    category: string;
+    published: boolean;
+    featured: boolean;
+    meta_title: string | null;
+    meta_description: string | null;
+    keywords: string[] | null;
+    read_time: string | null;
+    created_at: string;
+    updated_at: string;
+  }
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loadingBlogPosts, setLoadingBlogPosts] = useState(false);
+  const [blogPostsExpanded, setBlogPostsExpanded] = useState(false);
+  const [showBlogPostModal, setShowBlogPostModal] = useState(false);
+  const [editingBlogPost, setEditingBlogPost] = useState<BlogPost | null>(null);
+  const [blogPostForm, setBlogPostForm] = useState({
+    title: '',
+    slug: '',
+    excerpt: '',
+    content: '',
+    category: 'AI',
+    published: false,
+    featured: false,
+    meta_title: '',
+    meta_description: '',
+    keywords: '',
+    read_time: '5 min read',
+  });
+
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
   }, []);
@@ -209,6 +245,7 @@ const NewsletterAdmin = () => {
       fetchSubscribers();
       fetchAdminUsers();
       fetchReadinessCompletions();
+      fetchBlogPosts();
     }
   }, [isAuthenticated]);
 
@@ -483,6 +520,148 @@ const NewsletterAdmin = () => {
       console.error('Failed to fetch readiness completions:', error);
     } finally {
       setLoadingReadiness(false);
+    }
+  };
+
+  const fetchBlogPosts = async () => {
+    setLoadingBlogPosts(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-blog-posts', {
+        body: { action: 'list', limit: 50 },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      setBlogPosts(data.posts || []);
+    } catch (error) {
+      console.error('Failed to fetch blog posts:', error);
+    } finally {
+      setLoadingBlogPosts(false);
+    }
+  };
+
+  const openCreateBlogPost = () => {
+    setEditingBlogPost(null);
+    setBlogPostForm({
+      title: '',
+      slug: '',
+      excerpt: '',
+      content: '',
+      category: 'AI',
+      published: false,
+      featured: false,
+      meta_title: '',
+      meta_description: '',
+      keywords: '',
+      read_time: '5 min read',
+    });
+    setShowBlogPostModal(true);
+  };
+
+  const openEditBlogPost = (post: BlogPost) => {
+    setEditingBlogPost(post);
+    setBlogPostForm({
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt,
+      content: post.content,
+      category: post.category,
+      published: post.published,
+      featured: post.featured,
+      meta_title: post.meta_title || '',
+      meta_description: post.meta_description || '',
+      keywords: post.keywords?.join(', ') || '',
+      read_time: post.read_time || '5 min read',
+    });
+    setShowBlogPostModal(true);
+  };
+
+  const handleSaveBlogPost = async () => {
+    try {
+      const action = editingBlogPost ? 'update' : 'create';
+      const slug = blogPostForm.slug || blogPostForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      
+      const postData = {
+        ...blogPostForm,
+        slug,
+        keywords: blogPostForm.keywords.split(',').map(k => k.trim()).filter(Boolean),
+        ...(editingBlogPost ? { id: editingBlogPost.id } : {}),
+      };
+
+      const { data, error } = await supabase.functions.invoke('manage-blog-posts', {
+        body: { action, post: postData },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      toast({
+        title: editingBlogPost ? "Blog Post Updated" : "Blog Post Created",
+        description: data.message || `${blogPostForm.title} has been saved.`,
+      });
+
+      setShowBlogPostModal(false);
+      fetchBlogPosts();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save blog post",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteBlogPost = async (post: BlogPost) => {
+    if (!confirm(`Are you sure you want to delete "${post.title}"?`)) return;
+
+    try {
+      const { error } = await supabase.functions.invoke('manage-blog-posts', {
+        body: { action: 'delete', postId: post.id },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Blog Post Deleted",
+        description: `${post.title} has been removed.`,
+      });
+
+      fetchBlogPosts();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete blog post",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleBlogPostPublished = async (post: BlogPost) => {
+    try {
+      const { error } = await supabase.functions.invoke('manage-blog-posts', {
+        body: {
+          action: 'update',
+          post: { id: post.id, published: !post.published },
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: post.published ? "Blog Post Unpublished" : "Blog Post Published",
+        description: `${post.title} is now ${post.published ? 'hidden' : 'live'}.`,
+      });
+
+      fetchBlogPosts();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update blog post",
+        variant: "destructive",
+      });
     }
   };
 
@@ -2109,6 +2288,123 @@ const NewsletterAdmin = () => {
               )}
             </div>
 
+            {/* Blog Posts Management */}
+            <div className="card-glass p-6 mb-8">
+              <button
+                onClick={() => setBlogPostsExpanded(!blogPostsExpanded)}
+                className="w-full flex items-center justify-between text-left"
+              >
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <FileText size={20} className="text-blue-400" />
+                  Blog Posts ({blogPosts.length})
+                </h2>
+                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <Button 
+                    onClick={openCreateBlogPost}
+                    variant="accent" 
+                    size="sm"
+                    className="gap-1"
+                  >
+                    <Plus size={14} />
+                    New Post
+                  </Button>
+                  {blogPostsExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                </div>
+              </button>
+
+              {blogPostsExpanded && (
+                <div className="mt-4">
+                  {loadingBlogPosts ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                    </div>
+                  ) : blogPosts.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No blog posts yet. Create your first post!</p>
+                  ) : (
+                    <div className="card-tech overflow-x-auto">
+                      <table className="w-full min-w-[800px]">
+                        <thead className="bg-secondary">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Title</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Category</th>
+                            <th className="px-4 py-3 text-center text-sm font-medium">Status</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Updated</th>
+                            <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {blogPosts.map((post) => (
+                            <tr key={post.id} className="border-t border-border">
+                              <td className="px-4 py-3">
+                                <div>
+                                  <p className="font-medium text-sm">{post.title}</p>
+                                  <p className="text-xs text-muted-foreground">/insights/{post.slug}</p>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                <span className="px-2 py-1 rounded bg-accent/10 text-accent text-xs">
+                                  {post.category}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <button
+                                  onClick={() => toggleBlogPostPublished(post)}
+                                  className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                                    post.published
+                                      ? 'bg-green-500/10 text-green-400'
+                                      : 'bg-yellow-500/10 text-yellow-400'
+                                  }`}
+                                >
+                                  {post.published ? (
+                                    <>
+                                      <CheckCircle size={12} />
+                                      Published
+                                    </>
+                                  ) : (
+                                    <>
+                                      <AlertCircle size={12} />
+                                      Draft
+                                    </>
+                                  )}
+                                </button>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-muted-foreground">
+                                {new Date(post.updated_at).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEditBlogPost(post)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Pencil size={14} />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteBlogPost(post)}
+                                    className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                                  >
+                                    <Trash2 size={14} />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {recentSends.filter(s => ['partial', 'pending', 'sending'].includes(s.status)).length > 0 && (
               <div>
                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-yellow-400">
@@ -2384,6 +2680,159 @@ const NewsletterAdmin = () => {
                   Import
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Blog Post Modal */}
+      <Dialog open={showBlogPostModal} onOpenChange={setShowBlogPostModal}>
+        <DialogContent className="bg-card border-border max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText size={20} className="text-blue-400" />
+              {editingBlogPost ? 'Edit Blog Post' : 'Create Blog Post'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="post-title">Title *</Label>
+                <Input
+                  id="post-title"
+                  placeholder="Blog post title"
+                  value={blogPostForm.title}
+                  onChange={(e) => setBlogPostForm({ ...blogPostForm, title: e.target.value })}
+                  className="bg-secondary border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="post-slug">Slug</Label>
+                <Input
+                  id="post-slug"
+                  placeholder="auto-generated-from-title"
+                  value={blogPostForm.slug}
+                  onChange={(e) => setBlogPostForm({ ...blogPostForm, slug: e.target.value })}
+                  className="bg-secondary border-border"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="post-category">Category</Label>
+                <select
+                  id="post-category"
+                  value={blogPostForm.category}
+                  onChange={(e) => setBlogPostForm({ ...blogPostForm, category: e.target.value })}
+                  className="w-full px-3 py-2 bg-secondary border border-border rounded-md text-sm"
+                >
+                  <option value="AI">AI</option>
+                  <option value="Wellness">Wellness</option>
+                  <option value="Fitness">Fitness</option>
+                  <option value="Data">Data</option>
+                  <option value="Partnerships">Partnerships</option>
+                  <option value="GTM">GTM</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="post-read-time">Read Time</Label>
+                <Input
+                  id="post-read-time"
+                  placeholder="5 min read"
+                  value={blogPostForm.read_time}
+                  onChange={(e) => setBlogPostForm({ ...blogPostForm, read_time: e.target.value })}
+                  className="bg-secondary border-border"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="post-excerpt">Excerpt</Label>
+              <Textarea
+                id="post-excerpt"
+                placeholder="Brief description of the post..."
+                value={blogPostForm.excerpt}
+                onChange={(e) => setBlogPostForm({ ...blogPostForm, excerpt: e.target.value })}
+                className="bg-secondary border-border min-h-[80px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="post-content">Content *</Label>
+              <Textarea
+                id="post-content"
+                placeholder="Write your blog post content here (supports HTML)..."
+                value={blogPostForm.content}
+                onChange={(e) => setBlogPostForm({ ...blogPostForm, content: e.target.value })}
+                className="bg-secondary border-border min-h-[200px] font-mono text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="post-meta-title">Meta Title (SEO)</Label>
+                <Input
+                  id="post-meta-title"
+                  placeholder="SEO title"
+                  value={blogPostForm.meta_title}
+                  onChange={(e) => setBlogPostForm({ ...blogPostForm, meta_title: e.target.value })}
+                  className="bg-secondary border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="post-keywords">Keywords (comma-separated)</Label>
+                <Input
+                  id="post-keywords"
+                  placeholder="ai, wellness, fitness"
+                  value={blogPostForm.keywords}
+                  onChange={(e) => setBlogPostForm({ ...blogPostForm, keywords: e.target.value })}
+                  className="bg-secondary border-border"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="post-meta-desc">Meta Description (SEO)</Label>
+              <Textarea
+                id="post-meta-desc"
+                placeholder="SEO description (max 160 characters)"
+                value={blogPostForm.meta_description}
+                onChange={(e) => setBlogPostForm({ ...blogPostForm, meta_description: e.target.value })}
+                className="bg-secondary border-border min-h-[60px]"
+                maxLength={160}
+              />
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="post-published"
+                  checked={blogPostForm.published}
+                  onCheckedChange={(checked) => setBlogPostForm({ ...blogPostForm, published: checked })}
+                />
+                <Label htmlFor="post-published">Published</Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="post-featured"
+                  checked={blogPostForm.featured}
+                  onCheckedChange={(checked) => setBlogPostForm({ ...blogPostForm, featured: checked })}
+                />
+                <Label htmlFor="post-featured">Featured</Label>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBlogPostModal(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="accent" 
+              onClick={handleSaveBlogPost} 
+              disabled={!blogPostForm.title || !blogPostForm.content}
+            >
+              {editingBlogPost ? 'Update' : 'Create'} Post
             </Button>
           </DialogFooter>
         </DialogContent>
