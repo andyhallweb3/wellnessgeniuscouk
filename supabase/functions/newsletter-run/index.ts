@@ -457,8 +457,9 @@ Deno.serve(async (req) => {
       sendId: string;
       articles: Article[];
       trackingBaseUrl: string;
+      targetEmails?: string[];
     }) => {
-      const { sendId, articles, trackingBaseUrl } = opts;
+      const { sendId, articles, trackingBaseUrl, targetEmails } = opts;
 
       let sentTotal = 0;
       let failedTotal = 0;
@@ -505,24 +506,31 @@ Deno.serve(async (req) => {
           .eq('send_id', sendId);
 
         if (!existingQueued || existingQueued === 0) {
-          // Fetch ALL active subscribers (override default 1000 limit)
           let allSubscribers: { email: string }[] = [];
-          let page = 0;
-          const pageSize = 1000;
+          
+          // Use targetEmails if provided, otherwise fetch all active subscribers
+          if (targetEmails && targetEmails.length > 0) {
+            console.log(`Using ${targetEmails.length} targeted emails`);
+            allSubscribers = targetEmails.map(email => ({ email }));
+          } else {
+            // Fetch ALL active subscribers (override default 1000 limit)
+            let page = 0;
+            const pageSize = 1000;
 
-          while (true) {
-            const { data: batch, error: batchError } = await supabase
-              .from('newsletter_subscribers')
-              .select('email')
-              .eq('is_active', true)
-              .range(page * pageSize, (page + 1) * pageSize - 1);
+            while (true) {
+              const { data: batch, error: batchError } = await supabase
+                .from('newsletter_subscribers')
+                .select('email')
+                .eq('is_active', true)
+                .range(page * pageSize, (page + 1) * pageSize - 1);
 
-            if (batchError) throw batchError;
-            if (!batch || batch.length === 0) break;
+              if (batchError) throw batchError;
+              if (!batch || batch.length === 0) break;
 
-            allSubscribers = [...allSubscribers, ...batch];
-            if (batch.length < pageSize) break;
-            page++;
+              allSubscribers = [...allSubscribers, ...batch];
+              if (batch.length < pageSize) break;
+              page++;
+            }
           }
 
           if (allSubscribers.length === 0) {
@@ -688,6 +696,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const previewOnly = body.preview === true;
     const syncFromRss = body.syncFromRss === true;
+    const targetEmails: string[] | undefined = Array.isArray(body.targetEmails) ? body.targetEmails : undefined;
 
     // Lightweight status endpoint for the admin UI (avoids timeouts + respects admin secret)
     if (body.action === 'status' && body.sendId) {
@@ -1003,10 +1012,16 @@ Deno.serve(async (req) => {
     }
 
     // SEND path: respond quickly; do heavy work in background to avoid timeouts
-    const { count: subscriberCount } = await supabase
-      .from('newsletter_subscribers')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true);
+    const effectiveSubscriberCount = targetEmails?.length || 0;
+    let allSubscriberCount = effectiveSubscriberCount;
+    
+    if (!targetEmails) {
+      const { count: subscriberCount } = await supabase
+        .from('newsletter_subscribers')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+      allSubscriberCount = subscriberCount || 0;
+    }
 
     const articleIdsForSend = articles.map((a) => a.id);
 
@@ -1031,7 +1046,7 @@ Deno.serve(async (req) => {
     const sendId = sendRecord.id as string;
     const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
 
-    console.log(`Queued send ${sendId}: starting background send workflow`);
+    console.log(`Queued send ${sendId}: starting background send workflow${targetEmails ? ` (targeted: ${targetEmails.length} emails)` : ''}`);
 
     // @ts-ignore - EdgeRuntime exists in the edge environment
     EdgeRuntime.waitUntil(
@@ -1039,18 +1054,20 @@ Deno.serve(async (req) => {
         sendId,
         articles,
         trackingBaseUrl,
+        targetEmails,
       })
     );
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Newsletter sending started',
+        message: targetEmails ? `Newsletter sending started to ${targetEmails.length} selected subscribers` : 'Newsletter sending started',
         articleCount: articles.length,
-        subscriberCount: subscriberCount || 0,
+        subscriberCount: allSubscriberCount,
         sendId,
         batchSize: BATCH_SIZE,
         delaySeconds: Math.floor(DELAY_MS / 1000),
+        targeted: !!targetEmails,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
