@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,8 @@ import {
   ExternalLink,
   FileText,
   Wand2,
+  Search,
+  Newspaper,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,7 +85,7 @@ const BUSINESS_LENSES = [
 export default function AIArticleGenerator({
   open,
   onOpenChange,
-  sourceArticle,
+  sourceArticle: initialSourceArticle,
   getAuthHeaders,
   onArticleCreated,
 }: AIArticleGeneratorProps) {
@@ -92,6 +94,12 @@ export default function AIArticleGenerator({
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  
+  // News article selection
+  const [newsArticles, setNewsArticles] = useState<SourceArticle[]>([]);
+  const [loadingNews, setLoadingNews] = useState(false);
+  const [newsSearch, setNewsSearch] = useState('');
+  const [selectedArticle, setSelectedArticle] = useState<SourceArticle | null>(initialSourceArticle);
   
   // Editorial controls
   const [audience, setAudience] = useState('operators');
@@ -119,8 +127,47 @@ export default function AIArticleGenerator({
     featured: false,
   });
 
+  // Fetch news articles when modal opens
+  useEffect(() => {
+    if (open) {
+      fetchNewsArticles();
+      setSelectedArticle(initialSourceArticle);
+    }
+  }, [open, initialSourceArticle]);
+
+  const fetchNewsArticles = async () => {
+    setLoadingNews(true);
+    try {
+      // Fetch from rss_news_cache (recent news)
+      const { data, error } = await supabase
+        .from('rss_news_cache')
+        .select('id, title, summary, source_url, source_name, category, published_date, business_lens')
+        .order('published_date', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      setNewsArticles(data || []);
+    } catch (error) {
+      console.error('Error fetching news:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load news articles",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingNews(false);
+    }
+  };
+
+  const filteredArticles = newsArticles.filter(article =>
+    article.title.toLowerCase().includes(newsSearch.toLowerCase()) ||
+    article.summary.toLowerCase().includes(newsSearch.toLowerCase()) ||
+    article.source_name.toLowerCase().includes(newsSearch.toLowerCase())
+  );
+
   const handleGenerate = async () => {
-    if (!sourceArticle) return;
+    if (!selectedArticle) return;
     
     setGenerating(true);
     try {
@@ -136,20 +183,20 @@ export default function AIArticleGenerator({
           },
           body: JSON.stringify({
             sourceArticle: {
-              headline: sourceArticle.title,
-              summary: sourceArticle.summary,
-              source: sourceArticle.source_name,
-              date: sourceArticle.published_date,
-              category: sourceArticle.category,
-              url: sourceArticle.source_url,
-              business_lens: businessLens || sourceArticle.business_lens,
+              headline: selectedArticle.title,
+              summary: selectedArticle.summary,
+              source: selectedArticle.source_name,
+              date: selectedArticle.published_date,
+              category: selectedArticle.category,
+              url: selectedArticle.source_url,
+              business_lens: businessLens || selectedArticle.business_lens,
             },
             editorialControls: {
               audience,
               tone,
               channel,
               length,
-              business_lens: businessLens || sourceArticle.business_lens,
+              business_lens: businessLens || selectedArticle.business_lens,
             },
           }),
         }
@@ -292,17 +339,27 @@ export default function AIArticleGenerator({
           {/* Left Column - Source & Controls */}
           <div className="space-y-4">
             {/* Source Article Info */}
-            {sourceArticle && (
-              <div className="p-4 rounded-lg bg-secondary/50 border border-border space-y-2">
-                <h4 className="font-medium text-sm text-muted-foreground">Source Article</h4>
-                <p className="font-semibold">{sourceArticle.title}</p>
-                <p className="text-sm text-muted-foreground line-clamp-3">{sourceArticle.summary}</p>
+            {selectedArticle && selectedArticle.title ? (
+              <div className="p-4 rounded-lg bg-accent/10 border border-accent/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm text-accent">Selected Article</h4>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSelectedArticle(null)}
+                    className="h-6 px-2 text-xs"
+                  >
+                    Change
+                  </Button>
+                </div>
+                <p className="font-semibold">{selectedArticle.title}</p>
+                <p className="text-sm text-muted-foreground line-clamp-2">{selectedArticle.summary}</p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{sourceArticle.source_name}</span>
+                  <span>{selectedArticle.source_name}</span>
                   <span>•</span>
-                  <span>{new Date(sourceArticle.published_date).toLocaleDateString()}</span>
+                  <span>{new Date(selectedArticle.published_date).toLocaleDateString()}</span>
                   <a 
-                    href={sourceArticle.source_url} 
+                    href={selectedArticle.source_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-accent hover:underline flex items-center gap-1"
@@ -310,6 +367,48 @@ export default function AIArticleGenerator({
                     <ExternalLink size={12} />
                     View
                   </a>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Newspaper size={16} className="text-muted-foreground" />
+                  <h4 className="font-medium text-sm">Select a News Article</h4>
+                </div>
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search articles..."
+                    value={newsSearch}
+                    onChange={(e) => setNewsSearch(e.target.value)}
+                    className="pl-9 bg-secondary border-border"
+                  />
+                </div>
+                <div className="max-h-[300px] overflow-y-auto space-y-2 border border-border rounded-lg p-2">
+                  {loadingNews ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                    </div>
+                  ) : filteredArticles.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No articles found
+                    </p>
+                  ) : (
+                    filteredArticles.map((article) => (
+                      <button
+                        key={article.id}
+                        onClick={() => setSelectedArticle(article)}
+                        className="w-full text-left p-3 rounded-lg bg-secondary/50 hover:bg-secondary border border-transparent hover:border-accent/30 transition-colors"
+                      >
+                        <p className="font-medium text-sm line-clamp-2">{article.title}</p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <span>{article.source_name}</span>
+                          <span>•</span>
+                          <span>{new Date(article.published_date).toLocaleDateString()}</span>
+                        </div>
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -390,7 +489,7 @@ export default function AIArticleGenerator({
 
               <Button
                 onClick={handleGenerate}
-                disabled={generating || !sourceArticle}
+                disabled={generating || !selectedArticle || !selectedArticle.title}
                 className="w-full gap-2"
                 variant="accent"
               >
