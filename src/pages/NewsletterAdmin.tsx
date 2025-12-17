@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AIArticleGenerator from "@/components/admin/AIArticleGenerator";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { 
   Mail, 
   Send, 
@@ -2798,12 +2799,10 @@ const NewsletterAdmin = () => {
 
             <div className="space-y-2">
               <Label htmlFor="post-content">Content *</Label>
-              <Textarea
-                id="post-content"
-                placeholder="Write your blog post content here (supports HTML)..."
-                value={blogPostForm.content}
-                onChange={(e) => setBlogPostForm({ ...blogPostForm, content: e.target.value })}
-                className="bg-secondary border-border min-h-[200px] font-mono text-sm"
+              <RichTextEditor
+                content={blogPostForm.content}
+                onChange={(content) => setBlogPostForm({ ...blogPostForm, content })}
+                placeholder="Write your blog post content here..."
               />
             </div>
 
