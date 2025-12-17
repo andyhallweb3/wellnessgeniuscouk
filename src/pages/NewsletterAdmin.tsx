@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import AIArticleGenerator from "@/components/admin/AIArticleGenerator";
 import { 
   Mail, 
   Send, 
@@ -39,7 +40,8 @@ import {
   ShieldCheck,
   ShieldX,
   Activity,
-  TrendingUp
+  TrendingUp,
+  Sparkles
 } from "lucide-react";
 import {
   Dialog,
@@ -233,6 +235,20 @@ const NewsletterAdmin = () => {
     keywords: '',
     read_time: '5 min read',
   });
+
+  // AI Article Generator state
+  interface SourceArticle {
+    id?: string;
+    title: string;
+    summary: string;
+    source_name: string;
+    source_url: string;
+    category: string;
+    published_date: string;
+    business_lens?: string | null;
+  }
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
+  const [aiSourceArticle, setAiSourceArticle] = useState<SourceArticle | null>(null);
 
   useEffect(() => {
     document.title = "Newsletter Admin | Wellness Genius";
@@ -663,6 +679,19 @@ const NewsletterAdmin = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const openAIGenerator = () => {
+    // Open AI generator with empty source - user can fill in manually
+    setAiSourceArticle({
+      title: '',
+      summary: '',
+      source_name: '',
+      source_url: '',
+      category: '',
+      published_date: new Date().toISOString(),
+    });
+    setShowAIGenerator(true);
   };
 
   const grantAdminAccess = async (userId?: string, email?: string) => {
@@ -2300,6 +2329,15 @@ const NewsletterAdmin = () => {
                 </h2>
                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   <Button 
+                    onClick={openAIGenerator}
+                    variant="outline" 
+                    size="sm"
+                    className="gap-1 border-accent/50 text-accent hover:bg-accent/10"
+                  >
+                    <Sparkles size={14} />
+                    AI Writer
+                  </Button>
+                  <Button 
                     onClick={openCreateBlogPost}
                     variant="accent" 
                     size="sm"
@@ -2837,6 +2875,15 @@ const NewsletterAdmin = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* AI Article Generator */}
+      <AIArticleGenerator
+        open={showAIGenerator}
+        onOpenChange={setShowAIGenerator}
+        sourceArticle={aiSourceArticle}
+        getAuthHeaders={getAuthHeaders}
+        onArticleCreated={fetchBlogPosts}
+      />
 
     </div>
   );
