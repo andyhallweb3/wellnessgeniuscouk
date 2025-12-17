@@ -695,8 +695,36 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const previewOnly = body.preview === true;
-    const syncFromRss = body.syncFromRss === true;
     const targetEmails: string[] | undefined = Array.isArray(body.targetEmails) ? body.targetEmails : undefined;
+    const selectedArticleIds: string[] | undefined = Array.isArray(body.selectedArticleIds) ? body.selectedArticleIds : undefined;
+
+    // ========================================
+    // ACTION: List available news articles for manual selection
+    // ========================================
+    if (body.action === 'list-news') {
+      const daysBack = body.daysBack || 7;
+      const limit = body.limit || 50;
+      const cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
+      
+      const { data: newsItems, error: newsError } = await supabase
+        .from('rss_news_cache')
+        .select('id, title, summary, source_name, source_url, category, published_date, image_url, business_lens')
+        .gte('published_date', cutoffDate)
+        .order('published_date', { ascending: false })
+        .limit(limit);
+      
+      if (newsError) {
+        return new Response(
+          JSON.stringify({ success: false, error: newsError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ success: true, articles: newsItems || [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Lightweight status endpoint for the admin UI (avoids timeouts + respects admin secret)
     if (body.action === 'status' && body.sendId) {
@@ -834,39 +862,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Newsletter run - preview: ${previewOnly}`);
+    console.log(`Newsletter run - preview: ${previewOnly}, selectedArticleIds: ${selectedArticleIds?.length || 'auto'}`);
 
     // ========================================
-    // ARTICLE SELECTION (directly from RSS cache - the news page)
+    // ARTICLE SELECTION
     // ========================================
     
-    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
-    const targetCategories = ['AI', 'Wellness', 'Fitness', 'Technology', 'Investment', 'Hospitality', 'Corporate Wellness'];
-    
-    console.log('Fetching articles directly from rss_news_cache (news page)...');
-    
-    // Fetch recent articles from rss_news_cache with category diversity
     let articles: Article[] = [];
     
-    for (const category of targetCategories) {
-      if (articles.length >= 8) break;
+    // If specific articles selected, use those
+    if (selectedArticleIds && selectedArticleIds.length > 0) {
+      console.log(`Fetching ${selectedArticleIds.length} manually selected articles...`);
       
-      const { data: categoryArticles, error } = await supabase
+      const { data: selectedItems, error } = await supabase
         .from('rss_news_cache')
         .select('*')
-        .eq('category', category)
-        .gte('published_date', threeDaysAgo)
-        .order('published_date', { ascending: false })
-        .limit(2);
+        .in('id', selectedArticleIds);
       
       if (error) {
-        console.error(`Error fetching ${category} articles:`, error);
-        continue;
-      }
-      
-      if (categoryArticles && categoryArticles.length > 0) {
+        console.error('Error fetching selected articles:', error);
+      } else if (selectedItems && selectedItems.length > 0) {
         // Map rss_news_cache format to Article format
-        const mapped: Article[] = categoryArticles.map(item => ({
+        articles = selectedItems.map(item => ({
           id: item.id,
           title: item.title,
           ai_summary: item.summary,
@@ -882,17 +899,60 @@ Deno.serve(async (req) => {
           excerpt: item.summary,
           content: null
         }));
-        articles = [...articles, ...mapped];
-        console.log(`Added ${categoryArticles.length} ${category} articles from news cache`);
+        console.log(`Loaded ${articles.length} manually selected articles`);
       }
+    } else {
+      // Auto-select from RSS cache with category diversity
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+      const targetCategories = ['AI', 'Wellness', 'Fitness', 'Technology', 'Investment', 'Hospitality', 'Corporate Wellness'];
+      
+      console.log('Auto-selecting articles from rss_news_cache (news page)...');
+      
+      for (const category of targetCategories) {
+        if (articles.length >= 8) break;
+        
+        const { data: categoryArticles, error } = await supabase
+          .from('rss_news_cache')
+          .select('*')
+          .eq('category', category)
+          .gte('published_date', threeDaysAgo)
+          .order('published_date', { ascending: false })
+          .limit(2);
+        
+        if (error) {
+          console.error(`Error fetching ${category} articles:`, error);
+          continue;
+        }
+        
+        if (categoryArticles && categoryArticles.length > 0) {
+          const mapped: Article[] = categoryArticles.map(item => ({
+            id: item.id,
+            title: item.title,
+            ai_summary: item.summary,
+            source: item.source_name,
+            url: item.source_url,
+            category: item.category,
+            published_at: item.published_date,
+            business_lens: item.business_lens,
+            ai_why_it_matters: null,
+            ai_commercial_angle: null,
+            processed: false,
+            created_at: item.created_at,
+            excerpt: item.summary,
+            content: null
+          }));
+          articles = [...articles, ...mapped];
+          console.log(`Added ${categoryArticles.length} ${category} articles from news cache`);
+        }
+      }
+      
+      // Sort by date (most recent first) and limit to 8
+      articles = articles
+        .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+        .slice(0, 8);
     }
     
-    // Sort by date (most recent first) and limit to 8
-    articles = articles
-      .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
-      .slice(0, 8);
-    
-    console.log(`Selected ${articles.length} articles from news page for newsletter`);
+    console.log(`Selected ${articles.length} articles for newsletter`);
 
     if (articles.length === 0) {
       return new Response(
