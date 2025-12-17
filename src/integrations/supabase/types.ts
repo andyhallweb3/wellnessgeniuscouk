@@ -79,6 +79,7 @@ export type Database = {
           ai_commercial_angle: string | null
           ai_summary: string | null
           ai_why_it_matters: string[] | null
+          business_lens: string | null
           category: string
           content: string | null
           created_at: string
@@ -103,6 +104,7 @@ export type Database = {
           ai_commercial_angle?: string | null
           ai_summary?: string | null
           ai_why_it_matters?: string[] | null
+          business_lens?: string | null
           category?: string
           content?: string | null
           created_at?: string
@@ -127,6 +129,7 @@ export type Database = {
           ai_commercial_angle?: string | null
           ai_summary?: string | null
           ai_why_it_matters?: string[] | null
+          business_lens?: string | null
           category?: string
           content?: string | null
           created_at?: string

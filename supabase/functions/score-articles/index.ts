@@ -79,6 +79,14 @@ SCORING CRITERIA (respond with JSON only):
    - 0-3: Soft lifestyle wellness
    Wellness Genius is an insight engine, not a wellness blog.
 
+6. BUSINESS_LENS: What is the PRIMARY business impact angle? Choose exactly ONE:
+   - "revenue_growth": Directly affects top-line revenue, pricing, new markets, customer acquisition
+   - "cost_efficiency": Reduces costs, improves margins, automation, operational efficiency
+   - "retention_engagement": Member/customer retention, engagement, experience, loyalty
+   - "risk_regulation": Compliance, legal, regulatory, liability, industry standards
+   - "investment_ma": Funding, M&A, valuations, investor activity, market consolidation
+   - "technology_enablement": Tech adoption, digital transformation, AI/automation tools, platforms
+
 ARTICLE TO SCORE:
 Title: {{TITLE}}
 Source: {{SOURCE}}
@@ -93,6 +101,7 @@ Respond with ONLY this JSON structure, no other text:
   "novelty": <number>,
   "timeliness": <number>,
   "wg_fit": <number>,
+  "business_lens": "<one of: revenue_growth, cost_efficiency, retention_engagement, risk_regulation, investment_ma, technology_enablement>",
   "reasoning": "<1-2 sentence explanation of the score>"
 }`;
 
@@ -111,8 +120,11 @@ interface ScoreResult {
   novelty: number;
   timeliness: number;
   wg_fit: number;
+  business_lens: string;
   reasoning: string;
 }
+
+const VALID_LENSES = ['revenue_growth', 'cost_efficiency', 'retention_engagement', 'risk_regulation', 'investment_ma', 'technology_enablement'];
 
 async function scoreArticle(article: Article, apiKey: string): Promise<ScoreResult | null> {
   try {
@@ -166,6 +178,11 @@ async function scoreArticle(article: Article, apiKey: string): Promise<ScoreResu
     scores.novelty = Math.min(15, Math.max(0, scores.novelty || 0));
     scores.timeliness = Math.min(10, Math.max(0, scores.timeliness || 0));
     scores.wg_fit = Math.min(10, Math.max(0, scores.wg_fit || 0));
+    
+    // Validate business lens
+    if (!VALID_LENSES.includes(scores.business_lens)) {
+      scores.business_lens = 'technology_enablement'; // default fallback
+    }
 
     return scores;
   } catch (error) {
@@ -295,7 +312,7 @@ Deno.serve(async (req) => {
         aiScores.timeliness +
         aiScores.wg_fit;
 
-      console.log(`Score breakdown for "${article.title.substring(0, 30)}...": SA=${sourceAuthority} CI=${aiScores.commercial_impact} OR=${aiScores.operator_relevance} N=${aiScores.novelty} T=${aiScores.timeliness} WG=${aiScores.wg_fit} TOTAL=${totalScore}`);
+      console.log(`Score breakdown for "${article.title.substring(0, 30)}...": SA=${sourceAuthority} CI=${aiScores.commercial_impact} OR=${aiScores.operator_relevance} N=${aiScores.novelty} T=${aiScores.timeliness} WG=${aiScores.wg_fit} TOTAL=${totalScore} LENS=${aiScores.business_lens}`);
 
       // Update article with scores
       const { error: updateError } = await supabase
@@ -309,6 +326,7 @@ Deno.serve(async (req) => {
           score_wg_fit: aiScores.wg_fit,
           score_total: totalScore,
           score_reasoning: aiScores.reasoning,
+          business_lens: aiScores.business_lens,
           scored_at: new Date().toISOString(),
         })
         .eq('id', article.id);
