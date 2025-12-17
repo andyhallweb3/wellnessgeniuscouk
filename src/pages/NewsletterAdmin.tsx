@@ -748,12 +748,12 @@ const NewsletterAdmin = () => {
     }
   };
 
-  const scoreArticles = async () => {
+  const scoreArticles = async (force: boolean = false) => {
     setScoring(true);
     setScoringResults(null);
     try {
       const { data, error } = await supabase.functions.invoke('score-articles', {
-        body: null,
+        body: force ? { force: true } : null,
         headers: getAuthHeaders(),
       });
 
@@ -1437,13 +1437,23 @@ const NewsletterAdmin = () => {
                 </Button>
 
                 <Button 
-                  onClick={scoreArticles} 
+                  onClick={() => scoreArticles(false)} 
                   disabled={scoring}
                   variant="secondary"
                   className="gap-2"
                 >
                   {scoring ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-                  Score Articles
+                  Score New
+                </Button>
+
+                <Button 
+                  onClick={() => scoreArticles(true)} 
+                  disabled={scoring}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  {scoring ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                  Re-Score All
                 </Button>
 
                 <Button 
