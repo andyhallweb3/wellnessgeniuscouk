@@ -34,6 +34,7 @@ interface SourceArticle {
   category: string;
   published_date: string;
   business_lens?: string | null;
+  image_url?: string | null;
 }
 
 interface AIArticleGeneratorProps {
@@ -125,6 +126,7 @@ export default function AIArticleGenerator({
     read_time: '5 min read',
     published: false,
     featured: false,
+    image_url: '',
   });
 
   // Fetch news articles when modal opens
@@ -141,7 +143,7 @@ export default function AIArticleGenerator({
       // Fetch from rss_news_cache (recent news)
       const { data, error } = await supabase
         .from('rss_news_cache')
-        .select('id, title, summary, source_url, source_name, category, published_date, business_lens')
+        .select('id, title, summary, source_url, source_name, category, published_date, business_lens, image_url')
         .order('published_date', { ascending: false })
         .limit(50);
 
@@ -213,13 +215,14 @@ export default function AIArticleGenerator({
       setGeneratedBody(data.body);
       setRawContent(data.raw);
       
-      // Auto-fill blog form
+      // Auto-fill blog form with source article image
       setBlogForm(prev => ({
         ...prev,
         slug: data.headline.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         excerpt: data.body.replace(/<[^>]*>/g, '').substring(0, 200) + '...',
         meta_title: data.headline,
         meta_description: data.body.replace(/<[^>]*>/g, '').substring(0, 160),
+        image_url: selectedArticle?.image_url || '',
       }));
 
       toast({
@@ -267,6 +270,7 @@ export default function AIArticleGenerator({
               meta_description: blogForm.meta_description,
               keywords: blogForm.keywords.split(',').map(k => k.trim()).filter(Boolean),
               read_time: blogForm.read_time,
+              image_url: blogForm.image_url,
             },
           }),
         }
@@ -319,6 +323,7 @@ export default function AIArticleGenerator({
       read_time: '5 min read',
       published: false,
       featured: false,
+      image_url: '',
     });
   };
 
@@ -585,6 +590,28 @@ export default function AIArticleGenerator({
                           <option value="GTM">GTM</option>
                         </select>
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Featured Image URL</Label>
+                      <Input
+                        value={blogForm.image_url}
+                        onChange={(e) => setBlogForm({ ...blogForm, image_url: e.target.value })}
+                        placeholder="https://example.com/image.jpg"
+                        className="bg-secondary border-border"
+                      />
+                      {blogForm.image_url && (
+                        <div className="mt-2 relative w-full h-24 rounded-lg overflow-hidden border border-border">
+                          <img 
+                            src={blogForm.image_url} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">

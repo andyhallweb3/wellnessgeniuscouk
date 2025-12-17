@@ -160,6 +160,7 @@ export type Database = {
           excerpt: string
           featured: boolean
           id: string
+          image_url: string | null
           keywords: string[] | null
           meta_description: string | null
           meta_title: string | null
@@ -176,6 +177,7 @@ export type Database = {
           excerpt: string
           featured?: boolean
           id?: string
+          image_url?: string | null
           keywords?: string[] | null
           meta_description?: string | null
           meta_title?: string | null
@@ -192,6 +194,7 @@ export type Database = {
           excerpt?: string
           featured?: boolean
           id?: string
+          image_url?: string | null
           keywords?: string[] | null
           meta_description?: string | null
           meta_title?: string | null
