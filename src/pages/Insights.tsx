@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,14 @@ const Insights = () => {
 
   return (
     <div className="min-h-screen bg-background dark">
+      <Helmet>
+        <title>AI & Wellness Insights | Wellness Genius Blog</title>
+        <meta name="description" content="Practical thinking on AI, automation, and growth in wellness. Honest perspectives on AI deployment, wellness tech, and building things that actually ship." />
+        <meta name="keywords" content="AI wellness, wellness technology, fitness AI, health tech insights, AI automation, wellness industry trends, AI agents, data analytics wellness, personalisation, wellness operators, gym technology, fitness innovation, wellness business, AI deployment" />
+        <meta property="og:title" content="AI & Wellness Insights | Wellness Genius Blog" />
+        <meta property="og:description" content="Practical thinking on AI, automation, and growth in wellness. No fluff, just honest perspectives." />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <Header />
       
       <main className="pt-24 lg:pt-32">
