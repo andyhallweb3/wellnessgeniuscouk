@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
@@ -6,53 +6,54 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Clock, Mail } from "lucide-react";
 import { useNewsletter } from "@/hooks/useNewsletter";
+import { supabase } from "@/integrations/supabase/client";
 
-// Blog images
+// Fallback blog images
 import aiComplianceImg from "@/assets/blog/ai-compliance.jpeg";
 import aiWellnessDataImg from "@/assets/blog/ai-wellness-data.webp";
 import aiPersonalisationImg from "@/assets/blog/ai-personalisation.jpeg";
 
 const categories = ["All", "AI Agents", "Wellness", "Data"];
 
-const posts = [
-  {
-    id: 1,
-    slug: "ai-wellness-policy-compliance",
-    title: "AI, Wellness & Policy: Why Compliance Is Now a Competitive Advantage",
-    excerpt: "AI is moving faster than regulation — and that's exactly why wellness brands can't afford to ignore policy and compliance.",
-    category: "AI Agents",
-    date: "Dec 12, 2024",
-    readTime: "6 min read",
-    featured: true,
-    image: aiComplianceImg,
-  },
-  {
-    id: 2,
-    slug: "power-of-data-ai-wellness",
-    title: "The Power of Data and AI in Wellness: From Noise to Insight",
-    excerpt: "Most wellness businesses are sitting on data they don't understand, don't trust, and don't use. AI is what turns wellness data into decisions.",
-    category: "Data",
-    date: "Dec 8, 2024",
-    readTime: "5 min read",
-    featured: false,
-    image: aiWellnessDataImg,
-  },
-  {
-    id: 3,
-    slug: "ai-wellness-personalisation",
-    title: "AI and Wellness Personalisation: From One-Size-Fits-All to One-to-One",
-    excerpt: "Personalisation is no longer a 'nice to have' — it's the baseline expectation. AI is what makes that possible at scale.",
-    category: "Wellness",
-    date: "Dec 4, 2024",
-    readTime: "5 min read",
-    featured: false,
-    image: aiPersonalisationImg,
-  },
-];
+// Fallback image mapping for posts without images
+const fallbackImages: Record<string, string> = {
+  "AI Agents": aiComplianceImg,
+  "Data": aiWellnessDataImg,
+  "Wellness": aiPersonalisationImg,
+};
+
+interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  created_at: string;
+  read_time: string | null;
+  featured: boolean;
+}
 
 const Insights = () => {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
   const { email, setEmail, isSubmitting, subscribe } = useNewsletter();
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("id, slug, title, excerpt, category, created_at, read_time, featured")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setPosts(data);
+      }
+      setLoading(false);
+    };
+    fetchPosts();
+  }, []);
 
   const filteredPosts = activeCategory === "All" 
     ? posts 
@@ -60,6 +61,16 @@ const Insights = () => {
 
   const featuredPost = posts.find(post => post.featured);
   const regularPosts = filteredPosts.filter(post => !post.featured || activeCategory !== "All");
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-GB", { 
+      month: "short", 
+      day: "numeric", 
+      year: "numeric" 
+    });
+  };
+
+  const getImage = (category: string) => fallbackImages[category] || aiComplianceImg;
 
   return (
     <div className="min-h-screen bg-background dark">
@@ -126,11 +137,11 @@ const Insights = () => {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={14} />
-                        {featuredPost.date}
+                        {formatDate(featuredPost.created_at)}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <Clock size={14} />
-                        {featuredPost.readTime}
+                        {featuredPost.read_time || "5 min read"}
                       </span>
                     </div>
                     <span className="inline-flex items-center gap-2 text-accent font-medium">
@@ -140,7 +151,7 @@ const Insights = () => {
                   </div>
                   <div className="lg:w-80 h-48 lg:h-64 rounded-xl overflow-hidden">
                     <img 
-                      src={featuredPost.image} 
+                      src={getImage(featuredPost.category)} 
                       alt={featuredPost.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -154,6 +165,11 @@ const Insights = () => {
         {/* Posts Grid */}
         <section className="px-6 lg:px-12 pb-20">
           <div className="container-wide">
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">Loading posts...</div>
+            ) : regularPosts.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">No posts found.</div>
+            ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {regularPosts.map((post, index) => (
                 <Link 
@@ -164,7 +180,7 @@ const Insights = () => {
                 >
                   <div className="h-40 overflow-hidden">
                     <img 
-                      src={post.image} 
+                      src={getImage(post.category)} 
                       alt={post.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -178,17 +194,18 @@ const Insights = () => {
                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={12} />
-                        {post.date}
+                        {formatDate(post.created_at)}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <Clock size={12} />
-                        {post.readTime}
+                        {post.read_time || "5 min read"}
                       </span>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
+            )}
           </div>
         </section>
 
