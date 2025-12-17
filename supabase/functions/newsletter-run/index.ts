@@ -126,12 +126,35 @@ Respond in JSON format:
   }
 }
 
+// Generate HMAC-signed unsubscribe token
+function generateUnsubscribeToken(email: string, secret: string): string {
+  const expiry = Date.now() + (90 * 24 * 60 * 60 * 1000); // 90 days
+  const payload = `${email}|${expiry}`;
+  const signature = generateSignature(payload, secret);
+  const combined = `${payload}|${signature}`;
+  // Base64url encode
+  return btoa(combined).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+// Simple signature generation
+function generateSignature(payload: string, secret: string): string {
+  let hash = 0;
+  const combined = payload + secret;
+  for (let i = 0; i < combined.length; i++) {
+    const char = combined.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16).padStart(8, '0');
+}
+
 function generateEmailHTML(
   articles: ProcessedArticle[], 
   previewOnly = false, 
   subscriberEmail = '',
   sendId = '',
-  trackingBaseUrl = ''
+  trackingBaseUrl = '',
+  unsubscribeSecret = ''
 ): string {
   // Helper to create tracking URL for links
   const trackLink = (url: string) => {
@@ -377,7 +400,7 @@ function generateEmailHTML(
                 You're receiving this because you subscribed to Wellness Genius insights.
               </p>
               <p style="margin: 0;">
-                <a href="https://wellnessgenius.co.uk/unsubscribe${subscriberEmail ? `?email=${encodeURIComponent(subscriberEmail)}` : ''}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
+                <a href="https://wellnessgenius.co.uk/unsubscribe${subscriberEmail && unsubscribeSecret ? `?token=${generateUnsubscribeToken(subscriberEmail, unsubscribeSecret)}` : ''}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
                   Unsubscribe
                 </a>
                 <span style="color: #94a3b8; font-size: 11px;"> • </span>
@@ -421,6 +444,7 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const resendKey = Deno.env.get('RESEND_API_KEY')!;
     const lovableKey = Deno.env.get('LOVABLE_API_KEY')!;
+    const unsubscribeSecret = Deno.env.get('UNSUBSCRIBE_SECRET') || '';
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     const resend = new Resend(resendKey);
@@ -584,7 +608,8 @@ Deno.serve(async (req) => {
                 false,
                 row.email,
                 sendId,
-                trackingBaseUrl
+                trackingBaseUrl,
+                unsubscribeSecret
               );
 
               try {
