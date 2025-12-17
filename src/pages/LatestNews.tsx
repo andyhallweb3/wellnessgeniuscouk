@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -167,6 +168,14 @@ const LatestNews = () => {
 
   return (
     <div className="min-h-screen bg-background dark">
+      <Helmet>
+        <title>Wellness & Fitness Industry News | Wellness Genius</title>
+        <meta name="description" content="Curated news and insights for wellness operators, facility managers, and senior teams across fitness, hospitality, and corporate wellness." />
+        <meta name="keywords" content="wellness news, fitness industry, gym news, HCM, health club management, UK Active, Sport England, NHS fitness, PureGym, Xponential Fitness, The Gym Group, Huw Edwards, HCM Summit, Everyone Active, Les Mills, wellness technology, AI fitness, health tech, operator insights, boutique fitness, franchise gyms" />
+        <meta property="og:title" content="Wellness & Fitness Industry News | Wellness Genius" />
+        <meta property="og:description" content="Curated news and insights for wellness operators, facility managers, and senior teams across fitness, hospitality, and corporate wellness." />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <Header />
       
       <main className="pt-24 lg:pt-32">
