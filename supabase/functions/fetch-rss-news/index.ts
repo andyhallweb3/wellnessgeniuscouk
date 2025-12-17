@@ -23,6 +23,7 @@ interface NewsItem {
   category: string;
   image_url: string | null;
   published_date: string;
+  business_lens?: string | null;
 }
 
 const RSS_FEEDS: RSSFeed[] = [
@@ -273,7 +274,7 @@ Deno.serve(async (req) => {
 
       let query = supabase
         .from('rss_news_cache')
-        .select('news_id, title, summary, source_url, source_name, category, image_url, published_date')
+        .select('news_id, title, summary, source_url, source_name, category, image_url, published_date, business_lens')
         .order('published_date', { ascending: false })
         .limit(limit);
 
@@ -294,6 +295,7 @@ Deno.serve(async (req) => {
         category: item.category,
         image_url: item.image_url,
         published_date: item.published_date,
+        business_lens: item.business_lens,
       })) || [];
 
       // Safety: if cache table is empty but metadata says it's fresh, treat as stale and refetch
@@ -320,6 +322,23 @@ Deno.serve(async (req) => {
     if (freshNews.length > 0) {
       console.log(`Updating cache with ${freshNews.length} items`);
 
+      // Get business_lens from articles table for matching URLs
+      const urls = freshNews.map(item => item.source_url);
+      const { data: articlesWithLens } = await supabase
+        .from('articles')
+        .select('url, business_lens')
+        .in('url', urls);
+
+      const lensMap = new Map<string, string>();
+      if (articlesWithLens) {
+        for (const article of articlesWithLens) {
+          if (article.business_lens) {
+            lensMap.set(article.url, article.business_lens);
+          }
+        }
+      }
+      console.log(`Found ${lensMap.size} articles with business_lens`);
+
       const cacheItems = freshNews.map(item => ({
         news_id: item.id,
         title: item.title,
@@ -330,7 +349,13 @@ Deno.serve(async (req) => {
         image_url: item.image_url,
         published_date: item.published_date,
         fetched_at: new Date().toISOString(),
+        business_lens: lensMap.get(item.source_url) || null,
       }));
+
+      // Also update freshNews with business_lens for immediate response
+      for (const item of freshNews) {
+        item.business_lens = lensMap.get(item.source_url) || null;
+      }
 
       // Deduplicate within the batch to avoid unique-constraint errors
       const uniqueCacheItems = Array.from(

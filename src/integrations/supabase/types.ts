@@ -416,6 +416,7 @@ export type Database = {
       }
       rss_news_cache: {
         Row: {
+          business_lens: string | null
           category: string
           created_at: string
           fetched_at: string
@@ -429,6 +430,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          business_lens?: string | null
           category: string
           created_at?: string
           fetched_at?: string
@@ -442,6 +444,7 @@ export type Database = {
           title: string
         }
         Update: {
+          business_lens?: string | null
           category?: string
           created_at?: string
           fetched_at?: string
