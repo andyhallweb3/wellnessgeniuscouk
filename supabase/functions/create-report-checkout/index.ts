@@ -27,7 +27,7 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     logStep("Stripe key verified");
 
-    const { completionId, email } = await req.json();
+    const { completionId, email, promoCode } = await req.json();
     
     if (!completionId) {
       throw new Error("completionId is required");
@@ -37,7 +37,7 @@ serve(async (req) => {
       throw new Error("email is required");
     }
     
-    logStep("Request parsed", { completionId, email });
+    logStep("Request parsed", { completionId, email, hasPromoCode: !!promoCode });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
@@ -52,8 +52,8 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://wellnessgenius.ai";
 
-    // Create checkout session
-    const session = await stripe.checkout.sessions.create({
+    // Create checkout session options
+    const sessionOptions: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : email,
       line_items: [
@@ -69,7 +69,31 @@ serve(async (req) => {
         completion_id: completionId,
         product_type: "ai_readiness_report",
       },
-    });
+      allow_promotion_codes: true,
+    };
+
+    // Apply promo code if provided
+    if (promoCode) {
+      try {
+        const promotionCodes = await stripe.promotionCodes.list({
+          code: promoCode,
+          active: true,
+          limit: 1,
+        });
+        
+        if (promotionCodes.data.length > 0) {
+          sessionOptions.discounts = [{ promotion_code: promotionCodes.data[0].id }];
+          logStep("Promo code applied", { code: promoCode, promotionCodeId: promotionCodes.data[0].id });
+        } else {
+          logStep("Promo code not found or inactive", { code: promoCode });
+        }
+      } catch (promoError) {
+        logStep("Error applying promo code, continuing without it", { code: promoCode, error: String(promoError) });
+      }
+    }
+
+    // Create checkout session
+    const session = await stripe.checkout.sessions.create(sessionOptions);
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
