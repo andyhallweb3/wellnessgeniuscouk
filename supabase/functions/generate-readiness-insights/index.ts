@@ -11,6 +11,13 @@ interface PillarScore {
   status: string;
 }
 
+interface QuestionAnswer {
+  questionId: string;
+  pillar: string;
+  questionText: string;
+  score: number; // 1-5
+}
+
 interface InsightRequest {
   businessType: string;
   companySize: string;
@@ -18,11 +25,35 @@ interface InsightRequest {
   overallScore: number;
   pillarScores: PillarScore[];
   role: string;
+  company?: string;
+  primaryGoal?: string;
+  questionAnswers?: QuestionAnswer[];
 }
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[GENERATE-READINESS-INSIGHTS] ${step}${detailsStr}`);
+};
+
+// Map scores to descriptive labels
+const getScoreLabel = (score: number): string => {
+  switch (score) {
+    case 1: return "Strongly Disagree";
+    case 2: return "Disagree";
+    case 3: return "Neutral";
+    case 4: return "Agree";
+    case 5: return "Strongly Agree";
+    default: return "Unknown";
+  }
+};
+
+// Identify weak areas (scores 1-2) and strengths (scores 4-5)
+const analyseAnswers = (answers: QuestionAnswer[]) => {
+  const weakAreas = answers.filter(a => a.score <= 2);
+  const moderateAreas = answers.filter(a => a.score === 3);
+  const strongAreas = answers.filter(a => a.score >= 4);
+  
+  return { weakAreas, moderateAreas, strongAreas };
 };
 
 serve(async (req) => {
@@ -40,9 +71,25 @@ serve(async (req) => {
     logStep("Synta API key verified");
 
     const body: InsightRequest = await req.json();
-    const { businessType, companySize, industry, overallScore, pillarScores, role } = body;
+    const { 
+      businessType, 
+      companySize, 
+      industry, 
+      overallScore, 
+      pillarScores, 
+      role,
+      company,
+      primaryGoal,
+      questionAnswers 
+    } = body;
 
-    logStep("Request parsed", { overallScore, industry, companySize });
+    logStep("Request parsed", { 
+      overallScore, 
+      industry, 
+      companySize, 
+      hasQuestionAnswers: !!questionAnswers,
+      questionCount: questionAnswers?.length || 0
+    });
 
     // Get score band
     const scoreBand = overallScore < 40 ? 'AI-Unready' 
@@ -55,81 +102,274 @@ serve(async (req) => {
     const weakestPillar = sortedPillars[0];
     const strongestPillar = sortedPillars[sortedPillars.length - 1];
 
-    // Build the prompt for Synta.io
-    const systemPrompt = `You are an AI readiness consultant for wellness and fitness businesses. You provide commercial intelligence that is:
-- Conservative in estimates (never overpromise)
-- Direct and actionable (no fluff)
-- British English spelling
-- Decision-maker focused (no jargon)
+    // Analyse individual question answers if available
+    let detailedAnalysis = '';
+    if (questionAnswers && questionAnswers.length > 0) {
+      const { weakAreas, moderateAreas, strongAreas } = analyseAnswers(questionAnswers);
+      
+      detailedAnalysis = `
+## Detailed Question Analysis (25 questions answered)
 
-You never use wellness clichés or generic AI hype. You focus on practical business outcomes.`;
+### Critical Gaps (Scored 1-2 - Immediate Attention Required)
+${weakAreas.length > 0 
+  ? weakAreas.map(a => `- [${a.pillar}] "${a.questionText}" → ${getScoreLabel(a.score)}`).join('\n')
+  : '- No critical gaps identified'}
 
-    const userPrompt = `Analyse this AI readiness assessment and generate a commercial intelligence report.
+### Development Areas (Scored 3 - Needs Improvement)
+${moderateAreas.length > 0 
+  ? moderateAreas.map(a => `- [${a.pillar}] "${a.questionText}" → ${getScoreLabel(a.score)}`).join('\n')
+  : '- No moderate gaps identified'}
 
-## Business Context
+### Strengths to Leverage (Scored 4-5 - Build On These)
+${strongAreas.length > 0 
+  ? strongAreas.map(a => `- [${a.pillar}] "${a.questionText}" → ${getScoreLabel(a.score)}`).join('\n')
+  : '- No strong areas identified'}
+
+### Gap Count by Pillar
+${pillarScores.map(p => {
+  const pillarWeak = weakAreas.filter(a => a.pillar === p.pillar).length;
+  const pillarModerate = moderateAreas.filter(a => a.pillar === p.pillar).length;
+  return `- ${p.pillar}: ${pillarWeak} critical gaps, ${pillarModerate} development areas`;
+}).join('\n')}
+`;
+    }
+
+    // Build the enhanced prompt
+    const systemPrompt = `You are an elite AI readiness consultant specialising in wellness, fitness, and leisure businesses. You create bespoke 90-day transformation plans based on detailed assessment data.
+
+Your approach:
+- Conservative estimates (never overpromise ROI)
+- Direct and actionable (no fluff or generic advice)
+- British English spelling throughout
+- Decision-maker focused (commercial language, not technical jargon)
+- Prioritise quick wins in weeks 1-4, foundations in weeks 5-8, and scale in weeks 9-12
+
+You never use wellness clichés or generic AI hype. Every recommendation must tie directly to a specific gap identified in their assessment.`;
+
+    const userPrompt = `Create a bespoke 90-day AI readiness plan based on this detailed assessment.
+
+## Business Profile
+- Company: ${company || 'Not specified'}
 - Industry: ${industry || 'Wellness & Fitness'}
 - Business Type: ${businessType || 'Wellness operator'}
 - Company Size: ${companySize || 'Unknown'}
-- Respondent Role: ${role || 'Unknown'}
+- Decision-Maker Role: ${role || 'Unknown'}
+- Primary Goal: ${primaryGoal || 'General AI adoption'}
 
-## Assessment Results
-- Overall Score: ${overallScore}/100
+## Overall Assessment
+- Score: ${overallScore}/100
 - Band: ${scoreBand}
 
-## Pillar Scores
+## Pillar Breakdown
 ${pillarScores.map(p => `- ${p.pillar}: ${p.score}% (${p.status})`).join('\n')}
 
-## Weakest Area: ${weakestPillar?.pillar} (${weakestPillar?.score}%)
-## Strongest Area: ${strongestPillar?.pillar} (${strongestPillar?.score}%)
+## Weakest Pillar: ${weakestPillar?.pillar} (${weakestPillar?.score}%)
+## Strongest Pillar: ${strongestPillar?.pillar} (${strongestPillar?.score}%)
+${detailedAnalysis}
 
 ---
 
-Generate a JSON response with this exact structure:
+Based on this detailed analysis, generate a comprehensive JSON response with this exact structure:
 
 {
-  "headline": "One-sentence diagnosis of their readiness (max 15 words)",
+  "headline": "One-sentence diagnosis of their readiness state (max 15 words)",
+  "executiveSummary": "2-3 sentence summary for the CEO/owner explaining the key finding and what it means commercially",
   "revenueUpside": {
-    "min": "Conservative minimum annual revenue opportunity (e.g. £25,000)",
-    "max": "Conservative maximum annual revenue opportunity (e.g. £75,000)",
+    "min": "Conservative minimum annual revenue/savings opportunity (e.g. £25,000)",
+    "max": "Conservative maximum annual revenue/savings opportunity (e.g. £75,000)",
     "confidence": "Low/Medium/High based on data quality",
-    "rationale": "One sentence explaining the estimate"
+    "rationale": "One sentence explaining how this estimate was derived from their specific gaps"
   },
   "topBlockers": [
-    "First critical blocker preventing AI adoption",
-    "Second blocker",
-    "Third blocker"
+    "First critical blocker - directly linked to a low-scoring question",
+    "Second blocker - directly linked to assessment data",
+    "Third blocker - with commercial impact explained"
   ],
-  "priorityPlan": [
+  "ninetyDayPlan": {
+    "phase1": {
+      "name": "Quick Wins (Weeks 1-4)",
+      "focus": "What this phase achieves",
+      "actions": [
+        {
+          "week": "1-2",
+          "action": "Specific task addressing their weakest score",
+          "owner": "Who should do this (e.g. Operations Manager)",
+          "effort": "Low/Medium/High",
+          "impact": "Low/Medium/High",
+          "linkedGap": "Which specific question/pillar this addresses"
+        },
+        {
+          "week": "2-3",
+          "action": "Second quick win task",
+          "owner": "Role",
+          "effort": "Low/Medium/High",
+          "impact": "Low/Medium/High",
+          "linkedGap": "Linked pillar or gap"
+        },
+        {
+          "week": "3-4",
+          "action": "Third quick win task",
+          "owner": "Role",
+          "effort": "Low/Medium/High",
+          "impact": "Low/Medium/High",
+          "linkedGap": "Linked pillar or gap"
+        }
+      ]
+    },
+    "phase2": {
+      "name": "Build Foundations (Weeks 5-8)",
+      "focus": "What this phase achieves",
+      "actions": [
+        {
+          "week": "5-6",
+          "action": "Foundation task 1",
+          "owner": "Role",
+          "effort": "Low/Medium/High",
+          "impact": "Low/Medium/High",
+          "linkedGap": "Linked pillar or gap"
+        },
+        {
+          "week": "6-7",
+          "action": "Foundation task 2",
+          "owner": "Role",
+          "effort": "Low/Medium/High",
+          "impact": "Low/Medium/High",
+          "linkedGap": "Linked pillar or gap"
+        },
+        {
+          "week": "7-8",
+          "action": "Foundation task 3",
+          "owner": "Role",
+          "effort": "Low/Medium/High",
+          "impact": "Low/Medium/High",
+          "linkedGap": "Linked pillar or gap"
+        }
+      ]
+    },
+    "phase3": {
+      "name": "Scale & Optimise (Weeks 9-12)",
+      "focus": "What this phase achieves",
+      "actions": [
+        {
+          "week": "9-10",
+          "action": "Scale task 1",
+          "owner": "Role",
+          "effort": "Low/Medium/High",
+          "impact": "Low/Medium/High",
+          "linkedGap": "Linked pillar or gap"
+        },
+        {
+          "week": "10-11",
+          "action": "Scale task 2",
+          "owner": "Role",
+          "effort": "Low/Medium/High",
+          "impact": "Low/Medium/High",
+          "linkedGap": "Linked pillar or gap"
+        },
+        {
+          "week": "11-12",
+          "action": "Scale task 3",
+          "owner": "Role",
+          "effort": "Low/Medium/High",
+          "impact": "Low/Medium/High",
+          "linkedGap": "Linked pillar or gap"
+        }
+      ]
+    }
+  },
+  "pillarRecommendations": {
+    "leadership": {
+      "status": "Critical/Needs Work/On Track/Strong",
+      "priority": 1-5,
+      "keyAction": "The single most important action for this pillar",
+      "rationale": "Why this matters for their business"
+    },
+    "data": {
+      "status": "Critical/Needs Work/On Track/Strong",
+      "priority": 1-5,
+      "keyAction": "The single most important action",
+      "rationale": "Why this matters"
+    },
+    "people": {
+      "status": "Critical/Needs Work/On Track/Strong",
+      "priority": 1-5,
+      "keyAction": "The single most important action",
+      "rationale": "Why this matters"
+    },
+    "process": {
+      "status": "Critical/Needs Work/On Track/Strong",
+      "priority": 1-5,
+      "keyAction": "The single most important action",
+      "rationale": "Why this matters"
+    },
+    "risk": {
+      "status": "Critical/Needs Work/On Track/Strong",
+      "priority": 1-5,
+      "keyAction": "The single most important action",
+      "rationale": "Why this matters"
+    }
+  },
+  "monetisationPaths": [
     {
-      "action": "Specific actionable task",
-      "effort": "Low/Medium/High",
-      "impact": "Low/Medium/High",
-      "week": "1-2"
+      "opportunity": "First revenue/savings opportunity",
+      "potentialValue": "Estimated annual value range",
+      "timeToValue": "Weeks/months to realise",
+      "prerequisite": "What needs to be in place first"
+    },
+    {
+      "opportunity": "Second opportunity",
+      "potentialValue": "Value range",
+      "timeToValue": "Timeline",
+      "prerequisite": "Prerequisite"
+    },
+    {
+      "opportunity": "Third opportunity",
+      "potentialValue": "Value range",
+      "timeToValue": "Timeline",
+      "prerequisite": "Prerequisite"
     }
   ],
-  "monetisationPaths": [
-    "First revenue opportunity AI could unlock",
-    "Second opportunity",
-    "Third opportunity"
-  ],
   "doList": [
-    "First thing they should do",
-    "Second thing",
-    "Third thing"
+    "First priority action they should take this week",
+    "Second priority",
+    "Third priority",
+    "Fourth priority",
+    "Fifth priority"
   ],
   "dontList": [
-    "First thing they should NOT do yet",
-    "Second thing",
-    "Third thing"
+    "First thing they should NOT do yet and why",
+    "Second warning",
+    "Third warning"
   ],
-  "roleInsight": "Specific advice based on their role as ${role || 'a decision-maker'}",
-  "nextStep": "The single most important next action"
+  "roleInsight": "Specific advice for ${role || 'decision-makers'} based on their assessment results and typical challenges in that role",
+  "investmentGuidance": {
+    "budgetRange": "Recommended budget range for the 90-day plan",
+    "keyInvestments": ["First investment area", "Second investment area"],
+    "avoidSpending": "Where NOT to spend money yet"
+  },
+  "successMetrics": [
+    {
+      "metric": "First KPI to track",
+      "baseline": "How to measure starting point",
+      "target": "Target for week 12"
+    },
+    {
+      "metric": "Second KPI",
+      "baseline": "Starting measurement",
+      "target": "Week 12 target"
+    },
+    {
+      "metric": "Third KPI",
+      "baseline": "Starting measurement",
+      "target": "Week 12 target"
+    }
+  ],
+  "nextStep": "The single most important next action to take today"
 }
 
-The priorityPlan should have 5 actions spread across weeks 1-12.
-Keep all text concise and direct. No marketing speak.`;
+CRITICAL: Every recommendation must be directly linked to a specific gap or strength from their assessment. No generic advice. Tailor everything to their ${companySize || 'business'} size, ${industry || 'wellness'} industry, and ${role || 'decision-maker'} role.`;
 
-    logStep("Calling Synta.io API");
+    logStep("Calling Synta.io API with enhanced prompt");
 
     const response = await fetch('https://api.synta.io/v1/chat/completions', {
       method: 'POST',
@@ -171,7 +411,10 @@ Keep all text concise and direct. No marketing speak.`;
       throw new Error('Invalid JSON in Synta response');
     }
 
-    logStep("Insights generated successfully");
+    logStep("Enhanced insights generated successfully", {
+      hasNinetyDayPlan: !!insights.ninetyDayPlan,
+      hasPillarRecommendations: !!insights.pillarRecommendations
+    });
 
     return new Response(
       JSON.stringify({ success: true, insights }),
