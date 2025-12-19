@@ -12,6 +12,7 @@ import {
 import { Download, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { generateAIMythsDeck, generate90DayChecklist } from "@/lib/pdf-generators";
 
 interface EmailGateModalProps {
   isOpen: boolean;
@@ -26,12 +27,25 @@ const EmailGateModal = ({
   onClose,
   productName,
   productId,
-  downloadUrl,
 }: EmailGateModalProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const generateAndDownloadPDF = () => {
+    let filename = "";
+    
+    if (productId === "myths-deck") {
+      const doc = generateAIMythsDeck();
+      filename = "Wellness-AI-Myths-Deck.pdf";
+      doc.save(filename);
+    } else if (productId === "reality-checklist") {
+      const doc = generate90DayChecklist();
+      filename = "90-Day-AI-Reality-Checklist.pdf";
+      doc.save(filename);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,14 +75,9 @@ const EmailGateModal = ({
       setIsSuccess(true);
       toast.success("Thank you! Your download is starting...");
       
-      // Trigger download after short delay
+      // Generate and download PDF after short delay
       setTimeout(() => {
-        const link = document.createElement("a");
-        link.href = downloadUrl;
-        link.download = `${productId}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        generateAndDownloadPDF();
       }, 500);
 
       // Close modal after download starts
@@ -78,7 +87,7 @@ const EmailGateModal = ({
         setName("");
         setEmail("");
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving subscriber:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
@@ -104,7 +113,7 @@ const EmailGateModal = ({
             Download {productName}
           </DialogTitle>
           <DialogDescription>
-            Enter your email to receive your free PDF. We'll also send you occasional insights (you can unsubscribe anytime).
+            Enter your email to receive your free PDF. We will also send you occasional insights (you can unsubscribe anytime).
           </DialogDescription>
         </DialogHeader>
 
