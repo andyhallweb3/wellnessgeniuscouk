@@ -262,12 +262,19 @@ const AIReadinessLanding = () => {
             <p className="text-lg text-muted-foreground mb-8">
               And what it's costing you not to know.
             </p>
-            <Button variant="accent" size="lg" asChild>
-              <Link to="/ai-readiness/start">
-                Start Assessment
-                <ArrowRight size={16} />
-              </Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button variant="accent" size="lg" asChild>
+                <Link to="/ai-readiness/start">
+                  Start Assessment
+                  <ArrowRight size={16} />
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link to="/products">
+                  Browse All Products
+                </Link>
+              </Button>
+            </div>
           </div>
         </section>
       </main>

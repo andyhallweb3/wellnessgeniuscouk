@@ -10,9 +10,9 @@ const Header = () => {
   const navLinks = [
     { href: "/ai-readiness", label: "Free AI Assessment", isRoute: true },
     { href: "/products", label: "Products", isRoute: true },
-    { href: "#services", label: "Services" },
-    { href: "#proof", label: "Proof" },
-    { href: "#how-it-works", label: "How It Works" },
+    { href: "/#services", label: "Services", isRoute: true },
+    { href: "/#proof", label: "Proof", isRoute: true },
+    { href: "/#how-it-works", label: "How It Works", isRoute: true },
     { href: "/insights", label: "Insights", isRoute: true },
     { href: "/news", label: "Latest News", isRoute: true },
     { href: "/speaker-kit", label: "Speaker Kit", isRoute: true },

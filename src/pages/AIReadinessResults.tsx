@@ -261,6 +261,19 @@ const AIReadinessResults = () => {
               Secure payment. Instant access.
             </p>
           </div>
+
+          {/* Browse other products */}
+          <div className="mt-12 pt-8 border-t border-border text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Looking for other resources?
+            </p>
+            <Button variant="outline" asChild>
+              <Link to="/products">
+                Browse All Products
+                <ArrowRight size={16} />
+              </Link>
+            </Button>
+          </div>
         </div>
       </main>
 
