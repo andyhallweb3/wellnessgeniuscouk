@@ -2,32 +2,80 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Download, ArrowLeft, CheckCircle, X, BarChart3, TrendingUp, AlertTriangle, Calendar } from "lucide-react";
+import { Download, ArrowLeft, CheckCircle, Check, X, BarChart3, TrendingUp, AlertTriangle, Calendar, Loader2, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface PillarScore {
+  pillar: string;
+  score: number;
+  status: string;
+}
 
 interface ReportData {
   overallScore: number;
   scoreBand: string;
-  pillarScores: {
-    pillar: string;
-    score: number;
-    status: string;
-  }[];
+  pillarScores: PillarScore[];
   headline: string;
   userInfo: {
     name: string;
     company: string;
     email: string;
+    role: string;
+    industry: string;
+    companySize: string;
   };
 }
 
-// Placeholder data for demonstration - will be replaced with Synta.io integration
-const getPlaceholderReportData = (score: number) => {
+interface AIInsights {
+  headline: string;
+  revenueUpside: {
+    min: string;
+    max: string;
+    confidence: string;
+    rationale?: string;
+  };
+  topBlockers: string[];
+  priorityPlan: {
+    action: string;
+    effort: string;
+    impact: string;
+    week: string;
+  }[];
+  monetisationPaths: string[];
+  doList?: string[];
+  dontList?: string[];
+  roleInsight?: string;
+  nextStep?: string;
+}
+
+const getScoreBandLabel = (score: number) => {
+  if (score < 40) return "AI-Unready";
+  if (score < 60) return "AI-Curious";
+  if (score < 80) return "AI-Ready";
+  return "AI-Native";
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "Critical": return "text-red-500 bg-red-500/10";
+    case "Needs Work": return "text-yellow-500 bg-yellow-500/10";
+    case "Healthy": return "text-accent bg-accent/10";
+    case "Strong": return "text-green-500 bg-green-500/10";
+    default: return "text-muted-foreground bg-secondary";
+  }
+};
+
+// Fallback data if AI fails
+const getFallbackInsights = (score: number): AIInsights => {
   const isLowScore = score < 60;
   
   return {
+    headline: isLowScore 
+      ? "Your business needs foundational work before AI adoption."
+      : "Your business is positioned for AI implementation.",
     revenueUpside: isLowScore 
       ? { min: "£25,000", max: "£75,000", confidence: "Low" }
       : { min: "£100,000", max: "£350,000", confidence: "Medium" },
@@ -71,35 +119,14 @@ const getPlaceholderReportData = (score: number) => {
   };
 };
 
-const getScoreBandLabel = (score: number) => {
-  if (score < 40) return "AI-Unready";
-  if (score < 60) return "AI-Curious";
-  if (score < 80) return "AI-Ready";
-  return "AI-Native";
-};
-
-const getHeadline = (score: number) => {
-  if (score < 40) return "Your business isn't ready for AI — and that's okay.";
-  if (score < 60) return "You're AI-curious — but the foundations need work.";
-  if (score < 80) return "Your business is ready for AI pilots — but not for scale.";
-  return "You're in the top tier of AI readiness.";
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Critical": return "text-red-500 bg-red-500/10";
-    case "Needs Work": return "text-yellow-500 bg-yellow-500/10";
-    case "Healthy": return "text-accent bg-accent/10";
-    case "Strong": return "text-green-500 bg-green-500/10";
-    default: return "text-muted-foreground bg-secondary";
-  }
-};
-
 const AIReadinessReport = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [insights, setInsights] = useState<AIInsights | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generatingInsights, setGeneratingInsights] = useState(false);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -121,10 +148,7 @@ const AIReadinessReport = () => {
           return;
         }
 
-        // TODO: Check payment status before showing full report
-        // For now, show placeholder data
-
-        const pillarScores = [
+        const pillarScores: PillarScore[] = [
           { pillar: "Leadership & Strategy", score: data.leadership_score || 0 },
           { pillar: "Data & Infrastructure", score: data.data_score || 0 },
           { pillar: "People & Skills", score: data.people_score || 0 },
@@ -135,31 +159,77 @@ const AIReadinessReport = () => {
           status: p.score < 40 ? "Critical" : p.score < 60 ? "Needs Work" : p.score < 80 ? "Healthy" : "Strong"
         }));
 
-        setReportData({
+        const reportInfo: ReportData = {
           overallScore: data.overall_score,
           scoreBand: getScoreBandLabel(data.overall_score),
           pillarScores,
-          headline: getHeadline(data.overall_score),
+          headline: "",
           userInfo: {
             name: data.name || "User",
             company: data.company || "Company",
             email: data.email,
+            role: data.role || "",
+            industry: data.industry || "",
+            companySize: data.company_size || "",
           },
-        });
+        };
+
+        setReportData(reportInfo);
+        setLoading(false);
+
+        // Generate AI insights
+        setGeneratingInsights(true);
+        try {
+          const { data: insightData, error: insightError } = await supabase.functions.invoke(
+            "generate-readiness-insights",
+            {
+              body: {
+                businessType: "Wellness operator",
+                companySize: data.company_size,
+                industry: data.industry,
+                overallScore: data.overall_score,
+                pillarScores,
+                role: data.role,
+              },
+            }
+          );
+
+          if (insightError) throw insightError;
+          
+          if (insightData?.insights) {
+            setInsights(insightData.insights);
+            setReportData(prev => prev ? { ...prev, headline: insightData.insights.headline } : null);
+          } else {
+            throw new Error("No insights returned");
+          }
+        } catch (insightErr) {
+          console.error("Failed to generate AI insights:", insightErr);
+          // Use fallback data
+          const fallback = getFallbackInsights(data.overall_score);
+          setInsights(fallback);
+          setReportData(prev => prev ? { ...prev, headline: fallback.headline } : null);
+          toast({
+            title: "Using standard insights",
+            description: "AI-generated insights unavailable. Showing standard recommendations.",
+          });
+        } finally {
+          setGeneratingInsights(false);
+        }
       } catch (err) {
         console.error("Error fetching report:", err);
         navigate("/ai-readiness");
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchReport();
-  }, [id, navigate]);
+  }, [id, navigate, toast]);
 
   const handleDownloadPDF = () => {
     // TODO: Implement PDF generation
-    console.log("Download PDF for:", id);
+    toast({
+      title: "Coming soon",
+      description: "PDF download will be available shortly.",
+    });
   };
 
   if (loading) {
@@ -176,8 +246,6 @@ const AIReadinessReport = () => {
   if (!reportData) {
     return null;
   }
-
-  const placeholderData = getPlaceholderReportData(reportData.overallScore);
 
   return (
     <div className="min-h-screen bg-background">
@@ -224,7 +292,14 @@ const AIReadinessReport = () => {
 
           {/* Headline */}
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-heading">{reportData.headline}</h2>
+            {generatingInsights ? (
+              <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                <Sparkles size={20} className="animate-pulse" />
+                <span>Generating personalised insights...</span>
+              </div>
+            ) : (
+              <h2 className="text-2xl font-heading">{reportData.headline}</h2>
+            )}
           </div>
 
           {/* Pillar Scores */}
@@ -256,98 +331,166 @@ const AIReadinessReport = () => {
             </div>
           </div>
 
-          {/* Revenue Upside */}
-          <div className="bg-accent/5 rounded-xl p-8 border border-accent/20 mb-8">
-            <h3 className="text-xl font-heading mb-4 flex items-center gap-2">
-              <TrendingUp size={20} className="text-accent" />
-              Revenue Upside Range
-            </h3>
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-3xl font-heading">{placeholderData.revenueUpside.min}</span>
-              <span className="text-muted-foreground">to</span>
-              <span className="text-3xl font-heading">{placeholderData.revenueUpside.max}</span>
-              <span className="text-sm text-muted-foreground">/ year</span>
+          {generatingInsights ? (
+            <div className="bg-card rounded-xl p-12 border border-border shadow-elegant mb-8 text-center">
+              <Loader2 size={32} className="animate-spin mx-auto mb-4 text-accent" />
+              <p className="text-muted-foreground">Analysing your results with AI...</p>
+              <p className="text-sm text-muted-foreground mt-2">This takes about 10-15 seconds</p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Confidence: {placeholderData.revenueUpside.confidence} — Conservative estimate based on your readiness profile
-            </p>
-          </div>
+          ) : insights && (
+            <>
+              {/* Revenue Upside */}
+              <div className="bg-accent/5 rounded-xl p-8 border border-accent/20 mb-8">
+                <h3 className="text-xl font-heading mb-4 flex items-center gap-2">
+                  <TrendingUp size={20} className="text-accent" />
+                  Revenue Upside Range
+                </h3>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-3xl font-heading">{insights.revenueUpside.min}</span>
+                  <span className="text-muted-foreground">to</span>
+                  <span className="text-3xl font-heading">{insights.revenueUpside.max}</span>
+                  <span className="text-sm text-muted-foreground">/ year</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Confidence: {insights.revenueUpside.confidence}
+                  {insights.revenueUpside.rationale && ` — ${insights.revenueUpside.rationale}`}
+                </p>
+              </div>
 
-          {/* Top Blockers */}
-          <div className="bg-red-500/5 rounded-xl p-8 border border-red-500/20 mb-8">
-            <h3 className="text-xl font-heading mb-4 flex items-center gap-2">
-              <AlertTriangle size={20} className="text-red-500" />
-              Top 3 Blockers
-            </h3>
-            <ul className="space-y-3">
-              {placeholderData.topBlockers.map((blocker, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center text-sm shrink-0">
-                    {idx + 1}
-                  </span>
-                  <span>{blocker}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* 90-Day Priority Plan */}
-          <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
-            <h3 className="text-xl font-heading mb-6 flex items-center gap-2">
-              <Calendar size={20} className="text-accent" />
-              90-Day Priority Plan
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 font-medium">Action</th>
-                    <th className="text-center py-3 font-medium">Effort</th>
-                    <th className="text-center py-3 font-medium">Impact</th>
-                    <th className="text-right py-3 font-medium">Week</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {placeholderData.priorityPlan.map((item, idx) => (
-                    <tr key={idx} className="border-b border-border/50 last:border-0">
-                      <td className="py-3">{item.action}</td>
-                      <td className="py-3 text-center">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          item.effort === "Low" ? "bg-green-500/10 text-green-500" :
-                          item.effort === "Medium" ? "bg-yellow-500/10 text-yellow-500" :
-                          "bg-red-500/10 text-red-500"
-                        }`}>
-                          {item.effort}
-                        </span>
-                      </td>
-                      <td className="py-3 text-center">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          item.impact === "High" ? "bg-accent/10 text-accent" :
-                          "bg-secondary text-muted-foreground"
-                        }`}>
-                          {item.impact}
-                        </span>
-                      </td>
-                      <td className="py-3 text-right text-muted-foreground">{item.week}</td>
-                    </tr>
+              {/* Top Blockers */}
+              <div className="bg-red-500/5 rounded-xl p-8 border border-red-500/20 mb-8">
+                <h3 className="text-xl font-heading mb-4 flex items-center gap-2">
+                  <AlertTriangle size={20} className="text-red-500" />
+                  Top Blockers
+                </h3>
+                <ul className="space-y-3">
+                  {insights.topBlockers.map((blocker, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center text-sm shrink-0">
+                        {idx + 1}
+                      </span>
+                      <span>{blocker}</span>
+                    </li>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </ul>
+              </div>
 
-          {/* Monetisation Paths */}
-          <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
-            <h3 className="text-xl font-heading mb-4">Monetisation Paths</h3>
-            <ul className="space-y-2">
-              {placeholderData.monetisationPaths.map((path, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <CheckCircle size={16} className="text-accent mt-0.5 shrink-0" />
-                  <span>{path}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+              {/* Do / Don't Lists */}
+              {(insights.doList || insights.dontList) && (
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  {insights.doList && (
+                    <div className="bg-accent/5 rounded-xl p-6 border border-accent/20">
+                      <h3 className="font-heading font-medium mb-4 flex items-center gap-2">
+                        <Check className="w-5 h-5 text-accent" />
+                        What to do next
+                      </h3>
+                      <ul className="space-y-3">
+                        {insights.doList.map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm">
+                            <Check className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {insights.dontList && (
+                    <div className="bg-red-500/5 rounded-xl p-6 border border-red-500/20">
+                      <h3 className="font-heading font-medium mb-4 flex items-center gap-2">
+                        <X className="w-5 h-5 text-red-500" />
+                        What NOT to do yet
+                      </h3>
+                      <ul className="space-y-3">
+                        {insights.dontList.map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm">
+                            <X className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Role-Specific Insight */}
+              {insights.roleInsight && (
+                <div className="bg-secondary/50 rounded-xl p-6 border border-border mb-8">
+                  <p className="text-sm text-muted-foreground mb-2">Based on your role as {reportData.userInfo.role || "a decision-maker"}:</p>
+                  <p className="text-foreground font-medium">{insights.roleInsight}</p>
+                </div>
+              )}
+
+              {/* 90-Day Priority Plan */}
+              <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
+                <h3 className="text-xl font-heading mb-6 flex items-center gap-2">
+                  <Calendar size={20} className="text-accent" />
+                  90-Day Priority Plan
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 font-medium">Action</th>
+                        <th className="text-center py-3 font-medium">Effort</th>
+                        <th className="text-center py-3 font-medium">Impact</th>
+                        <th className="text-right py-3 font-medium">Week</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {insights.priorityPlan.map((item, idx) => (
+                        <tr key={idx} className="border-b border-border/50 last:border-0">
+                          <td className="py-3">{item.action}</td>
+                          <td className="py-3 text-center">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              item.effort === "Low" ? "bg-green-500/10 text-green-500" :
+                              item.effort === "Medium" ? "bg-yellow-500/10 text-yellow-500" :
+                              "bg-red-500/10 text-red-500"
+                            }`}>
+                              {item.effort}
+                            </span>
+                          </td>
+                          <td className="py-3 text-center">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              item.impact === "High" ? "bg-accent/10 text-accent" :
+                              "bg-secondary text-muted-foreground"
+                            }`}>
+                              {item.impact}
+                            </span>
+                          </td>
+                          <td className="py-3 text-right text-muted-foreground">{item.week}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Monetisation Paths */}
+              <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
+                <h3 className="text-xl font-heading mb-4">Monetisation Paths</h3>
+                <ul className="space-y-2">
+                  {insights.monetisationPaths.map((path, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <CheckCircle size={16} className="text-accent mt-0.5 shrink-0" />
+                      <span>{path}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Next Step */}
+              {insights.nextStep && (
+                <div className="bg-accent/10 rounded-xl p-8 border border-accent/20 mb-8 text-center">
+                  <p className="text-sm font-medium text-accent uppercase tracking-wider mb-2">
+                    Your Next Step
+                  </p>
+                  <p className="text-lg font-heading">{insights.nextStep}</p>
+                </div>
+              )}
+            </>
+          )}
 
           {/* Disclaimer */}
           <div className="bg-secondary/30 rounded-xl p-6 border border-border text-center">

@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.create-report-checkout]
 verify_jwt = false
+
+[functions.generate-readiness-insights]
+verify_jwt = false
