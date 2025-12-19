@@ -30,7 +30,7 @@ serve(async (req) => {
 
       console.log('Saving AI Readiness completion for:', email);
 
-      const { error } = await supabase.from('ai_readiness_completions').insert({
+      const { data, error } = await supabase.from('ai_readiness_completions').insert({
         email,
         name,
         company,
@@ -46,7 +46,7 @@ serve(async (req) => {
         score_band: scoreBand,
         ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip'),
         user_agent: req.headers.get('user-agent'),
-      });
+      }).select('id').single();
 
       if (error) {
         console.error('Error saving completion:', error);
@@ -54,7 +54,7 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true }),
+        JSON.stringify({ success: true, id: data?.id }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

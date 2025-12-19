@@ -1,11 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AssessmentIntro from "@/components/assessment/AssessmentIntro";
 import AssessmentQuestion from "@/components/assessment/AssessmentQuestion";
-import AssessmentResults from "@/components/assessment/AssessmentResults";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export interface AssessmentAnswers {
   [key: string]: number;
@@ -150,11 +153,14 @@ const questions = [
   },
 ];
 
-const AIReadinessIndex = () => {
-  const [step, setStep] = useState<"intro" | "questions" | "results">("intro");
+const AIReadinessAssessment = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [step, setStep] = useState<"intro" | "questions">("intro");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleStartAssessment = (info: UserInfo) => {
     setUserInfo(info);
@@ -165,11 +171,83 @@ const AIReadinessIndex = () => {
     setAnswers((prev) => ({ ...prev, [questionId]: score }));
   };
 
+  const calculatePillarScore = (pillarName: string) => {
+    const pillarQuestions = questions.filter(q => q.pillar === pillarName);
+    const total = pillarQuestions.reduce((sum, q) => sum + (answers[q.id] || 3), 0);
+    return Math.round((total / (pillarQuestions.length * 5)) * 100);
+  };
+
+  const getScoreBand = (score: number) => {
+    if (score < 40) return 'AI-Unready';
+    if (score < 60) return 'AI-Curious';
+    if (score < 80) return 'AI-Ready';
+    return 'AI-Native';
+  };
+
+  const handleSubmit = async () => {
+    if (!userInfo) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      const totalScore = Object.values(answers).reduce((sum, val) => sum + val, 0);
+      const maxScore = questions.length * 5;
+      const overallScore = Math.round((totalScore / maxScore) * 100);
+      
+      const leadershipScore = calculatePillarScore('Leadership & Strategy');
+      const dataScore = calculatePillarScore('Data & Infrastructure');
+      const peopleScore = calculatePillarScore('People & Skills');
+      const processScore = calculatePillarScore('Process & Operations');
+      const riskScore = calculatePillarScore('Risk, Ethics & Governance');
+
+      const { data, error } = await supabase.functions.invoke('manage-readiness-completions', {
+        body: {
+          action: 'save',
+          email: userInfo.email,
+          name: userInfo.name,
+          company: userInfo.company,
+          role: userInfo.role,
+          industry: userInfo.industry,
+          companySize: userInfo.companySize,
+          overallScore,
+          leadershipScore,
+          dataScore,
+          peopleScore,
+          processScore,
+          riskScore,
+          scoreBand: getScoreBand(overallScore),
+        },
+      });
+
+      if (error) throw error;
+
+      // Navigate to results page with the completion ID
+      if (data?.id) {
+        navigate(`/ai-readiness/results/${data.id}`);
+      } else {
+        // Fallback: show inline results if no ID returned
+        toast({
+          title: "Assessment Complete",
+          description: `Your AI Readiness Score is ${overallScore}/100`,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save assessment:', err);
+      toast({
+        title: "Error",
+        description: "Failed to save your assessment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleNext = () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion((prev) => prev + 1);
     } else {
-      setStep("results");
+      handleSubmit();
     }
   };
 
@@ -185,10 +263,18 @@ const AIReadinessIndex = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>AI Readiness Assessment | Wellness Genius</title>
+        <meta 
+          name="description" 
+          content="Complete your AI Readiness assessment to discover your score and unlock actionable insights." 
+        />
+      </Helmet>
+      
       <Header />
       
       <main className="pt-24 pb-16">
-        <div className="container-wide">
+        <div className="container-wide section-padding">
           {step === "intro" && (
             <AssessmentIntro onStart={handleStartAssessment} />
           )}
@@ -228,21 +314,27 @@ const AIReadinessIndex = () => {
                 <Button
                   variant="accent"
                   onClick={handleNext}
-                  disabled={!hasCurrentAnswer}
+                  disabled={!hasCurrentAnswer || isSubmitting}
                 >
-                  {currentQuestion === questions.length - 1 ? "See Results" : "Next"}
-                  <ArrowRight size={16} />
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin" />
+                      Saving...
+                    </>
+                  ) : currentQuestion === questions.length - 1 ? (
+                    <>
+                      See Results
+                      <ArrowRight size={16} />
+                    </>
+                  ) : (
+                    <>
+                      Next
+                      <ArrowRight size={16} />
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
-          )}
-
-          {step === "results" && userInfo && (
-            <AssessmentResults 
-              answers={answers} 
-              questions={questions}
-              userInfo={userInfo}
-            />
           )}
         </div>
       </main>
@@ -252,4 +344,4 @@ const AIReadinessIndex = () => {
   );
 };
 
-export default AIReadinessIndex;
+export default AIReadinessAssessment;

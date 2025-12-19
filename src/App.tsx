@@ -4,7 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import AIReadinessIndex from "./pages/AIReadinessIndex";
+import AIReadinessLanding from "./pages/AIReadinessLanding";
+import AIReadinessAssessment from "./pages/AIReadinessAssessment";
+import AIReadinessResults from "./pages/AIReadinessResults";
+import AIReadinessCheckout from "./pages/AIReadinessCheckout";
+import AIReadinessReport from "./pages/AIReadinessReport";
 import SpeakerKit from "./pages/SpeakerKit";
 import Insights from "./pages/Insights";
 import BlogPost from "./pages/BlogPost";
@@ -26,7 +30,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/ai-readiness" element={<AIReadinessIndex />} />
+          <Route path="/ai-readiness" element={<AIReadinessLanding />} />
+          <Route path="/ai-readiness/start" element={<AIReadinessAssessment />} />
+          <Route path="/ai-readiness/results/:id" element={<AIReadinessResults />} />
+          <Route path="/ai-readiness/checkout/:id" element={<AIReadinessCheckout />} />
+          <Route path="/ai-readiness/report/:id" element={<AIReadinessReport />} />
           <Route path="/speaker-kit" element={<SpeakerKit />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/insights/:slug" element={<BlogPost />} />

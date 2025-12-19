@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowRight, Clock, Target, Shield, BarChart3 } from "lucide-react";
-import { UserInfo } from "@/pages/AIReadinessIndex";
+import { UserInfo } from "@/pages/AIReadinessAssessment";
 
 interface AssessmentIntroProps {
   onStart: (info: UserInfo) => void;

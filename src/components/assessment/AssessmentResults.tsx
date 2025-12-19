@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, AlertTriangle, TrendingUp, CheckCircle, Sparkles, X, Check, Mail, Loader2 } from "lucide-react";
-import { AssessmentAnswers, UserInfo } from "@/pages/AIReadinessIndex";
+import { AssessmentAnswers, UserInfo } from "@/pages/AIReadinessAssessment";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
