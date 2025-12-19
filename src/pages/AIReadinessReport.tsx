@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Download, ArrowLeft, CheckCircle, Check, X, BarChart3, TrendingUp, AlertTriangle, Calendar, Loader2, Sparkles } from "lucide-react";
+import { Download, ArrowLeft, CheckCircle, Check, X, BarChart3, TrendingUp, AlertTriangle, Calendar, Loader2, Sparkles, Mail } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,6 +128,7 @@ const AIReadinessReport = () => {
   const [insights, setInsights] = useState<AIInsights | null>(null);
   const [loading, setLoading] = useState(true);
   const [generatingInsights, setGeneratingInsights] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -369,6 +370,40 @@ const AIReadinessReport = () => {
     });
   };
 
+  const handleEmailReport = async () => {
+    if (!reportData || !insights) {
+      toast({
+        title: "Report not ready",
+        description: "Please wait for the report to fully load.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-readiness-report", {
+        body: { reportData, insights },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Report sent!",
+        description: `The PDF has been emailed to ${reportData.userInfo.email}`,
+      });
+    } catch (err) {
+      console.error("Failed to email report:", err);
+      toast({
+        title: "Failed to send email",
+        description: "Please try again or download the PDF instead.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -404,10 +439,16 @@ const AIReadinessReport = () => {
               <ArrowLeft size={16} />
               Back
             </Link>
-            <Button variant="outline" onClick={handleDownloadPDF}>
-              <Download size={16} />
-              Download PDF
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleEmailReport} disabled={sendingEmail || generatingInsights}>
+                {sendingEmail ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
+                {sendingEmail ? "Sending..." : "Email Report"}
+              </Button>
+              <Button variant="outline" onClick={handleDownloadPDF} disabled={generatingInsights}>
+                <Download size={16} />
+                Download PDF
+              </Button>
+            </div>
           </div>
 
           {/* Report Header */}
