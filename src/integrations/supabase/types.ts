@@ -423,6 +423,33 @@ export type Database = {
         }
         Relationships: []
       }
+      report_shares: {
+        Row: {
+          completion_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          share_token: string
+          view_count: number
+        }
+        Insert: {
+          completion_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          share_token?: string
+          view_count?: number
+        }
+        Update: {
+          completion_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          share_token?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       rss_cache_metadata: {
         Row: {
           id: string
