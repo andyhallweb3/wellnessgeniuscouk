@@ -25,130 +25,288 @@ export interface UserInfo {
 }
 
 const questions = [
-  // Leadership & Strategy (2 questions)
+  // Leadership & Strategy (5 questions)
   {
     id: "leadership_1",
     pillar: "Leadership & Strategy",
-    text: "We have clearly defined business problems we want AI to solve.",
-    context: "AI works best when targeting specific, measurable challenges rather than vague aspirations.",
+    text: "We have clearly defined, measurable business problems we want AI to solve.",
+    context: "AI works best when targeting specific, quantifiable challenges rather than vague aspirations. The clearer the problem, the easier it is to measure AI success.",
     examples: [
-      "Reducing member churn by predicting at-risk customers",
-      "Automating appointment booking and class scheduling",
-      "Personalising workout recommendations based on member goals",
+      "Reducing member churn by 15% by predicting at-risk customers",
+      "Cutting admin time by 10 hours per week through automation",
+      "Increasing class utilisation from 60% to 80% through smart scheduling",
     ],
   },
   {
     id: "leadership_2",
     pillar: "Leadership & Strategy",
-    text: "There is executive-level ownership and budget allocated for AI initiatives.",
-    context: "Successful AI adoption requires visible leadership commitment and dedicated resources.",
+    text: "There is executive-level ownership and dedicated budget allocated for AI initiatives.",
+    context: "Successful AI adoption requires visible leadership commitment, ring-fenced resources, and someone accountable for outcomes.",
     examples: [
-      "A C-level sponsor championing AI projects",
-      "Ring-fenced budget for pilots (even £5-10k to start)",
-      "AI discussed regularly at board or senior leadership meetings",
+      "A named C-level sponsor championing AI projects",
+      "Annual budget of £10k-50k+ earmarked for AI/automation",
+      "AI discussed at monthly board or leadership meetings",
     ],
   },
-  // Data & Infrastructure (2 questions)
+  {
+    id: "leadership_3",
+    pillar: "Leadership & Strategy",
+    text: "We have a 12-24 month technology roadmap that includes AI and automation milestones.",
+    context: "AI success compounds over time. A roadmap prevents reactive, disconnected projects and builds momentum.",
+    examples: [
+      "Documented phases: pilot → scale → optimise",
+      "Clear dependencies between tech projects mapped out",
+      "Quarterly review points built into the plan",
+    ],
+  },
+  {
+    id: "leadership_4",
+    pillar: "Leadership & Strategy",
+    text: "We have identified 2-3 specific use cases where AI could deliver the highest ROI within 6 months.",
+    context: "Focused pilots beat scattered experiments. Knowing your highest-value opportunities prevents wasted effort.",
+    examples: [
+      "Automated member win-back campaigns for lapsed customers",
+      "AI-powered chatbot for 24/7 membership enquiries",
+      "Predictive maintenance for gym equipment to reduce downtime",
+    ],
+  },
+  {
+    id: "leadership_5",
+    pillar: "Leadership & Strategy",
+    text: "We have defined success metrics (KPIs) for measuring AI project outcomes.",
+    context: "Without clear metrics, you can't prove value or secure future investment. What gets measured gets managed.",
+    examples: [
+      "Time saved per week in admin hours",
+      "Conversion rate improvement on enquiries",
+      "Net Promoter Score changes post-implementation",
+    ],
+  },
+
+  // Data & Infrastructure (5 questions)
   {
     id: "data_1",
     pillar: "Data & Infrastructure",
-    text: "We know where our critical data lives and who owns it.",
-    context: "AI is only as good as the data it learns from. Knowing your data landscape is step one.",
+    text: "We have a clear inventory of where our critical business data lives and who owns it.",
+    context: "AI is only as good as the data it learns from. Unknown or scattered data makes AI projects fail before they start.",
     examples: [
-      "Member data in your CRM vs booking system vs email platform",
-      "A named person responsible for data quality",
-      "Clear understanding of what data you collect and where it's stored",
+      "Documented list of all systems holding member data",
+      "Named data owners for CRM, booking, finance systems",
+      "Clear understanding of data retention policies",
     ],
   },
   {
     id: "data_2",
     pillar: "Data & Infrastructure",
-    text: "Our core systems are integrated rather than siloed.",
-    context: "Disconnected systems make AI insights incomplete and implementation harder.",
+    text: "Our core systems are integrated and data flows automatically between them.",
+    context: "Siloed systems create incomplete customer views and manual workarounds. Integration is the foundation of AI readiness.",
     examples: [
-      "Your booking system talks to your CRM automatically",
-      "Financial data syncs with member records",
-      "You can pull a single customer view across touchpoints",
+      "Booking system syncs automatically with your CRM",
+      "Payment data links to member profiles without manual entry",
+      "You can pull a unified customer view across all touchpoints",
     ],
   },
-  // People & Skills (2 questions)
+  {
+    id: "data_3",
+    pillar: "Data & Infrastructure",
+    text: "We have at least 12 months of clean, structured historical data for key business activities.",
+    context: "AI learns from patterns in historical data. The more quality data you have, the better predictions and automations work.",
+    examples: [
+      "Member attendance records going back 12+ months",
+      "Historical sales and revenue data cleanly categorised",
+      "Customer interaction logs (emails, calls, complaints) stored systematically",
+    ],
+  },
+  {
+    id: "data_4",
+    pillar: "Data & Infrastructure",
+    text: "We have processes to regularly clean, validate, and maintain data quality.",
+    context: "Dirty data produces unreliable AI. Garbage in, garbage out applies doubly to machine learning.",
+    examples: [
+      "Monthly data hygiene checks for duplicates and errors",
+      "Automated alerts when data quality drops below thresholds",
+      "Clear processes for handling incomplete or outdated records",
+    ],
+  },
+  {
+    id: "data_5",
+    pillar: "Data & Infrastructure",
+    text: "We can easily export data from our systems in standard formats (CSV, API, etc.).",
+    context: "Locked-in data prevents AI experimentation. Accessible data enables rapid prototyping and vendor flexibility.",
+    examples: [
+      "Your CRM allows full data exports without vendor involvement",
+      "APIs available for key systems for real-time data access",
+      "No contractual restrictions on using your own data externally",
+    ],
+  },
+
+  // People & Skills (5 questions)
   {
     id: "people_1",
     pillar: "People & Skills",
-    text: "Leadership understands AI capabilities and limitations.",
-    context: "Realistic expectations prevent disappointment. AI isn't magic—but it can be transformative when applied well.",
+    text: "Senior leadership understands AI capabilities, limitations, and realistic timelines.",
+    context: "Unrealistic expectations kill AI projects. Leaders who understand AI make better investment decisions.",
     examples: [
-      "Leaders know the difference between automation and AI",
-      "Awareness that AI needs data to learn and improve",
-      "Understanding that AI augments humans, not fully replaces them",
+      "Leaders know AI needs training data and time to improve",
+      "Understanding that AI augments humans rather than replacing them",
+      "Awareness of typical AI project timelines (3-6 months to value)",
     ],
   },
   {
     id: "people_2",
     pillar: "People & Skills",
-    text: "Our team is open to adopting new AI-powered tools and processes.",
-    context: "Technology adoption fails without buy-in from the people who'll use it daily.",
+    text: "Our frontline team is open to adopting new AI-powered tools and processes.",
+    context: "Technology adoption fails without buy-in from daily users. Culture matters more than features.",
     examples: [
-      "Staff excited to trial new tools vs resistant to change",
-      "History of successfully adopting new software",
-      "Culture of continuous improvement and learning",
+      "Staff actively suggest process improvements",
+      "History of successfully adopting new software within 2-3 months",
+      "Low resistance when new tools are introduced",
     ],
   },
-  // Process & Operations (3 questions)
+  {
+    id: "people_3",
+    pillar: "People & Skills",
+    text: "We have someone internally who can champion AI projects and bridge business and technical needs.",
+    context: "AI projects need a translator between what the business wants and what technology can deliver.",
+    examples: [
+      "An operations manager comfortable discussing tech with vendors",
+      "Someone who attends industry AI/tech events or webinars",
+      "A staff member actively experimenting with AI tools like ChatGPT",
+    ],
+  },
+  {
+    id: "people_4",
+    pillar: "People & Skills",
+    text: "We provide or would invest in AI literacy training for key team members.",
+    context: "Building internal capability reduces dependency on external consultants and accelerates adoption.",
+    examples: [
+      "Budget allocated for online AI courses or workshops",
+      "Staff encouraged to experiment with AI tools in their roles",
+      "Regular knowledge-sharing sessions about new technologies",
+    ],
+  },
+  {
+    id: "people_5",
+    pillar: "People & Skills",
+    text: "We have access to technical expertise (internal or external) to implement AI solutions.",
+    context: "AI implementation requires technical skills. Knowing your gaps helps you plan for the right support.",
+    examples: [
+      "Relationship with a technology partner or consultant",
+      "Internal IT team comfortable with API integrations",
+      "Budget for external implementation support when needed",
+    ],
+  },
+
+  // Process & Operations (5 questions)
   {
     id: "process_1",
     pillar: "Process & Operations",
-    text: "Our core operational processes are documented and repeatable.",
-    context: "AI learns from patterns. If your processes vary wildly, automation becomes difficult.",
+    text: "Our core operational processes are documented, standardised, and consistently followed.",
+    context: "AI learns from patterns. Inconsistent processes make automation unreliable and hard to train.",
     examples: [
-      "Written SOPs for member onboarding",
+      "Written SOPs for member onboarding and offboarding",
       "Consistent approach to handling complaints or cancellations",
-      "Standardised class scheduling and instructor allocation",
+      "Standardised class scheduling and instructor allocation procedures",
     ],
   },
   {
     id: "process_2",
     pillar: "Process & Operations",
-    text: "We have identified repetitive tasks that consume significant time.",
-    context: "The best AI opportunities often hide in tedious, time-consuming manual work.",
+    text: "We have mapped out repetitive, time-consuming tasks that could be automated.",
+    context: "The best AI opportunities hide in tedious manual work. Knowing where time is wasted reveals quick wins.",
     examples: [
-      "Manually chasing unpaid invoices or lapsed members",
-      "Copying data between spreadsheets and systems",
-      "Answering the same customer questions repeatedly",
+      "List of tasks taking 5+ hours per week of manual effort",
+      "Identified workflows with copy-paste between systems",
+      "Customer questions that get asked repeatedly (FAQs)",
     ],
   },
   {
     id: "process_3",
     pillar: "Process & Operations",
-    text: "Decision bottlenecks in our workflows are clearly understood.",
-    context: "AI can speed up decisions—but only if you know where the hold-ups are.",
+    text: "We understand our key decision bottlenecks and where delays hurt the business.",
+    context: "AI can accelerate decisions—but only if you know where the hold-ups cost you money or customers.",
     examples: [
-      "Approvals that sit in someone's inbox for days",
-      "Waiting on reports before making pricing decisions",
-      "Delayed responses to membership enquiries",
+      "Membership enquiries waiting 24+ hours for a response",
+      "Pricing or promotion decisions delayed by data gathering",
+      "Approvals sitting in manager inboxes for days",
     ],
   },
-  // Risk, Ethics & Governance (2 questions)
+  {
+    id: "process_4",
+    pillar: "Process & Operations",
+    text: "We track and measure operational metrics that AI could help optimise.",
+    context: "If you're not measuring it, AI can't improve it. Baseline metrics enable before/after comparisons.",
+    examples: [
+      "Class occupancy rates tracked weekly or monthly",
+      "Member acquisition cost and lifetime value calculated",
+      "Staff utilisation and productivity measured",
+    ],
+  },
+  {
+    id: "process_5",
+    pillar: "Process & Operations",
+    text: "We have run pilot projects or experiments with new technology in the past 12 months.",
+    context: "Organisations with a test-and-learn culture adopt AI faster. Experimentation builds change muscle.",
+    examples: [
+      "Trialled a new booking or CRM system recently",
+      "Tested marketing automation or email sequences",
+      "Piloted any AI tool (ChatGPT, scheduling optimiser, etc.)",
+    ],
+  },
+
+  // Risk, Ethics & Governance (5 questions)
   {
     id: "risk_1",
     pillar: "Risk, Ethics & Governance",
-    text: "We have guidelines for responsible AI use and data privacy.",
-    context: "Trust is hard to rebuild. Clear policies protect your business and your customers.",
+    text: "We have documented policies for data privacy, GDPR compliance, and responsible data use.",
+    context: "Trust is hard to rebuild. Clear policies protect your business, customers, and reputation.",
     examples: [
-      "GDPR compliance processes already in place",
-      "Policies on how customer data can be used",
-      "Awareness of bias risks in AI recommendations",
+      "Written data protection policy reviewed in the past year",
+      "Staff trained on GDPR and data handling requirements",
+      "Clear consent mechanisms for marketing and data processing",
     ],
   },
   {
     id: "risk_2",
     pillar: "Risk, Ethics & Governance",
-    text: "We understand the importance of human oversight in AI-assisted decisions.",
-    context: "AI should support decisions, not make them in the dark. Humans remain accountable.",
+    text: "We understand how AI decisions could impact different customer groups and have considered fairness.",
+    context: "AI can inadvertently discriminate. Awareness of bias risks prevents reputational damage and legal issues.",
     examples: [
-      "Staff review AI-generated recommendations before action",
-      "Clear escalation paths when AI makes errors",
-      "Regular audits of AI-driven outcomes for fairness",
+      "Considered whether AI recommendations could disadvantage any group",
+      "Awareness of how training data biases affect outcomes",
+      "Commitment to testing AI outputs for fairness before deployment",
+    ],
+  },
+  {
+    id: "risk_3",
+    pillar: "Risk, Ethics & Governance",
+    text: "We maintain human oversight for AI-assisted decisions that affect customers or staff.",
+    context: "AI should support decisions, not make them invisibly. Humans remain accountable for outcomes.",
+    examples: [
+      "Staff review AI recommendations before customer actions",
+      "Clear escalation paths when AI makes errors or edge cases",
+      "Regular audits of AI-driven outcomes and decisions",
+    ],
+  },
+  {
+    id: "risk_4",
+    pillar: "Risk, Ethics & Governance",
+    text: "We have vendor due diligence processes for evaluating AI tool providers.",
+    context: "Not all AI vendors are equal. Evaluating security, data handling, and reliability protects your business.",
+    examples: [
+      "Checklist for assessing new software providers",
+      "Review of vendor data security certifications (ISO 27001, SOC 2)",
+      "Understanding of where vendor-processed data is stored",
+    ],
+  },
+  {
+    id: "risk_5",
+    pillar: "Risk, Ethics & Governance",
+    text: "We have a plan for managing the change impact of AI on staff roles and responsibilities.",
+    context: "AI changes jobs, not just processes. Proactive change management prevents resistance and anxiety.",
+    examples: [
+      "Communication plan for how AI will affect team roles",
+      "Commitment to reskilling rather than replacing staff",
+      "Clear messaging that AI augments rather than threatens jobs",
     ],
   },
 ];
