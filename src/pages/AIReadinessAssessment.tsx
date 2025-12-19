@@ -358,6 +358,20 @@ const AIReadinessAssessment = () => {
       const processScore = calculatePillarScore('Process & Operations');
       const riskScore = calculatePillarScore('Risk, Ethics & Governance');
 
+      // Build detailed question answers for the AI insights generator
+      const questionAnswers = questions.map(q => ({
+        questionId: q.id,
+        pillar: q.pillar,
+        questionText: q.text,
+        score: answers[q.id] || 3,
+      }));
+
+      // Store question answers in sessionStorage for the report page
+      sessionStorage.setItem('aiReadinessAnswers', JSON.stringify({
+        questionAnswers,
+        userInfo,
+      }));
+
       const { data, error } = await supabase.functions.invoke('manage-readiness-completions', {
         body: {
           action: 'save',

@@ -32,6 +32,7 @@ interface ReportData {
 
 interface AIInsights {
   headline: string;
+  executiveSummary?: string;
   revenueUpside: {
     min: string;
     max: string;
@@ -39,17 +40,85 @@ interface AIInsights {
     rationale?: string;
   };
   topBlockers: string[];
-  priorityPlan: {
+  ninetyDayPlan?: {
+    phase1: {
+      name: string;
+      focus: string;
+      actions: {
+        week: string;
+        action: string;
+        owner: string;
+        effort: string;
+        impact: string;
+        linkedGap: string;
+      }[];
+    };
+    phase2: {
+      name: string;
+      focus: string;
+      actions: {
+        week: string;
+        action: string;
+        owner: string;
+        effort: string;
+        impact: string;
+        linkedGap: string;
+      }[];
+    };
+    phase3: {
+      name: string;
+      focus: string;
+      actions: {
+        week: string;
+        action: string;
+        owner: string;
+        effort: string;
+        impact: string;
+        linkedGap: string;
+      }[];
+    };
+  };
+  pillarRecommendations?: {
+    [key: string]: {
+      status: string;
+      priority: number;
+      keyAction: string;
+      rationale: string;
+    };
+  };
+  priorityPlan?: {
     action: string;
     effort: string;
     impact: string;
     week: string;
   }[];
-  monetisationPaths: string[];
+  monetisationPaths: string[] | {
+    opportunity: string;
+    potentialValue: string;
+    timeToValue: string;
+    prerequisite: string;
+  }[];
   doList?: string[];
   dontList?: string[];
   roleInsight?: string;
+  investmentGuidance?: {
+    budgetRange: string;
+    keyInvestments: string[];
+    avoidSpending: string;
+  };
+  successMetrics?: {
+    metric: string;
+    baseline: string;
+    target: string;
+  }[];
   nextStep?: string;
+}
+
+interface QuestionAnswer {
+  questionId: string;
+  pillar: string;
+  questionText: string;
+  score: number;
 }
 
 const getScoreBandLabel = (score: number) => {
@@ -184,16 +253,26 @@ const AIReadinessReport = () => {
         // Generate AI insights
         setGeneratingInsights(true);
         try {
+          // Retrieve question answers from sessionStorage
+          let questionAnswers: QuestionAnswer[] | undefined;
+          const storedData = sessionStorage.getItem('aiReadinessAnswers');
+          if (storedData) {
+            const parsed = JSON.parse(storedData);
+            questionAnswers = parsed.questionAnswers;
+          }
+
           const { data: insightData, error: insightError } = await supabase.functions.invoke(
             "generate-readiness-insights",
             {
               body: {
                 businessType: "Wellness operator",
                 companySize: data.company_size,
+                company: data.company,
                 industry: data.industry,
                 overallScore: data.overall_score,
                 pillarScores,
                 role: data.role,
+                questionAnswers,
               },
             }
           );
@@ -661,56 +740,238 @@ const AIReadinessReport = () => {
                   <Calendar size={20} className="text-accent" />
                   90-Day Priority Plan
                 </h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 font-medium">Action</th>
-                        <th className="text-center py-3 font-medium">Effort</th>
-                        <th className="text-center py-3 font-medium">Impact</th>
-                        <th className="text-right py-3 font-medium">Week</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {insights.priorityPlan.map((item, idx) => (
-                        <tr key={idx} className="border-b border-border/50 last:border-0">
-                          <td className="py-3">{item.action}</td>
-                          <td className="py-3 text-center">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              item.effort === "Low" ? "bg-green-500/10 text-green-500" :
-                              item.effort === "Medium" ? "bg-yellow-500/10 text-yellow-500" :
-                              "bg-red-500/10 text-red-500"
-                            }`}>
-                              {item.effort}
-                            </span>
-                          </td>
-                          <td className="py-3 text-center">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              item.impact === "High" ? "bg-accent/10 text-accent" :
-                              "bg-secondary text-muted-foreground"
-                            }`}>
-                              {item.impact}
-                            </span>
-                          </td>
-                          <td className="py-3 text-right text-muted-foreground">{item.week}</td>
+                
+                {insights.ninetyDayPlan ? (
+                  <div className="space-y-8">
+                    {/* Phase 1 */}
+                    <div className="border-l-4 border-accent pl-6">
+                      <div className="mb-4">
+                        <h4 className="font-heading font-medium text-accent">{insights.ninetyDayPlan.phase1.name}</h4>
+                        <p className="text-sm text-muted-foreground">{insights.ninetyDayPlan.phase1.focus}</p>
+                      </div>
+                      <div className="space-y-3">
+                        {insights.ninetyDayPlan.phase1.actions.map((item, idx) => (
+                          <div key={idx} className="bg-secondary/30 rounded-lg p-4">
+                            <div className="flex items-start justify-between gap-4 mb-2">
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{item.action}</p>
+                                <p className="text-xs text-muted-foreground mt-1">Owner: {item.owner}</p>
+                              </div>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Week {item.week}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                item.effort === "Low" ? "bg-green-500/10 text-green-500" :
+                                item.effort === "Medium" ? "bg-yellow-500/10 text-yellow-500" :
+                                "bg-red-500/10 text-red-500"
+                              }`}>
+                                Effort: {item.effort}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                item.impact === "High" ? "bg-accent/10 text-accent" :
+                                "bg-secondary text-muted-foreground"
+                              }`}>
+                                Impact: {item.impact}
+                              </span>
+                              <span className="text-xs text-muted-foreground">→ {item.linkedGap}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Phase 2 */}
+                    <div className="border-l-4 border-yellow-500 pl-6">
+                      <div className="mb-4">
+                        <h4 className="font-heading font-medium text-yellow-500">{insights.ninetyDayPlan.phase2.name}</h4>
+                        <p className="text-sm text-muted-foreground">{insights.ninetyDayPlan.phase2.focus}</p>
+                      </div>
+                      <div className="space-y-3">
+                        {insights.ninetyDayPlan.phase2.actions.map((item, idx) => (
+                          <div key={idx} className="bg-secondary/30 rounded-lg p-4">
+                            <div className="flex items-start justify-between gap-4 mb-2">
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{item.action}</p>
+                                <p className="text-xs text-muted-foreground mt-1">Owner: {item.owner}</p>
+                              </div>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Week {item.week}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                item.effort === "Low" ? "bg-green-500/10 text-green-500" :
+                                item.effort === "Medium" ? "bg-yellow-500/10 text-yellow-500" :
+                                "bg-red-500/10 text-red-500"
+                              }`}>
+                                Effort: {item.effort}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                item.impact === "High" ? "bg-accent/10 text-accent" :
+                                "bg-secondary text-muted-foreground"
+                              }`}>
+                                Impact: {item.impact}
+                              </span>
+                              <span className="text-xs text-muted-foreground">→ {item.linkedGap}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Phase 3 */}
+                    <div className="border-l-4 border-green-500 pl-6">
+                      <div className="mb-4">
+                        <h4 className="font-heading font-medium text-green-500">{insights.ninetyDayPlan.phase3.name}</h4>
+                        <p className="text-sm text-muted-foreground">{insights.ninetyDayPlan.phase3.focus}</p>
+                      </div>
+                      <div className="space-y-3">
+                        {insights.ninetyDayPlan.phase3.actions.map((item, idx) => (
+                          <div key={idx} className="bg-secondary/30 rounded-lg p-4">
+                            <div className="flex items-start justify-between gap-4 mb-2">
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{item.action}</p>
+                                <p className="text-xs text-muted-foreground mt-1">Owner: {item.owner}</p>
+                              </div>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Week {item.week}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                item.effort === "Low" ? "bg-green-500/10 text-green-500" :
+                                item.effort === "Medium" ? "bg-yellow-500/10 text-yellow-500" :
+                                "bg-red-500/10 text-red-500"
+                              }`}>
+                                Effort: {item.effort}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                item.impact === "High" ? "bg-accent/10 text-accent" :
+                                "bg-secondary text-muted-foreground"
+                              }`}>
+                                Impact: {item.impact}
+                              </span>
+                              <span className="text-xs text-muted-foreground">→ {item.linkedGap}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : insights.priorityPlan ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 font-medium">Action</th>
+                          <th className="text-center py-3 font-medium">Effort</th>
+                          <th className="text-center py-3 font-medium">Impact</th>
+                          <th className="text-right py-3 font-medium">Week</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {insights.priorityPlan.map((item, idx) => (
+                          <tr key={idx} className="border-b border-border/50 last:border-0">
+                            <td className="py-3">{item.action}</td>
+                            <td className="py-3 text-center">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                item.effort === "Low" ? "bg-green-500/10 text-green-500" :
+                                item.effort === "Medium" ? "bg-yellow-500/10 text-yellow-500" :
+                                "bg-red-500/10 text-red-500"
+                              }`}>
+                                {item.effort}
+                              </span>
+                            </td>
+                            <td className="py-3 text-center">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                item.impact === "High" ? "bg-accent/10 text-accent" :
+                                "bg-secondary text-muted-foreground"
+                              }`}>
+                                {item.impact}
+                              </span>
+                            </td>
+                            <td className="py-3 text-right text-muted-foreground">{item.week}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
               </div>
+
+              {/* Investment Guidance */}
+              {insights.investmentGuidance && (
+                <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
+                  <h3 className="text-xl font-heading mb-4">Investment Guidance</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Recommended Budget</p>
+                      <p className="font-heading text-lg">{insights.investmentGuidance.budgetRange}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Where NOT to Spend</p>
+                      <p className="text-sm">{insights.investmentGuidance.avoidSpending}</p>
+                    </div>
+                  </div>
+                  {insights.investmentGuidance.keyInvestments && (
+                    <div className="mt-4">
+                      <p className="text-sm text-muted-foreground mb-2">Priority Investments</p>
+                      <div className="flex flex-wrap gap-2">
+                        {insights.investmentGuidance.keyInvestments.map((inv, idx) => (
+                          <span key={idx} className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm">
+                            {inv}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Success Metrics */}
+              {insights.successMetrics && insights.successMetrics.length > 0 && (
+                <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
+                  <h3 className="text-xl font-heading mb-4">Success Metrics (Week 12 Targets)</h3>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {insights.successMetrics.map((metric, idx) => (
+                      <div key={idx} className="bg-secondary/30 rounded-lg p-4">
+                        <p className="font-medium text-sm mb-2">{metric.metric}</p>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Baseline: {metric.baseline}</span>
+                          <span className="text-accent font-medium">Target: {metric.target}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Monetisation Paths */}
               <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
                 <h3 className="text-xl font-heading mb-4">Monetisation Paths</h3>
-                <ul className="space-y-2">
-                  {insights.monetisationPaths.map((path, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle size={16} className="text-accent mt-0.5 shrink-0" />
-                      <span>{path}</span>
-                    </li>
-                  ))}
-                </ul>
+                {Array.isArray(insights.monetisationPaths) && insights.monetisationPaths.length > 0 && (
+                  typeof insights.monetisationPaths[0] === 'string' ? (
+                    <ul className="space-y-2">
+                      {(insights.monetisationPaths as string[]).map((path, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <CheckCircle size={16} className="text-accent mt-0.5 shrink-0" />
+                          <span>{path}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="space-y-4">
+                      {(insights.monetisationPaths as { opportunity: string; potentialValue: string; timeToValue: string; prerequisite: string }[]).map((path, idx) => (
+                        <div key={idx} className="bg-secondary/30 rounded-lg p-4">
+                          <div className="flex items-start justify-between gap-4 mb-2">
+                            <p className="font-medium">{path.opportunity}</p>
+                            <span className="text-accent font-medium whitespace-nowrap">{path.potentialValue}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Time to value: {path.timeToValue}</span>
+                            <span>Prerequisite: {path.prerequisite}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
               </div>
 
               {/* Next Step */}
