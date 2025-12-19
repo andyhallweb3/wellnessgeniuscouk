@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import AIReadinessLanding from "./pages/AIReadinessLanding";
-import AIReadinessAssessment from "./pages/AIReadinessAssessment";
+import AIReadinessAssessmentFree from "./pages/AIReadinessAssessmentFree";
+import AIReadinessAssessmentPaid from "./pages/AIReadinessAssessmentPaid";
 import AIReadinessResults from "./pages/AIReadinessResults";
 import AIReadinessCheckout from "./pages/AIReadinessCheckout";
 import AIReadinessReport from "./pages/AIReadinessReport";
@@ -32,7 +33,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/ai-readiness" element={<AIReadinessLanding />} />
-          <Route path="/ai-readiness/start" element={<AIReadinessAssessment />} />
+          <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
+          <Route path="/ai-readiness/full/:id" element={<AIReadinessAssessmentPaid />} />
           <Route path="/ai-readiness/results/:id" element={<AIReadinessResults />} />
           <Route path="/ai-readiness/checkout/:id" element={<AIReadinessCheckout />} />
           <Route path="/ai-readiness/report/:id" element={<AIReadinessReport />} />
