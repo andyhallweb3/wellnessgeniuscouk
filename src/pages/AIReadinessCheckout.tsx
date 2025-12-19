@@ -1,9 +1,12 @@
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Lock, CheckCircle, CreditCard } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle, CreditCard, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const includedFeatures = [
   "Full diagnostic report",
@@ -17,10 +20,81 @@ const includedFeatures = [
 
 const AIReadinessCheckout = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+  const [fetchingEmail, setFetchingEmail] = useState(true);
+
+  // Check for cancelled payment
+  useEffect(() => {
+    if (searchParams.get("payment") === "cancelled") {
+      toast({
+        title: "Payment cancelled",
+        description: "Your payment was not completed. You can try again when ready.",
+      });
+    }
+  }, [searchParams, toast]);
+
+  // Fetch user email from completion record
+  useEffect(() => {
+    const fetchEmail = async () => {
+      if (!id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("ai_readiness_completions")
+          .select("email")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
+        setEmail(data?.email || null);
+      } catch (err) {
+        console.error("Failed to fetch email:", err);
+      } finally {
+        setFetchingEmail(false);
+      }
+    };
+
+    fetchEmail();
+  }, [id]);
 
   const handleCheckout = async () => {
-    // TODO: Implement Stripe checkout
-    console.log("Stripe checkout for result ID:", id);
+    if (!id || !email) {
+      toast({
+        title: "Error",
+        description: "Unable to process checkout. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("create-report-checkout", {
+        body: { completionId: id, email },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Open Stripe checkout in new tab
+        window.open(data.url, "_blank");
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      toast({
+        title: "Checkout failed",
+        description: "Unable to start checkout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -79,9 +153,19 @@ const AIReadinessCheckout = () => {
               size="lg" 
               className="w-full"
               onClick={handleCheckout}
+              disabled={isLoading || fetchingEmail || !email}
             >
-              <CreditCard size={16} />
-              Pay £99
+              {isLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CreditCard size={16} />
+                  Pay £99
+                </>
+              )}
             </Button>
 
             {/* Security note */}
@@ -90,12 +174,11 @@ const AIReadinessCheckout = () => {
               <span>Secure payment powered by Stripe</span>
             </div>
 
-            {/* Stripe not connected notice */}
-            <div className="mt-8 p-4 bg-secondary/50 rounded-lg text-center">
-              <p className="text-sm text-muted-foreground">
-                Payment integration pending. Contact us to access your full report.
+            {email && (
+              <p className="text-xs text-muted-foreground text-center mt-4">
+                Receipt will be sent to {email}
               </p>
-            </div>
+            )}
           </div>
         </div>
       </main>
