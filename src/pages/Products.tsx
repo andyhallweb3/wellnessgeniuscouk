@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowRight, 
@@ -12,11 +12,14 @@ import {
   Zap,
   BookOpen,
   Users,
-  Package
+  Package,
+  Loader2
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import EmailGateModal from "@/components/EmailGateModal";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Product {
   id: string;
@@ -31,6 +34,7 @@ interface Product {
   link: string;
   badge?: string;
   isDownload?: boolean;
+  isStripeProduct?: boolean;
 }
 
 const products: Product[] = [
@@ -123,6 +127,7 @@ const products: Product[] = [
     ],
     cta: "Buy Now",
     link: "#prompt-pack",
+    isStripeProduct: true,
   },
   {
     id: "revenue-framework",
@@ -139,6 +144,7 @@ const products: Product[] = [
     ],
     cta: "Buy Now",
     link: "#revenue-framework",
+    isStripeProduct: true,
   },
   {
     id: "build-vs-buy",
@@ -155,6 +161,7 @@ const products: Product[] = [
     ],
     cta: "Buy Now",
     link: "#build-vs-buy",
+    isStripeProduct: true,
   },
   // Premium Products
   {
@@ -260,17 +267,25 @@ const getTypeBadge = (type: Product["type"]) => {
 
 const ProductCard = ({ 
   product, 
-  onDownloadClick 
+  onDownloadClick,
+  onBuyClick,
+  isProcessing
 }: { 
   product: Product; 
   onDownloadClick?: (product: Product) => void;
+  onBuyClick?: (product: Product) => void;
+  isProcessing?: string | null;
 }) => {
-  const isInternal = product.link.startsWith("/") && !product.isDownload;
+  const isInternal = product.link.startsWith("/") && !product.isDownload && !product.isStripeProduct;
   const isDownload = product.isDownload;
+  const isStripe = product.isStripeProduct;
+  const isLoading = isProcessing === product.id;
   
   const handleClick = () => {
     if (isDownload && onDownloadClick) {
       onDownloadClick(product);
+    } else if (isStripe && onBuyClick) {
+      onBuyClick(product);
     }
   };
   
@@ -317,6 +332,25 @@ const ProductCard = ({
           <Download size={16} />
           {product.cta}
         </Button>
+      ) : isStripe ? (
+        <Button 
+          variant="accent" 
+          className="w-full" 
+          onClick={handleClick}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              <ArrowRight size={16} />
+              {product.cta}
+            </>
+          )}
+        </Button>
       ) : isInternal ? (
         <Button variant={product.type === "free" ? "outline" : "accent"} className="w-full" asChild>
           <Link to={product.link}>
@@ -336,14 +370,26 @@ const ProductCard = ({
 };
 
 const Products = () => {
+  const [searchParams] = useSearchParams();
   const [emailGateModal, setEmailGateModal] = useState<{
     isOpen: boolean;
     product: Product | null;
   }>({ isOpen: false, product: null });
+  const [processingProductId, setProcessingProductId] = useState<string | null>(null);
 
   const freeProducts = products.filter(p => p.type === "free");
   const paidProducts = products.filter(p => p.type === "paid");
   const premiumProducts = products.filter(p => p.type === "premium");
+
+  // Handle payment success/cancel from URL params
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+    if (payment === "success") {
+      toast.success("Payment successful! Check your email for access details.");
+    } else if (payment === "cancelled") {
+      toast.info("Payment was cancelled.");
+    }
+  }, [searchParams]);
 
   const handleDownloadClick = (product: Product) => {
     setEmailGateModal({ isOpen: true, product });
@@ -351,6 +397,29 @@ const Products = () => {
 
   const handleCloseModal = () => {
     setEmailGateModal({ isOpen: false, product: null });
+  };
+
+  const handleBuyClick = async (product: Product) => {
+    setProcessingProductId(product.id);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("create-product-checkout", {
+        body: { productId: product.id },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (error: unknown) {
+      console.error("Checkout error:", error);
+      toast.error("Failed to start checkout. Please try again.");
+    } finally {
+      setProcessingProductId(null);
+    }
   };
 
   return (
@@ -412,7 +481,12 @@ const Products = () => {
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {paidProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  onBuyClick={handleBuyClick}
+                  isProcessing={processingProductId}
+                />
               ))}
             </div>
           </section>
