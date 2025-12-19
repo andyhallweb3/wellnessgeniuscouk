@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import EmailGateModal from "@/components/EmailGateModal";
 
 interface Product {
   id: string;
@@ -28,6 +30,7 @@ interface Product {
   cta: string;
   link: string;
   badge?: string;
+  isDownload?: boolean;
 }
 
 const products: Product[] = [
@@ -63,7 +66,8 @@ const products: Product[] = [
       "AI without governance increases risk",
     ],
     cta: "Download PDF",
-    link: "#myths-deck",
+    link: "/downloads/ai-myths-deck.pdf",
+    isDownload: true,
   },
   {
     id: "reality-checklist",
@@ -79,7 +83,8 @@ const products: Product[] = [
       "Trust & compliance",
     ],
     cta: "Download PDF",
-    link: "#checklist",
+    link: "/downloads/90-day-ai-checklist.pdf",
+    isDownload: true,
   },
   // Paid Products
   {
@@ -253,8 +258,21 @@ const getTypeBadge = (type: Product["type"]) => {
   }
 };
 
-const ProductCard = ({ product }: { product: Product }) => {
-  const isInternal = product.link.startsWith("/");
+const ProductCard = ({ 
+  product, 
+  onDownloadClick 
+}: { 
+  product: Product; 
+  onDownloadClick?: (product: Product) => void;
+}) => {
+  const isInternal = product.link.startsWith("/") && !product.isDownload;
+  const isDownload = product.isDownload;
+  
+  const handleClick = () => {
+    if (isDownload && onDownloadClick) {
+      onDownloadClick(product);
+    }
+  };
   
   return (
     <div className={`rounded-xl border p-6 ${getTypeStyles(product.type)} relative flex flex-col h-full`}>
@@ -290,7 +308,16 @@ const ProductCard = ({ product }: { product: Product }) => {
         ))}
       </ul>
       
-      {isInternal ? (
+      {isDownload ? (
+        <Button 
+          variant="outline" 
+          className="w-full" 
+          onClick={handleClick}
+        >
+          <Download size={16} />
+          {product.cta}
+        </Button>
+      ) : isInternal ? (
         <Button variant={product.type === "free" ? "outline" : "accent"} className="w-full" asChild>
           <Link to={product.link}>
             {product.type === "free" ? <Download size={16} /> : <ArrowRight size={16} />}
@@ -309,9 +336,22 @@ const ProductCard = ({ product }: { product: Product }) => {
 };
 
 const Products = () => {
+  const [emailGateModal, setEmailGateModal] = useState<{
+    isOpen: boolean;
+    product: Product | null;
+  }>({ isOpen: false, product: null });
+
   const freeProducts = products.filter(p => p.type === "free");
   const paidProducts = products.filter(p => p.type === "paid");
   const premiumProducts = products.filter(p => p.type === "premium");
+
+  const handleDownloadClick = (product: Product) => {
+    setEmailGateModal({ isOpen: true, product });
+  };
+
+  const handleCloseModal = () => {
+    setEmailGateModal({ isOpen: false, product: null });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -345,12 +385,16 @@ const Products = () => {
               </div>
               <div>
                 <h2 className="text-2xl font-heading">Free Resources</h2>
-                <p className="text-sm text-muted-foreground">Start here. No email required.</p>
+                <p className="text-sm text-muted-foreground">Start here. Email required for PDFs.</p>
               </div>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {freeProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  onDownloadClick={handleDownloadClick}
+                />
               ))}
             </div>
           </section>
@@ -428,6 +472,17 @@ const Products = () => {
       </main>
 
       <Footer />
+
+      {/* Email Gate Modal */}
+      {emailGateModal.product && (
+        <EmailGateModal
+          isOpen={emailGateModal.isOpen}
+          onClose={handleCloseModal}
+          productName={emailGateModal.product.name}
+          productId={emailGateModal.product.id}
+          downloadUrl={emailGateModal.product.link}
+        />
+      )}
     </div>
   );
 };
