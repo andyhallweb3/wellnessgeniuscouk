@@ -63,7 +63,7 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/ai-readiness/report/${completionId}?payment=success`,
+      success_url: `${origin}/ai-readiness/full/${completionId}?payment=success`,
       cancel_url: `${origin}/ai-readiness/checkout/${completionId}?payment=cancelled`,
       metadata: {
         completion_id: completionId,
