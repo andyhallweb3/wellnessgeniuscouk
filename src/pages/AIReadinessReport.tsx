@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
 
 interface PillarScore {
   pillar: string;
@@ -225,10 +226,146 @@ const AIReadinessReport = () => {
   }, [id, navigate, toast]);
 
   const handleDownloadPDF = () => {
-    // TODO: Implement PDF generation
+    if (!reportData || !insights) {
+      toast({
+        title: "Report not ready",
+        description: "Please wait for the report to fully load.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 20;
+    const contentWidth = pageWidth - margin * 2;
+    let y = 20;
+
+    const addText = (text: string, fontSize: number, isBold = false, color: [number, number, number] = [0, 0, 0]) => {
+      pdf.setFontSize(fontSize);
+      pdf.setFont("helvetica", isBold ? "bold" : "normal");
+      pdf.setTextColor(color[0], color[1], color[2]);
+      const lines = pdf.splitTextToSize(text, contentWidth);
+      pdf.text(lines, margin, y);
+      y += lines.length * (fontSize * 0.4) + 4;
+    };
+
+    const checkNewPage = (neededSpace: number) => {
+      if (y + neededSpace > pdf.internal.pageSize.getHeight() - 20) {
+        pdf.addPage();
+        y = 20;
+      }
+    };
+
+    // Header
+    addText("AI Readiness Report", 22, true, [0, 128, 128]);
+    addText(reportData.userInfo.company, 16, true);
+    addText(`Prepared for ${reportData.userInfo.name}`, 11, false, [100, 100, 100]);
+    y += 5;
+
+    // Overall Score
+    addText(`Overall Score: ${reportData.overallScore}% — ${reportData.scoreBand}`, 14, true, [0, 128, 128]);
+    y += 5;
+
+    // Headline
+    addText(reportData.headline, 12, false);
+    y += 8;
+
+    // Pillar Scores
+    addText("Section Breakdown", 14, true);
+    reportData.pillarScores.forEach((pillar) => {
+      checkNewPage(12);
+      addText(`• ${pillar.pillar}: ${pillar.score}% (${pillar.status})`, 10, false);
+    });
+    y += 8;
+
+    // Revenue Upside
+    checkNewPage(30);
+    addText("Revenue Upside Range", 14, true, [0, 128, 128]);
+    addText(`${insights.revenueUpside.min} to ${insights.revenueUpside.max} / year`, 12, true);
+    addText(`Confidence: ${insights.revenueUpside.confidence}${insights.revenueUpside.rationale ? ` — ${insights.revenueUpside.rationale}` : ""}`, 10, false, [100, 100, 100]);
+    y += 8;
+
+    // Top Blockers
+    checkNewPage(30);
+    addText("Top Blockers", 14, true, [200, 50, 50]);
+    insights.topBlockers.forEach((blocker, idx) => {
+      checkNewPage(10);
+      addText(`${idx + 1}. ${blocker}`, 10, false);
+    });
+    y += 8;
+
+    // Do / Don't Lists
+    if (insights.doList && insights.doList.length > 0) {
+      checkNewPage(30);
+      addText("What to do next", 14, true, [0, 128, 128]);
+      insights.doList.forEach((item) => {
+        checkNewPage(10);
+        addText(`✓ ${item}`, 10, false);
+      });
+      y += 8;
+    }
+
+    if (insights.dontList && insights.dontList.length > 0) {
+      checkNewPage(30);
+      addText("What NOT to do yet", 14, true, [200, 50, 50]);
+      insights.dontList.forEach((item) => {
+        checkNewPage(10);
+        addText(`✗ ${item}`, 10, false);
+      });
+      y += 8;
+    }
+
+    // Role Insight
+    if (insights.roleInsight) {
+      checkNewPage(25);
+      addText(`Insight for ${reportData.userInfo.role || "your role"}:`, 12, true);
+      addText(insights.roleInsight, 10, false);
+      y += 8;
+    }
+
+    // 90-Day Priority Plan
+    checkNewPage(40);
+    addText("90-Day Priority Plan", 14, true, [0, 128, 128]);
+    insights.priorityPlan.forEach((item) => {
+      checkNewPage(12);
+      addText(`Week ${item.week}: ${item.action} [Effort: ${item.effort}, Impact: ${item.impact}]`, 10, false);
+    });
+    y += 8;
+
+    // Monetisation Paths
+    checkNewPage(30);
+    addText("Monetisation Paths", 14, true);
+    insights.monetisationPaths.forEach((path) => {
+      checkNewPage(10);
+      addText(`• ${path}`, 10, false);
+    });
+    y += 8;
+
+    // Next Step
+    if (insights.nextStep) {
+      checkNewPage(25);
+      addText("Your Next Step", 14, true, [0, 128, 128]);
+      addText(insights.nextStep, 11, false);
+      y += 8;
+    }
+
+    // Disclaimer
+    checkNewPage(25);
+    y += 10;
+    pdf.setFontSize(8);
+    pdf.setTextColor(128, 128, 128);
+    const disclaimer = "This report provides indicative guidance based on your assessment responses. Revenue estimates are conservative and based on industry benchmarks. Actual results will vary based on execution and market conditions. This is not financial advice.";
+    const disclaimerLines = pdf.splitTextToSize(disclaimer, contentWidth);
+    pdf.text(disclaimerLines, margin, y);
+
+    // Save
+    const filename = `AI-Readiness-Report-${reportData.userInfo.company.replace(/\s+/g, "-")}.pdf`;
+    pdf.save(filename);
+
     toast({
-      title: "Coming soon",
-      description: "PDF download will be available shortly.",
+      title: "PDF downloaded",
+      description: "Your report has been saved.",
     });
   };
 
