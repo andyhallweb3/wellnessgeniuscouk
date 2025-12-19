@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Lock, ArrowRight, CheckCircle, BarChart3 } from "lucide-react";
+import { Lock, ArrowRight, CheckCircle, BarChart3, AlertTriangle, TrendingUp } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,14 +16,14 @@ interface ResultData {
     status: string;
   }[];
   headline: string;
-  unlocked: boolean;
+  subheadline: string;
 }
 
 const getScoreBandLabel = (score: number) => {
-  if (score < 40) return "AI-Unready";
-  if (score < 60) return "AI-Curious";
-  if (score < 80) return "AI-Ready";
-  return "AI-Native";
+  if (score < 40) return "Not AI Ready";
+  if (score < 60) return "Emerging";
+  if (score < 80) return "Operational";
+  return "Scalable";
 };
 
 const getHeadline = (score: number) => {
@@ -31,6 +31,13 @@ const getHeadline = (score: number) => {
   if (score < 60) return "You're AI-curious — but the foundations need work.";
   if (score < 80) return "Your business is ready for AI pilots — but not for scale.";
   return "You're in the top tier of AI readiness.";
+};
+
+const getSubheadline = (score: number) => {
+  if (score < 40) return "There are some foundational steps to take first. The full report shows you exactly where to start.";
+  if (score < 60) return "Good awareness, but gaps remain. Unlock your report to see the specific blockers holding you back.";
+  if (score < 80) return "Strong foundations in place. Your report reveals how to accelerate from here.";
+  return "You're ahead of most. Your report shows how to maximise your advantage.";
 };
 
 const getStatusColor = (status: string) => {
@@ -44,7 +51,7 @@ const getStatusColor = (status: string) => {
 };
 
 const lockedFeatures = [
-  "Revenue upside range (conservative)",
+  "Conservative revenue upside range",
   "Top 3 blockers identified",
   "90-day priority action plan",
   "Monetisation paths",
@@ -78,11 +85,11 @@ const AIReadinessResults = () => {
         }
 
         const pillarScores = [
-          { pillar: "Leadership & Strategy", score: data.leadership_score || 0 },
-          { pillar: "Data & Infrastructure", score: data.data_score || 0 },
-          { pillar: "People & Skills", score: data.people_score || 0 },
-          { pillar: "Process & Operations", score: data.process_score || 0 },
-          { pillar: "Risk, Ethics & Governance", score: data.risk_score || 0 },
+          { pillar: "Data Maturity", score: data.data_score || 0 },
+          { pillar: "Engagement", score: data.people_score || 0 },
+          { pillar: "Monetisation", score: data.process_score || 0 },
+          { pillar: "AI & Automation", score: data.leadership_score || 0 },
+          { pillar: "Trust & Compliance", score: data.risk_score || 0 },
         ].map(p => ({
           ...p,
           status: p.score < 40 ? "Critical" : p.score < 60 ? "Needs Work" : p.score < 80 ? "Healthy" : "Strong"
@@ -93,7 +100,7 @@ const AIReadinessResults = () => {
           scoreBand: getScoreBandLabel(data.overall_score),
           pillarScores,
           headline: getHeadline(data.overall_score),
-          unlocked: false, // TODO: Check payment status
+          subheadline: getSubheadline(data.overall_score),
         });
       } catch (err) {
         console.error("Error fetching results:", err);
@@ -205,31 +212,29 @@ const AIReadinessResults = () => {
           </div>
 
           {/* Locked Premium Content */}
-          {!resultData.unlocked && (
-            <div className="bg-secondary/30 rounded-xl p-8 border border-border relative overflow-hidden mb-8">
-              {/* Blur overlay */}
-              <div className="absolute inset-0 backdrop-blur-sm bg-background/60 flex flex-col items-center justify-center z-10">
-                <Lock size={32} className="text-muted-foreground mb-4" />
-                <h3 className="text-xl font-heading mb-2">Unlock Full Report</h3>
-                <p className="text-muted-foreground text-sm mb-6 text-center max-w-md">
-                  Get your complete diagnostic with revenue upside, blockers, and 90-day action plan.
-                </p>
-                <Button variant="accent" size="lg" asChild>
-                  <Link to={`/ai-readiness/checkout/${id}`}>
-                    Unlock for £99
-                    <ArrowRight size={16} />
-                  </Link>
-                </Button>
-              </div>
-              
-              {/* Preview content (blurred) */}
-              <div className="space-y-4 opacity-50">
-                <div className="h-24 bg-card rounded-lg" />
-                <div className="h-32 bg-card rounded-lg" />
-                <div className="h-48 bg-card rounded-lg" />
-              </div>
+          <div className="bg-secondary/30 rounded-xl p-8 border border-border relative overflow-hidden mb-8">
+            {/* Blur overlay */}
+            <div className="absolute inset-0 backdrop-blur-sm bg-background/60 flex flex-col items-center justify-center z-10">
+              <Lock size={32} className="text-muted-foreground mb-4" />
+              <h3 className="text-xl font-heading mb-2">Unlock Full Report</h3>
+              <p className="text-muted-foreground text-sm mb-6 text-center max-w-md">
+                {resultData.subheadline}
+              </p>
+              <Button variant="accent" size="lg" asChild>
+                <Link to={`/ai-readiness/checkout/${id}`}>
+                  Unlock for £99
+                  <ArrowRight size={16} />
+                </Link>
+              </Button>
             </div>
-          )}
+            
+            {/* Preview content (blurred) */}
+            <div className="space-y-4 opacity-50">
+              <div className="h-24 bg-card rounded-lg" />
+              <div className="h-32 bg-card rounded-lg" />
+              <div className="h-48 bg-card rounded-lg" />
+            </div>
+          </div>
 
           {/* What's included in the report */}
           <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">

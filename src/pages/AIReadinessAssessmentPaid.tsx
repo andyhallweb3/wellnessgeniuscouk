@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, Building2, TrendingUp, Users, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, TrendingUp, Users, Loader2, Lock } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AssessmentQuestion from "@/components/assessment/AssessmentQuestion";
@@ -24,6 +23,12 @@ interface BusinessProfile {
 
 interface AssessmentAnswers {
   [key: string]: number;
+}
+
+interface CompletionData {
+  id: string;
+  email: string;
+  overall_score: number;
 }
 
 // Full paid assessment: 5 questions per section = 25 questions total
@@ -255,10 +260,13 @@ const activeRateBands = [
 const AIReadinessAssessmentPaid = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [step, setStep] = useState<"profile" | "questions">("profile");
+  const [step, setStep] = useState<"verifying" | "profile" | "questions">("verifying");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
+  const [completionData, setCompletionData] = useState<CompletionData | null>(null);
+  const [paymentVerified, setPaymentVerified] = useState(false);
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile>({
     businessType: "",
     region: "",
@@ -270,6 +278,54 @@ const AIReadinessAssessmentPaid = () => {
     unknownActiveRate: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Verify payment on mount
+  useEffect(() => {
+    const verifyAccess = async () => {
+      if (!id) {
+        navigate("/ai-readiness");
+        return;
+      }
+
+      // Check for payment success parameter
+      const paymentStatus = searchParams.get("payment");
+      
+      if (paymentStatus === "success") {
+        // Payment just completed - allow access
+        setPaymentVerified(true);
+        
+        // Fetch completion data
+        const { data, error } = await supabase
+          .from("ai_readiness_completions")
+          .select("id, email, overall_score")
+          .eq("id", id)
+          .single();
+          
+        if (error || !data) {
+          toast({
+            title: "Error",
+            description: "Could not load your assessment data.",
+            variant: "destructive",
+          });
+          navigate("/ai-readiness");
+          return;
+        }
+        
+        setCompletionData(data);
+        setStep("profile");
+        
+        toast({
+          title: "Payment successful",
+          description: "Complete your detailed assessment to generate your full report.",
+        });
+      } else {
+        // No payment parameter - redirect to checkout
+        navigate(`/ai-readiness/checkout/${id}`);
+      }
+    };
+
+    verifyAccess();
+  }, [id, navigate, searchParams, toast]);
 
   const handleProfileChange = (field: keyof BusinessProfile, value: string) => {
     setBusinessProfile(prev => {
@@ -360,6 +416,18 @@ const AIReadinessAssessmentPaid = () => {
   const currentQuestionData = paidQuestions[currentQuestion];
   const hasCurrentAnswer = currentQuestionData && answers[currentQuestionData.id] !== undefined;
   const progress = ((currentQuestion + 1) / paidQuestions.length) * 100;
+
+  // Loading state
+  if (step === "verifying") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={32} className="animate-spin text-accent mx-auto mb-4" />
+          <p className="text-muted-foreground">Verifying payment...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
