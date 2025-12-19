@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Download, ArrowLeft, CheckCircle, Check, X, BarChart3, TrendingUp, AlertTriangle, Calendar, Loader2, Sparkles, Mail } from "lucide-react";
+import { Download, ArrowLeft, CheckCircle, Check, X, BarChart3, TrendingUp, AlertTriangle, Calendar, Loader2, Sparkles, Mail, Share2, Copy } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,6 +129,8 @@ const AIReadinessReport = () => {
   const [loading, setLoading] = useState(true);
   const [generatingInsights, setGeneratingInsights] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [generatingShareLink, setGeneratingShareLink] = useState(false);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -404,6 +406,48 @@ const AIReadinessReport = () => {
     }
   };
 
+  const handleShareReport = async () => {
+    if (!id) return;
+
+    setGeneratingShareLink(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-report-shares", {
+        body: { action: "create", completionId: id },
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      const url = `${window.location.origin}/ai-readiness/share/${data.shareToken}`;
+      setShareUrl(url);
+      
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied!",
+        description: "Share link has been copied to your clipboard.",
+      });
+    } catch (err) {
+      console.error("Failed to create share link:", err);
+      toast({
+        title: "Failed to create share link",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingShareLink(false);
+    }
+  };
+
+  const handleCopyShareUrl = async () => {
+    if (shareUrl) {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link copied!",
+        description: "Share link has been copied to your clipboard.",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -439,14 +483,25 @@ const AIReadinessReport = () => {
               <ArrowLeft size={16} />
               Back
             </Link>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              {shareUrl ? (
+                <Button variant="outline" onClick={handleCopyShareUrl}>
+                  <Copy size={16} />
+                  Copy Link
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={handleShareReport} disabled={generatingShareLink}>
+                  {generatingShareLink ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
+                  {generatingShareLink ? "Creating..." : "Share"}
+                </Button>
+              )}
               <Button variant="outline" onClick={handleEmailReport} disabled={sendingEmail || generatingInsights}>
                 {sendingEmail ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
-                {sendingEmail ? "Sending..." : "Email Report"}
+                {sendingEmail ? "Sending..." : "Email"}
               </Button>
               <Button variant="outline" onClick={handleDownloadPDF} disabled={generatingInsights}>
                 <Download size={16} />
-                Download PDF
+                Download
               </Button>
             </div>
           </div>

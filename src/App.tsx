@@ -9,6 +9,7 @@ import AIReadinessAssessment from "./pages/AIReadinessAssessment";
 import AIReadinessResults from "./pages/AIReadinessResults";
 import AIReadinessCheckout from "./pages/AIReadinessCheckout";
 import AIReadinessReport from "./pages/AIReadinessReport";
+import SharedReport from "./pages/SharedReport";
 import SpeakerKit from "./pages/SpeakerKit";
 import Insights from "./pages/Insights";
 import BlogPost from "./pages/BlogPost";
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/ai-readiness/results/:id" element={<AIReadinessResults />} />
           <Route path="/ai-readiness/checkout/:id" element={<AIReadinessCheckout />} />
           <Route path="/ai-readiness/report/:id" element={<AIReadinessReport />} />
+          <Route path="/ai-readiness/share/:token" element={<SharedReport />} />
           <Route path="/speaker-kit" element={<SpeakerKit />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/insights/:slug" element={<BlogPost />} />
