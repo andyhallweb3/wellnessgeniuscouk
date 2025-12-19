@@ -1,112 +1,183 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import jsPDF from "https://esm.sh/jspdf@2.5.1";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface PillarResult {
+interface PillarScore {
   pillar: string;
   score: number;
   status: string;
 }
 
-interface ReportRequest {
+interface ReportData {
+  overallScore: number;
+  scoreBand: string;
+  pillarScores: PillarScore[];
+  headline: string;
   userInfo: {
     name: string;
-    email: string;
     company: string;
+    email: string;
     role: string;
-    industry: string;
-    companySize: string;
-    primaryGoal: string;
   };
-  overallScore: number;
-  pillarResults: PillarResult[];
-  headline: string;
-  recommendation: string;
 }
 
-const getScoreBand = (score: number): { label: string; color: string; bgColor: string } => {
-  if (score < 40) return { label: 'AI-Unready', color: '#ef4444', bgColor: '#fef2f2' };
-  if (score < 60) return { label: 'AI-Curious', color: '#f59e0b', bgColor: '#fffbeb' };
-  if (score < 80) return { label: 'AI-Ready', color: '#0d9488', bgColor: '#f0fdfa' };
-  return { label: 'AI-Native', color: '#22c55e', bgColor: '#f0fdf4' };
-};
-
-const getStatusColor = (score: number): string => {
-  if (score < 40) return '#ef4444';
-  if (score < 60) return '#f59e0b';
-  if (score < 80) return '#0d9488';
-  return '#22c55e';
-};
-
-const getRecommendations = (score: number): { doList: string[]; dontList: string[]; nextStep: string; nextStepDesc: string } => {
-  if (score < 40) {
-    return {
-      doList: [
-        'Get clear on 2-3 business problems before touching tools',
-        'Assign explicit AI ownership at exec level',
-        'Document your most painful manual processes',
-      ],
-      dontList: [
-        'Buy AI tools yet (you\'ll waste money)',
-        'Let teams experiment without coordination',
-        'Promise AI outcomes to the board yet',
-      ],
-      nextStep: 'AI Readiness Sprint',
-      nextStepDesc: 'A 60-90 minute diagnostic that identifies exactly what\'s blocking you and creates a 90-day action plan.',
-    };
-  }
-  if (score < 60) {
-    return {
-      doList: [
-        'Run 1 tightly scoped pilot in a low-risk area',
-        'Invest in AI literacy for leadership',
-        'Map your top 5 time-consuming manual tasks',
-      ],
-      dontList: [
-        'Roll out AI tools company-wide',
-        'Skip the education step',
-        'Automate customer-facing processes yet',
-      ],
-      nextStep: 'AI Literacy for Leaders',
-      nextStepDesc: 'Practical AI education that gets your leadership team aligned on what AI can (and can\'t) do.',
-    };
-  }
-  if (score < 80) {
-    return {
-      doList: [
-        'Identify 1 high-impact use case with clear metrics',
-        'Start with an AI agent that replaces tasks, not roles',
-        'Keep a human-in-the-loop for all outputs initially',
-      ],
-      dontList: [
-        'Try to automate everything at once',
-        'Skip the measurement framework',
-        'Replace human decision-making prematurely',
-      ],
-      nextStep: 'AI Agent Build',
-      nextStepDesc: 'One agent. One job. Real ROI. We design and deploy a working AI agent inside your business.',
-    };
-  }
-  return {
-    doList: [
-      'Build AI agents that create lasting competitive advantage',
-      'Design for multi-agent workflows',
-      'Measure AI impact at the business level, not task level',
-    ],
-    dontList: [
-      'Settle for off-the-shelf tools',
-      'Wait for perfect conditions',
-      'Underestimate the change management required',
-    ],
-    nextStep: 'AI Agent Build',
-    nextStepDesc: 'Let\'s build a multi-agent system that creates lasting competitive advantage. You\'re ready to ship.',
+interface AIInsights {
+  headline: string;
+  revenueUpside: {
+    min: string;
+    max: string;
+    confidence: string;
+    rationale?: string;
   };
-};
+  topBlockers: string[];
+  priorityPlan: {
+    action: string;
+    effort: string;
+    impact: string;
+    week: string;
+  }[];
+  monetisationPaths: string[];
+  doList?: string[];
+  dontList?: string[];
+  roleInsight?: string;
+  nextStep?: string;
+}
+
+function generatePDF(reportData: ReportData, insights: AIInsights): string {
+  const pdf = new jsPDF();
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 20;
+
+  const addText = (text: string, fontSize: number, isBold = false, color: [number, number, number] = [0, 0, 0]) => {
+    pdf.setFontSize(fontSize);
+    pdf.setFont("helvetica", isBold ? "bold" : "normal");
+    pdf.setTextColor(color[0], color[1], color[2]);
+    const lines = pdf.splitTextToSize(text, contentWidth);
+    pdf.text(lines, margin, y);
+    y += lines.length * (fontSize * 0.4) + 4;
+  };
+
+  const checkNewPage = (neededSpace: number) => {
+    if (y + neededSpace > pdf.internal.pageSize.getHeight() - 20) {
+      pdf.addPage();
+      y = 20;
+    }
+  };
+
+  // Header
+  addText("AI Readiness Report", 22, true, [0, 128, 128]);
+  addText(reportData.userInfo.company, 16, true);
+  addText(`Prepared for ${reportData.userInfo.name}`, 11, false, [100, 100, 100]);
+  y += 5;
+
+  // Overall Score
+  addText(`Overall Score: ${reportData.overallScore}% — ${reportData.scoreBand}`, 14, true, [0, 128, 128]);
+  y += 5;
+
+  // Headline
+  addText(reportData.headline, 12, false);
+  y += 8;
+
+  // Pillar Scores
+  addText("Section Breakdown", 14, true);
+  reportData.pillarScores.forEach((pillar) => {
+    checkNewPage(12);
+    addText(`• ${pillar.pillar}: ${pillar.score}% (${pillar.status})`, 10, false);
+  });
+  y += 8;
+
+  // Revenue Upside
+  checkNewPage(30);
+  addText("Revenue Upside Range", 14, true, [0, 128, 128]);
+  addText(`${insights.revenueUpside.min} to ${insights.revenueUpside.max} / year`, 12, true);
+  addText(`Confidence: ${insights.revenueUpside.confidence}${insights.revenueUpside.rationale ? ` — ${insights.revenueUpside.rationale}` : ""}`, 10, false, [100, 100, 100]);
+  y += 8;
+
+  // Top Blockers
+  checkNewPage(30);
+  addText("Top Blockers", 14, true, [200, 50, 50]);
+  insights.topBlockers.forEach((blocker, idx) => {
+    checkNewPage(10);
+    addText(`${idx + 1}. ${blocker}`, 10, false);
+  });
+  y += 8;
+
+  // Do / Don't Lists
+  if (insights.doList && insights.doList.length > 0) {
+    checkNewPage(30);
+    addText("What to do next", 14, true, [0, 128, 128]);
+    insights.doList.forEach((item) => {
+      checkNewPage(10);
+      addText(`✓ ${item}`, 10, false);
+    });
+    y += 8;
+  }
+
+  if (insights.dontList && insights.dontList.length > 0) {
+    checkNewPage(30);
+    addText("What NOT to do yet", 14, true, [200, 50, 50]);
+    insights.dontList.forEach((item) => {
+      checkNewPage(10);
+      addText(`✗ ${item}`, 10, false);
+    });
+    y += 8;
+  }
+
+  // Role Insight
+  if (insights.roleInsight) {
+    checkNewPage(25);
+    addText(`Insight for ${reportData.userInfo.role || "your role"}:`, 12, true);
+    addText(insights.roleInsight, 10, false);
+    y += 8;
+  }
+
+  // 90-Day Priority Plan
+  checkNewPage(40);
+  addText("90-Day Priority Plan", 14, true, [0, 128, 128]);
+  insights.priorityPlan.forEach((item) => {
+    checkNewPage(12);
+    addText(`Week ${item.week}: ${item.action} [Effort: ${item.effort}, Impact: ${item.impact}]`, 10, false);
+  });
+  y += 8;
+
+  // Monetisation Paths
+  checkNewPage(30);
+  addText("Monetisation Paths", 14, true);
+  insights.monetisationPaths.forEach((path) => {
+    checkNewPage(10);
+    addText(`• ${path}`, 10, false);
+  });
+  y += 8;
+
+  // Next Step
+  if (insights.nextStep) {
+    checkNewPage(25);
+    addText("Your Next Step", 14, true, [0, 128, 128]);
+    addText(insights.nextStep, 11, false);
+    y += 8;
+  }
+
+  // Disclaimer
+  checkNewPage(25);
+  y += 10;
+  pdf.setFontSize(8);
+  pdf.setTextColor(128, 128, 128);
+  const disclaimer = "This report provides indicative guidance based on your assessment responses. Revenue estimates are conservative and based on industry benchmarks. Actual results will vary based on execution and market conditions. This is not financial advice.";
+  const disclaimerLines = pdf.splitTextToSize(disclaimer, contentWidth);
+  pdf.text(disclaimerLines, margin, y);
+
+  // Return as base64
+  return pdf.output("datauristring").split(",")[1];
+}
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-readiness-report: Received request");
@@ -116,279 +187,81 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { userInfo, overallScore, pillarResults, headline, recommendation }: ReportRequest = await req.json();
+    const { reportData, insights } = await req.json();
 
-    console.log(`Sending report to ${userInfo.email} with score ${overallScore}`);
-
-    const scoreBand = getScoreBand(overallScore);
-    const recs = getRecommendations(overallScore);
-
-    const pillarRows = pillarResults.map(p => {
-      const statusColor = getStatusColor(p.score);
-      const barWidth = Math.max(5, p.score);
-      return `
-        <tr>
-          <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="color: #374151; font-size: 14px; font-weight: 500; padding-bottom: 6px;">
-                  ${p.pillar}
-                </td>
-                <td style="text-align: right; color: ${statusColor}; font-size: 14px; font-weight: 700; padding-bottom: 6px;">
-                  ${p.score}/100
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2">
-                  <div style="background: #f3f4f6; border-radius: 9999px; height: 8px; overflow: hidden;">
-                    <div style="background: ${statusColor}; height: 100%; width: ${barWidth}%; border-radius: 9999px;"></div>
-                  </div>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      `;
-    }).join("");
-
-    const doItems = recs.doList.map(item => `
-      <tr>
-        <td style="padding: 6px 0; color: #065f46; font-size: 14px;">
-          <span style="color: #10b981; margin-right: 8px;">✓</span> ${item}
-        </td>
-      </tr>
-    `).join('');
-
-    const dontItems = recs.dontList.map(item => `
-      <tr>
-        <td style="padding: 6px 0; color: #991b1b; font-size: 14px;">
-          <span style="color: #ef4444; margin-right: 8px;">✗</span> ${item}
-        </td>
-      </tr>
-    `).join('');
-
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your AI Readiness Report</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 40px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #2dd4bf; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
-                Wellness Genius
-              </h1>
-              <p style="margin: 12px 0 0 0; color: #94a3b8; font-size: 14px;">
-                AI Readiness Index™ Report
-              </p>
-            </td>
-          </tr>
-          
-          <!-- Score Banner -->
-          <tr>
-            <td style="padding: 32px; text-align: center;">
-              <p style="margin: 0 0 8px 0; color: #64748b; font-size: 14px;">Your Overall AI Readiness Score</p>
-              <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-                <tr>
-                  <td style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; font-size: 56px; font-weight: 800; padding: 24px 48px; border-radius: 16px;">
-                    ${overallScore}<span style="font-size: 28px; font-weight: 400; opacity: 0.8;">/100</span>
-                  </td>
-                </tr>
-              </table>
-              <table cellpadding="0" cellspacing="0" style="margin: 16px auto 0;">
-                <tr>
-                  <td style="background: ${scoreBand.bgColor}; color: ${scoreBand.color}; padding: 8px 20px; border-radius: 9999px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                    ${scoreBand.label}
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-          <!-- Headline -->
-          <tr>
-            <td style="padding: 0 32px 24px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 12px;">
-                <tr>
-                  <td style="padding: 20px 24px;">
-                    <h2 style="margin: 0 0 8px 0; color: #0f172a; font-size: 20px; font-weight: 700; line-height: 1.3;">
-                      ${headline}
-                    </h2>
-                    <p style="margin: 0; color: #64748b; font-size: 14px;">
-                      Prepared for ${userInfo.name} at ${userInfo.company}
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-          <!-- Pillar Breakdown -->
-          <tr>
-            <td style="padding: 0 32px 24px;">
-              <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 16px; font-weight: 700;">
-                Your Pillar Breakdown
-              </h3>
-              <table width="100%" cellpadding="0" cellspacing="0">
-                ${pillarRows}
-              </table>
-            </td>
-          </tr>
-          
-          <!-- Do / Don't Framework -->
-          <tr>
-            <td style="padding: 0 32px 24px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td width="48%" valign="top">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdf4; border-radius: 12px;">
-                      <tr>
-                        <td style="padding: 16px 20px;">
-                          <p style="margin: 0 0 12px 0; color: #065f46; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                            ✓ Do This
-                          </p>
-                          <table width="100%" cellpadding="0" cellspacing="0">
-                            ${doItems}
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                  <td width="4%"></td>
-                  <td width="48%" valign="top">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border-radius: 12px;">
-                      <tr>
-                        <td style="padding: 16px 20px;">
-                          <p style="margin: 0 0 12px 0; color: #991b1b; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                            ✗ Avoid This
-                          </p>
-                          <table width="100%" cellpadding="0" cellspacing="0">
-                            ${dontItems}
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-          <!-- Recommended Next Step -->
-          <tr>
-            <td style="padding: 0 32px 24px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px;">
-                <tr>
-                  <td style="padding: 20px 24px;">
-                    <p style="margin: 0 0 4px 0; color: #92400e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                      💡 Recommended Next Step
-                    </p>
-                    <p style="margin: 0 0 8px 0; color: #78350f; font-size: 18px; font-weight: 700;">
-                      ${recs.nextStep}
-                    </p>
-                    <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.5;">
-                      ${recs.nextStepDesc}
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-          <!-- CTA -->
-          <tr>
-            <td style="padding: 0 32px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); border-radius: 12px;">
-                <tr>
-                  <td style="padding: 28px 24px; text-align: center;">
-                    <p style="margin: 0 0 6px 0; color: white; font-size: 18px; font-weight: 700;">
-                      Want to pressure-test this with a human?
-                    </p>
-                    <p style="margin: 0 0 20px 0; color: rgba(255,255,255,0.85); font-size: 14px;">
-                      Book a free 30-minute strategy call to discuss your results and get actionable next steps.
-                    </p>
-                    <a href="https://calendly.com/andy-wellnessgenius/30min" style="display: inline-block; padding: 14px 32px; background: white; color: #0d9488; font-size: 16px; font-weight: 700; text-decoration: none; border-radius: 8px;">
-                      Book Your Free Call with Andy →
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-          <!-- Footer -->
-          <tr>
-            <td style="background: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
-              <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px;">
-                © ${new Date().getFullYear()} Wellness Genius. All rights reserved.
-              </p>
-              <p style="margin: 0 0 12px 0; color: #94a3b8; font-size: 11px;">
-                This report was generated by the AI Readiness Index™ assessment.
-              </p>
-              <p style="margin: 0;">
-                <a href="https://wellnessgenius.co.uk" style="color: #0d9488; font-size: 11px; text-decoration: none;">
-                  wellnessgenius.co.uk
-                </a>
-                <span style="color: #94a3b8; font-size: 11px;"> • </span>
-                <a href="https://wellnessgenius.co.uk/privacy-policy" style="color: #64748b; font-size: 11px; text-decoration: underline;">
-                  Privacy Policy
-                </a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-    `;
-
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "Wellness Genius <reports@news.wellnessgenius.co.uk>",
-        reply_to: "andy@wellnessgenius.co.uk",
-        to: [userInfo.email],
-        subject: `Your AI Readiness Report from Wellness Genius`,
-        html: emailHtml,
-      }),
-    });
-
-    const emailData = await emailResponse.json();
-
-    if (!emailResponse.ok) {
-      throw new Error(emailData.message || "Failed to send email");
+    if (!reportData || !insights) {
+      console.error("Missing reportData or insights");
+      return new Response(
+        JSON.stringify({ error: "Missing report data or insights" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    console.log("Email sent successfully:", emailData);
+    console.log(`Generating PDF for ${reportData.userInfo.email}`);
 
-    return new Response(JSON.stringify({ success: true, id: emailData.id }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+    // Generate PDF as base64
+    const pdfBase64 = generatePDF(reportData, insights);
+
+    console.log(`Sending email to ${reportData.userInfo.email}`);
+
+    // Send email with PDF attachment
+    const emailResponse = await resend.emails.send({
+      from: "Wellness Genius <reports@news.wellnessgenius.co.uk>",
+      reply_to: "andy@wellnessgenius.co.uk",
+      to: [reportData.userInfo.email],
+      subject: `Your AI Readiness Report — ${reportData.userInfo.company}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #0d9488;">Your AI Readiness Report</h1>
+          <p>Hi ${reportData.userInfo.name},</p>
+          <p>Thank you for completing the AI Readiness Assessment. Your full report is attached to this email as a PDF.</p>
+          
+          <div style="background: #f0fdfa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="margin: 0 0 10px 0; color: #0d9488;">Your Score: ${reportData.overallScore}%</h2>
+            <p style="margin: 0; color: #0f766e; font-weight: 600;">${reportData.scoreBand}</p>
+          </div>
+          
+          <p>${reportData.headline}</p>
+          
+          <p>The attached PDF contains:</p>
+          <ul>
+            <li>Section-by-section breakdown</li>
+            <li>Revenue upside estimate</li>
+            <li>Top blockers to address</li>
+            <li>90-day priority action plan</li>
+            <li>Monetisation pathways</li>
+          </ul>
+          
+          <p>Ready to take the next step? Reply to this email to discuss how we can help accelerate your AI journey.</p>
+          
+          <p style="margin-top: 30px;">Best regards,<br><strong>The Wellness Genius Team</strong></p>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;" />
+          <p style="font-size: 12px; color: #6b7280;">
+            This email was sent because you completed the AI Readiness Assessment on wellnessgenius.co.uk
+          </p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: `AI-Readiness-Report-${reportData.userInfo.company.replace(/\s+/g, "-")}.pdf`,
+          content: pdfBase64,
+        },
+      ],
     });
+
+    console.log("Email sent successfully:", emailResponse);
+
+    return new Response(
+      JSON.stringify({ success: true, message: "Report sent successfully" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error("Error sending readiness report:", message);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error sending report:", message);
     return new Response(
       JSON.stringify({ error: message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 };
