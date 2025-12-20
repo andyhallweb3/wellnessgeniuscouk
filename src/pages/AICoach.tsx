@@ -18,7 +18,8 @@ import {
   BookmarkCheck,
   RotateCcw,
   Settings,
-  BookOpen
+  BookOpen,
+  UserCog
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -29,6 +30,7 @@ import CoachOnboarding from "@/components/coach/CoachOnboarding";
 import ModeSelector, { COACH_MODES } from "@/components/coach/ModeSelector";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 import CoachPromptLibrary from "@/components/coach/CoachPromptLibrary";
+import ProfileEditor from "@/components/coach/ProfileEditor";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 
 interface Message {
@@ -54,6 +56,7 @@ const AICoach = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { 
@@ -526,6 +529,14 @@ const AICoach = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
+                onClick={() => setShowProfileEditor(true)}
+                title="Edit profile"
+              >
+                <UserCog size={14} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
                 onClick={handleManageSubscription}
                 disabled={openingPortal}
                 title="Manage subscription"
@@ -738,6 +749,29 @@ const AICoach = () => {
           onClose={() => setShowPromptLibrary(false)}
         />
       )}
+
+      {/* Profile Editor Modal */}
+      <ProfileEditor
+        isOpen={showProfileEditor}
+        onClose={() => setShowProfileEditor(false)}
+        profile={profile}
+        onSave={async (data) => {
+          const success = await saveProfile({
+            business_type: data.business_type || "",
+            business_name: data.business_name || "",
+            business_size_band: data.business_size_band || "",
+            team_size: data.team_size || "",
+            role: data.role || "",
+            primary_goal: data.primary_goal || "",
+            frustration: data.frustration || "",
+            current_tech: data.current_tech || "",
+            ai_experience: data.ai_experience || "",
+            biggest_win: data.biggest_win || "",
+            decision_style: data.decision_style || "",
+          });
+          return success;
+        }}
+      />
     </div>
   );
 };

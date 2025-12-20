@@ -474,6 +474,47 @@ const Products = () => {
 
       if (error) throw error;
 
+      // Check if user has free access via subscription
+      if (data?.free_access) {
+        toast.success("This product is included with your AI Coach subscription!");
+        
+        // Trigger immediate download
+        try {
+          let doc;
+          let filename = "wellness-genius-download.pdf";
+          
+          switch (product.id) {
+            case "prompt-pack":
+              doc = generatePromptPack();
+              filename = "wellness-ai-prompt-pack.pdf";
+              break;
+            case "revenue-framework":
+              doc = generateRevenueFramework();
+              filename = "engagement-revenue-framework.pdf";
+              break;
+            case "build-vs-buy":
+              doc = generateBuildVsBuy();
+              filename = "build-vs-buy-guide.pdf";
+              break;
+            case "activation-playbook":
+              doc = generateActivationPlaybook();
+              filename = "90-day-activation-playbook.pdf";
+              break;
+            case "engagement-playbook":
+              doc = generateEngagementPlaybook();
+              filename = "wellness-engagement-systems-playbook.pdf";
+              break;
+          }
+          
+          if (doc) {
+            doc.save(filename);
+          }
+        } catch (pdfError) {
+          console.error("Failed to generate PDF:", pdfError);
+        }
+        return;
+      }
+
       if (data?.url) {
         window.open(data.url, "_blank");
       } else {
