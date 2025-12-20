@@ -154,6 +154,42 @@ const AICoach = () => {
     return COACH_MODES.find((m) => m.id === modeId) || COACH_MODES[5]; // Default to general
   };
 
+  const getPromptExamples = (mode: string): string[] => {
+    const examples: Record<string, string[]> = {
+      diagnostic: [
+        "We want to add AI-powered workout recommendations. What are we missing?",
+        "Our retention dropped 15% last quarter. What should I investigate?",
+        "Is our member data good enough to personalise experiences?",
+      ],
+      decision: [
+        "Should we build an app or improve our web experience first?",
+        "Monthly subscription vs pay-per-class: which model suits a boutique gym?",
+        "Hire in-house developers or use a no-code platform for our MVP?",
+      ],
+      commercial: [
+        "What would adding a nutrition coaching tier do to our unit economics?",
+        "Is a 24/7 unmanned gym model financially viable for our area?",
+        "What margin can we expect from corporate wellness contracts?",
+      ],
+      foundations: [
+        "We want to launch AI personalisation next month. Are we ready?",
+        "Should we start collecting more member health data now?",
+        "Is our team equipped to handle a new mobile app?",
+      ],
+      planner: [
+        "Create a 90-day plan to improve member retention by 10%",
+        "Plan the launch of a new premium membership tier",
+        "Map out our AI readiness improvement over the next quarter",
+      ],
+      general: [
+        "How do I increase member engagement without discounting?",
+        "What metrics should a wellness business track weekly?",
+        "How can small studios compete with big box gyms?",
+      ],
+    };
+    return examples[mode] || examples.general;
+  };
+
   const streamChat = useCallback(async (userMessages: Message[], mode: string) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach-chat`;
 
@@ -516,9 +552,25 @@ const AICoach = () => {
                 <p className="text-muted-foreground text-sm max-w-md mb-4">
                   {getModeConfig(selectedMode).description}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Example: "{getModeConfig(selectedMode).example}"
-                </p>
+                
+                {/* Prompt Examples */}
+                <div className="w-full max-w-lg mt-6">
+                  <p className="text-xs font-medium text-muted-foreground mb-3">Try asking:</p>
+                  <div className="grid gap-2">
+                    {getPromptExamples(selectedMode).map((example, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setInput(example)}
+                        className="text-left text-sm px-4 py-3 rounded-lg bg-secondary/50 hover:bg-secondary border border-border/50 transition-colors"
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Tip: Be specific about your business context for better responses.
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -539,7 +591,7 @@ const AICoach = () => {
                           : "bg-secondary"
                       }`}
                     >
-                      <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none dark:prose-invert">
+                      <div className="text-sm whitespace-pre-wrap leading-relaxed">
                         {message.content}
                       </div>
                     </div>
