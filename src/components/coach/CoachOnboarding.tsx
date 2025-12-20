@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -10,14 +11,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, Brain, Target, AlertTriangle, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowLeft, Brain, Target, AlertTriangle, Sparkles, Building2, Users } from "lucide-react";
 
 interface CoachOnboardingProps {
   onComplete: (profile: {
     business_type: string;
+    business_name: string;
+    business_size_band: string;
+    team_size: string;
     role: string;
     primary_goal: string;
     frustration: string;
+    current_tech: string;
+    ai_experience: string;
+    biggest_win: string;
+    decision_style: string;
   }) => void;
 }
 
@@ -26,16 +34,31 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
   const [acknowledged, setAcknowledged] = useState(false);
   const [profile, setProfile] = useState({
     business_type: "",
+    business_name: "",
+    business_size_band: "",
+    team_size: "",
     role: "",
     primary_goal: "",
     frustration: "",
+    current_tech: "",
+    ai_experience: "",
+    biggest_win: "",
+    decision_style: "",
   });
 
+  const totalSteps = 6;
+
   const handleNext = () => {
-    if (step < 4) {
+    if (step < totalSteps) {
       setStep(step + 1);
     } else {
       onComplete(profile);
+    }
+  };
+
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
     }
   };
 
@@ -46,8 +69,12 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
       case 2:
         return acknowledged;
       case 3:
-        return profile.business_type && profile.role && profile.primary_goal;
+        return profile.business_type && profile.role;
       case 4:
+        return profile.primary_goal;
+      case 5:
+        return profile.ai_experience;
+      case 6:
         return true;
       default:
         return false;
@@ -58,7 +85,7 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
     <div className="max-w-xl mx-auto">
       {/* Progress */}
       <div className="flex gap-2 mb-8">
-        {[1, 2, 3, 4].map((s) => (
+        {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
           <div
             key={s}
             className={`h-1 flex-1 rounded-full transition-colors ${
@@ -162,22 +189,22 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
         </div>
       )}
 
-      {/* Step 3: Context Capture */}
+      {/* Step 3: Business Context */}
       {step === 3 && (
         <div className="space-y-6">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
-              <Brain size={32} className="text-accent" />
+              <Building2 size={32} className="text-accent" />
             </div>
-            <h2 className="text-2xl font-heading mb-2">Set your context</h2>
+            <h2 className="text-2xl font-heading mb-2">Tell me about your business</h2>
             <p className="text-sm text-muted-foreground">
-              This helps the coach challenge you properly.
+              This helps me give you relevant, specific guidance.
             </p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Business type</Label>
+              <Label>What type of wellness business do you run?</Label>
               <Select
                 value={profile.business_type}
                 onValueChange={(v) => setProfile({ ...profile, business_type: v })}
@@ -192,13 +219,24 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
                   <SelectItem value="corporate">Corporate Wellness</SelectItem>
                   <SelectItem value="studio">Studio / Boutique</SelectItem>
                   <SelectItem value="platform">Platform / Marketplace</SelectItem>
+                  <SelectItem value="coaching">Coaching / PT</SelectItem>
+                  <SelectItem value="retreat">Retreat / Experience</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>Your role</Label>
+              <Label>Business name (optional)</Label>
+              <Input
+                placeholder="e.g. FitLife Studios"
+                value={profile.business_name}
+                onChange={(e) => setProfile({ ...profile, business_name: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>What is your role?</Label>
               <Select
                 value={profile.role}
                 onValueChange={(v) => setProfile({ ...profile, role: v })}
@@ -209,6 +247,7 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
                 <SelectContent>
                   <SelectItem value="founder">Founder / CEO</SelectItem>
                   <SelectItem value="exec">Executive / Director</SelectItem>
+                  <SelectItem value="gm">General Manager</SelectItem>
                   <SelectItem value="product">Product</SelectItem>
                   <SelectItem value="ops">Operations</SelectItem>
                   <SelectItem value="commercial">Commercial / Sales</SelectItem>
@@ -218,6 +257,65 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
               </Select>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Business size</Label>
+                <Select
+                  value={profile.business_size_band}
+                  onValueChange={(v) => setProfile({ ...profile, business_size_band: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Revenue band" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="startup">Pre-revenue</SelectItem>
+                    <SelectItem value="small">Under £100k</SelectItem>
+                    <SelectItem value="growing">£100k - £500k</SelectItem>
+                    <SelectItem value="established">£500k - £2m</SelectItem>
+                    <SelectItem value="scaling">£2m - £10m</SelectItem>
+                    <SelectItem value="enterprise">£10m+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Team size</Label>
+                <Select
+                  value={profile.team_size}
+                  onValueChange={(v) => setProfile({ ...profile, team_size: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="People" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="solo">Just me</SelectItem>
+                    <SelectItem value="micro">2-5</SelectItem>
+                    <SelectItem value="small">6-15</SelectItem>
+                    <SelectItem value="medium">16-50</SelectItem>
+                    <SelectItem value="large">51-200</SelectItem>
+                    <SelectItem value="enterprise">200+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Goals & Frustrations */}
+      {step === 4 && (
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
+              <Target size={32} className="text-accent" />
+            </div>
+            <h2 className="text-2xl font-heading mb-2">What matters most right now?</h2>
+            <p className="text-sm text-muted-foreground">
+              I will tailor my guidance to your priorities.
+            </p>
+          </div>
+
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label>Primary focus right now</Label>
               <Select
@@ -225,25 +323,37 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
                 onValueChange={(v) => setProfile({ ...profile, primary_goal: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="What's your main priority?" />
+                  <SelectValue placeholder="What is your main priority?" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="retention">Retention & Engagement</SelectItem>
-                  <SelectItem value="monetisation">Monetisation & Revenue</SelectItem>
+                  <SelectItem value="retention">Retention and Engagement</SelectItem>
+                  <SelectItem value="monetisation">Monetisation and Revenue</SelectItem>
                   <SelectItem value="ai">AI Implementation</SelectItem>
-                  <SelectItem value="risk">Risk & Compliance</SelectItem>
-                  <SelectItem value="growth">Growth & Acquisition</SelectItem>
+                  <SelectItem value="risk">Risk and Compliance</SelectItem>
+                  <SelectItem value="growth">Growth and Acquisition</SelectItem>
                   <SelectItem value="product">Product Development</SelectItem>
+                  <SelectItem value="operations">Operations and Efficiency</SelectItem>
+                  <SelectItem value="team">Team and Culture</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>Biggest frustration right now (optional)</Label>
+              <Label>What is your biggest frustration right now?</Label>
               <Textarea
-                placeholder="What's blocking your progress?"
+                placeholder="Be specific. What is blocking your progress or keeping you up at night?"
                 value={profile.frustration}
                 onChange={(e) => setProfile({ ...profile, frustration: e.target.value })}
+                className="min-h-[100px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>What is a recent win you are proud of? (optional)</Label>
+              <Textarea
+                placeholder="This helps me understand what success looks like for you."
+                value={profile.biggest_win}
+                onChange={(e) => setProfile({ ...profile, biggest_win: e.target.value })}
                 className="min-h-[80px]"
               />
             </div>
@@ -251,8 +361,73 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
         </div>
       )}
 
-      {/* Step 4: Mode Education */}
-      {step === 4 && (
+      {/* Step 5: AI & Tech Context */}
+      {step === 5 && (
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
+              <Brain size={32} className="text-accent" />
+            </div>
+            <h2 className="text-2xl font-heading mb-2">Your tech and AI context</h2>
+            <p className="text-sm text-muted-foreground">
+              This helps me gauge what is realistic for you.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>How would you describe your AI experience?</Label>
+              <Select
+                value={profile.ai_experience}
+                onValueChange={(v) => setProfile({ ...profile, ai_experience: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your AI familiarity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="curious">Curious but not started</SelectItem>
+                  <SelectItem value="experimenting">Experimenting with tools like ChatGPT</SelectItem>
+                  <SelectItem value="piloting">Running small AI pilots</SelectItem>
+                  <SelectItem value="implementing">Actively implementing AI features</SelectItem>
+                  <SelectItem value="advanced">AI is core to our product</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>What tech do you currently use? (optional)</Label>
+              <Textarea
+                placeholder="e.g. Mindbody, custom app, Excel, Stripe, Mailchimp..."
+                value={profile.current_tech}
+                onChange={(e) => setProfile({ ...profile, current_tech: e.target.value })}
+                className="min-h-[80px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>How do you prefer to make decisions?</Label>
+              <Select
+                value={profile.decision_style}
+                onValueChange={(v) => setProfile({ ...profile, decision_style: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your style" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="data">Data-driven, show me the numbers</SelectItem>
+                  <SelectItem value="instinct">Instinct-led, I trust my gut</SelectItem>
+                  <SelectItem value="collaborative">Collaborative, I like to discuss</SelectItem>
+                  <SelectItem value="cautious">Cautious, I prefer low-risk moves</SelectItem>
+                  <SelectItem value="fast">Fast, I prefer speed over perfection</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 6: Mode Education */}
+      {step === 6 && (
         <div className="space-y-6">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
@@ -269,7 +444,7 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
               {
                 icon: "🔍",
                 name: "Diagnostic Mode",
-                desc: "Use when something feels wrong but you can't pinpoint why",
+                desc: "Use when something feels wrong but you cannot pinpoint why",
               },
               {
                 icon: "🧠",
@@ -289,7 +464,7 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
               {
                 icon: "📋",
                 name: "90-Day Planner",
-                desc: "Use when you're ready to act",
+                desc: "Use when you are ready to act",
               },
             ].map((mode) => (
               <div
@@ -304,13 +479,27 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
               </div>
             ))}
           </div>
+
+          <div className="bg-accent/10 rounded-lg p-4 text-center">
+            <p className="text-sm text-accent font-medium">
+              You are all set. I have saved your context and will use it to give you personalised guidance.
+            </p>
+          </div>
         </div>
       )}
 
       {/* Navigation */}
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 flex justify-between">
+        {step > 1 ? (
+          <Button onClick={handleBack} variant="ghost">
+            <ArrowLeft size={16} />
+            Back
+          </Button>
+        ) : (
+          <div />
+        )}
         <Button onClick={handleNext} disabled={!canProceed()} variant="accent">
-          {step === 4 ? "Enter AI Coach" : "Continue"}
+          {step === totalSteps ? "Enter AI Coach" : "Continue"}
           <ArrowRight size={16} />
         </Button>
       </div>

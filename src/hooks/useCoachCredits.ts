@@ -9,9 +9,16 @@ interface CoachCredits {
 
 interface CoachProfile {
   business_type: string | null;
+  business_name: string | null;
+  business_size_band: string | null;
+  team_size: string | null;
   role: string | null;
   primary_goal: string | null;
   frustration: string | null;
+  current_tech: string | null;
+  ai_experience: string | null;
+  biggest_win: string | null;
+  decision_style: string | null;
   onboarding_completed: boolean;
 }
 
@@ -56,7 +63,7 @@ export const useCoachCredits = () => {
       // Fetch profile
       const { data: profileData } = await supabase
         .from("coach_profiles")
-        .select("business_type, role, primary_goal, frustration, onboarding_completed")
+        .select("business_type, business_name, business_size_band, team_size, role, primary_goal, frustration, current_tech, ai_experience, biggest_win, decision_style, onboarding_completed")
         .eq("user_id", user.id)
         .single();
 
@@ -107,9 +114,16 @@ export const useCoachCredits = () => {
 
   const saveProfile = async (profileData: {
     business_type: string;
+    business_name?: string;
+    business_size_band?: string;
+    team_size?: string;
     role: string;
     primary_goal: string;
-    frustration: string;
+    frustration?: string;
+    current_tech?: string;
+    ai_experience?: string;
+    biggest_win?: string;
+    decision_style?: string;
   }) => {
     if (!user) return false;
 
@@ -122,7 +136,18 @@ export const useCoachCredits = () => {
 
       if (error) throw error;
 
-      setProfile({ ...profileData, onboarding_completed: true });
+      setProfile({ 
+        ...profileData, 
+        business_name: profileData.business_name || null,
+        business_size_band: profileData.business_size_band || null,
+        team_size: profileData.team_size || null,
+        frustration: profileData.frustration || null,
+        current_tech: profileData.current_tech || null,
+        ai_experience: profileData.ai_experience || null,
+        biggest_win: profileData.biggest_win || null,
+        decision_style: profileData.decision_style || null,
+        onboarding_completed: true 
+      });
       return true;
     } catch (error) {
       console.error("Error saving profile:", error);
