@@ -505,7 +505,12 @@ const Products = () => {
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               {premiumProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  onBuyClick={handleBuyClick}
+                  isProcessing={processingProductId}
+                />
               ))}
             </div>
           </section>
