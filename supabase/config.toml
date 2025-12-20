@@ -1,21 +1,69 @@
 project_id = "hiayegpvrsxhhemyxghz"
 
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://127.0.0.1:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[functions.cleanup-image-cache]
+verify_jwt = false
+
+[functions.create-report-checkout]
+verify_jwt = false
+
 [functions.fetch-rss-news]
 verify_jwt = false
 
-[functions.newsletter-run]
+[functions.generate-article-content]
+verify_jwt = false
+
+[functions.generate-readiness-insights]
 verify_jwt = false
 
 [functions.image-proxy]
 verify_jwt = false
 
-[functions.cleanup-image-cache]
+[functions.manage-admins]
+verify_jwt = false
+
+[functions.manage-blog-posts]
+verify_jwt = false
+
+[functions.manage-readiness-completions]
+verify_jwt = false
+
+[functions.manage-report-shares]
 verify_jwt = false
 
 [functions.manage-subscribers]
 verify_jwt = false
 
-[functions.unsubscribe]
+[functions.newsletter-run]
 verify_jwt = false
 
 [functions.newsletter-track]
@@ -24,32 +72,17 @@ verify_jwt = false
 [functions.score-articles]
 verify_jwt = false
 
-[functions.send-readiness-report]
-verify_jwt = false
-
-[functions.manage-admins]
-verify_jwt = false
-
-[functions.manage-readiness-completions]
-verify_jwt = false
-
 [functions.send-newsletter-confirmation]
 verify_jwt = false
 
-[functions.manage-blog-posts]
+[functions.send-readiness-report]
 verify_jwt = false
 
-[functions.generate-article-content]
-verify_jwt = false
-
-[functions.create-report-checkout]
-verify_jwt = false
-
-[functions.generate-readiness-insights]
-verify_jwt = false
-
-[functions.manage-report-shares]
+[functions.unsubscribe]
 verify_jwt = false
 
 [functions.create-product-checkout]
+verify_jwt = false
+
+[functions.stripe-product-webhook]
 verify_jwt = false
