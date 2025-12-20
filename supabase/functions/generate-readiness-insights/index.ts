@@ -52,6 +52,21 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[GENERATE-READINESS-INSIGHTS] ${step}${detailsStr}`);
 };
 
+// Wellness Data Maturity Map - benchmarked expectations by vertical
+const WELLNESS_MATURITY_MAP = `
+## WELLNESS DATA MATURITY MAP (Use this to benchmark their responses)
+
+| Level | Gyms & Studios | Wellness Apps | Hospitality/Spa | Corporate Wellness |
+|-------|---------------|---------------|-----------------|-------------------|
+| Poor (0-2) | Attendance only | App opens only | Room check-ins | Signup counts |
+| Functional (2-3) | Class bookings, checkins | Session completions | Spa bookings | Participation rates |
+| Valuable (3-4) | Habit streaks, member journeys | Behaviour cohorts, retention flags | In-stay behaviour patterns | Engagement by department |
+| Monetisable (4-5) | Retention drivers, LTV prediction | Churn prediction, upsell timing | Guest value prediction, upsell moments | ROI per employee, absenteeism correlation |
+
+Use this map to assess where they actually sit vs where they think they sit.
+Flag any mismatches between self-reported maturity and likely reality based on business type.
+`;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -75,23 +90,26 @@ serve(async (req) => {
     });
 
     // Build the comprehensive Synta prompt
-    const systemPrompt = `You are an AI commercial analyst for wellness businesses.
-Your job is to turn structured assessment inputs into credible, conservative, decision-grade insight.
+    const systemPrompt = `You are an AI commercial analyst specialising in wellness businesses.
+Your job is to turn structured assessment inputs into credible, conservative, decision-grade intelligence.
 
 You must prioritise:
-- commercial clarity
-- defensible logic
+- commercial clarity (speak in revenue, retention, LTV, not features)
+- defensible logic (show your reasoning)
 - calm, professional judgement
+- wellness-specific context (gyms, apps, spas, corporate wellness)
 
 Avoid:
-- hype
-- guarantees
-- wellness clichés
-- tool evangelism
+- hype or enthusiasm
+- guarantees or promises
+- wellness clichés ("holistic", "journey", "transform")
+- tool evangelism or vendor recommendations
 
 Use British English at all times.
 
-This workflow powers a paid diagnostic product. Treat outputs accordingly.`;
+This powers a £99 paid diagnostic product. Outputs must justify that price.
+
+${WELLNESS_MATURITY_MAP}`;
 
     // Determine if we have the new detailed format or legacy format
     const isDetailedAssessment = body.businessProfile && body.sectionScores;
@@ -132,7 +150,7 @@ This workflow powers a paid diagnostic product. Treat outputs accordingly.`;
       const lowScoreQuestions = questionAnswers?.filter(q => q.score <= 2) || [];
       const highScoreQuestions = questionAnswers?.filter(q => q.score >= 4) || [];
 
-      userPrompt = `Analyse this wellness business AI readiness assessment and generate a commercial intelligence report.
+      userPrompt = `Analyse this wellness business AI readiness assessment and generate a COMMERCIAL EDITION intelligence report.
 
 ## BUSINESS PROFILE
 - Business Type: ${businessProfile!.businessType}
@@ -169,7 +187,7 @@ ${highScoreQuestions.length > 0
 
 ---
 
-Generate a JSON response with this exact structure:
+Generate a JSON response with this COMMERCIAL EDITION structure:
 
 {
   "total_score": ${totalScore},
@@ -183,59 +201,147 @@ Generate a JSON response with this exact structure:
     "trust_compliance": ${trust}
   },
   "headline_insight": "One-sentence diagnosis (max 15 words, direct, no hype)",
-  "band_summary": "2-3 sentences explaining what this band means commercially",
+  "executive_summary": "2-3 paragraphs executive summary suitable for board/investor consumption. Include: current state, key risks, opportunity size, recommended path.",
+  "band_summary": "2-3 sentences explaining what this band means commercially for a ${businessProfile!.businessType}",
+  
+  "data_maturity_assessment": {
+    "current_level": "Poor/Functional/Valuable/Monetisable",
+    "expected_level": "What level a ${businessProfile!.businessType} of size ${businessProfile!.sizeBand} should be at",
+    "gap_analysis": "Plain English explanation of the gap",
+    "what_good_looks_like": "Specific example of monetisable data for their business type"
+  },
+  
   "blockers": [
-    "First critical blocker in plain English with commercial impact",
-    "Second blocker",
-    "Third blocker"
+    {
+      "blocker": "First critical blocker in plain English",
+      "commercial_impact": "How this costs them money or limits growth",
+      "section_affected": "Which pillar this relates to"
+    },
+    {
+      "blocker": "Second blocker",
+      "commercial_impact": "Impact",
+      "section_affected": "Pillar"
+    },
+    {
+      "blocker": "Third blocker",
+      "commercial_impact": "Impact",
+      "section_affected": "Pillar"
+    }
   ],
+  
   "revenue_upside": {
     "low": "Conservative minimum (e.g. £25,000)",
     "high": "Conservative maximum (e.g. £75,000)",
     "currency": "GBP",
     "confidence": "${confidenceLevel}",
-    "rationale": "One sentence explaining the estimate"
+    "rationale": "One sentence explaining the estimate",
+    "assumptions": [
+      "First assumption (e.g. 'Assumes 5% improvement in retention')",
+      "Second assumption",
+      "Third assumption"
+    ]
   },
+  
+  "revenue_translation_table": {
+    "engagement_behaviour": "The key engagement metric to focus on (e.g. 'Weekly active sessions')",
+    "retention_impact_assumption": "What improvement you'd expect (e.g. '+2% monthly retention')",
+    "confidence_level": "${confidenceLevel}",
+    "annual_upside_low": "Low estimate",
+    "annual_upside_high": "High estimate",
+    "risk_if_ignored": "What happens if they don't address this"
+  },
+  
   "actions_90_day": [
     {
       "title": "Specific actionable task",
       "why_it_matters": "One sentence on commercial impact",
       "effort": "Low/Medium/High",
       "expected_impact": "Low/Medium/High",
-      "suggested_owner": "Product/Ops/Marketing/Data",
-      "week": "1-2"
+      "suggested_owner": "Product/Ops/Marketing/Data/Finance",
+      "week": "1-2",
+      "section_fixed": "Which pillar this addresses",
+      "what_not_to_do": "A related action they should NOT take yet, and why"
     }
   ],
+  
   "monetisation_paths": [
     {
-      "path": "Revenue opportunity name",
-      "rationale": "Why this fits their business type",
-      "potential_value": "Indicative range"
+      "opportunity": "Revenue opportunity name",
+      "rationale": "Why this fits a ${businessProfile!.businessType}",
+      "potential_value": "Indicative range",
+      "time_to_value": "How long before this generates revenue",
+      "prerequisite": "What they need to fix first from their assessment"
     }
   ],
+  
   "do_list": [
-    "First priority action to take this week",
+    "First priority action to take this week (specific, actionable)",
     "Second priority",
-    "Third priority"
+    "Third priority",
+    "Fourth priority",
+    "Fifth priority"
   ],
+  
   "dont_list": [
-    "First thing they should NOT do yet and why",
-    "Second warning",
-    "Third warning"
+    {
+      "action": "First thing they should NOT do yet",
+      "reason": "Why this would be premature or risky given their current state"
+    },
+    {
+      "action": "Second warning",
+      "reason": "Why"
+    },
+    {
+      "action": "Third warning",
+      "reason": "Why"
+    }
   ],
-  "role_insight": "Specific advice based on their role and assessment results",
-  "next_step": "The single most important next action",
+  
+  "investment_guidance": {
+    "budget_range": "Suggested 90-day investment range (e.g. £5,000-£15,000)",
+    "key_investments": [
+      "First priority investment area",
+      "Second",
+      "Third"
+    ],
+    "avoid_spending": "Where NOT to spend money right now and why"
+  },
+  
+  "success_metrics": [
+    {
+      "metric": "KPI name (e.g. Monthly Active Rate)",
+      "baseline": "Where they likely are now based on assessment",
+      "target": "Realistic 90-day target"
+    },
+    {
+      "metric": "Second KPI",
+      "baseline": "Baseline",
+      "target": "Target"
+    },
+    {
+      "metric": "Third KPI",
+      "baseline": "Baseline",
+      "target": "Target"
+    }
+  ],
+  
+  "role_insight": "Specific advice based on their role and what they personally should focus on",
+  "next_step": "The single most important next action - make it specific and immediately actionable",
   "disclaimer": "All figures are indicative estimates based on supplied inputs and industry benchmarks. This assessment does not constitute financial, legal, or medical advice."
 }
 
 CRITICAL RULES:
-1. actions_90_day should have 5 actions spread across weeks 1-12, prioritised by lowest section scores
-2. Revenue estimates must be CONSERVATIVE - never overpromise
-3. If confidence is Low, widen ranges and add caveats
-4. monetisation_paths should be 2-3 items relevant to ${businessProfile!.businessType}
-5. Blockers should translate low scores into plain-English commercial problems
-6. Never mention specific vendors or tools by name
-7. All text must be British English`;
+1. actions_90_day should have exactly 5 actions spread across weeks 1-12, prioritised by lowest section scores
+2. Each action MUST include "what_not_to_do" - this is unique to our product
+3. Revenue estimates must be CONSERVATIVE - never overpromise
+4. If confidence is Low, widen ranges significantly and add caveats
+5. monetisation_paths should be 3-4 items SPECIFIC to ${businessProfile!.businessType}
+6. Blockers should translate low scores into plain-English commercial problems with £ impact
+7. Never mention specific vendors or tools by name
+8. data_maturity_assessment must reference the Wellness Data Maturity Map
+9. revenue_translation_table must be fillable/actionable - the kind of table a CFO would accept
+10. success_metrics must have realistic baselines and targets for a ${businessProfile!.businessType}
+11. All text must be British English`;
 
     } else {
       // Legacy format support
@@ -274,6 +380,7 @@ Generate a JSON response with this structure:
 
 {
   "headline": "One-sentence diagnosis (max 15 words)",
+  "executiveSummary": "2-3 paragraph executive summary for board consumption",
   "revenueUpside": {
     "min": "Conservative minimum (e.g. £25,000)",
     "max": "Conservative maximum (e.g. £75,000)",
@@ -294,19 +401,45 @@ Generate a JSON response with this structure:
     }
   ],
   "monetisationPaths": [
-    "First revenue opportunity",
-    "Second opportunity",
-    "Third opportunity"
+    {
+      "opportunity": "Revenue opportunity",
+      "potentialValue": "Indicative range",
+      "timeToValue": "Timeline",
+      "prerequisite": "What needs fixing first"
+    }
   ],
   "doList": [
     "First priority action",
     "Second priority",
-    "Third priority"
+    "Third priority",
+    "Fourth priority",
+    "Fifth priority"
   ],
   "dontList": [
-    "First thing NOT to do yet",
-    "Second warning",
-    "Third warning"
+    {
+      "action": "First thing NOT to do yet",
+      "reason": "Why this would be premature"
+    },
+    {
+      "action": "Second warning",
+      "reason": "Why"
+    },
+    {
+      "action": "Third warning",
+      "reason": "Why"
+    }
+  ],
+  "investmentGuidance": {
+    "budgetRange": "Suggested 90-day investment",
+    "keyInvestments": ["First area", "Second", "Third"],
+    "avoidSpending": "Where NOT to spend"
+  },
+  "successMetrics": [
+    {
+      "metric": "KPI name",
+      "baseline": "Current estimate",
+      "target": "90-day target"
+    }
   ],
   "roleInsight": "Specific advice based on their role as ${role || 'a decision-maker'}",
   "nextStep": "The single most important next action"
@@ -360,7 +493,9 @@ All estimates must be conservative. No hype. British English.`;
     logStep("Insights generated successfully", {
       isDetailedFormat: isDetailedAssessment,
       hasBlockers: !!insights.blockers || !!insights.topBlockers,
-      hasActions: !!insights.actions_90_day || !!insights.priorityPlan
+      hasActions: !!insights.actions_90_day || !!insights.priorityPlan,
+      hasMaturityAssessment: !!insights.data_maturity_assessment,
+      hasRevenueTable: !!insights.revenue_translation_table
     });
 
     return new Response(

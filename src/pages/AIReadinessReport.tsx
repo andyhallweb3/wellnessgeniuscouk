@@ -38,8 +38,29 @@ interface AIInsights {
     max: string;
     confidence: string;
     rationale?: string;
+    assumptions?: string[];
   };
-  topBlockers: string[];
+  topBlockers: string[] | {
+    blocker: string;
+    commercial_impact: string;
+    section_affected: string;
+  }[];
+  // Commercial Edition: Data Maturity Assessment
+  dataMaturityAssessment?: {
+    currentLevel: string;
+    expectedLevel: string;
+    gapAnalysis: string;
+    whatGoodLooksLike: string;
+  };
+  // Commercial Edition: Revenue Translation Table
+  revenueTranslationTable?: {
+    engagementBehaviour: string;
+    retentionImpactAssumption: string;
+    confidenceLevel: string;
+    annualUpsideLow: string;
+    annualUpsideHigh: string;
+    riskIfIgnored: string;
+  };
   ninetyDayPlan?: {
     phase1: {
       name: string;
@@ -91,15 +112,21 @@ interface AIInsights {
     effort: string;
     impact: string;
     week: string;
+    sectionFixed?: string;
+    whatNotToDo?: string;
   }[];
   monetisationPaths: string[] | {
     opportunity: string;
     potentialValue: string;
     timeToValue: string;
     prerequisite: string;
+    rationale?: string;
   }[];
   doList?: string[];
-  dontList?: string[];
+  dontList?: string[] | {
+    action: string;
+    reason: string;
+  }[];
   roleInsight?: string;
   investmentGuidance?: {
     budgetRange: string;
@@ -651,6 +678,44 @@ const AIReadinessReport = () => {
             </div>
           ) : insights && (
             <>
+              {/* Executive Summary (Commercial Edition) */}
+              {insights.executiveSummary && (
+                <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
+                  <h3 className="text-xl font-heading mb-4">Executive Summary</h3>
+                  <p className="text-muted-foreground whitespace-pre-line">{insights.executiveSummary}</p>
+                </div>
+              )}
+
+              {/* Data Maturity Assessment (Commercial Edition) */}
+              {insights.dataMaturityAssessment && (
+                <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
+                  <h3 className="text-xl font-heading mb-4 flex items-center gap-2">
+                    <BarChart3 size={20} className="text-accent" />
+                    Wellness Data Maturity Assessment
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-secondary/30 rounded-lg p-4">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Current Level</p>
+                      <p className="font-heading text-lg">{insights.dataMaturityAssessment.currentLevel}</p>
+                    </div>
+                    <div className="bg-accent/10 rounded-lg p-4">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Expected Level</p>
+                      <p className="font-heading text-lg text-accent">{insights.dataMaturityAssessment.expectedLevel}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium mb-1">Gap Analysis</p>
+                      <p className="text-sm text-muted-foreground">{insights.dataMaturityAssessment.gapAnalysis}</p>
+                    </div>
+                    <div className="bg-accent/5 rounded-lg p-4 border border-accent/20">
+                      <p className="text-sm font-medium mb-1 text-accent">What "Good" Looks Like</p>
+                      <p className="text-sm">{insights.dataMaturityAssessment.whatGoodLooksLike}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Revenue Upside */}
               <div className="bg-accent/5 rounded-xl p-8 border border-accent/20 mb-8">
                 <h3 className="text-xl font-heading mb-4 flex items-center gap-2">
@@ -663,31 +728,104 @@ const AIReadinessReport = () => {
                   <span className="text-3xl font-heading">{insights.revenueUpside.max}</span>
                   <span className="text-sm text-muted-foreground">/ year</span>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mb-3">
                   Confidence: {insights.revenueUpside.confidence}
                   {insights.revenueUpside.rationale && ` — ${insights.revenueUpside.rationale}`}
                 </p>
+                {insights.revenueUpside.assumptions && insights.revenueUpside.assumptions.length > 0 && (
+                  <div className="border-t border-accent/20 pt-3 mt-3">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Assumptions</p>
+                    <ul className="space-y-1">
+                      {insights.revenueUpside.assumptions.map((assumption, idx) => (
+                        <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">
+                          <span className="text-accent">•</span>
+                          {assumption}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
-              {/* Top Blockers */}
+              {/* Revenue Translation Table (Commercial Edition) */}
+              {insights.revenueTranslationTable && (
+                <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
+                  <h3 className="text-xl font-heading mb-2">Revenue Translation Table</h3>
+                  <p className="text-sm text-muted-foreground mb-6">The table your CFO will accept</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <tbody>
+                        <tr className="border-b border-border">
+                          <td className="py-3 pr-4 font-medium text-muted-foreground">Engagement Behaviour</td>
+                          <td className="py-3">{insights.revenueTranslationTable.engagementBehaviour}</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-3 pr-4 font-medium text-muted-foreground">Retention Impact Assumption</td>
+                          <td className="py-3">{insights.revenueTranslationTable.retentionImpactAssumption}</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-3 pr-4 font-medium text-muted-foreground">Confidence Level</td>
+                          <td className="py-3">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              insights.revenueTranslationTable.confidenceLevel === "High" ? "bg-green-500/10 text-green-500" :
+                              insights.revenueTranslationTable.confidenceLevel === "Medium" ? "bg-yellow-500/10 text-yellow-500" :
+                              "bg-red-500/10 text-red-500"
+                            }`}>
+                              {insights.revenueTranslationTable.confidenceLevel}
+                            </span>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-3 pr-4 font-medium text-muted-foreground">Annual Upside (Low)</td>
+                          <td className="py-3 text-accent font-medium">{insights.revenueTranslationTable.annualUpsideLow}</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-3 pr-4 font-medium text-muted-foreground">Annual Upside (High)</td>
+                          <td className="py-3 text-accent font-medium">{insights.revenueTranslationTable.annualUpsideHigh}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 pr-4 font-medium text-red-500">Risk if Ignored</td>
+                          <td className="py-3 text-muted-foreground">{insights.revenueTranslationTable.riskIfIgnored}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Top Blockers (Enhanced) */}
               <div className="bg-red-500/5 rounded-xl p-8 border border-red-500/20 mb-8">
                 <h3 className="text-xl font-heading mb-4 flex items-center gap-2">
                   <AlertTriangle size={20} className="text-red-500" />
                   Top Blockers
                 </h3>
-                <ul className="space-y-3">
-                  {insights.topBlockers.map((blocker, idx) => (
+                <ul className="space-y-4">
+                  {Array.isArray(insights.topBlockers) && insights.topBlockers.map((blocker, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <span className="w-6 h-6 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center text-sm shrink-0">
                         {idx + 1}
                       </span>
-                      <span>{blocker}</span>
+                      <div className="flex-1">
+                        {typeof blocker === 'string' ? (
+                          <span>{blocker}</span>
+                        ) : (
+                          <>
+                            <p className="font-medium">{blocker.blocker}</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <span className="text-red-500">£ Impact:</span> {blocker.commercial_impact}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Affects: {blocker.section_affected}
+                            </p>
+                          </>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Do / Don't Lists */}
+              {/* Do / Don't Lists (Enhanced) */}
               {(insights.doList || insights.dontList) && (
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                   {insights.doList && (
@@ -713,11 +851,20 @@ const AIReadinessReport = () => {
                         <X className="w-5 h-5 text-red-500" />
                         What NOT to do yet
                       </h3>
-                      <ul className="space-y-3">
+                      <ul className="space-y-4">
                         {insights.dontList.map((item, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-sm">
                             <X className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
-                            <span>{item}</span>
+                            <div>
+                              {typeof item === 'string' ? (
+                                <span>{item}</span>
+                              ) : (
+                                <>
+                                  <p className="font-medium">{item.action}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">{item.reason}</p>
+                                </>
+                              )}
+                            </div>
                           </li>
                         ))}
                       </ul>
