@@ -12,6 +12,7 @@ const PRODUCT_PRICES: Record<string, string> = {
   "revenue-framework": "price_1SgLn4ADyJKZqOM9wGt6k508",
   "build-vs-buy": "price_1SgLn7ADyJKZqOM94XoVJeuz",
   "activation-playbook": "price_1SgLn8ADyJKZqOM99yCT7KOH",
+  "engagement-playbook": "price_1SgM2iADyJKZqOM9R1jOSJP6",
 };
 
 const logStep = (step: string, details?: unknown) => {

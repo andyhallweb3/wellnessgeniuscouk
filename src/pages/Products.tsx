@@ -24,7 +24,8 @@ import {
   generatePromptPack, 
   generateRevenueFramework, 
   generateBuildVsBuy,
-  generateActivationPlaybook 
+  generateActivationPlaybook,
+  generateEngagementPlaybook
 } from "@/lib/pdf-generators";
 
 interface Product {
@@ -167,6 +168,24 @@ const products: Product[] = [
     ],
     cta: "Buy Now",
     link: "#build-vs-buy",
+    isStripeProduct: true,
+  },
+  {
+    id: "engagement-playbook",
+    name: "Wellness Engagement Systems Playbook",
+    description: "Operating systems for engagement, not best practices. Includes Habit→Outcome Map, Intervention Ladder, and Journey Blueprints.",
+    price: "£79",
+    type: "paid",
+    icon: <BarChart3 size={24} />,
+    features: [
+      "Habit → Outcome Map (behaviour to value)",
+      "5-Rung Intervention Ladder",
+      "Ready-to-use Journey Blueprints (IF/THEN logic)",
+      "Churn rescue workflows",
+      "Upsell timing engine",
+    ],
+    cta: "Buy Now",
+    link: "#engagement-playbook",
     isStripeProduct: true,
   },
   // Premium Products
@@ -418,6 +437,10 @@ const Products = () => {
             case "activation-playbook":
               doc = generateActivationPlaybook();
               filename = "90-day-activation-playbook.pdf";
+              break;
+            case "engagement-playbook":
+              doc = generateEngagementPlaybook();
+              filename = "wellness-engagement-systems-playbook.pdf";
               break;
           }
           
