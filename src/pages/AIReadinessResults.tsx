@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Lock, ArrowRight, CheckCircle, BarChart3, AlertTriangle, TrendingUp } from "lucide-react";
+import { Lock, ArrowRight, CheckCircle, BarChart3, Save, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface ResultData {
   overallScore: number;
@@ -61,8 +63,11 @@ const lockedFeatures = [
 const AIReadinessResults = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [resultData, setResultData] = useState<ResultData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -112,6 +117,50 @@ const AIReadinessResults = () => {
 
     fetchResults();
   }, [id, navigate]);
+
+  // Check if already saved
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!user || !id) return;
+      const { data } = await supabase
+        .from("user_saved_outputs")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("output_type", "ai-readiness")
+        .eq("data->>completion_id", id)
+        .maybeSingle();
+      if (data) setIsSaved(true);
+    };
+    checkIfSaved();
+  }, [user, id]);
+
+  const handleSaveToHub = async () => {
+    if (!user || !id || !resultData) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("user_saved_outputs").insert({
+        user_id: user.id,
+        output_type: "ai-readiness",
+        title: `AI Readiness Score: ${resultData.overallScore}/100`,
+        data: {
+          completion_id: id,
+          overall_score: resultData.overallScore,
+          score_band: resultData.scoreBand,
+          pillar_scores: resultData.pillarScores,
+        },
+      });
+      
+      if (error) throw error;
+      setIsSaved(true);
+      toast.success("Assessment saved to your hub!");
+    } catch (error) {
+      console.error("Error saving:", error);
+      toast.error("Failed to save assessment");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -209,6 +258,28 @@ const AIReadinessResults = () => {
                 </div>
               ))}
             </div>
+
+            {/* Save to Hub Button */}
+            {user && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <Button
+                  variant={isSaved ? "outline" : "accent"}
+                  size="sm"
+                  onClick={handleSaveToHub}
+                  disabled={isSaving || isSaved}
+                  className="w-full"
+                >
+                  {isSaving ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : isSaved ? (
+                    <CheckCircle size={14} />
+                  ) : (
+                    <Save size={14} />
+                  )}
+                  {isSaved ? "Saved to Hub" : "Save to My Hub"}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Locked Premium Content */}

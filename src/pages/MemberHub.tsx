@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Download, 
   FileText, 
@@ -13,7 +14,8 @@ import {
   Zap,
   BarChart3,
   Sparkles,
-  Loader2
+  Loader2,
+  Terminal
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -27,6 +29,7 @@ import {
   generateActivationPlaybook,
   generateEngagementPlaybook
 } from "@/lib/pdf-generators";
+import PromptLibrary from "@/components/hub/PromptLibrary";
 
 interface Purchase {
   id: string;
@@ -209,177 +212,195 @@ const MemberHub = () => {
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
           ) : (
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Main Content - Purchases */}
-              <div className="lg:col-span-2 space-y-8">
-                {/* Purchased Products */}
-                <section>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 rounded-lg bg-accent/10">
-                      <Package size={20} className="text-accent" />
-                    </div>
-                    <h2 className="text-xl font-heading">Your Products</h2>
-                  </div>
+            <Tabs defaultValue="products" className="w-full">
+              <TabsList className="mb-8">
+                <TabsTrigger value="products" className="flex items-center gap-2">
+                  <Package size={16} />
+                  Products & Reports
+                </TabsTrigger>
+                <TabsTrigger value="prompts" className="flex items-center gap-2">
+                  <Terminal size={16} />
+                  Prompt Library
+                </TabsTrigger>
+              </TabsList>
 
-                  {purchases.length === 0 ? (
-                    <div className="rounded-xl border border-border bg-card p-8 text-center">
-                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-heading mb-2">No purchases yet</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Your purchased products will appear here for easy access.
-                      </p>
-                      <Button variant="accent" asChild>
-                        <Link to="/products">Browse Products</Link>
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {purchases.map((purchase) => (
-                        <div
-                          key={purchase.id}
-                          className="rounded-xl border border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center gap-4"
-                        >
-                          <div className="p-3 rounded-lg bg-accent/10 shrink-0">
-                            {PRODUCT_ICONS[purchase.product_id] || <FileText size={20} />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-heading text-base mb-1">{purchase.product_name}</h3>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Clock size={14} />
-                                {formatDate(purchase.purchased_at)}
-                              </span>
-                              <span>{formatPrice(purchase.price_paid, purchase.currency)}</span>
-                            </div>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownload(purchase.product_id)}
-                          >
-                            <Download size={14} />
-                            Download
+              <TabsContent value="products">
+                <div className="grid lg:grid-cols-3 gap-8">
+                  {/* Main Content - Purchases */}
+                  <div className="lg:col-span-2 space-y-8">
+                    {/* Purchased Products */}
+                    <section>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 rounded-lg bg-accent/10">
+                          <Package size={20} className="text-accent" />
+                        </div>
+                        <h2 className="text-xl font-heading">Your Products</h2>
+                      </div>
+
+                      {purchases.length === 0 ? (
+                        <div className="rounded-xl border border-border bg-card p-8 text-center">
+                          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-lg font-heading mb-2">No purchases yet</h3>
+                          <p className="text-muted-foreground mb-4">
+                            Your purchased products will appear here for easy access.
+                          </p>
+                          <Button variant="accent" asChild>
+                            <Link to="/products">Browse Products</Link>
                           </Button>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                {/* Saved Outputs */}
-                <section>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 rounded-lg bg-purple-500/10">
-                      <Sparkles size={20} className="text-purple-500" />
-                    </div>
-                    <h2 className="text-xl font-heading">Saved Reports & Outputs</h2>
-                  </div>
-
-                  {savedOutputs.length === 0 ? (
-                    <div className="rounded-xl border border-border bg-card p-8 text-center">
-                      <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-heading mb-2">No saved outputs yet</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Complete an AI Readiness Assessment to save your results here.
-                      </p>
-                      <Button variant="accent" asChild>
-                        <Link to="/ai-readiness">Take Assessment</Link>
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {savedOutputs.map((output) => (
-                        <div
-                          key={output.id}
-                          className="rounded-xl border border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center gap-4"
-                        >
-                          <div className="p-3 rounded-lg bg-purple-500/10 shrink-0">
-                            <Sparkles size={20} className="text-purple-500" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-heading text-base mb-1">{output.title}</h3>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                              <span>{output.output_type}</span>
-                              <span className="flex items-center gap-1">
-                                <Clock size={14} />
-                                {formatDate(output.created_at)}
-                              </span>
+                      ) : (
+                        <div className="space-y-4">
+                          {purchases.map((purchase) => (
+                            <div
+                              key={purchase.id}
+                              className="rounded-xl border border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+                            >
+                              <div className="p-3 rounded-lg bg-accent/10 shrink-0">
+                                {PRODUCT_ICONS[purchase.product_id] || <FileText size={20} />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-heading text-base mb-1">{purchase.product_name}</h3>
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Clock size={14} />
+                                    {formatDate(purchase.purchased_at)}
+                                  </span>
+                                  <span>{formatPrice(purchase.price_paid, purchase.currency)}</span>
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownload(purchase.product_id)}
+                              >
+                                <Download size={14} />
+                                Download
+                              </Button>
                             </div>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            View Report
+                          ))}
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Saved Outputs */}
+                    <section>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 rounded-lg bg-purple-500/10">
+                          <Sparkles size={20} className="text-purple-500" />
+                        </div>
+                        <h2 className="text-xl font-heading">Saved Reports & Outputs</h2>
+                      </div>
+
+                      {savedOutputs.length === 0 ? (
+                        <div className="rounded-xl border border-border bg-card p-8 text-center">
+                          <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-lg font-heading mb-2">No saved outputs yet</h3>
+                          <p className="text-muted-foreground mb-4">
+                            Complete an AI Readiness Assessment to save your results here.
+                          </p>
+                          <Button variant="accent" asChild>
+                            <Link to="/ai-readiness">Take Assessment</Link>
                           </Button>
                         </div>
-                      ))}
+                      ) : (
+                        <div className="space-y-4">
+                          {savedOutputs.map((output) => (
+                            <div
+                              key={output.id}
+                              className="rounded-xl border border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+                            >
+                              <div className="p-3 rounded-lg bg-purple-500/10 shrink-0">
+                                <Sparkles size={20} className="text-purple-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-heading text-base mb-1">{output.title}</h3>
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                  <span>{output.output_type}</span>
+                                  <span className="flex items-center gap-1">
+                                    <Clock size={14} />
+                                    {formatDate(output.created_at)}
+                                  </span>
+                                </div>
+                              </div>
+                              <Button variant="outline" size="sm">
+                                View Report
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  </div>
+                  {/* Sidebar */}
+                  <div className="space-y-6">
+                    {/* Account Card */}
+                    <div className="rounded-xl border border-border bg-card p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 rounded-full bg-accent/10">
+                          <User size={20} className="text-accent" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">
+                            {user?.user_metadata?.full_name || "Member"}
+                          </p>
+                          <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-border space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Products owned</span>
+                          <span className="font-medium">{purchases.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Saved outputs</span>
+                          <span className="font-medium">{savedOutputs.length}</span>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </section>
-              </div>
 
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Account Card */}
-                <div className="rounded-xl border border-border bg-card p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-full bg-accent/10">
-                      <User size={20} className="text-accent" />
+                    {/* Quick Actions */}
+                    <div className="rounded-xl border border-border bg-card p-6">
+                      <h3 className="font-heading mb-4">Quick Actions</h3>
+                      <div className="space-y-2">
+                        <Button variant="outline" className="w-full justify-start" asChild>
+                          <Link to="/ai-readiness">
+                            <Sparkles size={16} />
+                            Take AI Readiness Assessment
+                          </Link>
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start" asChild>
+                          <Link to="/products">
+                            <Package size={16} />
+                            Browse All Products
+                          </Link>
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start" asChild>
+                          <Link to="/insights">
+                            <BookOpen size={16} />
+                            Read Latest Insights
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">
-                        {user?.user_metadata?.full_name || "Member"}
+
+                    {/* Help */}
+                    <div className="rounded-xl border border-accent/20 bg-accent/5 p-6">
+                      <h3 className="font-heading mb-2">Need Help?</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Questions about your products or downloads? We're here to help.
                       </p>
-                      <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t border-border space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Products owned</span>
-                      <span className="font-medium">{purchases.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Saved outputs</span>
-                      <span className="font-medium">{savedOutputs.length}</span>
+                      <Button variant="outline" size="sm" className="w-full" asChild>
+                        <a href="mailto:hello@wellnessgenius.io">Contact Support</a>
+                      </Button>
                     </div>
                   </div>
                 </div>
+              </TabsContent>
 
-                {/* Quick Actions */}
-                <div className="rounded-xl border border-border bg-card p-6">
-                  <h3 className="font-heading mb-4">Quick Actions</h3>
-                  <div className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start" asChild>
-                      <Link to="/ai-readiness">
-                        <Sparkles size={16} />
-                        Take AI Readiness Assessment
-                      </Link>
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" asChild>
-                      <Link to="/products">
-                        <Package size={16} />
-                        Browse All Products
-                      </Link>
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" asChild>
-                      <Link to="/insights">
-                        <BookOpen size={16} />
-                        Read Latest Insights
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Help */}
-                <div className="rounded-xl border border-accent/20 bg-accent/5 p-6">
-                  <h3 className="font-heading mb-2">Need Help?</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Questions about your products or downloads? We're here to help.
-                  </p>
-                  <Button variant="outline" size="sm" className="w-full" asChild>
-                    <a href="mailto:hello@wellnessgenius.io">Contact Support</a>
-                  </Button>
-                </div>
-              </div>
-            </div>
+              <TabsContent value="prompts">
+                <PromptLibrary />
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </main>
