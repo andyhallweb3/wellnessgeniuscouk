@@ -1362,3 +1362,372 @@ export const generateActivationPlaybook = (): jsPDF => {
   
   return doc;
 };
+
+// Wellness Engagement Systems Playbook - £79
+export const generateEngagementPlaybook = (): jsPDF => {
+  const doc = new jsPDF();
+  const totalPages = 12;
+  
+  // Page 1 - Cover
+  addHeader(doc, 1, totalPages);
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Wellness Engagement", 105, 80, { align: "center" });
+  doc.text("Systems Playbook", 105, 100, { align: "center" });
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Operating systems, not best practices.", 105, 125, { align: "center" });
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("This replaces intuition with logic.", 105, 145, { align: "center" });
+  doc.setFontSize(10);
+  doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
+  
+  // Page 2 - What's Inside
+  doc.addPage();
+  addHeader(doc, 2, totalPages);
+  doc.setFontSize(22);
+  doc.setTextColor(...BRAND.white);
+  doc.text("What's Inside", 20, 40);
+  
+  const contents = [
+    { num: "01", title: "The Habit → Outcome Map", desc: "How behaviour translates to commercial value" },
+    { num: "02", title: "The Intervention Ladder", desc: "What to do before you burn margin on incentives" },
+    { num: "03", title: "Journey Blueprints", desc: "Ready-to-use IF/THEN logic for engagement systems" },
+  ];
+  
+  let yPos = 65;
+  contents.forEach(item => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos - 5, 180, 40, 3, 3, "F");
+    doc.setFontSize(24);
+    doc.setTextColor(...BRAND.teal);
+    doc.text(item.num, 25, yPos + 18);
+    doc.setFontSize(14);
+    doc.setTextColor(...BRAND.white);
+    doc.text(item.title, 55, yPos + 12);
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.muted);
+    doc.text(item.desc, 55, yPos + 26);
+    yPos += 52;
+  });
+  
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("This is how wellness platforms retain members profitably.", 105, 240, { align: "center" });
+  
+  // Page 3 - Habit → Outcome Map Title
+  doc.addPage();
+  addHeader(doc, 3, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("SECTION 01", 20, 40);
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("The Habit → Outcome", 20, 60);
+  doc.text("Map", 20, 78);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("This is the missing link in wellness tech.", 20, 100);
+  doc.text("How user behaviours translate into commercial outcomes.", 20, 115);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 135, 180, 100, 3, 3, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("THE TRANSLATION CHAIN", 25, 150);
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.white);
+  
+  const chain = [
+    "Activity (sessions, check-ins, interactions)",
+    "      ↓",
+    "Consistency (streaks, frequency, habit formation)",
+    "      ↓",
+    "Recovery (return after drop-off, re-engagement)",
+    "      ↓",
+    "Commercial Outcomes (retention, upsell, sponsor value)"
+  ];
+  yPos = 165;
+  chain.forEach(line => {
+    if (line.includes("↓")) {
+      doc.setTextColor(...BRAND.teal);
+    } else {
+      doc.setTextColor(...BRAND.white);
+    }
+    doc.text(line, 25, yPos);
+    yPos += 12;
+  });
+  
+  // Page 4 - Outcome Map Detail
+  doc.addPage();
+  addHeader(doc, 4, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("BEHAVIOUR → VALUE TRANSLATION", 20, 35);
+  
+  const translations = [
+    { behaviour: "Activity", metric: "Session frequency, class bookings", outcome: "Baseline engagement health" },
+    { behaviour: "Consistency", metric: "Streak length, weekly active rate", outcome: "Retention prediction (+15-30%)" },
+    { behaviour: "Recovery", metric: "Re-engagement after 7+ days", outcome: "Churn rescue opportunity" },
+    { behaviour: "Drop-off", metric: "Missed sessions, broken streaks", outcome: "Early warning signals" },
+  ];
+  
+  yPos = 50;
+  translations.forEach((t, i) => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos, 180, 50, 3, 3, "F");
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.teal);
+    doc.text(t.behaviour.toUpperCase(), 22, yPos + 14);
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.muted);
+    doc.text("Metric: " + t.metric, 22, yPos + 28);
+    doc.setTextColor(...BRAND.white);
+    doc.text("→ " + t.outcome, 22, yPos + 42);
+    yPos += 58;
+  });
+  
+  // Page 5 - Intervention Ladder Title
+  doc.addPage();
+  addHeader(doc, 5, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("SECTION 02", 20, 40);
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("The Intervention", 20, 60);
+  doc.text("Ladder", 20, 78);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Most platforms jump to discounts and burn margin.", 20, 100);
+  doc.text("This ladder forces you to try everything else first.", 20, 115);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 135, 180, 30, 3, 3, "F");
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Rule: Only escalate when the previous rung fails.", 25, 153);
+  
+  // Page 6 - Intervention Ladder Detail
+  doc.addPage();
+  addHeader(doc, 6, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("THE 5-RUNG LADDER", 20, 35);
+  
+  const rungs = [
+    { num: "1", name: "Notification Timing", desc: "Move send times to match peak engagement windows. Cost: £0" },
+    { num: "2", name: "Content Swap", desc: "Replace generic content with personalised alternatives. Cost: £0" },
+    { num: "3", name: "Social Proof", desc: "Show peer activity, community momentum, shared goals. Cost: £0" },
+    { num: "4", name: "Goal Re-framing", desc: "Adjust targets to feel achievable. Micro-wins > big failures. Cost: £0" },
+    { num: "5", name: "Incentives (Last Resort)", desc: "Rewards, discounts, prizes. High cost. Use sparingly." },
+  ];
+  
+  yPos = 50;
+  rungs.forEach((rung, i) => {
+    const isLast = i === rungs.length - 1;
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos, 180, 42, 3, 3, "F");
+    doc.setFontSize(20);
+    doc.setTextColor(...(isLast ? [255, 180, 100] as [number, number, number] : BRAND.teal));
+    doc.text(rung.num, 25, yPos + 25);
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.white);
+    doc.text(rung.name, 45, yPos + 15);
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND.muted);
+    const descLines = doc.splitTextToSize(rung.desc, 140);
+    doc.text(descLines, 45, yPos + 28);
+    yPos += 47;
+  });
+  
+  // Page 7 - Why Ladder Matters
+  doc.addPage();
+  addHeader(doc, 7, totalPages);
+  doc.setFontSize(16);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Why This Ladder Matters", 105, 50, { align: "center" });
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(20, 70, 170, 60, 3, 3, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("THE PROBLEM", 30, 85);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Most platforms skip straight to Rung 5.", 30, 100);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("They burn margin on discounts before trying free options.", 30, 115);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(20, 145, 170, 60, 3, 3, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("THE RESULT", 30, 160);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Members expect discounts to stay.", 30, 175);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("LTV decreases. Retention becomes transactional.", 30, 190);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("The ladder forces discipline. Exhaust cheap before expensive.", 105, 230, { align: "center" });
+  
+  // Page 8 - Journey Blueprints Title
+  doc.addPage();
+  addHeader(doc, 8, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("SECTION 03", 20, 40);
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Journey Blueprints", 20, 60);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Ready-to-use IF/THEN logic.", 20, 85);
+  doc.text("This is not prose. It's operating code.", 20, 100);
+  
+  // Page 9 - Blueprint 1
+  doc.addPage();
+  addHeader(doc, 9, totalPages);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("BLUEPRINT 01: MISSED SESSION RE-ENGAGEMENT", 20, 35);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 45, 180, 140, 3, 3, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  
+  const blueprint1 = [
+    "IF user misses 2 sessions in 7 days",
+    "AND habit_score < 60",
+    "AND last_intervention > 14 days ago",
+    "THEN:",
+    "  1. Wait 24 hours (avoid seeming needy)",
+    "  2. Send personalised content based on preferences",
+    "  3. IF no response in 48 hours:",
+    "     → Try different channel (push → email → SMS)",
+    "  4. IF still no response:",
+    "     → Flag for coach review (do not discount)",
+    "",
+    "SUCCESS = session completed within 7 days",
+    "FAILURE = no session → escalate to Ladder Rung 3"
+  ];
+  yPos = 60;
+  blueprint1.forEach(line => {
+    if (line.startsWith("IF") || line.startsWith("AND") || line.startsWith("THEN")) {
+      doc.setTextColor(...BRAND.teal);
+    } else if (line.startsWith("SUCCESS") || line.startsWith("FAILURE")) {
+      doc.setTextColor(...BRAND.white);
+    } else {
+      doc.setTextColor(...BRAND.muted);
+    }
+    doc.text(line, 25, yPos);
+    yPos += 10;
+  });
+  
+  // Page 10 - Blueprint 2
+  doc.addPage();
+  addHeader(doc, 10, totalPages);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("BLUEPRINT 02: UPSELL TIMING ENGINE", 20, 35);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 45, 180, 130, 3, 3, "F");
+  
+  const blueprint2 = [
+    "IF user completes 7-day streak",
+    "AND engagement_trend = 'increasing'",
+    "AND has NOT seen upsell in last 30 days",
+    "THEN:",
+    "  1. Present relevant upgrade at session end",
+    "  2. Frame as 'you've earned this' not 'buy now'",
+    "  3. Use social proof from similar users",
+    "",
+    "TIMING RULE:",
+    "  Present AFTER achievement, NEVER during session",
+    "",
+    "ANTI-PATTERN:",
+    "  Showing upsell after missed sessions (kills trust)"
+  ];
+  yPos = 60;
+  blueprint2.forEach(line => {
+    if (line.startsWith("IF") || line.startsWith("AND") || line.startsWith("THEN")) {
+      doc.setTextColor(...BRAND.teal);
+    } else if (line.startsWith("TIMING") || line.startsWith("ANTI-PATTERN")) {
+      doc.setTextColor(...BRAND.white);
+    } else {
+      doc.setTextColor(...BRAND.muted);
+    }
+    doc.text(line, 25, yPos);
+    yPos += 10;
+  });
+  
+  // Page 11 - Blueprint 3
+  doc.addPage();
+  addHeader(doc, 11, totalPages);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("BLUEPRINT 03: CHURN RISK ESCALATION", 20, 35);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 45, 180, 155, 3, 3, "F");
+  
+  const blueprint3 = [
+    "IF days_since_last_session > 14",
+    "AND churn_probability > 0.6",
+    "AND member_tenure > 30 days",
+    "THEN:",
+    "  1. Trigger Ladder Rung 1 (timing optimisation)",
+    "  2. Wait 3 days, measure response",
+    "  3. IF no response → Rung 2 (content swap)",
+    "  4. Wait 3 days, measure response",
+    "  5. IF no response → Rung 3 (social proof)",
+    "  6. IF still no response after 14 days:",
+    "     → Coach outreach (human touch)",
+    "",
+    "NEVER:",
+    "  Jump to discounts without exhausting ladder",
+    "  The member who needs discounts to stay won't stay"
+  ];
+  yPos = 58;
+  blueprint3.forEach(line => {
+    if (line.startsWith("IF") || line.startsWith("AND") || line.startsWith("THEN")) {
+      doc.setTextColor(...BRAND.teal);
+    } else if (line.startsWith("NEVER")) {
+      doc.setTextColor(255, 150, 150);
+    } else {
+      doc.setTextColor(...BRAND.muted);
+    }
+    doc.text(line, 25, yPos);
+    yPos += 10;
+  });
+  
+  // Page 12 - CTA
+  doc.addPage();
+  addHeader(doc, 12, totalPages);
+  
+  doc.setFontSize(22);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Ready to diagnose your gaps?", 105, 90, { align: "center" });
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Take the AI Readiness Score to benchmark", 105, 120, { align: "center" });
+  doc.text("your engagement systems against the industry.", 105, 135, { align: "center" });
+  
+  doc.setFontSize(16);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("wellnessgenius.io/ai-readiness", 105, 170, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Wellness Genius", 105, 220, { align: "center" });
+  doc.text("Operating intelligence for wellness businesses.", 105, 232, { align: "center" });
+
+  return doc;
+};
