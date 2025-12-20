@@ -6,12 +6,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Product price mapping
+// Product price mapping (TEST MODE)
 const PRODUCT_PRICES: Record<string, string> = {
-  "prompt-pack": "price_1SgCXRADyJKZqOM9dODHFMIq",
-  "revenue-framework": "price_1SgCXTADyJKZqOM9P1nV63fd",
-  "build-vs-buy": "price_1SgCXUADyJKZqOM9Zo7yKdLO",
-  "activation-playbook": "price_1SgLTzADyJKZqOM9x9KtBlkp",
+  "prompt-pack": "price_1SgLn2ADyJKZqOM99i15KWE2",
+  "revenue-framework": "price_1SgLn4ADyJKZqOM9wGt6k508",
+  "build-vs-buy": "price_1SgLn7ADyJKZqOM94XoVJeuz",
+  "activation-playbook": "price_1SgLn8ADyJKZqOM99yCT7KOH",
 };
 
 const logStep = (step: string, details?: unknown) => {
