@@ -95,3 +95,12 @@ verify_jwt = false
 
 [functions.record-product-purchase]
 verify_jwt = false
+
+[functions.ai-coach-chat]
+verify_jwt = false
+
+[functions.create-coach-subscription]
+verify_jwt = false
+
+[functions.check-coach-subscription]
+verify_jwt = false
