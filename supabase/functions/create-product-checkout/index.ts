@@ -11,6 +11,7 @@ const PRODUCT_PRICES: Record<string, string> = {
   "prompt-pack": "price_1SgCXRADyJKZqOM9dODHFMIq",
   "revenue-framework": "price_1SgCXTADyJKZqOM9P1nV63fd",
   "build-vs-buy": "price_1SgCXUADyJKZqOM9Zo7yKdLO",
+  "activation-playbook": "price_1SgLTzADyJKZqOM9x9KtBlkp",
 };
 
 const logStep = (step: string, details?: unknown) => {

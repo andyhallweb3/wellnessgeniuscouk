@@ -191,6 +191,279 @@ const generateBuildVsBuyPDF = (): string => {
   return doc.output("datauristring").split(",")[1];
 };
 
+const generateActivationPlaybookPDF = (): string => {
+  const doc = new jsPDF();
+  
+  // Cover page
+  addHeader(doc, 1, 10);
+  doc.setFontSize(36);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("90-Day AI", 105, 90, { align: "center" });
+  doc.setFontSize(36);
+  doc.text("Activation Playbook", 105, 110, { align: "center" });
+  doc.setFontSize(14);
+  doc.setTextColor(BRAND.teal[0], BRAND.teal[1], BRAND.teal[2]);
+  doc.text("Month-by-month execution plan for wellness leaders", 105, 140, { align: "center" });
+  doc.setFontSize(10);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+  doc.text("No AI until you're ready.", 105, 160, { align: "center" });
+
+  // Introduction
+  doc.addPage();
+  addHeader(doc, 2, 10);
+  doc.setFontSize(22);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("Introduction", 20, 35);
+  doc.setFontSize(11);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+  const introText = [
+    "Most AI projects fail because they start with technology instead of foundations.",
+    "",
+    "This playbook exists to force clarity before you build anything.",
+    "",
+    "Use it slowly. Rushing defeats the purpose.",
+    "",
+    "Month 1 focuses on data foundations. No AI yet. This matters.",
+    "Month 2 introduces engagement journeys and segmentation.",
+    "Month 3 links everything to monetisation.",
+    "",
+    "Success is not 'we launched AI'.",
+    "Success is 'we made better decisions faster'."
+  ];
+  let yPos = 55;
+  introText.forEach((line) => {
+    if (line === "") { yPos += 8; return; }
+    doc.text(line, 20, yPos);
+    yPos += 8;
+  });
+
+  // Month 1
+  doc.addPage();
+  addHeader(doc, 3, 10);
+  doc.setFontSize(22);
+  doc.setTextColor(BRAND.teal[0], BRAND.teal[1], BRAND.teal[2]);
+  doc.text("MONTH 1", 20, 35);
+  doc.setFontSize(18);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("Foundations & Data Cleanup", 20, 50);
+  
+  const month1Tasks = [
+    { week: "Week 1-2", title: "Data Audit", tasks: ["Identify where core data lives", "Document data sources and quality", "List what's missing or unclear", "Clean obvious duplicates"] },
+    { week: "Week 3", title: "Event Definition", tasks: ["Define your 5 most important events", "Ensure consistent tracking", "Validate data accuracy"] },
+    { week: "Week 4", title: "Consent & Governance", tasks: ["Review consent mechanisms", "Document data usage policies", "Identify compliance gaps"] }
+  ];
+  
+  yPos = 70;
+  month1Tasks.forEach((item) => {
+    doc.setFillColor(BRAND.cardBg[0], BRAND.cardBg[1], BRAND.cardBg[2]);
+    doc.roundedRect(15, yPos - 5, 180, 55, 3, 3, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(BRAND.teal[0], BRAND.teal[1], BRAND.teal[2]);
+    doc.text(item.week, 20, yPos + 5);
+    doc.setFontSize(12);
+    doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+    doc.text(item.title, 20, yPos + 18);
+    doc.setFontSize(9);
+    doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+    item.tasks.forEach((task, i) => {
+      doc.text(`□ ${task}`, 25, yPos + 30 + (i * 6));
+    });
+    yPos += 65;
+  });
+
+  // Month 1 Success Criteria
+  doc.addPage();
+  addHeader(doc, 4, 10);
+  doc.setFontSize(18);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("Month 1 Success Criteria", 20, 35);
+  doc.setFontSize(11);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+  const m1Success = [
+    "✓ You can explain where your core data lives without opening 5 tools",
+    "✓ You have documented your 5 most important engagement events",
+    "✓ You know which data you trust and which you don't",
+    "✓ Consent mechanisms are reviewed and documented",
+    "✓ You can confidently describe your data to a regulator"
+  ];
+  yPos = 55;
+  m1Success.forEach((line) => {
+    doc.text(line, 20, yPos);
+    yPos += 12;
+  });
+
+  // Month 2
+  doc.addPage();
+  addHeader(doc, 5, 10);
+  doc.setFontSize(22);
+  doc.setTextColor(BRAND.teal[0], BRAND.teal[1], BRAND.teal[2]);
+  doc.text("MONTH 2", 20, 35);
+  doc.setFontSize(18);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("Engagement Journeys & Segmentation", 20, 50);
+
+  const month2Tasks = [
+    { week: "Week 5-6", title: "Journey Mapping", tasks: ["Map current user journeys", "Identify drop-off points", "Define 'time-to-value'"] },
+    { week: "Week 7", title: "Segmentation", tasks: ["Create 3-5 user segments", "Define segment behaviours", "Identify high-value segments"] },
+    { week: "Week 8", title: "Test Hypotheses", tasks: ["Pick ONE journey to improve", "Design A/B test", "Implement and measure"] }
+  ];
+
+  yPos = 70;
+  month2Tasks.forEach((item) => {
+    doc.setFillColor(BRAND.cardBg[0], BRAND.cardBg[1], BRAND.cardBg[2]);
+    doc.roundedRect(15, yPos - 5, 180, 50, 3, 3, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(BRAND.teal[0], BRAND.teal[1], BRAND.teal[2]);
+    doc.text(item.week, 20, yPos + 5);
+    doc.setFontSize(12);
+    doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+    doc.text(item.title, 20, yPos + 18);
+    doc.setFontSize(9);
+    doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+    item.tasks.forEach((task, i) => {
+      doc.text(`□ ${task}`, 25, yPos + 28 + (i * 6));
+    });
+    yPos += 58;
+  });
+
+  // Month 2 Success Criteria
+  doc.addPage();
+  addHeader(doc, 6, 10);
+  doc.setFontSize(18);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("Month 2 Success Criteria", 20, 35);
+  doc.setFontSize(11);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+  const m2Success = [
+    "✓ User journeys are mapped with measurable drop-off points",
+    "✓ You have 3-5 actionable user segments",
+    "✓ You know which behaviours predict retention",
+    "✓ At least one A/B test is running or completed",
+    "✓ You can explain what engagement means for your business"
+  ];
+  yPos = 55;
+  m2Success.forEach((line) => {
+    doc.text(line, 20, yPos);
+    yPos += 12;
+  });
+
+  // Month 3
+  doc.addPage();
+  addHeader(doc, 7, 10);
+  doc.setFontSize(22);
+  doc.setTextColor(BRAND.teal[0], BRAND.teal[1], BRAND.teal[2]);
+  doc.text("MONTH 3", 20, 35);
+  doc.setFontSize(18);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("Monetisation Experiments", 20, 50);
+
+  const month3Tasks = [
+    { week: "Week 9-10", title: "Revenue Levers", tasks: ["Identify all revenue levers", "Link engagement to outcomes", "Calculate LTV by segment"] },
+    { week: "Week 11", title: "Test One Lever", tasks: ["Pick highest-impact lever", "Design controlled test", "Set conservative targets"] },
+    { week: "Week 12", title: "Measure & Plan", tasks: ["Analyse test results", "Document learnings", "Plan next quarter"] }
+  ];
+
+  yPos = 70;
+  month3Tasks.forEach((item) => {
+    doc.setFillColor(BRAND.cardBg[0], BRAND.cardBg[1], BRAND.cardBg[2]);
+    doc.roundedRect(15, yPos - 5, 180, 50, 3, 3, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(BRAND.teal[0], BRAND.teal[1], BRAND.teal[2]);
+    doc.text(item.week, 20, yPos + 5);
+    doc.setFontSize(12);
+    doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+    doc.text(item.title, 20, yPos + 18);
+    doc.setFontSize(9);
+    doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+    item.tasks.forEach((task, i) => {
+      doc.text(`□ ${task}`, 25, yPos + 28 + (i * 6));
+    });
+    yPos += 58;
+  });
+
+  // Month 3 Success Criteria
+  doc.addPage();
+  addHeader(doc, 8, 10);
+  doc.setFontSize(18);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("Month 3 Success Criteria", 20, 35);
+  doc.setFontSize(11);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+  const m3Success = [
+    "✓ Engagement improvements are linked to revenue/retention",
+    "✓ You understand LTV and churn drivers by segment",
+    "✓ At least one revenue lever has been tested",
+    "✓ You can explain value to finance in their language",
+    "✓ You have a clear plan for the next 90 days"
+  ];
+  yPos = 55;
+  m3Success.forEach((line) => {
+    doc.text(line, 20, yPos);
+    yPos += 12;
+  });
+
+  // Final page
+  doc.addPage();
+  addHeader(doc, 9, 10);
+  doc.setFontSize(22);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("What Not To Do", 20, 35);
+  doc.setFontSize(11);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+  const dontDo = [
+    "✗ Don't skip Month 1 because it feels slow",
+    "✗ Don't add AI before foundations are solid",
+    "✗ Don't measure vanity metrics",
+    "✗ Don't optimise for engagement without linking to outcomes",
+    "✗ Don't assume more data = better decisions",
+    "✗ Don't build features users haven't asked for",
+    "✗ Don't rush to 'launch AI' for PR value"
+  ];
+  yPos = 55;
+  dontDo.forEach((line) => {
+    doc.text(line, 20, yPos);
+    yPos += 12;
+  });
+
+  doc.setFontSize(14);
+  doc.setTextColor(BRAND.teal[0], BRAND.teal[1], BRAND.teal[2]);
+  doc.text("The goal is better decisions, not more technology.", 20, yPos + 20);
+
+  // Closing
+  doc.addPage();
+  addHeader(doc, 10, 10);
+  doc.setFontSize(22);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("Next Steps", 20, 35);
+  doc.setFontSize(11);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+  const nextSteps = [
+    "1. Print Month 1 checklist and pin it to your wall",
+    "",
+    "2. Schedule a weekly 30-minute review",
+    "",
+    "3. Assign ownership for each task",
+    "",
+    "4. Resist the urge to skip ahead",
+    "",
+    "5. Questions? Email hello@wellnessgenius.io"
+  ];
+  yPos = 55;
+  nextSteps.forEach((line) => {
+    if (line === "") { yPos += 6; return; }
+    doc.text(line, 20, yPos);
+    yPos += 10;
+  });
+
+  doc.setFontSize(12);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+  doc.text("Wellness Genius", 105, 250, { align: "center" });
+  doc.setFontSize(10);
+  doc.text("Practical intelligence for wellness leaders", 105, 260, { align: "center" });
+
+  return doc.output("datauristring").split(",")[1];
+};
+
 const PRODUCT_INFO: Record<string, { name: string; filename: string; generator: () => string }> = {
   "prompt-pack": {
     name: "Wellness AI Builder – Prompt Pack",
@@ -206,6 +479,11 @@ const PRODUCT_INFO: Record<string, { name: string; filename: string; generator: 
     name: "Build vs Buy: AI in Wellness",
     filename: "build-vs-buy-guide.pdf",
     generator: generateBuildVsBuyPDF,
+  },
+  "activation-playbook": {
+    name: "90-Day AI Activation Playbook",
+    filename: "90-day-activation-playbook.pdf",
+    generator: generateActivationPlaybookPDF,
   },
 };
 
