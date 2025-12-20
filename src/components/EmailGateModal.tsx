@@ -59,7 +59,7 @@ const EmailGateModal = ({
 
     try {
       // Save to newsletter_subscribers table
-      const { error } = await supabase
+      const { error: subError } = await supabase
         .from("newsletter_subscribers")
         .upsert(
           {
@@ -70,10 +70,37 @@ const EmailGateModal = ({
           { onConflict: "email" }
         );
 
-      if (error) throw error;
+      if (subError) throw subError;
+
+      // Log the download
+      const { error: downloadError } = await supabase
+        .from("product_downloads")
+        .insert({
+          email: email.trim().toLowerCase(),
+          name: name.trim() || null,
+          product_id: productId,
+          product_name: productName,
+          product_type: "free",
+          download_type: "free",
+        });
+
+      if (downloadError) {
+        console.error("Error logging download:", downloadError);
+        // Don't block the download if logging fails
+      }
 
       setIsSuccess(true);
       toast.success("Thank you! Your download is starting...");
+      
+      // Trigger upsell email in background
+      supabase.functions.invoke("send-download-upsell", {
+        body: { 
+          email: email.trim().toLowerCase(), 
+          name: name.trim() || null,
+          productId,
+          productName,
+        },
+      }).catch(console.error);
       
       // Generate and download PDF after short delay
       setTimeout(() => {

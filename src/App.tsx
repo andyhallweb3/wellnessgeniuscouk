@@ -17,6 +17,7 @@ import Insights from "./pages/Insights";
 import BlogPost from "./pages/BlogPost";
 import LatestNews from "./pages/LatestNews";
 import NewsletterAdmin from "./pages/NewsletterAdmin";
+import DownloadsAdmin from "./pages/DownloadsAdmin";
 import Unsubscribe from "./pages/Unsubscribe";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/insights/:slug" element={<BlogPost />} />
           <Route path="/news" element={<LatestNews />} />
           <Route path="/news/admin" element={<NewsletterAdmin />} />
+          <Route path="/downloads/admin" element={<DownloadsAdmin />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />

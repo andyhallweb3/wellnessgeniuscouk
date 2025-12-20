@@ -423,6 +423,51 @@ export type Database = {
         }
         Relationships: []
       }
+      product_downloads: {
+        Row: {
+          created_at: string
+          download_type: string
+          email: string
+          id: string
+          ip_address: string | null
+          name: string | null
+          product_id: string
+          product_name: string
+          product_type: string
+          upsell_email_sent: boolean | null
+          upsell_email_sent_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          download_type?: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          name?: string | null
+          product_id: string
+          product_name: string
+          product_type?: string
+          upsell_email_sent?: boolean | null
+          upsell_email_sent_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          download_type?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          name?: string | null
+          product_id?: string
+          product_name?: string
+          product_type?: string
+          upsell_email_sent?: boolean | null
+          upsell_email_sent_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       report_shares: {
         Row: {
           completion_id: string
