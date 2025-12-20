@@ -15,7 +15,8 @@ import {
   BarChart3,
   Sparkles,
   Loader2,
-  Terminal
+  Terminal,
+  MessageCircle
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -356,6 +357,25 @@ const MemberHub = () => {
                           <span className="font-medium">{savedOutputs.length}</span>
                         </div>
                       </div>
+                    </div>
+
+                    {/* AI Coach CTA */}
+                    <div className="rounded-xl border-2 border-accent bg-gradient-to-br from-accent/10 to-accent/5 p-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 rounded-full bg-accent/20">
+                          <MessageCircle size={20} className="text-accent" />
+                        </div>
+                        <h3 className="font-heading">AI Coach</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Get expert AI guidance for building apps and strategic decisions.
+                      </p>
+                      <Button variant="accent" size="sm" className="w-full" asChild>
+                        <Link to="/hub/coach">
+                          <Sparkles size={14} />
+                          Open AI Coach
+                        </Link>
+                      </Button>
                     </div>
 
                     {/* Quick Actions */}

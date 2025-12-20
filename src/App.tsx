@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Auth from "./pages/Auth";
 import MemberHub from "./pages/MemberHub";
+import AICoach from "./pages/AICoach";
 import AIReadinessLanding from "./pages/AIReadinessLanding";
 import AIReadinessAssessmentFree from "./pages/AIReadinessAssessmentFree";
 import AIReadinessAssessmentPaid from "./pages/AIReadinessAssessmentPaid";
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/products" element={<Products />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/hub" element={<MemberHub />} />
+            <Route path="/hub/coach" element={<AICoach />} />
             <Route path="/ai-readiness" element={<AIReadinessLanding />} />
             <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
             <Route path="/ai-readiness/full/:id" element={<AIReadinessAssessmentPaid />} />
