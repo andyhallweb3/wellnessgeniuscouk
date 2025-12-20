@@ -3,9 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
+import Auth from "./pages/Auth";
+import MemberHub from "./pages/MemberHub";
 import AIReadinessLanding from "./pages/AIReadinessLanding";
 import AIReadinessAssessmentFree from "./pages/AIReadinessAssessmentFree";
 import AIReadinessAssessmentPaid from "./pages/AIReadinessAssessmentPaid";
@@ -29,36 +32,40 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/ai-readiness" element={<AIReadinessLanding />} />
-          <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
-          <Route path="/ai-readiness/full/:id" element={<AIReadinessAssessmentPaid />} />
-          <Route path="/ai-readiness/results/:id" element={<AIReadinessResults />} />
-          <Route path="/ai-readiness/checkout/:id" element={<AIReadinessCheckout />} />
-          <Route path="/ai-readiness/report/:id" element={<AIReadinessReport />} />
-          <Route path="/ai-readiness/share/:token" element={<SharedReport />} />
-          <Route path="/speaker-kit" element={<SpeakerKit />} />
-          <Route path="/insights" element={<Insights />} />
-          <Route path="/insights/:slug" element={<BlogPost />} />
-          <Route path="/news" element={<LatestNews />} />
-          <Route path="/news/admin" element={<NewsletterAdmin />} />
-          <Route path="/downloads/admin" element={<DownloadsAdmin />} />
-          <Route path="/unsubscribe" element={<Unsubscribe />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/cookies" element={<CookiePolicy />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/hub" element={<MemberHub />} />
+            <Route path="/ai-readiness" element={<AIReadinessLanding />} />
+            <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
+            <Route path="/ai-readiness/full/:id" element={<AIReadinessAssessmentPaid />} />
+            <Route path="/ai-readiness/results/:id" element={<AIReadinessResults />} />
+            <Route path="/ai-readiness/checkout/:id" element={<AIReadinessCheckout />} />
+            <Route path="/ai-readiness/report/:id" element={<AIReadinessReport />} />
+            <Route path="/ai-readiness/share/:token" element={<SharedReport />} />
+            <Route path="/speaker-kit" element={<SpeakerKit />} />
+            <Route path="/insights" element={<Insights />} />
+            <Route path="/insights/:slug" element={<BlogPost />} />
+            <Route path="/news" element={<LatestNews />} />
+            <Route path="/news/admin" element={<NewsletterAdmin />} />
+            <Route path="/downloads/admin" element={<DownloadsAdmin />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/cookies" element={<CookiePolicy />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

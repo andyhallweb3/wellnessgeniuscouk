@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogIn } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.png";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, isLoading } = useAuth();
 
   const navLinks = [
     { href: "/ai-readiness", label: "Free AI Assessment", isRoute: true },
@@ -52,9 +54,23 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <a href="#contact">Get Pricing</a>
-            </Button>
+            {!isLoading && (
+              user ? (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/hub">
+                    <User size={16} />
+                    My Hub
+                  </Link>
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/auth">
+                    <LogIn size={16} />
+                    Sign In
+                  </Link>
+                </Button>
+              )
+            )}
             <Button variant="accent" size="default" asChild>
               <a href="#contact">Book a Call</a>
             </Button>
@@ -96,11 +112,25 @@ const Header = () => {
                 )
               ))}
               <div className="flex flex-col gap-3 pt-4">
-                <Button variant="outline" asChild>
-                  <a href="#contact">Get Pricing</a>
-                </Button>
+                {!isLoading && (
+                  user ? (
+                    <Button variant="outline" asChild>
+                      <Link to="/hub" onClick={() => setIsMenuOpen(false)}>
+                        <User size={16} />
+                        My Hub
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" asChild>
+                      <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                        <LogIn size={16} />
+                        Sign In
+                      </Link>
+                    </Button>
+                  )
+                )}
                 <Button variant="accent" asChild>
-                  <a href="#contact">Book a Call</a>
+                  <a href="#contact" onClick={() => setIsMenuOpen(false)}>Book a Call</a>
                 </Button>
               </div>
             </nav>
