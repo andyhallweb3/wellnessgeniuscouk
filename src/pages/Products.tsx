@@ -20,6 +20,12 @@ import Footer from "@/components/Footer";
 import EmailGateModal from "@/components/EmailGateModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { 
+  generatePromptPack, 
+  generateRevenueFramework, 
+  generateBuildVsBuy,
+  generateActivationPlaybook 
+} from "@/lib/pdf-generators";
 
 interface Product {
   id: string;
@@ -385,8 +391,43 @@ const Products = () => {
   // Handle payment success/cancel from URL params
   useEffect(() => {
     const payment = searchParams.get("payment");
+    const productId = searchParams.get("product");
+    
     if (payment === "success") {
-      toast.success("Payment successful! Check your email for access details.");
+      toast.success("Payment successful! Your PDF is downloading and will also be emailed to you.");
+      
+      // Trigger immediate download based on product
+      if (productId) {
+        try {
+          let doc;
+          let filename = "wellness-genius-download.pdf";
+          
+          switch (productId) {
+            case "prompt-pack":
+              doc = generatePromptPack();
+              filename = "wellness-ai-prompt-pack.pdf";
+              break;
+            case "revenue-framework":
+              doc = generateRevenueFramework();
+              filename = "engagement-revenue-framework.pdf";
+              break;
+            case "build-vs-buy":
+              doc = generateBuildVsBuy();
+              filename = "build-vs-buy-guide.pdf";
+              break;
+            case "activation-playbook":
+              doc = generateActivationPlaybook();
+              filename = "90-day-activation-playbook.pdf";
+              break;
+          }
+          
+          if (doc) {
+            doc.save(filename);
+          }
+        } catch (error) {
+          console.error("Failed to generate PDF:", error);
+        }
+      }
     } else if (payment === "cancelled") {
       toast.info("Payment was cancelled.");
     }
