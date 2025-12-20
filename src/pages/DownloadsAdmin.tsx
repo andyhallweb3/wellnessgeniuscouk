@@ -19,7 +19,11 @@ import {
   CheckCircle,
   Send,
   Calendar,
-  User
+  User,
+  MousePointer,
+  Eye,
+  TrendingUp,
+  BarChart3
 } from "lucide-react";
 import {
   Table,
@@ -37,6 +41,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 interface ProductDownload {
   id: string;
@@ -49,6 +59,16 @@ interface ProductDownload {
   created_at: string;
   upsell_email_sent: boolean;
   upsell_email_sent_at: string | null;
+  ab_variant: string | null;
+  ab_subject_line: string | null;
+  email_opened: boolean;
+  email_opened_at: string | null;
+  email_clicked: boolean;
+  email_clicked_at: string | null;
+  converted: boolean;
+  converted_at: string | null;
+  conversion_product: string | null;
+  conversion_value: number | null;
 }
 
 interface DownloadStats {
@@ -56,6 +76,17 @@ interface DownloadStats {
   uniqueEmails: number;
   downloadsToday: number;
   pendingUpsells: number;
+}
+
+interface ABStats {
+  variant: string;
+  sent: number;
+  opened: number;
+  clicked: number;
+  converted: number;
+  openRate: number;
+  clickRate: number;
+  conversionRate: number;
 }
 
 const DownloadsAdmin = () => {
@@ -73,11 +104,13 @@ const DownloadsAdmin = () => {
   
   const [downloads, setDownloads] = useState<ProductDownload[]>([]);
   const [stats, setStats] = useState<DownloadStats | null>(null);
+  const [abStats, setAbStats] = useState<ABStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [productFilter, setProductFilter] = useState<string>("all");
   const [sendingUpsell, setSendingUpsell] = useState<string | null>(null);
   const [sendingBulkUpsell, setSendingBulkUpsell] = useState(false);
+  const [activeTab, setActiveTab] = useState("downloads");
 
   useEffect(() => {
     document.title = "Downloads Admin | Wellness Genius";
@@ -123,7 +156,9 @@ const DownloadsAdmin = () => {
         .limit(500);
 
       if (error) throw error;
-      setDownloads((data as ProductDownload[]) || []);
+      const typedData = (data || []) as ProductDownload[];
+      setDownloads(typedData);
+      calculateABStats(typedData);
     } catch (error) {
       console.error("Error fetching downloads:", error);
       toast({
@@ -134,6 +169,42 @@ const DownloadsAdmin = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateABStats = (data: ProductDownload[]) => {
+    const variantMap = new Map<string, { sent: number; opened: number; clicked: number; converted: number }>();
+    
+    data.forEach((d) => {
+      if (!d.ab_variant || !d.upsell_email_sent) return;
+      
+      const key = d.ab_variant;
+      const current = variantMap.get(key) || { sent: 0, opened: 0, clicked: 0, converted: 0 };
+      
+      current.sent++;
+      if (d.email_opened) current.opened++;
+      if (d.email_clicked) current.clicked++;
+      if (d.converted) current.converted++;
+      
+      variantMap.set(key, current);
+    });
+
+    const stats: ABStats[] = [];
+    variantMap.forEach((value, key) => {
+      stats.push({
+        variant: key,
+        sent: value.sent,
+        opened: value.opened,
+        clicked: value.clicked,
+        converted: value.converted,
+        openRate: value.sent > 0 ? (value.opened / value.sent) * 100 : 0,
+        clickRate: value.opened > 0 ? (value.clicked / value.opened) * 100 : 0,
+        conversionRate: value.clicked > 0 ? (value.converted / value.clicked) * 100 : 0,
+      });
+    });
+
+    // Sort by conversion rate descending
+    stats.sort((a, b) => b.conversionRate - a.conversionRate);
+    setAbStats(stats);
   };
 
   const fetchStats = async () => {
@@ -164,7 +235,7 @@ const DownloadsAdmin = () => {
     }
   };
 
-  const sendUpsellEmail = async (download: ProductDownload) => {
+  const sendUpsellEmail = async (download: ProductDownload, forceVariant?: string) => {
     setSendingUpsell(download.id);
     try {
       const { error } = await supabase.functions.invoke("send-download-upsell", {
@@ -174,6 +245,7 @@ const DownloadsAdmin = () => {
           productId: download.product_id,
           productName: download.product_name,
           forceResend: true,
+          forceVariant,
         },
       });
 
@@ -181,7 +253,7 @@ const DownloadsAdmin = () => {
 
       toast({
         title: "Upsell Email Sent",
-        description: `Email sent to ${download.email}`,
+        description: `Email sent to ${download.email}${forceVariant ? ` (Variant ${forceVariant})` : ''}`,
       });
 
       fetchDownloads();
@@ -212,7 +284,7 @@ const DownloadsAdmin = () => {
     let sent = 0;
     let failed = 0;
 
-    for (const download of pending.slice(0, 50)) { // Limit to 50 at a time
+    for (const download of pending.slice(0, 50)) {
       try {
         await supabase.functions.invoke("send-download-upsell", {
           body: {
@@ -250,7 +322,14 @@ const DownloadsAdmin = () => {
 
   const uniqueProducts = [...new Set(downloads.map((d) => d.product_id))];
 
-  // Login form for non-authenticated users
+  // Overall email metrics
+  const emailMetrics = {
+    totalSent: downloads.filter(d => d.upsell_email_sent).length,
+    totalOpened: downloads.filter(d => d.email_opened).length,
+    totalClicked: downloads.filter(d => d.email_clicked).length,
+    totalConverted: downloads.filter(d => d.converted).length,
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -275,22 +354,18 @@ const DownloadsAdmin = () => {
               </div>
 
               <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <Input
-                    type="email"
-                    placeholder="Admin email"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                  />
-                </div>
+                <Input
+                  type="email"
+                  placeholder="Admin email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                />
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                />
                 <Button type="submit" variant="accent" className="w-full">
                   Sign In
                 </Button>
@@ -325,7 +400,7 @@ const DownloadsAdmin = () => {
               </Button>
               <div>
                 <h1 className="text-2xl font-heading">Downloads Admin</h1>
-                <p className="text-sm text-muted-foreground">Track downloads and send upsell emails</p>
+                <p className="text-sm text-muted-foreground">Track downloads, A/B tests, and conversions</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -341,20 +416,48 @@ const DownloadsAdmin = () => {
 
           {/* Stats */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
                   <Download size={14} />
-                  Total Downloads
+                  Downloads
                 </div>
                 <div className="text-2xl font-heading">{stats.totalDownloads}</div>
               </div>
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
                   <User size={14} />
-                  Unique Emails
+                  Unique
                 </div>
                 <div className="text-2xl font-heading">{stats.uniqueEmails}</div>
+              </div>
+              <div className="rounded-lg border bg-card p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Mail size={14} />
+                  Sent
+                </div>
+                <div className="text-2xl font-heading">{emailMetrics.totalSent}</div>
+              </div>
+              <div className="rounded-lg border bg-card p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <Eye size={14} />
+                  Opened
+                </div>
+                <div className="text-2xl font-heading text-blue-500">{emailMetrics.totalOpened}</div>
+              </div>
+              <div className="rounded-lg border bg-card p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <MousePointer size={14} />
+                  Clicked
+                </div>
+                <div className="text-2xl font-heading text-purple-500">{emailMetrics.totalClicked}</div>
+              </div>
+              <div className="rounded-lg border bg-card p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+                  <TrendingUp size={14} />
+                  Converted
+                </div>
+                <div className="text-2xl font-heading text-green-500">{emailMetrics.totalConverted}</div>
               </div>
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
@@ -365,149 +468,278 @@ const DownloadsAdmin = () => {
               </div>
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                  <Mail size={14} />
-                  Pending Upsells
+                  <Send size={14} />
+                  Pending
                 </div>
                 <div className="text-2xl font-heading text-amber-500">{stats.pendingUpsells}</div>
               </div>
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by email, name, or product..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={productFilter} onValueChange={setProductFilter}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Filter by product" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Products</SelectItem>
-                {uniqueProducts.map((id) => (
-                  <SelectItem key={id} value={id}>
-                    {id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="accent"
-              onClick={sendBulkUpsells}
-              disabled={sendingBulkUpsell || !stats?.pendingUpsells}
-            >
-              {sendingBulkUpsell ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send size={16} />
-                  Send All Upsells ({stats?.pendingUpsells || 0})
-                </>
-              )}
-            </Button>
-          </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="downloads">
+                <FileText size={16} className="mr-2" />
+                Downloads
+              </TabsTrigger>
+              <TabsTrigger value="ab-testing">
+                <BarChart3 size={16} className="mr-2" />
+                A/B Testing
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Downloads Table */}
-          <div className="rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Upsell Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto" />
-                    </TableCell>
-                  </TableRow>
-                ) : filteredDownloads.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No downloads found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredDownloads.map((download) => (
-                    <TableRow key={download.id}>
-                      <TableCell className="font-medium">{download.email}</TableCell>
-                      <TableCell>{download.name || "-"}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <FileText size={14} className="text-muted-foreground" />
-                          {download.product_name}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={download.product_type === "free" ? "outline" : "default"}>
-                          {download.product_type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(download.created_at).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {download.upsell_email_sent ? (
-                          <div className="flex items-center gap-1 text-green-600">
-                            <CheckCircle size={14} />
-                            <span className="text-sm">Sent</span>
-                          </div>
-                        ) : (
-                          <Badge variant="outline" className="text-amber-600 border-amber-600">
-                            Pending
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => sendUpsellEmail(download)}
-                          disabled={sendingUpsell === download.id}
-                        >
-                          {sendingUpsell === download.id ? (
-                            <Loader2 size={14} className="animate-spin" />
-                          ) : (
-                            <Mail size={14} />
-                          )}
-                          {download.upsell_email_sent ? "Resend" : "Send"}
-                        </Button>
-                      </TableCell>
+            <TabsContent value="downloads" className="space-y-6">
+              {/* Actions */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by email, name, or product..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={productFilter} onValueChange={setProductFilter}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <SelectValue placeholder="Filter by product" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Products</SelectItem>
+                    {uniqueProducts.map((id) => (
+                      <SelectItem key={id} value={id}>
+                        {id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="accent"
+                  onClick={sendBulkUpsells}
+                  disabled={sendingBulkUpsell || !stats?.pendingUpsells}
+                >
+                  {sendingBulkUpsell ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={16} />
+                      Send All ({stats?.pendingUpsells || 0})
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Downloads Table */}
+              <div className="rounded-lg border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Variant</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Funnel</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredDownloads.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          No downloads found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredDownloads.map((download) => (
+                        <TableRow key={download.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{download.email}</div>
+                              {download.name && (
+                                <div className="text-sm text-muted-foreground">{download.name}</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <FileText size={14} className="text-muted-foreground" />
+                              <span className="text-sm">{download.product_id}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {download.ab_variant ? (
+                              <Badge variant="outline">{download.ab_variant}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {new Date(download.created_at).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <span title="Sent">
+                                {download.upsell_email_sent ? (
+                                  <Mail size={14} className="text-green-500" />
+                                ) : (
+                                  <Mail size={14} className="text-muted-foreground" />
+                                )}
+                              </span>
+                              <span title="Opened">
+                                {download.email_opened ? (
+                                  <Eye size={14} className="text-blue-500" />
+                                ) : (
+                                  <Eye size={14} className="text-muted-foreground" />
+                                )}
+                              </span>
+                              <span title="Clicked">
+                                {download.email_clicked ? (
+                                  <MousePointer size={14} className="text-purple-500" />
+                                ) : (
+                                  <MousePointer size={14} className="text-muted-foreground" />
+                                )}
+                              </span>
+                              <span title="Converted">
+                                {download.converted ? (
+                                  <TrendingUp size={14} className="text-green-500" />
+                                ) : (
+                                  <TrendingUp size={14} className="text-muted-foreground" />
+                                )}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => sendUpsellEmail(download)}
+                              disabled={sendingUpsell === download.id}
+                            >
+                              {sendingUpsell === download.id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <Mail size={14} />
+                              )}
+                              {download.upsell_email_sent ? "Resend" : "Send"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
 
-          <div className="mt-4 text-sm text-muted-foreground">
-            Showing {filteredDownloads.length} of {downloads.length} downloads
-          </div>
+            <TabsContent value="ab-testing" className="space-y-6">
+              <div className="rounded-lg border bg-card p-6">
+                <h2 className="text-lg font-heading mb-4 flex items-center gap-2">
+                  <BarChart3 size={20} />
+                  A/B Test Results
+                </h2>
+                
+                {abStats.length === 0 ? (
+                  <p className="text-muted-foreground">No A/B test data yet. Send some upsell emails to start collecting data.</p>
+                ) : (
+                  <div className="space-y-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Variant</TableHead>
+                          <TableHead className="text-right">Sent</TableHead>
+                          <TableHead className="text-right">Opened</TableHead>
+                          <TableHead className="text-right">Open Rate</TableHead>
+                          <TableHead className="text-right">Clicked</TableHead>
+                          <TableHead className="text-right">Click Rate</TableHead>
+                          <TableHead className="text-right">Converted</TableHead>
+                          <TableHead className="text-right">Conv. Rate</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {abStats.map((stat, index) => (
+                          <TableRow key={stat.variant} className={index === 0 ? "bg-green-500/10" : ""}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Badge variant={index === 0 ? "default" : "outline"}>
+                                  {stat.variant}
+                                </Badge>
+                                {index === 0 && <span className="text-xs text-green-500">Winner</span>}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">{stat.sent}</TableCell>
+                            <TableCell className="text-right">{stat.opened}</TableCell>
+                            <TableCell className="text-right">
+                              <span className={stat.openRate > 30 ? "text-green-500" : stat.openRate > 20 ? "text-yellow-500" : "text-red-500"}>
+                                {stat.openRate.toFixed(1)}%
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">{stat.clicked}</TableCell>
+                            <TableCell className="text-right">
+                              <span className={stat.clickRate > 20 ? "text-green-500" : stat.clickRate > 10 ? "text-yellow-500" : "text-red-500"}>
+                                {stat.clickRate.toFixed(1)}%
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">{stat.converted}</TableCell>
+                            <TableCell className="text-right">
+                              <span className={stat.conversionRate > 5 ? "text-green-500" : stat.conversionRate > 2 ? "text-yellow-500" : "text-muted-foreground"}>
+                                {stat.conversionRate.toFixed(1)}%
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                      <div className="rounded-lg border p-4">
+                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Subject Lines Being Tested</h3>
+                        <div className="space-y-2">
+                          {[...new Set(downloads.filter(d => d.ab_subject_line).map(d => d.ab_subject_line))].slice(0, 5).map((subject, i) => (
+                            <p key={i} className="text-sm truncate" title={subject || ''}>
+                              {subject}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-lg border p-4">
+                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Recommendation</h3>
+                        {abStats.length > 0 && abStats[0].sent >= 30 ? (
+                          <p className="text-sm">
+                            Based on {abStats[0].sent} emails, <strong>Variant {abStats[0].variant}</strong> is performing best with a {abStats[0].conversionRate.toFixed(1)}% conversion rate.
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Need at least 30 emails per variant for statistically meaningful results.
+                          </p>
+                        )}
+                      </div>
+                      <div className="rounded-lg border p-4">
+                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Revenue</h3>
+                        <p className="text-2xl font-heading">
+                          £{downloads.filter(d => d.converted && d.conversion_value).reduce((sum, d) => sum + (d.conversion_value || 0), 0).toFixed(0)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">from {emailMetrics.totalConverted} conversions</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
-      
       <Footer />
     </div>
   );

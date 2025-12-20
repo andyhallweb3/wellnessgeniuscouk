@@ -425,9 +425,19 @@ export type Database = {
       }
       product_downloads: {
         Row: {
+          ab_subject_line: string | null
+          ab_variant: string | null
+          conversion_product: string | null
+          conversion_value: number | null
+          converted: boolean | null
+          converted_at: string | null
           created_at: string
           download_type: string
           email: string
+          email_clicked: boolean | null
+          email_clicked_at: string | null
+          email_opened: boolean | null
+          email_opened_at: string | null
           id: string
           ip_address: string | null
           name: string | null
@@ -439,9 +449,19 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
+          ab_subject_line?: string | null
+          ab_variant?: string | null
+          conversion_product?: string | null
+          conversion_value?: number | null
+          converted?: boolean | null
+          converted_at?: string | null
           created_at?: string
           download_type?: string
           email: string
+          email_clicked?: boolean | null
+          email_clicked_at?: string | null
+          email_opened?: boolean | null
+          email_opened_at?: string | null
           id?: string
           ip_address?: string | null
           name?: string | null
@@ -453,9 +473,19 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
+          ab_subject_line?: string | null
+          ab_variant?: string | null
+          conversion_product?: string | null
+          conversion_value?: number | null
+          converted?: boolean | null
+          converted_at?: string | null
           created_at?: string
           download_type?: string
           email?: string
+          email_clicked?: boolean | null
+          email_clicked_at?: string | null
+          email_opened?: boolean | null
+          email_opened_at?: string | null
           id?: string
           ip_address?: string | null
           name?: string | null
