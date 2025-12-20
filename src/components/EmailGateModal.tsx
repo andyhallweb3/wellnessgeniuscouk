@@ -58,19 +58,19 @@ const EmailGateModal = ({
     setIsSubmitting(true);
 
     try {
-      // Save to newsletter_subscribers table
+      // Save to newsletter_subscribers table (ignore if already exists)
       const { error: subError } = await supabase
         .from("newsletter_subscribers")
-        .upsert(
-          {
-            email: email.trim().toLowerCase(),
-            name: name.trim() || null,
-            source: `download-${productId}`,
-          },
-          { onConflict: "email" }
-        );
+        .insert({
+          email: email.trim().toLowerCase(),
+          name: name.trim() || null,
+          source: `download-${productId}`,
+        });
 
-      if (subError) throw subError;
+      // Ignore duplicate email error (23505 is unique_violation)
+      if (subError && !subError.message?.includes("duplicate key")) {
+        console.error("Subscriber error:", subError);
+      }
 
       // Log the download
       const { error: downloadError } = await supabase
