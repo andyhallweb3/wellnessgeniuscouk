@@ -16,7 +16,8 @@ import {
   Bot,
   Bookmark,
   BookmarkCheck,
-  RotateCcw
+  RotateCcw,
+  Settings
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -49,6 +50,7 @@ const AICoach = () => {
   const [selectedMode, setSelectedMode] = useState("general");
   const [lastSessionId, setLastSessionId] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { 
@@ -115,6 +117,24 @@ const AICoach = () => {
       toast.error("Failed to start subscription. Please try again.");
     } finally {
       setSubscribing(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setOpeningPortal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("coach-customer-portal");
+      
+      if (error) throw error;
+      
+      if (data.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error) {
+      console.error("Portal error:", error);
+      toast.error("Failed to open subscription management. Please try again.");
+    } finally {
+      setOpeningPortal(false);
     }
   };
 
@@ -449,7 +469,16 @@ const AICoach = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleManageSubscription}
+                disabled={openingPortal}
+                title="Manage subscription"
+              >
+                {openingPortal ? <Loader2 size={14} className="animate-spin" /> : <Settings size={14} />}
+              </Button>
               {messages.length > 0 && (
                 <Button variant="outline" size="sm" onClick={handleNewConversation}>
                   <RotateCcw size={14} />

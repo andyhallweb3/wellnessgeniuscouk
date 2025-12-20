@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.check-coach-subscription]
 verify_jwt = false
+
+[functions.coach-customer-portal]
+verify_jwt = false
