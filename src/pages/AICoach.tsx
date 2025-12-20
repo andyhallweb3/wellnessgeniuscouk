@@ -17,7 +17,8 @@ import {
   Bookmark,
   BookmarkCheck,
   RotateCcw,
-  Settings
+  Settings,
+  BookOpen
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -27,6 +28,7 @@ import { toast } from "sonner";
 import CoachOnboarding from "@/components/coach/CoachOnboarding";
 import ModeSelector, { COACH_MODES } from "@/components/coach/ModeSelector";
 import CreditDisplay from "@/components/coach/CreditDisplay";
+import CoachPromptLibrary from "@/components/coach/CoachPromptLibrary";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 
 interface Message {
@@ -51,6 +53,7 @@ const AICoach = () => {
   const [lastSessionId, setLastSessionId] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
+  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { 
@@ -140,9 +143,16 @@ const AICoach = () => {
 
   const handleOnboardingComplete = async (profileData: {
     business_type: string;
+    business_name: string;
+    business_size_band: string;
+    team_size: string;
     role: string;
     primary_goal: string;
     frustration: string;
+    current_tech: string;
+    ai_experience: string;
+    biggest_win: string;
+    decision_style: string;
   }) => {
     const success = await saveProfile(profileData);
     if (success) {
@@ -204,9 +214,16 @@ const AICoach = () => {
         mode,
         userContext: profile ? {
           business_type: profile.business_type,
+          business_name: profile.business_name,
+          business_size_band: profile.business_size_band,
+          team_size: profile.team_size,
           role: profile.role,
           primary_goal: profile.primary_goal,
           frustration: profile.frustration,
+          current_tech: profile.current_tech,
+          ai_experience: profile.ai_experience,
+          biggest_win: profile.biggest_win,
+          decision_style: profile.decision_style,
         } : undefined,
       }),
     });
@@ -567,6 +584,16 @@ const AICoach = () => {
                       </button>
                     ))}
                   </div>
+                  <div className="flex items-center justify-center gap-4 mt-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowPromptLibrary(true)}
+                    >
+                      <BookOpen size={14} />
+                      Browse Prompt Library
+                    </Button>
+                  </div>
                   <p className="text-xs text-muted-foreground mt-4">
                     Tip: Be specific about your business context for better responses.
                   </p>
@@ -661,6 +688,15 @@ const AICoach = () => {
               </div>
             )}
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-14 w-14 shrink-0"
+                onClick={() => setShowPromptLibrary(true)}
+                title="Prompt Library"
+              >
+                <BookOpen size={18} />
+              </Button>
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -691,6 +727,17 @@ const AICoach = () => {
           </div>
         </div>
       </main>
+
+      {/* Prompt Library Modal */}
+      {showPromptLibrary && (
+        <CoachPromptLibrary
+          onSelectPrompt={(prompt) => {
+            setInput(prompt);
+            setShowPromptLibrary(false);
+          }}
+          onClose={() => setShowPromptLibrary(false)}
+        />
+      )}
     </div>
   );
 };

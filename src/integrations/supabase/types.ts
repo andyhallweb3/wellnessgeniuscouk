@@ -268,38 +268,56 @@ export type Database = {
       }
       coach_profiles: {
         Row: {
+          ai_experience: string | null
+          biggest_win: string | null
+          business_name: string | null
           business_size_band: string | null
           business_type: string | null
           created_at: string
+          current_tech: string | null
+          decision_style: string | null
           frustration: string | null
           id: string
           onboarding_completed: boolean | null
           primary_goal: string | null
           role: string | null
+          team_size: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          ai_experience?: string | null
+          biggest_win?: string | null
+          business_name?: string | null
           business_size_band?: string | null
           business_type?: string | null
           created_at?: string
+          current_tech?: string | null
+          decision_style?: string | null
           frustration?: string | null
           id?: string
           onboarding_completed?: boolean | null
           primary_goal?: string | null
           role?: string | null
+          team_size?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          ai_experience?: string | null
+          biggest_win?: string | null
+          business_name?: string | null
           business_size_band?: string | null
           business_type?: string | null
           created_at?: string
+          current_tech?: string | null
+          decision_style?: string | null
           frustration?: string | null
           id?: string
           onboarding_completed?: boolean | null
           primary_goal?: string | null
           role?: string | null
+          team_size?: string | null
           updated_at?: string
           user_id?: string
         }

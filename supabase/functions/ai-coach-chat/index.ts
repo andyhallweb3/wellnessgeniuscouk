@@ -250,12 +250,19 @@ serve(async (req) => {
     let contextString = "";
     if (userContext) {
       const parts = [];
-      if (userContext.business_type) parts.push(`Business: ${userContext.business_type}`);
+      if (userContext.business_name) parts.push(`Business Name: ${userContext.business_name}`);
+      if (userContext.business_type) parts.push(`Business Type: ${userContext.business_type}`);
+      if (userContext.business_size_band) parts.push(`Revenue Band: ${userContext.business_size_band}`);
+      if (userContext.team_size) parts.push(`Team Size: ${userContext.team_size}`);
       if (userContext.role) parts.push(`Role: ${userContext.role}`);
       if (userContext.primary_goal) parts.push(`Primary Goal: ${userContext.primary_goal}`);
       if (userContext.frustration) parts.push(`Current Frustration: ${userContext.frustration}`);
+      if (userContext.ai_experience) parts.push(`AI Experience: ${userContext.ai_experience}`);
+      if (userContext.current_tech) parts.push(`Current Tech: ${userContext.current_tech}`);
+      if (userContext.decision_style) parts.push(`Decision Style: ${userContext.decision_style}`);
+      if (userContext.biggest_win) parts.push(`Recent Win: ${userContext.biggest_win}`);
       if (parts.length > 0) {
-        contextString = `\n\nUSER CONTEXT:\n${parts.join("\n")}`;
+        contextString = `\n\nUSER CONTEXT (use this to personalise your guidance):\n${parts.join("\n")}`;
       }
     }
 
