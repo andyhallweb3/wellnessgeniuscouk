@@ -9,18 +9,24 @@ import {
   Lock, 
   Sparkles, 
   ArrowLeft,
-  MessageCircle,
   Calendar,
   Mail,
   CheckCircle,
   User,
-  Bot
+  Bot,
+  Bookmark,
+  BookmarkCheck,
+  RotateCcw
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import CoachOnboarding from "@/components/coach/CoachOnboarding";
+import ModeSelector, { COACH_MODES } from "@/components/coach/ModeSelector";
+import CreditDisplay from "@/components/coach/CreditDisplay";
+import { useCoachCredits } from "@/hooks/useCoachCredits";
 
 interface Message {
   role: "user" | "assistant";
@@ -40,7 +46,20 @@ const AICoach = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [selectedMode, setSelectedMode] = useState("general");
+  const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { 
+    credits, 
+    profile, 
+    loading: creditsLoading, 
+    deductCredits, 
+    saveProfile, 
+    saveSession,
+    toggleSaveSession 
+  } = useCoachCredits();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -99,7 +118,23 @@ const AICoach = () => {
     }
   };
 
-  const streamChat = useCallback(async (userMessages: Message[]) => {
+  const handleOnboardingComplete = async (profileData: {
+    business_type: string;
+    role: string;
+    primary_goal: string;
+    frustration: string;
+  }) => {
+    const success = await saveProfile(profileData);
+    if (success) {
+      toast.success("Profile saved. Let's get started.");
+    }
+  };
+
+  const getModeConfig = (modeId: string) => {
+    return COACH_MODES.find((m) => m.id === modeId) || COACH_MODES[5]; // Default to general
+  };
+
+  const streamChat = useCallback(async (userMessages: Message[], mode: string) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach-chat`;
 
     const resp = await fetch(CHAT_URL, {
@@ -108,7 +143,16 @@ const AICoach = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: userMessages }),
+      body: JSON.stringify({ 
+        messages: userMessages,
+        mode,
+        userContext: profile ? {
+          business_type: profile.business_type,
+          role: profile.role,
+          primary_goal: profile.primary_goal,
+          frustration: profile.frustration,
+        } : undefined,
+      }),
     });
 
     if (!resp.ok) {
@@ -162,23 +206,51 @@ const AICoach = () => {
         }
       }
     }
-  }, []);
+
+    return assistantContent;
+  }, [profile]);
 
   const handleSend = async () => {
     if (!input.trim() || isStreaming) return;
+
+    const modeConfig = getModeConfig(selectedMode);
+    
+    // Check credits
+    if (credits.balance < modeConfig.cost) {
+      toast.error("Not enough credits for this mode. Try a simpler question.");
+      return;
+    }
 
     const userMessage: Message = { role: "user", content: input.trim() };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
     setIsStreaming(true);
+    setLastSessionId(null);
+    setIsSaved(false);
 
     try {
-      await streamChat(newMessages);
+      // Deduct credits first
+      const deducted = await deductCredits(modeConfig.cost, selectedMode);
+      if (!deducted) {
+        throw new Error("Failed to deduct credits");
+      }
+
+      const response = await streamChat(newMessages, selectedMode);
+      
+      // Save session
+      const session = await saveSession(
+        selectedMode,
+        userMessage.content,
+        response,
+        modeConfig.cost
+      );
+      if (session) {
+        setLastSessionId(session.id);
+      }
     } catch (error) {
       console.error("Chat error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to get response");
-      // Remove the failed assistant message if any
       setMessages(prev => {
         if (prev[prev.length - 1]?.role === "assistant" && prev[prev.length - 1]?.content === "") {
           return prev.slice(0, -1);
@@ -197,7 +269,23 @@ const AICoach = () => {
     }
   };
 
-  if (authLoading || checkingSubscription) {
+  const handleSaveInsight = async () => {
+    if (!lastSessionId) return;
+    const success = await toggleSaveSession(lastSessionId, true);
+    if (success) {
+      setIsSaved(true);
+      toast.success("Insight saved to your hub");
+    }
+  };
+
+  const handleNewConversation = () => {
+    setMessages([]);
+    setLastSessionId(null);
+    setIsSaved(false);
+    setSelectedMode("general");
+  };
+
+  if (authLoading || checkingSubscription || creditsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -229,7 +317,7 @@ const AICoach = () => {
               </div>
               <h1 className="text-3xl md:text-4xl font-heading mb-4">Wellness Genius AI Coach</h1>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Your expert AI coach for building wellness apps, strategic guidance, and operational excellence.
+                Decision intelligence for wellness leaders. Not a chatbot.
               </p>
             </div>
 
@@ -245,15 +333,15 @@ const AICoach = () => {
                   <li className="flex items-start gap-3">
                     <CheckCircle size={20} className="text-accent shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium">Unlimited AI Coaching</p>
-                      <p className="text-sm text-muted-foreground">Strategic and operational guidance from the Wellness Genius</p>
+                      <p className="font-medium">40 Credits/Month</p>
+                      <p className="text-sm text-muted-foreground">5 strategic modes for deep thinking</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle size={20} className="text-accent shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium">Lovable Building Support</p>
-                      <p className="text-sm text-muted-foreground">Expert help building apps and tools with Lovable</p>
+                      <p className="font-medium">Decision-Grade Intelligence</p>
+                      <p className="text-sm text-muted-foreground">Challenges assumptions, protects margin</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
@@ -263,7 +351,7 @@ const AICoach = () => {
                         <Mail size={16} />
                         Premium Newsletter
                       </p>
-                      <p className="text-sm text-muted-foreground">Exclusive insights and strategies delivered monthly</p>
+                      <p className="text-sm text-muted-foreground">Exclusive insights delivered monthly</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
@@ -273,7 +361,7 @@ const AICoach = () => {
                         <Calendar size={16} />
                         1 Call/Month with Andy
                       </p>
-                      <p className="text-sm text-muted-foreground">30-minute strategy call with our founder</p>
+                      <p className="text-sm text-muted-foreground">30-minute strategy call</p>
                     </div>
                   </li>
                 </ul>
@@ -306,7 +394,33 @@ const AICoach = () => {
     );
   }
 
-  // Chat Interface for Subscribers
+  // Onboarding for new users
+  if (!profile?.onboarding_completed) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Helmet>
+          <title>AI Coach Setup | Wellness Genius</title>
+        </Helmet>
+        
+        <Header />
+        
+        <main className="pt-24 pb-16">
+          <div className="container-narrow section-padding">
+            <Button variant="ghost" size="sm" className="mb-8" onClick={() => navigate("/hub")}>
+              <ArrowLeft size={16} />
+              Back to Hub
+            </Button>
+
+            <CoachOnboarding onComplete={handleOnboardingComplete} />
+          </div>
+        </main>
+        
+        <Footer />
+      </div>
+    );
+  }
+
+  // Main Chat Interface
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
@@ -319,57 +433,63 @@ const AICoach = () => {
       <main className="pt-24 pb-4 flex-1 flex flex-col">
         <div className="container-wide section-padding flex-1 flex flex-col max-h-[calc(100vh-180px)]">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6 shrink-0">
+          <div className="flex items-center justify-between mb-4 shrink-0">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={() => navigate("/hub")}>
                 <ArrowLeft size={16} />
-                Back to Hub
+                Back
               </Button>
               <div className="h-6 w-px bg-border" />
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-full bg-accent/10">
-                  <Sparkles size={20} className="text-accent" />
+                  <Sparkles size={18} className="text-accent" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-heading">Wellness Genius AI Coach</h1>
-                  {subscriptionEnd && (
-                    <p className="text-xs text-muted-foreground">
-                      Renews {new Date(subscriptionEnd).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                    </p>
-                  )}
+                  <h1 className="text-base font-heading">Wellness Genius AI Coach</h1>
                 </div>
               </div>
             </div>
+            <div className="flex items-center gap-3">
+              {messages.length > 0 && (
+                <Button variant="outline" size="sm" onClick={handleNewConversation}>
+                  <RotateCcw size={14} />
+                  New
+                </Button>
+              )}
+              <CreditDisplay 
+                balance={credits.balance} 
+                monthlyAllowance={credits.monthlyAllowance} 
+                compact 
+              />
+            </div>
           </div>
+
+          {/* Mode Selector (when no messages) */}
+          {messages.length === 0 && (
+            <div className="mb-6 shrink-0">
+              <h2 className="text-sm font-medium mb-3 text-muted-foreground">Select a mode</h2>
+              <ModeSelector 
+                selectedMode={selectedMode} 
+                onSelectMode={setSelectedMode}
+                credits={credits.balance}
+              />
+            </div>
+          )}
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto rounded-xl border border-border bg-card p-4 mb-4">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8">
                 <div className="p-4 rounded-full bg-accent/10 mb-4">
-                  <MessageCircle size={32} className="text-accent" />
+                  <span className="text-3xl">{getModeConfig(selectedMode).icon}</span>
                 </div>
-                <h2 className="text-xl font-heading mb-2">Welcome to Your AI Coach</h2>
-                <p className="text-muted-foreground max-w-md mb-6">
-                  I'm here to help you build wellness apps with Lovable, answer strategic questions, and guide your operational decisions.
+                <h2 className="text-lg font-heading mb-2">{getModeConfig(selectedMode).name}</h2>
+                <p className="text-muted-foreground text-sm max-w-md mb-4">
+                  {getModeConfig(selectedMode).description}
                 </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {[
-                    "Help me plan an AI feature for my gym app",
-                    "What metrics should I track for member retention?",
-                    "How do I structure a Lovable prompt for a booking system?",
-                  ].map((suggestion) => (
-                    <Button
-                      key={suggestion}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setInput(suggestion)}
-                      className="text-xs"
-                    >
-                      {suggestion}
-                    </Button>
-                  ))}
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Example: "{getModeConfig(selectedMode).example}"
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -390,7 +510,9 @@ const AICoach = () => {
                           : "bg-secondary"
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none dark:prose-invert">
+                        {message.content}
+                      </div>
                     </div>
                     {message.role === "user" && (
                       <div className="p-2 rounded-full bg-secondary h-fit shrink-0">
@@ -414,29 +536,77 @@ const AICoach = () => {
             )}
           </div>
 
+          {/* Save Button (after response) */}
+          {lastSessionId && messages.length > 0 && !isStreaming && (
+            <div className="shrink-0 flex justify-end mb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveInsight}
+                disabled={isSaved}
+              >
+                {isSaved ? (
+                  <>
+                    <BookmarkCheck size={14} />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <Bookmark size={14} />
+                    Save Insight
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
           {/* Input */}
-          <div className="shrink-0 flex gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about strategy, Lovable building, or operational questions..."
-              className="min-h-[56px] max-h-[120px] resize-none"
-              disabled={isStreaming}
-            />
-            <Button
-              variant="accent"
-              size="icon"
-              className="h-14 w-14 shrink-0"
-              onClick={handleSend}
-              disabled={!input.trim() || isStreaming}
-            >
-              {isStreaming ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <Send size={20} />
-              )}
-            </Button>
+          <div className="shrink-0">
+            {messages.length > 0 && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs text-muted-foreground">Mode:</span>
+                <select
+                  value={selectedMode}
+                  onChange={(e) => setSelectedMode(e.target.value)}
+                  className="text-xs bg-secondary border border-border rounded px-2 py-1"
+                  disabled={isStreaming}
+                >
+                  {COACH_MODES.map((mode) => (
+                    <option key={mode.id} value={mode.id} disabled={credits.balance < mode.cost}>
+                      {mode.icon} {mode.name} ({mode.cost} credits)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={`Ask about strategy, decisions, or commercial impact...`}
+                className="min-h-[56px] max-h-[120px] resize-none"
+                disabled={isStreaming}
+              />
+              <Button
+                variant="accent"
+                size="icon"
+                className="h-14 w-14 shrink-0"
+                onClick={handleSend}
+                disabled={!input.trim() || isStreaming || credits.balance < getModeConfig(selectedMode).cost}
+              >
+                {isStreaming ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <Send size={20} />
+                )}
+              </Button>
+            </div>
+            {credits.balance < getModeConfig(selectedMode).cost && (
+              <p className="text-xs text-destructive mt-2">
+                Not enough credits. Select a cheaper mode or wait for monthly reset.
+              </p>
+            )}
           </div>
         </div>
       </main>

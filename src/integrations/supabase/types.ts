@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_sessions: {
+        Row: {
+          created_at: string
+          credit_cost: number
+          id: string
+          mode: string
+          output_text: string | null
+          prompt_input: string
+          saved: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credit_cost?: number
+          id?: string
+          mode: string
+          output_text?: string | null
+          prompt_input: string
+          saved?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credit_cost?: number
+          id?: string
+          mode?: string
+          output_text?: string | null
+          prompt_input?: string
+          saved?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_readiness_completions: {
         Row: {
           company: string | null
@@ -203,6 +236,99 @@ export type Database = {
           slug?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      coach_credits: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          last_reset_at: string
+          monthly_allowance: number
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          monthly_allowance?: number
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          monthly_allowance?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      coach_profiles: {
+        Row: {
+          business_size_band: string | null
+          business_type: string | null
+          created_at: string
+          frustration: string | null
+          id: string
+          onboarding_completed: boolean | null
+          primary_goal: string | null
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_size_band?: string | null
+          business_type?: string | null
+          created_at?: string
+          frustration?: string | null
+          id?: string
+          onboarding_completed?: boolean | null
+          primary_goal?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_size_band?: string | null
+          business_type?: string | null
+          created_at?: string
+          frustration?: string | null
+          id?: string
+          onboarding_completed?: boolean | null
+          primary_goal?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          change_amount: number
+          created_at: string
+          id: string
+          mode: string | null
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          change_amount: number
+          created_at?: string
+          id?: string
+          mode?: string | null
+          reason: string
+          user_id: string
+        }
+        Update: {
+          change_amount?: number
+          created_at?: string
+          id?: string
+          mode?: string | null
+          reason?: string
+          user_id?: string
         }
         Relationships: []
       }
