@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.stripe-product-webhook]
 verify_jwt = false
+
+[functions.send-download-upsell]
+verify_jwt = false
