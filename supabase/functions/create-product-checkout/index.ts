@@ -70,7 +70,7 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/products?payment=success`,
+      success_url: `${origin}/products?payment=success&product=${productId}`,
       cancel_url: `${origin}/products?payment=cancelled`,
       metadata: {
         productId,
