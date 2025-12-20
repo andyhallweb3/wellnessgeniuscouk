@@ -25,76 +25,261 @@ const addHeader = (doc: jsPDF, pageNum: number, totalPages: number) => {
   doc.text(`${pageNum} / ${totalPages}`, 190, 290, { align: "right" });
 };
 
-// AI Myths Deck - 10 Slides
+// Helper to add CTA page
+const addCTAPage = (doc: jsPDF, pageNum: number, totalPages: number) => {
+  doc.addPage();
+  addHeader(doc, pageNum, totalPages);
+  
+  doc.setFontSize(24);
+  doc.setTextColor(...BRAND.white);
+  doc.text("If you want to quantify the gap,", 105, 100, { align: "center" });
+  doc.text("use the AI Readiness Score.", 105, 115, { align: "center" });
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Practical clarity for wellness leaders.", 105, 150, { align: "center" });
+  
+  doc.setFontSize(16);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("wellnessgenius.io/ai-readiness", 105, 180, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Wellness Genius", 105, 220, { align: "center" });
+};
+
+// AI Readiness Quick Check (Lite) - FREE
+export const generateQuickCheck = (): jsPDF => {
+  const doc = new jsPDF();
+  const totalPages = 6;
+  
+  // Page 1 - Cover
+  addHeader(doc, 1, totalPages);
+  doc.setFontSize(32);
+  doc.setTextColor(...BRAND.white);
+  doc.text("AI Readiness", 105, 90, { align: "center" });
+  doc.text("Quick Check", 105, 110, { align: "center" });
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("A reality check for wellness businesses", 105, 140, { align: "center" });
+  doc.text("considering AI, engagement, or automation.", 105, 155, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Wellness Genius", 105, 200, { align: "center" });
+  
+  // Page 2 - Introduction
+  doc.addPage();
+  addHeader(doc, 2, totalPages);
+  
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Introduction", 20, 35);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  const intro = [
+    "Most wellness organisations believe they are \"exploring AI\".",
+    "Very few can explain what problem they are solving,",
+    "what data they trust, or what outcome they expect.",
+    "",
+    "This quick check is not a score.",
+    "It is a signal.",
+    "",
+    "If multiple questions below feel uncomfortable,",
+    "that discomfort is useful."
+  ];
+  let yPos = 55;
+  intro.forEach(line => {
+    doc.text(line, 20, yPos);
+    yPos += 10;
+  });
+  
+  // Page 3 - Questions (Data & Engagement)
+  doc.addPage();
+  addHeader(doc, 3, totalPages);
+  
+  doc.setFontSize(16);
+  doc.setTextColor(...BRAND.white);
+  doc.text("The 10 Questions", 20, 35);
+  
+  const sections = [
+    {
+      title: "DATA",
+      questions: [
+        "1. Can you explain where your customer data lives without opening five tools?",
+        "2. Can you clearly define your three most important engagement events?"
+      ]
+    },
+    {
+      title: "ENGAGEMENT",
+      questions: [
+        "3. Do you know which behaviours predict retention?",
+        "4. Can you confidently say which engagement initiatives worked last quarter?"
+      ]
+    },
+    {
+      title: "MONETISATION",
+      questions: [
+        "5. Can you link engagement improvements to revenue or retention?",
+        "6. Could you explain the commercial value of your app or platform to a CFO?"
+      ]
+    }
+  ];
+  
+  yPos = 50;
+  sections.forEach(section => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos - 5, 180, 10, 2, 2, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.teal);
+    doc.text(section.title, 20, yPos + 2);
+    yPos += 15;
+    
+    doc.setFontSize(11);
+    doc.setTextColor(...BRAND.white);
+    section.questions.forEach(q => {
+      const lines = doc.splitTextToSize(q, 170);
+      doc.text(lines, 20, yPos);
+      yPos += lines.length * 7 + 8;
+    });
+    yPos += 5;
+  });
+  
+  // Page 4 - Questions (AI & Trust)
+  doc.addPage();
+  addHeader(doc, 4, totalPages);
+  
+  const sections2 = [
+    {
+      title: "AI",
+      questions: [
+        "7. Are you using AI to support decisions, or just to generate content?",
+        "8. Could you remove your AI tools tomorrow without affecting performance?"
+      ]
+    },
+    {
+      title: "TRUST",
+      questions: [
+        "9. Would you feel comfortable explaining your data usage to a regulator or journalist?",
+        "10. Do customers understand what data you collect and why?"
+      ]
+    }
+  ];
+  
+  yPos = 35;
+  sections2.forEach(section => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos - 5, 180, 10, 2, 2, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.teal);
+    doc.text(section.title, 20, yPos + 2);
+    yPos += 15;
+    
+    doc.setFontSize(11);
+    doc.setTextColor(...BRAND.white);
+    section.questions.forEach(q => {
+      const lines = doc.splitTextToSize(q, 170);
+      doc.text(lines, 20, yPos);
+      yPos += lines.length * 7 + 8;
+    });
+    yPos += 10;
+  });
+  
+  // Interpreting section
+  yPos += 10;
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Interpreting Your Answers", 20, yPos);
+  yPos += 15;
+  
+  const interpretations = [
+    { label: "Mostly yes", text: "You may be ready to scale intelligently" },
+    { label: "Mixed", text: "You are likely creating value without capturing it" },
+    { label: "Mostly no", text: "AI would currently add risk, not leverage" }
+  ];
+  
+  interpretations.forEach(item => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos - 5, 180, 18, 2, 2, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.teal);
+    doc.text(item.label + ":", 20, yPos + 3);
+    doc.setTextColor(...BRAND.white);
+    doc.text(item.text, 60, yPos + 3);
+    yPos += 25;
+  });
+  
+  // Page 5 - CTA
+  addCTAPage(doc, 5, totalPages);
+  
+  return doc;
+};
+
+// The Wellness AI Myths Deck - 10 Slides
 export const generateAIMythsDeck = (): jsPDF => {
   const doc = new jsPDF();
   
   const slides = [
     {
-      title: "The Wellness AI Myths Deck",
-      subtitle: "10 myths holding back your AI strategy",
       isTitle: true,
+      title: "Wellness AI:",
+      subtitle: "The Myths Holding Businesses Back"
     },
     {
       myth: "Myth #1",
-      title: '"We need AI"',
-      reality: "You need better outcomes. AI is a tool, not a goal.",
-      insight: "Start with the problem you are solving, not the technology you want to use. Most wellness challenges can be addressed with simpler solutions.",
+      title: '"We need AI to stay competitive."',
+      reality: "You need clarity to stay competitive.",
+      insight: "AI without foundations increases cost and confusion."
     },
     {
       myth: "Myth #2",
-      title: '"Engagement = Value"',
-      reality: "High engagement without insight is just noise.",
-      insight: "Tracking app opens and session length tells you nothing about health outcomes. Focus on meaningful actions that correlate with results.",
+      title: '"More engagement means more value."',
+      reality: "Engagement without attribution is just activity.",
+      insight: "Value only exists when behaviour links to outcomes."
     },
     {
       myth: "Myth #3",
-      title: '"Our data is our moat"',
-      reality: "Most wellness data cannot be monetised or even used.",
-      insight: "Without proper consent, data governance, and clean pipelines, your data is a liability, not an asset. Quality beats quantity.",
+      title: '"Our data will be useful once we scale."',
+      reality: "Bad data scales badly.",
+      insight: "If it's unclear now, it will be dangerous later."
     },
     {
       myth: "Myth #4",
-      title: '"AI will reduce our headcount"',
-      reality: "AI augments expertise. It does not replace judgement.",
-      insight: "The best AI implementations free up skilled staff for higher-value work. Plan for redeployment, not replacement.",
+      title: '"AI will tell us what to do."',
+      reality: "AI amplifies judgement.",
+      insight: "If judgement is weak, AI amplifies the problem."
     },
     {
       myth: "Myth #5",
-      title: '"We can build this ourselves"',
-      reality: "Build vs buy is rarely binary. Most should partner.",
-      insight: "In-house AI requires sustained investment in talent, infrastructure, and maintenance. Honest assessment of capabilities saves money.",
+      title: '"Governance slows innovation."',
+      reality: "Governance enables scale.",
+      insight: "Without it, innovation collapses under scrutiny."
     },
     {
-      myth: "Myth #6",
-      title: '"Personalisation sells"',
-      reality: "Generic personalisation is often worse than none.",
-      insight: "Users can spot shallow personalisation instantly. It erodes trust. Either invest in meaningful personalisation or be honest about what you offer.",
+      isQuestion: true,
+      title: "The Real Question",
+      content: 'The real question isn\'t "Should we use AI?"\n\nIt\'s "What decisions are we failing to make well today?"'
     },
     {
-      myth: "Myth #7",
-      title: '"We need more features"',
-      reality: "Feature creep kills wellness products faster than competition.",
-      insight: "Every feature is a promise to maintain, support, and improve. The best products do fewer things exceptionally well.",
+      isWhatWorks: true,
+      title: "What Actually Works",
+      items: [
+        "Clear data ownership",
+        "Defined engagement outcomes",
+        "Conservative experimentation",
+        "Commercial accountability"
+      ]
     },
     {
-      myth: "Myth #8",
-      title: '"AI is plug and play"',
-      reality: "Integration is where most AI projects fail.",
-      insight: "The AI model is 20% of the work. Data pipelines, user experience, and operational integration are the other 80%.",
+      isGap: true,
+      title: "The Gap",
+      content: "Most wellness businesses sit in the gap between:\n\n• ambition\n• and operational reality\n\nThat gap is where value leaks."
     },
     {
-      myth: "Myth #9",
-      title: '"Compliance can come later"',
-      reality: "Retrofitting governance is 10x harder than building it in.",
-      insight: "GDPR, HIPAA, and emerging AI regulations require privacy-by-design. Early investment prevents expensive rewrites.",
-    },
-    {
-      myth: "Myth #10",
-      title: '"First mover advantage"',
-      reality: "In wellness AI, fast followers often win.",
-      insight: "Let others make expensive mistakes. Focus on execution excellence and genuine differentiation rather than being first.",
-    },
+      isCTA: true
+    }
   ];
 
   slides.forEach((slide, index) => {
@@ -102,153 +287,156 @@ export const generateAIMythsDeck = (): jsPDF => {
     addHeader(doc, index + 1, slides.length);
 
     if (slide.isTitle) {
-      // Title slide
       doc.setFontSize(36);
       doc.setTextColor(...BRAND.white);
-      doc.text(slide.title, 105, 100, { align: "center" });
-      
-      doc.setFontSize(16);
+      doc.text(slide.title || "", 105, 100, { align: "center" });
+      doc.setFontSize(20);
       doc.setTextColor(...BRAND.teal);
-      doc.text(slide.subtitle || "", 105, 120, { align: "center" });
-      
-      doc.setFontSize(12);
+      doc.text(slide.subtitle || "", 105, 125, { align: "center" });
+      doc.setFontSize(10);
       doc.setTextColor(...BRAND.muted);
       doc.text("Wellness Genius", 105, 200, { align: "center" });
-      doc.text("wellnessgenius.io", 105, 210, { align: "center" });
+    } else if (slide.isCTA) {
+      doc.setFontSize(20);
+      doc.setTextColor(...BRAND.white);
+      doc.text("If you want to quantify that gap,", 105, 110, { align: "center" });
+      doc.text("use the AI Readiness Score.", 105, 130, { align: "center" });
+      doc.setFontSize(14);
+      doc.setTextColor(...BRAND.teal);
+      doc.text("wellnessgenius.io/ai-readiness", 105, 170, { align: "center" });
+    } else if (slide.isQuestion || slide.isGap) {
+      doc.setFontSize(20);
+      doc.setTextColor(...BRAND.teal);
+      doc.text(slide.title || "", 105, 60, { align: "center" });
+      doc.setFontSize(16);
+      doc.setTextColor(...BRAND.white);
+      const lines = doc.splitTextToSize(slide.content || "", 160);
+      doc.text(lines, 105, 100, { align: "center" });
+    } else if (slide.isWhatWorks) {
+      doc.setFontSize(20);
+      doc.setTextColor(...BRAND.teal);
+      doc.text(slide.title || "", 105, 50, { align: "center" });
+      let yPos = 80;
+      slide.items?.forEach(item => {
+        doc.setFillColor(...BRAND.cardBg);
+        doc.roundedRect(40, yPos - 5, 130, 20, 3, 3, "F");
+        doc.setFontSize(14);
+        doc.setTextColor(...BRAND.white);
+        doc.text(item, 105, yPos + 7, { align: "center" });
+        yPos += 30;
+      });
     } else {
-      // Content slide
+      // Standard myth slide
       doc.setFontSize(12);
       doc.setTextColor(...BRAND.teal);
       doc.text(slide.myth || "", 20, 40);
       
-      doc.setFontSize(28);
+      doc.setFontSize(24);
       doc.setTextColor(...BRAND.white);
-      doc.text(slide.title, 20, 60);
+      const titleLines = doc.splitTextToSize(slide.title || "", 170);
+      doc.text(titleLines, 20, 60);
       
       // Reality box
       doc.setFillColor(...BRAND.cardBg);
-      doc.roundedRect(20, 80, 170, 40, 3, 3, "F");
+      doc.roundedRect(20, 90, 170, 50, 3, 3, "F");
       
       doc.setFontSize(10);
       doc.setTextColor(...BRAND.teal);
-      doc.text("REALITY", 30, 95);
+      doc.text("REALITY", 30, 105);
       
-      doc.setFontSize(14);
+      doc.setFontSize(16);
       doc.setTextColor(...BRAND.white);
-      const realityLines = doc.splitTextToSize(slide.reality || "", 150);
-      doc.text(realityLines, 30, 108);
+      doc.text(slide.reality || "", 30, 122);
       
-      // Insight section
+      // Insight
       doc.setFontSize(10);
       doc.setTextColor(...BRAND.teal);
-      doc.text("INSIGHT", 20, 145);
+      doc.text("INSIGHT", 20, 165);
       
       doc.setFontSize(12);
       doc.setTextColor(...BRAND.muted);
       const insightLines = doc.splitTextToSize(slide.insight || "", 170);
-      doc.text(insightLines, 20, 158);
+      doc.text(insightLines, 20, 180);
     }
   });
-
-  // Final CTA slide
-  doc.addPage();
-  addHeader(doc, slides.length + 1, slides.length + 1);
-  
-  doc.setFontSize(24);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Ready to cut through the noise?", 105, 100, { align: "center" });
-  
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Take the free AI Readiness Assessment", 105, 130, { align: "center" });
-  
-  doc.setFontSize(16);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("wellnessgenius.io/ai-readiness", 105, 150, { align: "center" });
 
   return doc;
 };
 
-// 90-Day AI Reality Checklist
+// 90-Day Wellness AI Reality Checklist - 1 page
 export const generate90DayChecklist = (): jsPDF => {
   const doc = new jsPDF();
   
   addHeader(doc, 1, 1);
   
   // Title
-  doc.setFontSize(24);
+  doc.setFontSize(22);
   doc.setTextColor(...BRAND.white);
-  doc.text("90-Day AI Reality Checklist", 105, 30, { align: "center" });
+  doc.text("90-Day AI Reality Checklist", 105, 28, { align: "center" });
   
   doc.setFontSize(10);
   doc.setTextColor(...BRAND.teal);
-  doc.text("Your practical roadmap to AI readiness in wellness", 105, 40, { align: "center" });
+  doc.text("A fast self-diagnosis for wellness leaders", 105, 38, { align: "center" });
 
   const sections = [
     {
-      title: "MONTH 1: DATA FOUNDATIONS",
+      title: "DATA FOUNDATIONS",
       items: [
-        "Audit existing data sources and quality",
-        "Map data consent and governance gaps",
-        "Identify one high-value data set to clean",
-        "Document current manual processes",
-        "Benchmark current metrics baseline",
-      ],
+        "We know where our core data lives",
+        "We trust our engagement metrics",
+        "We can define key events consistently"
+      ]
     },
     {
-      title: "MONTH 2: ENGAGEMENT & JOURNEYS",
+      title: "ENGAGEMENT",
       items: [
-        "Map user journeys end-to-end",
-        "Identify drop-off points and friction",
-        "Define 3 key engagement metrics that matter",
-        "Audit current personalisation (if any)",
-        "Interview 5 users about their experience",
-      ],
+        "Engagement has a purpose, not just activity",
+        "We know which behaviours matter most",
+        "We actively test journeys"
+      ]
     },
     {
-      title: "MONTH 3: MONETISATION CLARITY",
+      title: "MONETISATION",
       items: [
-        "Calculate true cost of current operations",
-        "Model potential efficiency gains",
-        "Identify one pilot AI use case",
-        "Build business case with conservative estimates",
-        "Define success criteria for pilot",
-      ],
+        "Engagement links to retention or revenue",
+        "We understand LTV and churn drivers",
+        "We can explain value to finance"
+      ]
     },
     {
-      title: "ONGOING: TRUST & COMPLIANCE",
+      title: "AI & AUTOMATION",
       items: [
-        "Review privacy policy for AI implications",
-        "Plan for transparency in AI-driven decisions",
-        "Establish human oversight protocols",
-        "Train team on responsible AI principles",
-        "Monitor regulatory developments",
-      ],
+        "AI supports decisions, not novelty",
+        "Automation reduces friction or cost"
+      ]
     },
+    {
+      title: "TRUST",
+      items: [
+        "Consent is clear and documented",
+        "We are comfortable being audited"
+      ]
+    }
   ];
 
-  let yPos = 55;
+  let yPos = 52;
   const checkboxSize = 4;
   
   sections.forEach((section) => {
-    // Section header
     doc.setFillColor(...BRAND.cardBg);
     doc.roundedRect(15, yPos - 5, 180, 10, 2, 2, "F");
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(...BRAND.teal);
     doc.text(section.title, 20, yPos + 2);
     
     yPos += 12;
     
-    // Checklist items
     section.items.forEach((item) => {
-      // Checkbox
       doc.setDrawColor(...BRAND.teal);
       doc.setLineWidth(0.5);
       doc.rect(20, yPos - 3, checkboxSize, checkboxSize);
       
-      // Text
       doc.setFontSize(9);
       doc.setTextColor(...BRAND.white);
       doc.text(item, 28, yPos);
@@ -256,8 +444,18 @@ export const generate90DayChecklist = (): jsPDF => {
       yPos += 8;
     });
     
-    yPos += 6;
+    yPos += 4;
   });
+
+  // Warning box
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, yPos, 180, 22, 3, 3, "F");
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("If you tick fewer than 70%,", 105, yPos + 9, { align: "center" });
+  doc.setTextColor(...BRAND.white);
+  doc.text("stop building AI. Fix foundations first.", 105, yPos + 18, { align: "center" });
 
   // Bottom CTA
   doc.setFillColor(...BRAND.cardBg);
@@ -265,93 +463,74 @@ export const generate90DayChecklist = (): jsPDF => {
   
   doc.setFontSize(10);
   doc.setTextColor(...BRAND.white);
-  doc.text("Want a personalised action plan?", 105, 265, { align: "center" });
+  doc.text("Want a proper diagnosis, not a gut feel?", 105, 265, { align: "center" });
   
   doc.setFontSize(11);
   doc.setTextColor(...BRAND.teal);
-  doc.text("Get your AI Readiness Score at wellnessgenius.io/ai-readiness", 105, 275, { align: "center" });
+  doc.text("Take the AI Readiness Score at wellnessgenius.io/ai-readiness", 105, 275, { align: "center" });
 
   return doc;
 };
 
-// Wellness AI Builder Prompt Pack
+// Wellness AI Builder – Prompt Pack
 export const generatePromptPack = (): jsPDF => {
   const doc = new jsPDF();
   
   const pages = [
     {
-      title: "Wellness AI Builder",
-      subtitle: "Prompt Pack",
       isTitle: true,
+      title: "Wellness AI Builder",
+      subtitle: "Prompt Pack"
     },
     {
-      section: "STRATEGIC PROMPTS",
-      prompts: [
-        {
-          name: "Market Position Analysis",
-          prompt: "Analyse my wellness [product/service] targeting [audience]. What AI capabilities would create genuine differentiation vs competitors offering [list 3 competitors]? Focus on defensible advantages, not features.",
-        },
-        {
-          name: "Build vs Buy Decision",
-          prompt: "I'm considering [AI capability] for [use case]. Our team has [X developers], budget of [£X], and need delivery in [X months]. Walk me through build vs buy trade-offs specific to our constraints.",
-        },
-        {
-          name: "ROI Modelling",
-          prompt: "Calculate potential ROI for implementing [AI feature] in our [wellness product]. Current metrics: [engagement rate], [retention], [LTV]. Be conservative and highlight assumptions.",
-        },
-      ],
+      isIntro: true,
+      content: [
+        "Most AI projects fail because they start with",
+        "technology instead of decisions.",
+        "",
+        "This prompt pack exists to force clarity",
+        "before you build anything.",
+        "",
+        "Use it slowly.",
+        "Rushing defeats the purpose."
+      ]
     },
     {
-      section: "PRODUCT PROMPTS",
-      prompts: [
-        {
-          name: "Feature Prioritisation",
-          prompt: "Our wellness app has these potential AI features: [list]. Users report these pain points: [list]. Rank features by impact vs implementation effort, considering we have [team size/budget].",
-        },
-        {
-          name: "Personalisation Strategy",
-          prompt: "Design a personalisation framework for [wellness product]. We collect [data types]. Define 3 tiers: basic (rule-based), intermediate (ML), advanced (generative). What's minimum viable?",
-        },
-        {
-          name: "User Journey Optimisation",
-          prompt: "Map how AI could improve each stage of this wellness user journey: [describe journey]. Identify where AI adds genuine value vs where simpler solutions work better.",
-        },
-      ],
+      prompt: "Prompt 1",
+      title: "One-Sentence Purpose",
+      question: "What is the single decision this AI tool should make easier, faster, or safer?",
+      warning: "If you cannot answer this clearly, stop."
     },
     {
-      section: "DATA & COMPLIANCE PROMPTS",
-      prompts: [
-        {
-          name: "Data Audit",
-          prompt: "Audit our wellness data readiness: We have [data sources]. Users consented to [uses]. Identify gaps in: quality, consent, governance, and pipeline readiness for AI applications.",
-        },
-        {
-          name: "Privacy-First AI",
-          prompt: "Design a GDPR-compliant AI feature for [use case] in wellness. Cover: data minimisation, consent mechanisms, right to explanation, and human oversight requirements.",
-        },
-        {
-          name: "Vendor Evaluation",
-          prompt: "Evaluate [AI vendor] for [wellness use case]. Create scorecard covering: data handling, accuracy claims, integration effort, pricing model, and exit strategy.",
-        },
-      ],
+      prompt: "Prompt 2",
+      title: "User × Decision Map",
+      question: "Who uses this system, and what decision do they currently make with instinct or incomplete data?",
+      warning: "If the decision isn't real, the tool won't be either."
     },
     {
-      section: "ENGAGEMENT PROMPTS",
-      prompts: [
-        {
-          name: "Retention Analysis",
-          prompt: "Analyse what drives retention in wellness apps like ours (category: [type]). Our current 30-day retention is [X%]. What AI interventions have evidence of impact?",
-        },
-        {
-          name: "Content Strategy",
-          prompt: "Create AI-assisted content strategy for [wellness niche]. Balance: personalisation depth, content freshness, production cost, and authenticity. Define what stays human-created.",
-        },
-        {
-          name: "Behaviour Change Design",
-          prompt: "Design an AI-supported behaviour change programme for [health goal]. Use evidence-based frameworks (COM-B, TTM). Specify where AI helps vs where human support matters.",
-        },
-      ],
+      prompt: "Prompt 3",
+      title: "Data Reality Check",
+      question: "What data do we ACTUALLY have today that is clean, consented, and trusted?",
+      warning: "Exclude: planned data, hypothetical integrations. Build for reality, not roadmaps."
     },
+    {
+      prompt: "Prompt 4",
+      title: "Use-Case Filter",
+      question: "Does this AI reduce cost, increase retention, speed decisions, or reduce risk?",
+      warning: "If none apply, this is a demo."
+    },
+    {
+      prompt: "Prompt 5",
+      title: "Monetisation First",
+      question: "If this works perfectly, where does money move?",
+      warning: "If money doesn't move, value is unclear."
+    },
+    {
+      prompt: "Prompt 6",
+      title: "Governance Stress Test",
+      question: "What would a regulator, customer, or journalist criticise?",
+      warning: "Design around that criticism now."
+    }
   ];
 
   pages.forEach((page, index) => {
@@ -362,109 +541,96 @@ export const generatePromptPack = (): jsPDF => {
       doc.setFontSize(36);
       doc.setTextColor(...BRAND.white);
       doc.text(page.title || "", 105, 100, { align: "center" });
-      
       doc.setFontSize(24);
       doc.setTextColor(...BRAND.teal);
-      doc.text(page.subtitle || "", 105, 120, { align: "center" });
+      doc.text(page.subtitle || "", 105, 125, { align: "center" });
+      doc.setFontSize(10);
+      doc.setTextColor(...BRAND.muted);
+      doc.text("Force clarity before you build anything.", 105, 160, { align: "center" });
+      doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
+    } else if (page.isIntro) {
+      doc.setFontSize(16);
+      doc.setTextColor(...BRAND.white);
+      let yPos = 80;
+      page.content?.forEach(line => {
+        doc.text(line, 105, yPos, { align: "center" });
+        yPos += 14;
+      });
+    } else {
+      // Prompt page
+      doc.setFontSize(12);
+      doc.setTextColor(...BRAND.teal);
+      doc.text(page.prompt || "", 20, 40);
       
+      doc.setFontSize(24);
+      doc.setTextColor(...BRAND.white);
+      doc.text(page.title || "", 20, 60);
+      
+      // Question box
+      doc.setFillColor(...BRAND.cardBg);
+      doc.roundedRect(20, 80, 170, 60, 3, 3, "F");
+      
+      doc.setFontSize(10);
+      doc.setTextColor(...BRAND.teal);
+      doc.text("THE QUESTION", 30, 95);
+      
+      doc.setFontSize(14);
+      doc.setTextColor(...BRAND.white);
+      const questionLines = doc.splitTextToSize(page.question || "", 150);
+      doc.text(questionLines, 30, 112);
+      
+      // Warning
       doc.setFontSize(12);
       doc.setTextColor(...BRAND.muted);
-      doc.text("12 battle-tested prompts for wellness AI strategy", 105, 150, { align: "center" });
-      doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
-    } else {
-      doc.setFontSize(14);
-      doc.setTextColor(...BRAND.teal);
-      doc.text(page.section || "", 20, 30);
-      
-      let yPos = 45;
-      page.prompts?.forEach((p) => {
-        doc.setFillColor(...BRAND.cardBg);
-        doc.roundedRect(15, yPos - 5, 180, 70, 3, 3, "F");
-        
-        doc.setFontSize(12);
-        doc.setTextColor(...BRAND.white);
-        doc.text(p.name, 20, yPos + 5);
-        
-        doc.setFontSize(9);
-        doc.setTextColor(...BRAND.muted);
-        const lines = doc.splitTextToSize(p.prompt, 165);
-        doc.text(lines, 20, yPos + 18);
-        
-        yPos += 80;
-      });
+      const warningLines = doc.splitTextToSize(page.warning || "", 170);
+      doc.text(warningLines, 20, 165);
     }
   });
+
+  // CTA page
+  addCTAPage(doc, pages.length + 1, pages.length + 1);
 
   return doc;
 };
 
-// Engagement → Revenue Framework
+// Engagement → Revenue Translation Framework
 export const generateRevenueFramework = (): jsPDF => {
   const doc = new jsPDF();
   
   const pages = [
     { isTitle: true },
     {
-      title: "The Revenue Equation",
+      title: "Core Principle",
       content: [
-        "Revenue = Users × Engagement × Conversion × LTV",
+        "Engagement only matters if it changes behaviour.",
         "",
-        "Most wellness products optimise for the wrong variable.",
+        "Behaviour only matters if it changes outcomes."
+      ]
+    },
+    {
+      title: "What to Measure",
+      items: [
+        "Frequency of meaningful actions",
+        "Time-to-habit",
+        "Drop-off points",
+        "Retention cohorts"
+      ],
+      warning: "Avoid vanity metrics."
+    },
+    {
+      title: "Translating for Finance",
+      before: '"Users loved it"',
+      after: '"Users with X behaviour stayed Y% longer"',
+      note: "This is the language that travels."
+    },
+    {
+      title: "Common Failure",
+      content: [
+        "Reporting engagement without action.",
         "",
-        "More users with poor engagement = expensive churn",
-        "High engagement without conversion = vanity metrics",
-        "Conversion without LTV focus = race to bottom",
-        "",
-        "This framework helps you identify which variable",
-        "deserves your AI investment.",
-      ],
-    },
-    {
-      title: "Stage 1: Diagnostic",
-      subtitle: "Where's your revenue leaking?",
-      checklist: [
-        "Calculate true CAC (include all marketing + onboarding costs)",
-        "Map user journey with drop-off rates at each stage",
-        "Identify time-to-value for your product",
-        "Measure engagement quality, not just quantity",
-        "Calculate revenue per engaged user (not per user)",
-      ],
-    },
-    {
-      title: "Stage 2: Prioritisation Matrix",
-      matrix: true,
-    },
-    {
-      title: "Stage 3: AI Investment Zones",
-      zones: [
-        { name: "ACQUISITION", ai: "Content generation, lead scoring, channel optimisation", caution: "Don't automate bad messaging" },
-        { name: "ACTIVATION", ai: "Personalised onboarding, smart defaults, progress prediction", caution: "Keep human touchpoints for trust" },
-        { name: "RETENTION", ai: "Churn prediction, re-engagement timing, content personalisation", caution: "Avoid creepy over-personalisation" },
-        { name: "REVENUE", ai: "Upgrade propensity, pricing optimisation, upsell timing", caution: "Transparency over manipulation" },
-      ],
-    },
-    {
-      title: "Stage 4: Build Your Business Case",
-      steps: [
-        "1. Identify your weakest stage (highest drop-off)",
-        "2. Quantify the revenue impact of 10% improvement",
-        "3. Estimate AI solution cost (build vs buy)",
-        "4. Calculate payback period with conservative assumptions",
-        "5. Define success metrics before starting",
-        "6. Plan pilot scope (small, measurable, reversible)",
-      ],
-    },
-    {
-      title: "The 80/20 Rule for Wellness AI",
-      insights: [
-        "80% of AI value comes from 20% of features",
-        "80% of implementation cost is integration, not AI",
-        "80% of failures are expectation mismatches, not tech",
-        "80% of quick wins need no AI at all",
-        "",
-        "Start with the 20% that matters.",
-      ],
-    },
+        "If insight doesn't change behaviour, it's noise."
+      ]
+    }
   ];
 
   pages.forEach((page, index) => {
@@ -472,196 +638,141 @@ export const generateRevenueFramework = (): jsPDF => {
     addHeader(doc, index + 1, pages.length);
 
     if (page.isTitle) {
-      doc.setFontSize(32);
+      doc.setFontSize(28);
       doc.setTextColor(...BRAND.white);
-      doc.text("Engagement → Revenue", 105, 90, { align: "center" });
-      doc.setFontSize(24);
+      doc.text("Engagement", 105, 90, { align: "center" });
+      doc.setFontSize(36);
       doc.setTextColor(...BRAND.teal);
-      doc.text("Framework", 105, 110, { align: "center" });
-      doc.setFontSize(12);
-      doc.setTextColor(...BRAND.muted);
-      doc.text("Turn wellness engagement into sustainable revenue", 105, 140, { align: "center" });
-      doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
-    } else if (page.matrix) {
-      doc.setFontSize(16);
+      doc.text("→", 105, 115, { align: "center" });
+      doc.setFontSize(28);
       doc.setTextColor(...BRAND.white);
-      doc.text(page.title || "", 105, 30, { align: "center" });
-      
-      // Draw matrix
-      doc.setFillColor(...BRAND.cardBg);
-      doc.roundedRect(25, 50, 75, 50, 3, 3, "F");
-      doc.roundedRect(110, 50, 75, 50, 3, 3, "F");
-      doc.roundedRect(25, 110, 75, 50, 3, 3, "F");
-      doc.roundedRect(110, 110, 75, 50, 3, 3, "F");
-      
+      doc.text("Revenue", 105, 140, { align: "center" });
+      doc.setFontSize(16);
+      doc.setTextColor(...BRAND.muted);
+      doc.text("Translation Framework", 105, 165, { align: "center" });
       doc.setFontSize(10);
-      doc.setTextColor(...BRAND.teal);
-      doc.text("HIGH IMPACT", 62, 45, { align: "center" });
-      doc.text("LOW IMPACT", 147, 45, { align: "center" });
-      
+      doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
+    } else if (page.items) {
+      doc.setFontSize(20);
       doc.setTextColor(...BRAND.white);
-      doc.setFontSize(11);
-      doc.text("DO FIRST", 62, 70, { align: "center" });
-      doc.text("(AI-worthy)", 62, 80, { align: "center" });
+      doc.text(page.title || "", 20, 50);
       
-      doc.text("CONSIDER", 147, 70, { align: "center" });
-      doc.text("(Validate need)", 147, 80, { align: "center" });
-      
-      doc.text("SIMPLIFY", 62, 130, { align: "center" });
-      doc.text("(Often no AI needed)", 62, 140, { align: "center" });
-      
-      doc.text("IGNORE", 147, 130, { align: "center" });
-      doc.text("(Distraction)", 147, 140, { align: "center" });
-      
-      doc.setTextColor(...BRAND.muted);
-      doc.setFontSize(9);
-      doc.text("LOW EFFORT", 15, 80, { angle: 90 });
-      doc.text("HIGH EFFORT", 15, 140, { angle: 90 });
-    } else if (page.zones) {
-      doc.setFontSize(16);
-      doc.setTextColor(...BRAND.white);
-      doc.text(page.title || "", 105, 25, { align: "center" });
-      
-      let yPos = 40;
-      page.zones.forEach((zone) => {
+      let yPos = 75;
+      page.items.forEach(item => {
         doc.setFillColor(...BRAND.cardBg);
-        doc.roundedRect(15, yPos, 180, 55, 3, 3, "F");
-        
-        doc.setFontSize(11);
-        doc.setTextColor(...BRAND.teal);
-        doc.text(zone.name, 20, yPos + 12);
-        
-        doc.setFontSize(9);
+        doc.roundedRect(20, yPos - 5, 170, 25, 3, 3, "F");
+        doc.setFontSize(14);
         doc.setTextColor(...BRAND.white);
-        doc.text("AI opportunity:", 20, yPos + 25);
-        const aiLines = doc.splitTextToSize(zone.ai, 160);
-        doc.text(aiLines, 20, yPos + 33);
-        
-        doc.setTextColor(...BRAND.muted);
-        doc.text("Caution: " + zone.caution, 20, yPos + 48);
-        
-        yPos += 60;
+        doc.text("• " + item, 30, yPos + 9);
+        yPos += 35;
       });
-    } else {
-      doc.setFontSize(18);
-      doc.setTextColor(...BRAND.white);
-      doc.text(page.title || "", 20, 35);
       
-      if (page.subtitle) {
+      if (page.warning) {
         doc.setFontSize(12);
         doc.setTextColor(...BRAND.teal);
-        doc.text(page.subtitle, 20, 48);
+        doc.text(page.warning, 20, yPos + 10);
       }
+    } else if (page.before && page.after) {
+      doc.setFontSize(20);
+      doc.setTextColor(...BRAND.white);
+      doc.text(page.title || "", 20, 50);
       
-      let yPos = page.subtitle ? 65 : 55;
+      // Before box
+      doc.setFillColor(...BRAND.cardBg);
+      doc.roundedRect(20, 70, 170, 40, 3, 3, "F");
+      doc.setFontSize(10);
+      doc.setTextColor(...BRAND.muted);
+      doc.text("REPLACE:", 30, 85);
+      doc.setFontSize(14);
+      doc.setTextColor(...BRAND.white);
+      doc.text(page.before, 30, 100);
       
-      const items = page.content || page.checklist || page.steps || page.insights || [];
-      items.forEach((item) => {
-        if (item === "") {
-          yPos += 8;
-        } else {
-          doc.setFontSize(10);
-          doc.setTextColor(...BRAND.muted);
-          const lines = doc.splitTextToSize(item, 170);
-          doc.text(lines, 20, yPos);
-          yPos += lines.length * 6 + 4;
-        }
+      // Arrow
+      doc.setFontSize(24);
+      doc.setTextColor(...BRAND.teal);
+      doc.text("↓", 105, 125, { align: "center" });
+      
+      // After box
+      doc.setFillColor(...BRAND.cardBg);
+      doc.roundedRect(20, 135, 170, 40, 3, 3, "F");
+      doc.setFontSize(10);
+      doc.setTextColor(...BRAND.muted);
+      doc.text("WITH:", 30, 150);
+      doc.setFontSize(14);
+      doc.setTextColor(...BRAND.white);
+      doc.text(page.after, 30, 165);
+      
+      doc.setFontSize(12);
+      doc.setTextColor(...BRAND.teal);
+      doc.text(page.note || "", 20, 200);
+    } else if (page.content) {
+      doc.setFontSize(20);
+      doc.setTextColor(...BRAND.white);
+      doc.text(page.title || "", 105, 80, { align: "center" });
+      
+      doc.setFontSize(16);
+      doc.setTextColor(...BRAND.muted);
+      let yPos = 120;
+      page.content.forEach(line => {
+        doc.text(line, 105, yPos, { align: "center" });
+        yPos += 16;
       });
     }
   });
 
+  addCTAPage(doc, pages.length + 1, pages.length + 1);
   return doc;
 };
 
-// Build vs Buy Guide
-export const generateBuildVsBuyGuide = (): jsPDF => {
+// Build vs Buy: AI in Wellness
+export const generateBuildVsBuy = (): jsPDF => {
   const doc = new jsPDF();
   
   const pages = [
     { isTitle: true },
     {
-      title: "The Real Question",
+      title: "The Decision Most Teams Avoid",
       content: [
-        "Build vs Buy is never binary.",
+        "Not every AI idea should be built.",
         "",
-        "The real question is: What capability do you",
-        "need to own to win?",
-        "",
-        "Everything else should be bought, partnered,",
-        "or skipped entirely.",
-        "",
-        "This framework helps you decide what belongs",
-        "in each category for your wellness business.",
-      ],
+        "Sometimes the smartest move is:",
+        "• partner",
+        "• wait",
+        "• or not build at all"
+      ]
     },
     {
-      title: "The Build Criteria",
-      subtitle: "Only build if ALL of these are true:",
+      title: "Build If:",
       items: [
-        "✓ Core to your differentiation (not just 'nice to have')",
-        "✓ You have or can hire the expertise",
-        "✓ You can maintain it for 3+ years",
-        "✓ No suitable vendor exists (really check)",
-        "✓ Speed to market isn't critical",
-        "✓ You're willing to be wrong and pivot",
-      ],
+        "The decision is core to your business",
+        "You own the data",
+        "You can maintain it"
+      ]
     },
     {
-      title: "The Buy Criteria",
-      subtitle: "Buy when ANY of these are true:",
+      title: "Buy If:",
       items: [
-        "→ It's commodity functionality (auth, payments, etc.)",
-        "→ Vendors have 10x your R&D budget",
-        "→ Your team's time is better spent elsewhere",
-        "→ You need it working in < 6 months",
-        "→ The space is evolving rapidly",
-        "→ Switching costs are manageable",
-      ],
+        "Speed matters more than control",
+        "Differentiation is low"
+      ]
     },
     {
-      title: "Wellness-Specific Guidance",
-      sections: [
-        { label: "USUALLY BUILD", items: "Domain-specific algorithms, proprietary content, unique user journeys, competitive-advantage features" },
-        { label: "USUALLY BUY", items: "Infrastructure, generic AI (LLMs, speech-to-text), analytics, compliance tooling, payments" },
-        { label: "USUALLY PARTNER", items: "Clinical validation, specialist content, hardware integration, enterprise distribution" },
-        { label: "OFTEN SKIP", items: "Features that sound good in pitches but users don't need. Be ruthless." },
-      ],
+      title: "Partner If:",
+      items: [
+        "The value is shared",
+        "The risk is high",
+        "The capability is specialist"
+      ]
     },
     {
-      title: "The Hidden Costs of Building",
-      costs: [
-        { item: "Initial development", multiplier: "1x" },
-        { item: "Maintenance (per year)", multiplier: "0.2x" },
-        { item: "Opportunity cost", multiplier: "2-5x" },
-        { item: "Hiring/retaining talent", multiplier: "0.5x" },
-        { item: "Technical debt (years 3+)", multiplier: "1-2x" },
+      title: "Don't Build If:",
+      items: [
+        "The outcome is unclear",
+        "The data is weak",
+        "The cost is underestimated"
       ],
-    },
-    {
-      title: "Decision Framework",
-      steps: [
-        "1. List all AI capabilities you're considering",
-        "2. Score each: differentiation (1-5), expertise (1-5)",
-        "3. Research vendor landscape (spend a week)",
-        "4. Cost model: build (3 years) vs buy (3 years)",
-        "5. Assess switching costs if you change mind",
-        "6. Start with buy, earn the right to build",
-      ],
-    },
-    {
-      title: "Key Takeaways",
-      insights: [
-        "1. Building is a marriage, buying is dating",
-        "",
-        "2. The best companies build less than you think",
-        "",
-        "3. Your build list should shrink over time",
-        "",
-        "4. 'We could build that' ≠ 'We should build that'",
-        "",
-        "5. Buy time, build moats",
-      ],
-    },
+      isWarning: true
+    }
   ];
 
   pages.forEach((page, index) => {
@@ -669,96 +780,198 @@ export const generateBuildVsBuyGuide = (): jsPDF => {
     addHeader(doc, index + 1, pages.length);
 
     if (page.isTitle) {
-      doc.setFontSize(32);
+      doc.setFontSize(28);
       doc.setTextColor(...BRAND.white);
-      doc.text("Build vs Buy", 105, 90, { align: "center" });
+      doc.text("Build vs Buy:", 105, 95, { align: "center" });
       doc.setFontSize(24);
       doc.setTextColor(...BRAND.teal);
-      doc.text("AI in Wellness", 105, 115, { align: "center" });
+      doc.text("AI in Wellness", 105, 120, { align: "center" });
       doc.setFontSize(12);
       doc.setTextColor(...BRAND.muted);
-      doc.text("A practical framework for investment decisions", 105, 145, { align: "center" });
+      doc.text("A decision guide for boards and execs", 105, 150, { align: "center" });
       doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
-    } else if (page.sections) {
-      doc.setFontSize(16);
-      doc.setTextColor(...BRAND.white);
-      doc.text(page.title || "", 105, 25, { align: "center" });
-      
-      let yPos = 45;
-      page.sections.forEach((s) => {
-        doc.setFillColor(...BRAND.cardBg);
-        doc.roundedRect(15, yPos, 180, 50, 3, 3, "F");
-        
-        doc.setFontSize(10);
+    } else if (page.items) {
+      doc.setFontSize(24);
+      if (page.isWarning) {
+        doc.setTextColor(255, 100, 100);
+      } else {
         doc.setTextColor(...BRAND.teal);
-        doc.text(s.label, 20, yPos + 15);
-        
-        doc.setFontSize(9);
-        doc.setTextColor(...BRAND.muted);
-        const lines = doc.splitTextToSize(s.items, 165);
-        doc.text(lines, 20, yPos + 28);
-        
-        yPos += 55;
-      });
-    } else if (page.costs) {
-      doc.setFontSize(16);
-      doc.setTextColor(...BRAND.white);
-      doc.text(page.title || "", 105, 30, { align: "center" });
-      
-      doc.setFontSize(10);
-      doc.setTextColor(...BRAND.muted);
-      doc.text("If initial build = £100k, expect:", 105, 45, { align: "center" });
-      
-      let yPos = 65;
-      page.costs.forEach((c) => {
-        doc.setFillColor(...BRAND.cardBg);
-        doc.roundedRect(30, yPos, 150, 20, 2, 2, "F");
-        
-        doc.setFontSize(10);
-        doc.setTextColor(...BRAND.white);
-        doc.text(c.item, 40, yPos + 13);
-        
-        doc.setTextColor(...BRAND.teal);
-        doc.text(c.multiplier, 165, yPos + 13, { align: "right" });
-        
-        yPos += 28;
-      });
-      
-      doc.setFontSize(10);
-      doc.setTextColor(...BRAND.muted);
-      doc.text("Total 3-year cost: 4-10x initial estimate", 105, 235, { align: "center" });
-    } else {
-      doc.setFontSize(18);
-      doc.setTextColor(...BRAND.white);
-      doc.text(page.title || "", 20, 35);
-      
-      if (page.subtitle) {
-        doc.setFontSize(11);
-        doc.setTextColor(...BRAND.teal);
-        doc.text(page.subtitle, 20, 48);
       }
+      doc.text(page.title || "", 20, 50);
       
-      let yPos = page.subtitle ? 65 : 55;
+      let yPos = 80;
+      page.items.forEach(item => {
+        doc.setFillColor(...BRAND.cardBg);
+        doc.roundedRect(20, yPos - 5, 170, 30, 3, 3, "F");
+        doc.setFontSize(14);
+        doc.setTextColor(...BRAND.white);
+        doc.text("• " + item, 30, yPos + 12);
+        yPos += 40;
+      });
+    } else if (page.content) {
+      doc.setFontSize(20);
+      doc.setTextColor(...BRAND.white);
+      doc.text(page.title || "", 20, 50);
       
-      const items = page.content || page.items || page.steps || page.insights || [];
-      items.forEach((item) => {
-        if (item === "") {
-          yPos += 8;
+      doc.setFontSize(14);
+      doc.setTextColor(...BRAND.muted);
+      let yPos = 80;
+      page.content.forEach(line => {
+        if (line.startsWith("•")) {
+          doc.setTextColor(...BRAND.white);
         } else {
-          doc.setFontSize(10);
           doc.setTextColor(...BRAND.muted);
-          const lines = doc.splitTextToSize(item, 170);
-          doc.text(lines, 20, yPos);
-          yPos += lines.length * 6 + 4;
         }
+        doc.text(line, 20, yPos);
+        yPos += 14;
       });
     }
   });
 
+  addCTAPage(doc, pages.length + 1, pages.length + 1);
   return doc;
 };
 
-// Download helper
-export const downloadPDF = (doc: jsPDF, filename: string) => {
-  doc.save(filename);
+// 90-Day AI Activation Playbook - Premium 25-page
+export const generateActivationPlaybook = (): jsPDF => {
+  const doc = new jsPDF();
+  const totalPages = 12;
+  
+  // Title page
+  addHeader(doc, 1, totalPages);
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("90-Day", 105, 90, { align: "center" });
+  doc.text("AI Activation Playbook", 105, 115, { align: "center" });
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("A structured programme for wellness leaders", 105, 145, { align: "center" });
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
+  
+  // Month 1 intro
+  doc.addPage();
+  addHeader(doc, 2, totalPages);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("MONTH 1", 20, 40);
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Foundations", 20, 60);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(20, 80, 170, 60, 3, 3, "F");
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  const month1Intro = doc.splitTextToSize("No AI yet. This matters. Before you can use AI effectively, you need to understand what you actually have.", 150);
+  doc.text(month1Intro, 30, 100);
+  
+  const month1Tasks = [
+    "Define core engagement events",
+    "Clean and document data",
+    "Clarify consent",
+    "Map current decision-making processes",
+    "Identify data gaps"
+  ];
+  
+  let yPos = 160;
+  month1Tasks.forEach(task => {
+    doc.setDrawColor(...BRAND.teal);
+    doc.rect(20, yPos - 3, 4, 4);
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.white);
+    doc.text(task, 30, yPos);
+    yPos += 15;
+  });
+  
+  // Month 2
+  doc.addPage();
+  addHeader(doc, 3, totalPages);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("MONTH 2", 20, 40);
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Journeys", 20, 60);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(20, 80, 170, 60, 3, 3, "F");
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  const month2Intro = doc.splitTextToSize("Now you understand your data, map how users actually move through your product or service.", 150);
+  doc.text(month2Intro, 30, 100);
+  
+  const month2Tasks = [
+    "Design onboarding and reactivation flows",
+    "Introduce meaningful segmentation",
+    "Test one hypothesis at a time",
+    "Measure what matters, not everything",
+    "Document learnings"
+  ];
+  
+  yPos = 160;
+  month2Tasks.forEach(task => {
+    doc.setDrawColor(...BRAND.teal);
+    doc.rect(20, yPos - 3, 4, 4);
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.white);
+    doc.text(task, 30, yPos);
+    yPos += 15;
+  });
+  
+  // Month 3
+  doc.addPage();
+  addHeader(doc, 4, totalPages);
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("MONTH 3", 20, 40);
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Monetisation", 20, 60);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(20, 80, 170, 60, 3, 3, "F");
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  const month3Intro = doc.splitTextToSize("Connect engagement to outcomes. If you can't link behaviour to revenue or retention, you're guessing.", 150);
+  doc.text(month3Intro, 30, 100);
+  
+  const month3Tasks = [
+    "Link engagement to outcomes",
+    "Test one revenue lever",
+    "Measure impact conservatively",
+    "Build the business case",
+    "Plan next quarter"
+  ];
+  
+  yPos = 160;
+  month3Tasks.forEach(task => {
+    doc.setDrawColor(...BRAND.teal);
+    doc.rect(20, yPos - 3, 4, 4);
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.white);
+    doc.text(task, 30, yPos);
+    yPos += 15;
+  });
+  
+  // Success Criteria
+  doc.addPage();
+  addHeader(doc, 5, totalPages);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Success Criteria", 105, 80, { align: "center" });
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(30, 100, 150, 40, 3, 3, "F");
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Not "we launched AI"', 105, 115, { align: "center" });
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text('But "we made better decisions faster"', 105, 130, { align: "center" });
+  
+  addCTAPage(doc, 6, totalPages);
+  
+  return doc;
 };

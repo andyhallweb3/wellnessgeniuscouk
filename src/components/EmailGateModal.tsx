@@ -12,7 +12,7 @@ import {
 import { Download, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { generateAIMythsDeck, generate90DayChecklist } from "@/lib/pdf-generators";
+import { generateAIMythsDeck, generate90DayChecklist, generateQuickCheck } from "@/lib/pdf-generators";
 
 interface EmailGateModalProps {
   isOpen: boolean;
@@ -43,6 +43,10 @@ const EmailGateModal = ({
     } else if (productId === "reality-checklist") {
       const doc = generate90DayChecklist();
       filename = "90-Day-AI-Reality-Checklist.pdf";
+      doc.save(filename);
+    } else if (productId === "quick-check-lite") {
+      const doc = generateQuickCheck();
+      filename = "AI-Readiness-Quick-Check.pdf";
       doc.save(filename);
     }
   };
