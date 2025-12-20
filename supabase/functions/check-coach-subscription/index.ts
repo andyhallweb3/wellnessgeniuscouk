@@ -9,6 +9,11 @@ const corsHeaders = {
 
 const AI_COACH_PRODUCT_ID = "prod_TddVXSB3jlACob";
 
+// Whitelisted emails with free access
+const FREE_ACCESS_EMAILS = [
+  "andyhall0708@gmail.com",
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,6 +40,19 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
 
     console.log("[CHECK-COACH-SUBSCRIPTION] Checking for:", user.email);
+
+    // Check if user has free access
+    if (FREE_ACCESS_EMAILS.includes(user.email.toLowerCase())) {
+      console.log("[CHECK-COACH-SUBSCRIPTION] Free access granted for:", user.email);
+      return new Response(JSON.stringify({
+        subscribed: true,
+        subscription_end: null,
+        free_access: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
