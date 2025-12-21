@@ -66,7 +66,7 @@ const Footer = () => {
               </a>
               <div className="flex gap-4">
                 <a
-                  href="https://www.linkedin.com/in/andyhallwellnessgenius"
+                  href="https://www.linkedin.com/in/andyweb3"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
@@ -75,13 +75,35 @@ const Footer = () => {
                   <Linkedin size={18} />
                 </a>
                 <a
-                  href="https://twitter.com/wellnessgeniu5"
+                  href="https://twitter.com/andy_web_3"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
                   aria-label="Twitter"
                 >
                   <Twitter size={18} />
+                </a>
+              </div>
+              
+              {/* AI Initiative */}
+              <div className="mt-6 pt-4 border-t border-primary-foreground/10">
+                <p className="text-xs text-primary-foreground/50 mb-2">Chair of</p>
+                <a
+                  href="https://globalwellnessinstitute.org/ai-initiative/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-accent hover:underline block mb-1"
+                >
+                  GWI AI Initiative
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/global-wellness-institute-ai-initiative/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary-foreground/50 hover:text-primary-foreground transition-colors inline-flex items-center gap-1"
+                >
+                  <Linkedin size={12} />
+                  Follow on LinkedIn
                 </a>
               </div>
             </div>
