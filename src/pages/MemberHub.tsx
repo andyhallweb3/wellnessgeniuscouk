@@ -35,6 +35,7 @@ import {
 import PromptLibrary from "@/components/hub/PromptLibrary";
 import SavedInsights from "@/components/hub/SavedInsights";
 import OnboardingBanner from "@/components/hub/OnboardingBanner";
+import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import { useOnboarding } from "@/hooks/useOnboarding";
 
 interface Purchase {
@@ -347,6 +348,9 @@ const MemberHub = () => {
                   </div>
                   {/* Sidebar */}
                   <div className="space-y-6">
+                    {/* Onboarding Progress */}
+                    <OnboardingProgress />
+                    
                     {/* Account Card */}
                     <div className="rounded-xl border border-border bg-card p-6">
                       <div className="flex items-center gap-3 mb-4">
