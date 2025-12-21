@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -694,9 +694,11 @@ const EmailTemplatesAdmin = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-                <ArrowLeft size={16} />
-                Back
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/admin">
+                  <ArrowLeft size={16} />
+                  Back to Admin
+                </Link>
               </Button>
               <div>
                 <h1 className="text-2xl md:text-3xl font-heading">Email Templates</h1>

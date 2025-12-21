@@ -284,9 +284,9 @@ const CoachCreditsAdmin = () => {
         <Header />
         <main className="pt-24 pb-16">
           <div className="container-narrow section-padding">
-            <Link to="/hub" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
+            <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
               <ArrowLeft size={16} />
-              Back to Hub
+              Back to Admin Dashboard
             </Link>
 
             <div className="max-w-md mx-auto">
@@ -334,7 +334,7 @@ const CoachCreditsAdmin = () => {
         <div className="container-wide section-padding">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
-              <Link to="/hub" className="text-muted-foreground hover:text-foreground">
+              <Link to="/admin" className="text-muted-foreground hover:text-foreground">
                 <ArrowLeft size={20} />
               </Link>
               <div>

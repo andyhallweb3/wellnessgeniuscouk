@@ -1898,7 +1898,7 @@ const NewsletterAdmin = () => {
             {/* Header */}
             <div className="flex items-center justify-between gap-4 mb-8">
               <div className="flex items-center gap-4">
-                <Link to="/news" className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                <Link to="/admin" className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
                   <ArrowLeft size={20} />
                 </Link>
                 <div>

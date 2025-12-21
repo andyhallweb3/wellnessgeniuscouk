@@ -372,8 +372,8 @@ const DownloadsAdmin = () => {
               </form>
 
               <div className="mt-6 text-center">
-                <Link to="/news/admin" className="text-sm text-accent hover:underline">
-                  Back to Newsletter Admin
+                <Link to="/admin" className="text-sm text-accent hover:underline">
+                  Back to Admin Dashboard
                 </Link>
               </div>
             </div>
@@ -394,7 +394,7 @@ const DownloadsAdmin = () => {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon" asChild>
-                <Link to="/news/admin">
+                <Link to="/admin">
                   <ArrowLeft size={20} />
                 </Link>
               </Button>
