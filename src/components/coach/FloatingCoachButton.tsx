@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import FloatingCoachPanel from "./FloatingCoachPanel";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.png";
 
 const TOOLTIP_DISMISSED_KEY = "wellness-genie-tooltip-dismissed";
 
 const FloatingCoachButton = () => {
   const { user } = useAuth();
+  const { markStepCompleted } = useOnboarding();
   const [isOpen, setIsOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -31,6 +33,8 @@ const FloatingCoachButton = () => {
     setShowTooltip(false);
     setHasInteracted(true);
     localStorage.setItem(TOOLTIP_DISMISSED_KEY, "true");
+    // Mark genie step as completed
+    markStepCompleted("genie");
   };
 
   const dismissTooltip = (e: React.MouseEvent) => {
