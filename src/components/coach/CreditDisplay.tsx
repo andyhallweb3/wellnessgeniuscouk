@@ -1,16 +1,25 @@
 import { cn } from "@/lib/utils";
-import { Coins, AlertTriangle } from "lucide-react";
+import { Coins, AlertTriangle, Calendar } from "lucide-react";
+import { format, formatDistanceToNow, isPast } from "date-fns";
 
 interface CreditDisplayProps {
   balance: number;
   monthlyAllowance: number;
+  nextResetDate?: string | null;
   compact?: boolean;
 }
 
-const CreditDisplay = ({ balance, monthlyAllowance, compact = false }: CreditDisplayProps) => {
+const CreditDisplay = ({ balance, monthlyAllowance, nextResetDate, compact = false }: CreditDisplayProps) => {
   const percentage = (balance / monthlyAllowance) * 100;
   const isLow = percentage < 25;
   const isCritical = percentage < 10;
+
+  const getResetText = () => {
+    if (!nextResetDate) return null;
+    const resetDate = new Date(nextResetDate);
+    if (isPast(resetDate)) return "Refreshing soon";
+    return `Resets ${formatDistanceToNow(resetDate, { addSuffix: true })}`;
+  };
 
   if (compact) {
     return (
@@ -58,9 +67,15 @@ const CreditDisplay = ({ balance, monthlyAllowance, compact = false }: CreditDis
         />
       </div>
       
-      <p className="text-xs text-muted-foreground">
-        {balance} of {monthlyAllowance} monthly credits remaining
-      </p>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{balance} of {monthlyAllowance} monthly credits</span>
+        {nextResetDate && (
+          <span className="flex items-center gap-1">
+            <Calendar size={12} />
+            {getResetText()}
+          </span>
+        )}
+      </div>
 
       {isLow && (
         <div className={cn(

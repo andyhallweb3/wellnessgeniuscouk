@@ -6,6 +6,7 @@ interface CoachCredits {
   balance: number;
   monthlyAllowance: number;
   tier: "pro" | "expert" | null;
+  nextResetDate: string | null;
 }
 
 interface CoachProfile {
@@ -25,7 +26,12 @@ interface CoachProfile {
 
 export const useCoachCredits = () => {
   const { user } = useAuth();
-  const [credits, setCredits] = useState<CoachCredits>({ balance: 40, monthlyAllowance: 40, tier: null });
+  const [credits, setCredits] = useState<CoachCredits>({ 
+    balance: 40, 
+    monthlyAllowance: 40, 
+    tier: null,
+    nextResetDate: null 
+  });
   const [profile, setProfile] = useState<CoachProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,11 +63,21 @@ export const useCoachCredits = () => {
       // Fetch credits from database
       const { data: creditsData } = await supabase
         .from("coach_credits")
-        .select("balance, monthly_allowance")
+        .select("balance, monthly_allowance, last_reset_at")
         .eq("user_id", user.id)
         .single();
 
+      // Calculate next reset date (1 month from last_reset_at)
+      const calculateNextResetDate = (lastResetAt: string): string => {
+        const lastReset = new Date(lastResetAt);
+        const nextReset = new Date(lastReset);
+        nextReset.setMonth(nextReset.getMonth() + 1);
+        return nextReset.toISOString();
+      };
+
       if (creditsData) {
+        const nextResetDate = calculateNextResetDate(creditsData.last_reset_at);
+        
         // If subscription tier changed, update monthly allowance in DB
         if (subscriptionTier && creditsData.monthly_allowance !== subscriptionMonthlyAllowance) {
           const { error: updateError } = await supabase
@@ -74,12 +90,14 @@ export const useCoachCredits = () => {
               balance: creditsData.balance,
               monthlyAllowance: subscriptionMonthlyAllowance,
               tier: subscriptionTier,
+              nextResetDate,
             });
           } else {
             setCredits({
               balance: creditsData.balance,
               monthlyAllowance: creditsData.monthly_allowance,
               tier: subscriptionTier,
+              nextResetDate,
             });
           }
         } else {
@@ -87,6 +105,7 @@ export const useCoachCredits = () => {
             balance: creditsData.balance,
             monthlyAllowance: subscriptionTier ? subscriptionMonthlyAllowance : creditsData.monthly_allowance,
             tier: subscriptionTier,
+            nextResetDate,
           });
         }
       } else {
@@ -102,10 +121,12 @@ export const useCoachCredits = () => {
           .single();
 
         if (newCredits) {
+          const nextResetDate = calculateNextResetDate(newCredits.last_reset_at);
           setCredits({
             balance: newCredits.balance,
             monthlyAllowance: newCredits.monthly_allowance,
             tier: subscriptionTier,
+            nextResetDate,
           });
         }
       }
