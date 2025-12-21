@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Linkedin, Twitter } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.png";
+import gwiLogo from "@/assets/logos/gwi-logo.svg";
 import { useNewsletter } from "@/hooks/useNewsletter";
 
 const Footer = () => {
@@ -87,15 +88,20 @@ const Footer = () => {
               
               {/* AI Initiative */}
               <div className="mt-6 pt-4 border-t border-primary-foreground/10">
-                <p className="text-xs text-primary-foreground/50 mb-2">Chair of</p>
+                <p className="text-xs text-primary-foreground/50 mb-3">Chair of</p>
                 <a
                   href="https://globalwellnessinstitute.org/ai-initiative/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-accent hover:underline block mb-1"
+                  className="block mb-3 hover:opacity-80 transition-opacity"
                 >
-                  GWI AI Initiative
+                  <img 
+                    src={gwiLogo} 
+                    alt="Global Wellness Institute" 
+                    className="h-8 w-auto brightness-0 invert opacity-80"
+                  />
                 </a>
+                <p className="text-sm text-accent mb-2">AI Initiative</p>
                 <a
                   href="https://www.linkedin.com/company/global-wellness-institute-ai-initiative/"
                   target="_blank"

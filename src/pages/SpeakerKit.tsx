@@ -3,6 +3,7 @@ import { ArrowRight, Mic, Users, Lightbulb, Bot, TrendingUp, BookOpen, Linkedin,
 import { Link } from "react-router-dom";
 import andyHeadshot from "@/assets/andy-headshot.jpeg";
 import beyondRepsCover from "@/assets/beyond-reps-cover.jpeg";
+import gwiLogo from "@/assets/logos/gwi-logo.svg";
 
 const topics = [
   {
@@ -110,6 +111,32 @@ const SpeakerKit = () => {
               </p>
             </div>
             
+            {/* AI Initiative Card */}
+            <div className="mt-8 bg-secondary/50 rounded-2xl p-6 border border-border/50">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Chair of</p>
+              <a
+                href="https://globalwellnessinstitute.org/ai-initiative/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 group"
+              >
+                <img 
+                  src={gwiLogo} 
+                  alt="Global Wellness Institute" 
+                  className="h-12 w-auto"
+                />
+                <div>
+                  <p className="font-semibold text-foreground group-hover:text-accent transition-colors">
+                    AI Initiative
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Shaping AI policy for the wellness industry
+                  </p>
+                </div>
+                <ExternalLink size={16} className="text-muted-foreground ml-auto" />
+              </a>
+            </div>
+
             {/* Social Links */}
             <div className="flex flex-wrap gap-3 mt-6">
               <a
