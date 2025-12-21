@@ -32,6 +32,7 @@ import CreditDisplay from "@/components/coach/CreditDisplay";
 import TierBadge from "@/components/coach/TierBadge";
 import CoachPromptLibrary from "@/components/coach/CoachPromptLibrary";
 import ProfileEditor from "@/components/coach/ProfileEditor";
+import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 
 interface Message {
@@ -636,9 +637,13 @@ const AICoach = () => {
                           : "bg-secondary"
                       }`}
                     >
-                      <div className="text-sm whitespace-pre-wrap leading-relaxed">
-                        {message.content}
-                      </div>
+                      {message.role === "assistant" ? (
+                        <MarkdownRenderer content={message.content} />
+                      ) : (
+                        <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                          {message.content}
+                        </div>
+                      )}
                     </div>
                     {message.role === "user" && (
                       <div className="p-2 rounded-full bg-secondary h-fit shrink-0">

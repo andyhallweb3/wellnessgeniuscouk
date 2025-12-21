@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import { toast } from "sonner";
 
 interface Message {
@@ -305,9 +306,13 @@ const AIGenius = () => {
                           : "bg-secondary"
                       }`}
                     >
-                      <div className="text-sm whitespace-pre-wrap leading-relaxed">
-                        {message.content}
-                      </div>
+                      {message.role === "assistant" ? (
+                        <MarkdownRenderer content={message.content} />
+                      ) : (
+                        <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                          {message.content}
+                        </div>
+                      )}
                     </div>
                     {message.role === "user" && (
                       <div className="p-2 rounded-full bg-secondary h-fit shrink-0">
