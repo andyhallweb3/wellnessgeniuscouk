@@ -757,6 +757,73 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Email metrics endpoint for admin dashboard
+    if (body.action === 'email-metrics') {
+      // Get aggregated metrics
+      const { data: openEvents } = await supabase
+        .from('newsletter_events')
+        .select('subscriber_email')
+        .eq('event_type', 'open');
+
+      const { data: clickEvents } = await supabase
+        .from('newsletter_events')
+        .select('subscriber_email')
+        .eq('event_type', 'click');
+
+      const { count: bounceCount } = await supabase
+        .from('newsletter_events')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_type', 'bounce');
+
+      const { count: complaintCount } = await supabase
+        .from('newsletter_events')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_type', 'complaint');
+
+      const { count: delayCount } = await supabase
+        .from('newsletter_events')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_type', 'delivery_delayed');
+
+      const totalOpens = openEvents?.length || 0;
+      const uniqueOpens = new Set(openEvents?.map(e => e.subscriber_email)).size;
+      const totalClicks = clickEvents?.length || 0;
+      const uniqueClicks = new Set(clickEvents?.map(e => e.subscriber_email)).size;
+
+      // Get recent events (last 50)
+      const { data: recentEvents } = await supabase
+        .from('newsletter_events')
+        .select('id, event_type, subscriber_email, send_id, link_url, created_at')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      // Get delivery issues (bounces, complaints, delays)
+      const { data: issueEvents } = await supabase
+        .from('newsletter_events')
+        .select('id, event_type, subscriber_email, send_id, link_url, created_at')
+        .in('event_type', ['bounce', 'complaint', 'delivery_delayed'])
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          metrics: {
+            totalOpens,
+            uniqueOpens,
+            totalClicks,
+            uniqueClicks,
+            bounces: bounceCount || 0,
+            complaints: complaintCount || 0,
+            deliveryDelays: delayCount || 0,
+          },
+          recentEvents: recentEvents || [],
+          issueEvents: issueEvents || [],
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // History endpoint to fetch recent sends
     if (body.action === 'history') {
       const limit = body.limit || 10;

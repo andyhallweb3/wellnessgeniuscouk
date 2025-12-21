@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AIArticleGenerator from "@/components/admin/AIArticleGenerator";
 import { SortableArticleList } from "@/components/admin/SortableArticleList";
+import EmailDeliveryMetrics from "@/components/admin/EmailDeliveryMetrics";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { 
   Mail, 
@@ -2770,6 +2771,9 @@ const NewsletterAdmin = () => {
                 </div>
               )}
             </div>
+
+            {/* Email Delivery Metrics */}
+            <EmailDeliveryMetrics getAuthHeaders={getAuthHeaders} />
 
             {/* Admin User Management */}
             <div className="card-glass p-6 mb-8">
