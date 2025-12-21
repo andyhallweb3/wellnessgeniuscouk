@@ -27,6 +27,7 @@ import Unsubscribe from "./pages/Unsubscribe";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
+import HowToUseStack from "./pages/HowToUseStack";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/how-to-use" element={<HowToUseStack />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/hub" element={<MemberHub />} />
             <Route path="/hub/coach" element={<AICoach />} />
