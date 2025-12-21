@@ -26,6 +26,7 @@ import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useGenieNotifications } from "@/hooks/useGenieNotifications";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import CreditDisplay from "@/components/coach/CreditDisplay";
+import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
 
 interface Message {
   role: "user" | "assistant";
@@ -297,6 +298,13 @@ const Genie = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <GenieVoiceInterface 
+                memoryContext={getMemoryContext()}
+                onTranscript={(text, role) => {
+                  setMessages(prev => [...prev, { role, content: text }]);
+                  if (showDashboard) setShowDashboard(false);
+                }}
+              />
               <Button 
                 variant={showDashboard ? "secondary" : "ghost"}
                 size="sm" 
