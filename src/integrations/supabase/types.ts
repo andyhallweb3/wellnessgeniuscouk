@@ -596,6 +596,54 @@ export type Database = {
         }
         Relationships: []
       }
+      genie_notifications: {
+        Row: {
+          created_at: string
+          dismissed: boolean
+          email_sent: boolean
+          email_sent_at: string | null
+          expires_at: string | null
+          id: string
+          message: string
+          priority: string
+          read: boolean
+          title: string
+          trigger_reason: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed?: boolean
+          email_sent?: boolean
+          email_sent_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message: string
+          priority?: string
+          read?: boolean
+          title: string
+          trigger_reason?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dismissed?: boolean
+          email_sent?: boolean
+          email_sent_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message?: string
+          priority?: string
+          read?: boolean
+          title?: string
+          trigger_reason?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       genie_sessions: {
         Row: {
           ended_at: string | null
