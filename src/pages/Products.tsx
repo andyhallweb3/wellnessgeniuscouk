@@ -13,7 +13,8 @@ import {
   BookOpen,
   Users,
   Package,
-  Loader2
+  Loader2,
+  Phone
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -129,7 +130,7 @@ const products: Product[] = [
     id: "prompt-pack",
     name: "Wellness AI Builder – Operator Edition",
     description: "Stop building AI that sounds impressive but delivers no value. Decision tree, use-case catalogue, system prompts, and data schemas.",
-    price: "£49",
+    price: "£69",
     type: "paid",
     icon: <Zap size={24} />,
     features: [
@@ -137,7 +138,7 @@ const products: Product[] = [
       "Wellness AI use-case catalogue",
       "Copy-paste system prompts",
       "Production-ready data schemas",
-      "Why most teams fail analysis",
+      "AI Build Brief Generator template",
     ],
     cta: "Buy Now",
     link: "#prompt-pack",
@@ -147,34 +148,33 @@ const products: Product[] = [
     id: "engagement-playbook",
     name: "Wellness Engagement Systems Playbook",
     description: "Convert engagement into outcomes without eroding margin. Includes Habit→Outcome Map, 6-Rung Intervention Ladder, and Journey Blueprints.",
-    price: "£79",
+    price: "£59",
     type: "paid",
     icon: <BarChart3 size={24} />,
     features: [
       "Habit → Outcome mapping framework",
       "6-rung intervention ladder (margin-safe)",
       "Ready-to-use IF/THEN journey blueprints",
-      "Churn rescue workflows",
-      "Upsell timing engine",
+      "Engagement KPI canon by vertical",
+      "Editable intervention register",
     ],
     cta: "Buy Now",
     link: "#engagement-playbook",
     isStripeProduct: true,
   },
-  // Premium Products
   {
     id: "activation-playbook",
     name: "90-Day AI Activation Playbook – Execution Edition",
     description: "Controlled, credible AI adoption without reputational or regulatory risk. Weekly sprints, board-safe KPIs, red-flag register.",
-    price: "£49",
-    type: "premium",
+    price: "£99",
+    type: "paid",
     icon: <BookOpen size={24} />,
     features: [
-      "Weekly sprint structure with stop criteria",
+      "Weekly sprint template (copy/paste)",
+      "Board update slide (single page)",
       "Month-by-month execution plan",
-      "Board-safe KPIs (no vanity metrics)",
       "Red-flag register for failure patterns",
-      "Success criteria for each phase",
+      "\"Do Not Proceed If\" kill list",
     ],
     cta: "Buy Now",
     link: "#activation-playbook",
@@ -184,37 +184,38 @@ const products: Product[] = [
 
 const bundles: Product[] = [
   {
-    id: "toolkit-bundle",
-    name: "AI Toolkit for Wellness Leaders",
-    description: "Everything you need to evaluate, plan, and decide on AI. Three essential guides in one package.",
-    price: "£99",
-    originalPrice: "£127",
-    type: "bundle",
-    icon: <Package size={24} />,
-    features: [
-      "Wellness AI Builder – Prompt Pack (£49)",
-      "Engagement → Revenue Framework (£49)",
-      "Build vs Buy Guide (£29)",
-      "Save £28",
-    ],
-    cta: "Buy Bundle",
-    link: "#toolkit-bundle",
-  },
-  {
-    id: "starter-pack",
-    name: "Commercial AI Starter Pack",
-    description: "Your diagnostic score plus the prompt pack to start building. Perfect for founders ready to act.",
-    price: "£129",
-    originalPrice: "£148",
+    id: "operator-pack",
+    name: "Wellness AI Operator Pack",
+    description: "Everything you need to assess, build, and engage. The complete operator toolkit for wellness AI.",
+    price: "£179",
+    originalPrice: "£227",
     type: "bundle",
     icon: <Package size={24} />,
     features: [
       "AI Readiness Score (£99)",
-      "Wellness AI Builder – Prompt Pack (£49)",
-      "Save £19",
+      "Wellness AI Builder – Operator Edition (£69)",
+      "Engagement Systems Playbook (£59)",
+      "Save £48",
     ],
     cta: "Buy Bundle",
-    link: "#starter-pack",
+    link: "#operator-pack",
+    badge: "Best Value",
+  },
+  {
+    id: "execution-pack",
+    name: "Execution Pack",
+    description: "Your diagnostic score plus the 90-day playbook to start executing. Perfect for teams ready to act.",
+    price: "£149",
+    originalPrice: "£198",
+    type: "bundle",
+    icon: <Package size={24} />,
+    features: [
+      "AI Readiness Score (£99)",
+      "90-Day Activation Playbook (£99)",
+      "Save £49",
+    ],
+    cta: "Buy Bundle",
+    link: "#execution-pack",
   },
 ];
 
@@ -337,48 +338,76 @@ const ProductCard = ({
         </button>
       )}
       
-      {isDownload ? (
-        <Button 
-          variant="outline" 
-          className="w-full" 
-          onClick={handleClick}
-        >
-          <Download size={16} />
-          {product.cta}
-        </Button>
-      ) : isStripe ? (
-        <Button 
-          variant="accent" 
-          className="w-full" 
-          onClick={handleClick}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <ArrowRight size={16} />
-              {product.cta}
-            </>
-          )}
-        </Button>
-      ) : isInternal ? (
-        <Button variant={product.type === "free" ? "outline" : "accent"} className="w-full" asChild>
-          <Link to={product.link}>
+      <div className="space-y-3 mt-auto">
+        {isDownload ? (
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={handleClick}
+          >
+            <Download size={16} />
+            {product.cta}
+          </Button>
+        ) : isStripe ? (
+          <>
+            <Button 
+              variant="accent" 
+              className="w-full" 
+              onClick={handleClick}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <ArrowRight size={16} />
+                  {product.cta}
+                </>
+              )}
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full text-xs" 
+              asChild
+            >
+              <a href="https://calendly.com/andy-wellnessgenius/30min" target="_blank" rel="noopener noreferrer">
+                <Phone size={14} />
+                Book a Call with Andy
+              </a>
+            </Button>
+          </>
+        ) : isInternal ? (
+          <>
+            <Button variant={product.type === "free" ? "outline" : "accent"} className="w-full" asChild>
+              <Link to={product.link}>
+                {product.type === "free" ? <Download size={16} /> : <ArrowRight size={16} />}
+                {product.cta}
+              </Link>
+            </Button>
+            {product.type !== "free" && (
+              <Button 
+                variant="outline" 
+                className="w-full text-xs" 
+                asChild
+              >
+                <a href="https://calendly.com/andy-wellnessgenius/30min" target="_blank" rel="noopener noreferrer">
+                  <Phone size={14} />
+                  Book a Call with Andy
+                </a>
+              </Button>
+            )}
+          </>
+        ) : (
+          <Button variant={product.type === "free" ? "outline" : "accent"} className="w-full" disabled>
             {product.type === "free" ? <Download size={16} /> : <ArrowRight size={16} />}
             {product.cta}
-          </Link>
-        </Button>
-      ) : (
-        <Button variant={product.type === "free" ? "outline" : "accent"} className="w-full" disabled>
-          {product.type === "free" ? <Download size={16} /> : <ArrowRight size={16} />}
-          {product.cta}
-          <span className="ml-1 text-xs opacity-60">(Coming Soon)</span>
-        </Button>
-      )}
+            <span className="ml-1 text-xs opacity-60">(Coming Soon)</span>
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
@@ -393,7 +422,6 @@ const Products = () => {
 
   const freeProducts = products.filter(p => p.type === "free");
   const paidProducts = products.filter(p => p.type === "paid");
-  const premiumProducts = products.filter(p => p.type === "premium");
 
   // Handle payment success/cancel from URL params
   useEffect(() => {
@@ -578,35 +606,12 @@ const Products = () => {
                 <Sparkles size={20} className="text-accent" />
               </div>
               <div>
-                <h2 className="text-2xl font-heading">Diagnostic Tools</h2>
-                <p className="text-sm text-muted-foreground">Decision-grade insights for serious operators.</p>
+                <h2 className="text-2xl font-heading">Diagnostic Tools & Playbooks</h2>
+                <p className="text-sm text-muted-foreground">Decision-grade insights and execution artefacts for serious operators.</p>
               </div>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {paidProducts.map(product => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product} 
-                  onBuyClick={handleBuyClick}
-                  isProcessing={processingProductId}
-                />
-              ))}
-            </div>
-          </section>
-
-          {/* Premium Products */}
-          <section className="mb-16">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <BookOpen size={20} className="text-purple-600" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-heading">Premium Resources</h2>
-                <p className="text-sm text-muted-foreground">For teams ready to accelerate.</p>
-              </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              {premiumProducts.map(product => (
                 <ProductCard 
                   key={product.id} 
                   product={product} 
