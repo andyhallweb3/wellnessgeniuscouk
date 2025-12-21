@@ -72,7 +72,7 @@ const Genie = () => {
   const { getMemoryContext, memory, insights, recentDecisions, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { notifications, dismiss: dismissNotification, markAsRead: markNotificationRead } = useGenieNotifications();
-  const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession } = useGenieSessions();
+  const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession, summarizeSession } = useGenieSessions();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -357,6 +357,7 @@ const Genie = () => {
                       loading={sessionsLoading}
                       onLoadSession={handleLoadSession}
                       currentSessionId={currentSessionId}
+                      onSummarize={summarizeSession}
                     />
                   </div>
                 </SheetContent>

@@ -57,27 +57,56 @@ export function useGenieSessions() {
     fetchSessions();
   }, [fetchSessions]);
 
+  const generateAISummary = useCallback(
+    async (messages: Message[], mode: string): Promise<string | null> => {
+      if (messages.length < 4) return null; // Need enough context for a good summary
+      
+      try {
+        const response = await supabase.functions.invoke('summarize-session', {
+          body: { messages, mode }
+        });
+        
+        if (response.error) {
+          console.error('Summary generation error:', response.error);
+          return null;
+        }
+        
+        return response.data?.summary || null;
+      } catch (error) {
+        console.error('Failed to generate AI summary:', error);
+        return null;
+      }
+    },
+    []
+  );
+
   const saveSession = useCallback(
-    async (mode: string, messages: Message[], sessionId?: string | null) => {
+    async (mode: string, messages: Message[], sessionId?: string | null, generateSummary = false) => {
       if (!user || messages.length === 0) return null;
 
       try {
-        // Generate a simple summary from the first user message
-        const firstUserMessage = messages.find((m) => m.role === "user");
-        const summary = firstUserMessage
-          ? firstUserMessage.content.slice(0, 100) + (firstUserMessage.content.length > 100 ? "..." : "")
-          : null;
+        // Generate AI summary if requested and enough messages
+        let summary: string | null = null;
+        if (generateSummary && messages.length >= 4) {
+          summary = await generateAISummary(messages, mode);
+        }
+        
+        // Fallback to simple summary if AI summary fails
+        if (!summary) {
+          const firstUserMessage = messages.find((m) => m.role === "user");
+          summary = firstUserMessage
+            ? firstUserMessage.content.slice(0, 100) + (firstUserMessage.content.length > 100 ? "..." : "")
+            : null;
+        }
 
-        // Convert messages to JSON-compatible format
         const messagesJson = JSON.parse(JSON.stringify(messages));
 
         if (sessionId) {
-          // Update existing session
           const { error } = await supabase
             .from("genie_sessions")
             .update({
               messages: messagesJson,
-              summary,
+              ...(summary && { summary }),
             })
             .eq("id", sessionId)
             .eq("user_id", user.id);
@@ -86,7 +115,6 @@ export function useGenieSessions() {
           await fetchSessions();
           return sessionId;
         } else {
-          // Create new session
           const { data, error } = await supabase
             .from("genie_sessions")
             .insert([{
@@ -108,7 +136,26 @@ export function useGenieSessions() {
         return null;
       }
     },
-    [user, fetchSessions]
+    [user, fetchSessions, generateAISummary]
+  );
+
+  const summarizeSession = useCallback(
+    async (sessionId: string) => {
+      const session = sessions.find(s => s.id === sessionId);
+      if (!session || session.messages.length < 4) return null;
+      
+      const summary = await generateAISummary(session.messages, session.mode);
+      if (summary) {
+        await supabase
+          .from("genie_sessions")
+          .update({ summary })
+          .eq("id", sessionId)
+          .eq("user_id", user?.id);
+        await fetchSessions();
+      }
+      return summary;
+    },
+    [sessions, user, generateAISummary, fetchSessions]
   );
 
   const endSession = useCallback(
@@ -159,6 +206,7 @@ export function useGenieSessions() {
     endSession,
     loadSession,
     deleteSession,
+    summarizeSession,
     refetch: fetchSessions,
   };
 }
