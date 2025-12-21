@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.export-user-data]
 verify_jwt = false
+
+[functions.genie-chat]
+verify_jwt = false
