@@ -17,7 +17,8 @@ import {
   Loader2,
   Terminal,
   MessageCircle,
-  Bookmark
+  Bookmark,
+  RotateCcw
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -34,6 +35,7 @@ import {
 import PromptLibrary from "@/components/hub/PromptLibrary";
 import SavedInsights from "@/components/hub/SavedInsights";
 import OnboardingBanner from "@/components/hub/OnboardingBanner";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 interface Purchase {
   id: string;
@@ -66,6 +68,7 @@ const MemberHub = () => {
   const navigate = useNavigate();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [savedOutputs, setSavedOutputs] = useState<SavedOutput[]>([]);
+  const { restartOnboarding } = useOnboarding();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -366,6 +369,17 @@ const MemberHub = () => {
                           <span className="text-muted-foreground">Saved outputs</span>
                           <span className="font-medium">{savedOutputs.length}</span>
                         </div>
+                      </div>
+                      <div className="pt-4 border-t border-border mt-4">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start text-muted-foreground hover:text-foreground"
+                          onClick={restartOnboarding}
+                        >
+                          <RotateCcw size={14} />
+                          Restart Site Tour
+                        </Button>
                       </div>
                     </div>
 
