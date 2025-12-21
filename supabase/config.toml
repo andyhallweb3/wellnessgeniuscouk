@@ -1,5 +1,8 @@
 project_id = "hiayegpvrsxhhemyxghz"
 
+[functions.resend-webhook]
+verify_jwt = false
+
 [functions.upsell-track]
 verify_jwt = false
 
