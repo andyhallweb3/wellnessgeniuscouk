@@ -37,6 +37,7 @@ import CoachPromptLibrary from "@/components/coach/CoachPromptLibrary";
 import ProfileEditor from "@/components/coach/ProfileEditor";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import DocumentLibrary from "@/components/coach/DocumentLibrary";
+import ProfileSummary from "@/components/coach/ProfileSummary";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 
@@ -142,6 +143,12 @@ const AICoach = () => {
       const { data, error } = await supabase.functions.invoke("coach-customer-portal");
       
       if (error) throw error;
+      
+      // Handle free access users who don't have a Stripe customer
+      if (data.free_access) {
+        toast.info("You have free access to the AI Coach. No subscription to manage.");
+        return;
+      }
       
       if (data.url) {
         window.open(data.url, "_blank");
@@ -588,6 +595,18 @@ const AICoach = () => {
               />
             </div>
           </div>
+
+          {/* Profile Summary (when no messages) */}
+          {messages.length === 0 && (
+            <div className="mb-4 shrink-0">
+              <ProfileSummary 
+                profile={profile}
+                documentCount={documents.length}
+                onEditProfile={() => setShowProfileEditor(true)}
+                compact
+              />
+            </div>
+          )}
 
           {/* Mode Selector (when no messages) */}
           {messages.length === 0 && (

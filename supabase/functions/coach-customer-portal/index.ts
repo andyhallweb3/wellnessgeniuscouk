@@ -45,7 +45,16 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
     if (customers.data.length === 0) {
-      throw new Error("No Stripe customer found for this user");
+      // User has free access but no Stripe customer - return helpful message
+      logStep("No Stripe customer found - user may have free access");
+      return new Response(JSON.stringify({ 
+        error: "No Stripe customer found for this user",
+        message: "You have free access to the AI Coach. No subscription to manage.",
+        free_access: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, // Return 200 with info instead of 500 error
+      });
     }
     
     const customerId = customers.data[0].id;
