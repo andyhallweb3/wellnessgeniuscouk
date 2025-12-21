@@ -36,6 +36,7 @@ import PromptLibrary from "@/components/hub/PromptLibrary";
 import SavedInsights from "@/components/hub/SavedInsights";
 import OnboardingBanner from "@/components/hub/OnboardingBanner";
 import OnboardingProgress from "@/components/hub/OnboardingProgress";
+import DownloadHistory from "@/components/hub/DownloadHistory";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { generateGamificationPlaybook } from "@/lib/pdf-generators";
 
@@ -434,6 +435,9 @@ const MemberHub = () => {
                   <div className="space-y-6">
                     {/* Onboarding Progress */}
                     <OnboardingProgress />
+                    
+                    {/* Download History */}
+                    <DownloadHistory />
                     
                     {/* Account Card */}
                     <div className="rounded-xl border border-border bg-card p-6">
