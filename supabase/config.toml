@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.send-data-deletion-request]
 verify_jwt = false
+
+[functions.export-user-data]
+verify_jwt = false
