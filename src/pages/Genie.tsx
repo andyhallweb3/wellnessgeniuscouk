@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AdvisorModeSelector from "@/components/advisor/AdvisorModeSelector";
 import CreditPurchase from "@/components/advisor/CreditPurchase";
+import LowCreditWarning from "@/components/advisor/LowCreditWarning";
 import GenieOnboarding from "@/components/genie/GenieOnboarding";
 import GenieDashboard from "@/components/genie/GenieDashboard";
 import { ADVISOR_MODES, getModeById } from "@/components/advisor/AdvisorModes";
@@ -421,6 +422,13 @@ const Genie = () => {
               />
             </div>
           </div>
+
+          {/* Low Credit Warning */}
+          <LowCreditWarning 
+            balance={credits.balance} 
+            threshold={5}
+            onPurchase={handlePurchaseCredits}
+          />
 
           {/* Main Content */}
           {showDashboard && messages.length === 0 ? (

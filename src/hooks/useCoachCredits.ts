@@ -24,14 +24,14 @@ interface CoachProfile {
   onboarding_completed: boolean;
 }
 
-// Free credits for non-subscribers
-const FREE_CREDITS = 5;
+// Free trial credits for new users
+const FREE_TRIAL_CREDITS = 10;
 
 export const useCoachCredits = () => {
   const { user } = useAuth();
   const [credits, setCredits] = useState<CoachCredits>({ 
-    balance: FREE_CREDITS, 
-    monthlyAllowance: FREE_CREDITS, 
+    balance: FREE_TRIAL_CREDITS, 
+    monthlyAllowance: FREE_TRIAL_CREDITS, 
     tier: null,
     nextResetDate: null 
   });
@@ -112,9 +112,9 @@ export const useCoachCredits = () => {
           });
         }
       } else {
-        // Create initial credits record - use subscription allowance if subscribed, otherwise free credits
-        const initialBalance = subscriptionTier ? subscriptionMonthlyAllowance : FREE_CREDITS;
-        const initialAllowance = subscriptionTier ? subscriptionMonthlyAllowance : FREE_CREDITS;
+        // Create initial credits record - use subscription allowance if subscribed, otherwise free trial credits
+        const initialBalance = subscriptionTier ? subscriptionMonthlyAllowance : FREE_TRIAL_CREDITS;
+        const initialAllowance = subscriptionTier ? subscriptionMonthlyAllowance : FREE_TRIAL_CREDITS;
         
         const { data: newCredits } = await supabase
           .from("coach_credits")
