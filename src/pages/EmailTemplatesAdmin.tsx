@@ -610,6 +610,16 @@ const EmailTemplatesAdmin = () => {
     }
   };
 
+  const copyRenderedHtml = async (html: string) => {
+    try {
+      const rendered = renderWithSampleData(html);
+      await navigator.clipboard.writeText(rendered);
+      toast.success("Rendered HTML copied to clipboard");
+    } catch {
+      toast.error("Failed to copy rendered HTML");
+    }
+  };
+
   const exportAllAsJson = () => {
     const exportData = templates.map(t => ({
       name: t.name,
@@ -899,6 +909,16 @@ const EmailTemplatesAdmin = () => {
                   </div>
                 </div>
               </div>
+              <div className="flex justify-end mb-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => copyRenderedHtml(formData.html_content)}
+                >
+                  <Copy size={14} />
+                  Copy Rendered HTML
+                </Button>
+              </div>
               <div className="rounded-lg border border-border overflow-hidden bg-white">
                 <iframe
                   srcDoc={renderWithSampleData(formData.html_content) || "<p>No content to preview</p>"}
@@ -960,6 +980,16 @@ const EmailTemplatesAdmin = () => {
                   />
                 </div>
               </div>
+            </div>
+            <div className="flex justify-end mb-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => selectedTemplate && copyRenderedHtml(selectedTemplate.html_content)}
+              >
+                <Copy size={14} />
+                Copy Rendered HTML
+              </Button>
             </div>
             <div className="rounded-lg border border-border overflow-hidden bg-white">
               <iframe
