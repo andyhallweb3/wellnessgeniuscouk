@@ -98,7 +98,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, mode = "general", userContext } = await req.json();
+    const { messages, mode = "general", userContext, documentContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -125,6 +125,11 @@ serve(async (req) => {
       if (parts.length > 0) {
         contextString = `\n\nUSER CONTEXT (use this to personalise your guidance):\n${parts.join("\n")}`;
       }
+    }
+
+    // Add document context if provided
+    if (documentContext && documentContext.trim()) {
+      contextString += `\n\nBUSINESS DOCUMENTS (use this information to provide more relevant, personalised advice):\n${documentContext}`;
     }
 
     const fullSystemPrompt = `${CLEAR_SYSTEM_PROMPT}${contextString}\n\n${modeConfig.prompt}`;
