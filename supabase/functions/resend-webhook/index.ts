@@ -115,9 +115,28 @@ Deno.serve(async (req) => {
         }
         break;
         
+      case "email.delivery_delayed":
+        console.log(`Email delivery delayed: ${event.data.email_id} to ${event.data.to?.join(", ")}`);
+        if (event.data.to?.[0]) {
+          await supabase.from("newsletter_events").insert({
+            event_type: "delivery_delayed",
+            subscriber_email: event.data.to[0],
+            send_id: event.data.email_id,
+          }).select().maybeSingle();
+        }
+        break;
+
       case "email.bounced":
         console.log(`Email bounced: ${event.data.email_id}, reason: ${event.data.bounce?.message}`);
         if (event.data.to?.[0]) {
+          // Track the bounce event
+          await supabase.from("newsletter_events").insert({
+            event_type: "bounce",
+            subscriber_email: event.data.to[0],
+            send_id: event.data.email_id,
+          }).select().maybeSingle();
+          
+          // Deactivate subscriber
           await supabase
             .from("newsletter_subscribers")
             .update({ is_active: false })
@@ -128,11 +147,27 @@ Deno.serve(async (req) => {
       case "email.complained":
         console.log(`Email complaint: ${event.data.email_id}`);
         if (event.data.to?.[0]) {
+          // Track the complaint event
+          await supabase.from("newsletter_events").insert({
+            event_type: "complaint",
+            subscriber_email: event.data.to[0],
+            send_id: event.data.email_id,
+          }).select().maybeSingle();
+          
+          // Deactivate subscriber
           await supabase
             .from("newsletter_subscribers")
             .update({ is_active: false })
             .eq("email", event.data.to[0]);
         }
+        break;
+
+      case "email.sent":
+        console.log(`Email sent: ${event.data.email_id} to ${event.data.to?.join(", ")}`);
+        break;
+        
+      case "email.delivered":
+        console.log(`Email delivered: ${event.data.email_id}`);
         break;
         
       default:
