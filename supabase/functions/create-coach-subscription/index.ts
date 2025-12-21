@@ -7,7 +7,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const AI_COACH_PRICE_ID = "price_1SgMEYADyJKZqOM97DKPDMXA";
+// AI Coach subscription tiers
+const SUBSCRIPTION_PRICES: Record<string, string> = {
+  "ai-coach-pro": "price_1SgoATADyJKZqOM9zDbLJkOy",     // £19.99/month - 40 credits
+  "ai-coach-expert": "price_1SgoAVADyJKZqOM9MrtJJj3b",  // £39.99/month - 120 credits
+};
+
+// Credit allowances per tier
+const TIER_CREDITS: Record<string, number> = {
+  "ai-coach-pro": 40,
+  "ai-coach-expert": 120,
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -29,7 +39,11 @@ serve(async (req) => {
       throw new Error("User not authenticated or email not available");
     }
 
-    console.log("[CREATE-COACH-SUBSCRIPTION] Creating subscription for:", user.email);
+    // Get the tier from request body, default to pro
+    const { tier } = await req.json().catch(() => ({ tier: "ai-coach-pro" }));
+    const priceId = SUBSCRIPTION_PRICES[tier] || SUBSCRIPTION_PRICES["ai-coach-pro"];
+    
+    console.log("[CREATE-COACH-SUBSCRIPTION] Creating subscription for:", user.email, "tier:", tier);
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -48,13 +62,17 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: AI_COACH_PRICE_ID,
+          price: priceId,
           quantity: 1,
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/hub/coach?subscribed=true`,
-      cancel_url: `${req.headers.get("origin")}/hub/coach`,
+      success_url: `${req.headers.get("origin")}/hub/coach?subscribed=true&tier=${tier}`,
+      cancel_url: `${req.headers.get("origin")}/products`,
+      metadata: {
+        tier,
+        credits: String(TIER_CREDITS[tier] || 40),
+      },
     });
 
     console.log("[CREATE-COACH-SUBSCRIPTION] Session created:", session.id);
