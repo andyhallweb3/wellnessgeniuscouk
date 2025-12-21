@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 interface CoachCredits {
   balance: number;
   monthlyAllowance: number;
+  tier: "pro" | "expert" | null;
 }
 
 interface CoachProfile {
@@ -24,7 +25,7 @@ interface CoachProfile {
 
 export const useCoachCredits = () => {
   const { user } = useAuth();
-  const [credits, setCredits] = useState<CoachCredits>({ balance: 40, monthlyAllowance: 40 });
+  const [credits, setCredits] = useState<CoachCredits>({ balance: 40, monthlyAllowance: 40, tier: null });
   const [profile, setProfile] = useState<CoachProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +33,28 @@ export const useCoachCredits = () => {
     if (!user) return;
 
     try {
-      // Fetch credits
+      // First, check subscription to get tier and monthly allowance
+      const { data: sessionData } = await supabase.auth.getSession();
+      let subscriptionTier: "pro" | "expert" | null = null;
+      let subscriptionMonthlyAllowance = 40; // Default for Pro
+
+      if (sessionData?.session?.access_token) {
+        const { data: subData, error: subError } = await supabase.functions.invoke(
+          "check-coach-subscription",
+          {
+            headers: {
+              Authorization: `Bearer ${sessionData.session.access_token}`,
+            },
+          }
+        );
+
+        if (!subError && subData?.subscribed) {
+          subscriptionTier = subData.tier || "pro";
+          subscriptionMonthlyAllowance = subData.monthly_allowance || (subscriptionTier === "expert" ? 120 : 40);
+        }
+      }
+
+      // Fetch credits from database
       const { data: creditsData } = await supabase
         .from("coach_credits")
         .select("balance, monthly_allowance")
@@ -40,15 +62,42 @@ export const useCoachCredits = () => {
         .single();
 
       if (creditsData) {
-        setCredits({
-          balance: creditsData.balance,
-          monthlyAllowance: creditsData.monthly_allowance,
-        });
+        // If subscription tier changed, update monthly allowance in DB
+        if (subscriptionTier && creditsData.monthly_allowance !== subscriptionMonthlyAllowance) {
+          const { error: updateError } = await supabase
+            .from("coach_credits")
+            .update({ monthly_allowance: subscriptionMonthlyAllowance })
+            .eq("user_id", user.id);
+
+          if (!updateError) {
+            setCredits({
+              balance: creditsData.balance,
+              monthlyAllowance: subscriptionMonthlyAllowance,
+              tier: subscriptionTier,
+            });
+          } else {
+            setCredits({
+              balance: creditsData.balance,
+              monthlyAllowance: creditsData.monthly_allowance,
+              tier: subscriptionTier,
+            });
+          }
+        } else {
+          setCredits({
+            balance: creditsData.balance,
+            monthlyAllowance: subscriptionTier ? subscriptionMonthlyAllowance : creditsData.monthly_allowance,
+            tier: subscriptionTier,
+          });
+        }
       } else {
-        // Create initial credits record
+        // Create initial credits record based on subscription tier
         const { data: newCredits } = await supabase
           .from("coach_credits")
-          .insert({ user_id: user.id, balance: 40, monthly_allowance: 40 })
+          .insert({ 
+            user_id: user.id, 
+            balance: subscriptionMonthlyAllowance, 
+            monthly_allowance: subscriptionMonthlyAllowance 
+          })
           .select()
           .single();
 
@@ -56,6 +105,7 @@ export const useCoachCredits = () => {
           setCredits({
             balance: newCredits.balance,
             monthlyAllowance: newCredits.monthly_allowance,
+            tier: subscriptionTier,
           });
         }
       }
