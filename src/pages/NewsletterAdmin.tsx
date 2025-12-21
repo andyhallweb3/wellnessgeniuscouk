@@ -46,7 +46,9 @@ import {
   TrendingUp,
   Sparkles,
   Save,
-  FolderOpen
+  FolderOpen,
+  Moon,
+  Sun
 } from "lucide-react";
 import {
   Dialog,
@@ -200,6 +202,9 @@ const NewsletterAdmin = () => {
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [showSaveTemplateInput, setShowSaveTemplateInput] = useState(false);
+  
+  // Dark mode preview toggle
+  const [previewDarkMode, setPreviewDarkMode] = useState(false);
 
   interface AdminUser {
     id: string;
@@ -2511,7 +2516,7 @@ const NewsletterAdmin = () => {
                 )}
 
                 {/* HTML Preview */}
-                <div className="border border-border rounded-xl overflow-hidden bg-white">
+                <div className={`border border-border rounded-xl overflow-hidden ${previewDarkMode ? 'bg-neutral-900' : 'bg-white'}`}>
                   <div className="bg-secondary px-4 py-2 flex items-center justify-between border-b border-border">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -2520,6 +2525,16 @@ const NewsletterAdmin = () => {
                       <span className="ml-2 text-xs text-muted-foreground">Email Preview</span>
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Dark Mode Toggle */}
+                      <Button
+                        size="sm"
+                        variant={previewDarkMode ? "default" : "ghost"}
+                        className="gap-1 text-xs h-7"
+                        onClick={() => setPreviewDarkMode(!previewDarkMode)}
+                      >
+                        {previewDarkMode ? <Moon size={14} /> : <Sun size={14} />}
+                        {previewDarkMode ? 'Dark' : 'Light'}
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -2559,9 +2574,31 @@ const NewsletterAdmin = () => {
                     </div>
                   </div>
                   <iframe
-                    srcDoc={previewHtml}
-                    className="w-full h-[800px] border-0"
+                    srcDoc={previewDarkMode 
+                      ? previewHtml.replace('</style>', `
+                        /* Force dark mode for preview */
+                        .email-bg { background-color: #1a1a1a !important; }
+                        .email-container { background-color: #262626 !important; }
+                        .content-bg { background-color: #262626 !important; }
+                        .light-text { color: #e5e5e5 !important; }
+                        .dark-text { color: #f5f5f5 !important; }
+                        .muted-text { color: #a3a3a3 !important; }
+                        .border-color { border-color: #404040 !important; }
+                        .card-bg { background-color: #333333 !important; }
+                        .footer-bg { background-color: #1f1f1f !important; }
+                        .link-color { color: #5eead4 !important; }
+                        .why-matters-bg { background-color: #1f2937 !important; }
+                        .commercial-bg { background-color: #422006 !important; }
+                        .commercial-text { color: #fcd34d !important; }
+                        .editor-choice-bg { background: linear-gradient(135deg, #134e4a 0%, #115e59 100%) !important; }
+                        .editor-choice-text { color: #ccfbf1 !important; }
+                        .editor-choice-card { background-color: rgba(0,0,0,0.3) !important; }
+                      </style>`)
+                      : previewHtml
+                    }
+                    className={`w-full h-[800px] border-0 ${previewDarkMode ? 'bg-neutral-900' : ''}`}
                     title="Newsletter Preview"
+                    style={previewDarkMode ? { colorScheme: 'dark' } : undefined}
                   />
                 </div>
               </div>
