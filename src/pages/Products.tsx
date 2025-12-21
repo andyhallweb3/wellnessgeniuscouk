@@ -647,14 +647,23 @@ const Products = () => {
 
           {/* Bundles */}
           <section>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <Package size={20} className="text-amber-600" />
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <Package size={20} className="text-amber-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-heading">Bundles</h2>
+                  <p className="text-sm text-muted-foreground">Save when you buy together.</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-heading">Bundles</h2>
-                <p className="text-sm text-muted-foreground">Save when you buy together.</p>
-              </div>
+              <Link 
+                to="/bundles" 
+                className="text-sm text-accent hover:underline flex items-center gap-1"
+              >
+                Compare bundles
+                <ArrowRight size={14} />
+              </Link>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               {bundles.map(bundle => (

@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
+import Bundles from "./pages/Bundles";
 import Auth from "./pages/Auth";
 import MemberHub from "./pages/MemberHub";
 import AICoach from "./pages/AICoach";
@@ -44,6 +45,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/bundles" element={<Bundles />} />
             <Route path="/how-to-use" element={<HowToUseStack />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/hub" element={<MemberHub />} />
