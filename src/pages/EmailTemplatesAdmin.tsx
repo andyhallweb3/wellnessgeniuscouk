@@ -36,6 +36,7 @@ import {
   Download,
   ArrowUp,
   ArrowDown,
+  Send,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -390,6 +391,8 @@ const EmailTemplatesAdmin = () => {
     firstname: "Sarah",
     siteUrl: "https://wellnessgenius.co",
   });
+  const [testEmail, setTestEmail] = useState("");
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -617,6 +620,33 @@ const EmailTemplatesAdmin = () => {
       toast.success("Rendered HTML copied to clipboard");
     } catch {
       toast.error("Failed to copy rendered HTML");
+    }
+  };
+
+  const sendTestEmail = async (html: string, subject: string) => {
+    if (!testEmail) {
+      toast.error("Please enter an email address");
+      return;
+    }
+
+    setIsSendingTest(true);
+    try {
+      const renderedHtml = renderWithSampleData(html);
+      const { data, error } = await supabase.functions.invoke("send-test-email", {
+        body: {
+          to: testEmail,
+          subject: subject,
+          html: renderedHtml,
+        },
+      });
+
+      if (error) throw error;
+      toast.success(`Test email sent to ${testEmail}`);
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      toast.error("Failed to send test email");
+    } finally {
+      setIsSendingTest(false);
     }
   };
 
@@ -909,7 +939,25 @@ const EmailTemplatesAdmin = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end mb-3">
+              <div className="flex flex-col sm:flex-row gap-3 mb-3">
+                <div className="flex-1 flex gap-2">
+                  <Input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="Enter email for test send..."
+                    className="h-9 text-sm"
+                  />
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={() => sendTestEmail(formData.html_content, formData.subject)}
+                    disabled={isSendingTest || !testEmail}
+                  >
+                    {isSendingTest ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                    Send Test
+                  </Button>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
@@ -981,7 +1029,25 @@ const EmailTemplatesAdmin = () => {
                 </div>
               </div>
             </div>
-            <div className="flex justify-end mb-3">
+            <div className="flex flex-col sm:flex-row gap-3 mb-3">
+              <div className="flex-1 flex gap-2">
+                <Input
+                  type="email"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  placeholder="Enter email for test send..."
+                  className="h-9 text-sm"
+                />
+                <Button
+                  variant="accent"
+                  size="sm"
+                  onClick={() => selectedTemplate && sendTestEmail(selectedTemplate.html_content, selectedTemplate.subject)}
+                  disabled={isSendingTest || !testEmail}
+                >
+                  {isSendingTest ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                  Send Test
+                </Button>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
