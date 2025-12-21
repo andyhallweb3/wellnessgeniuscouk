@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import DataDeletionForm from "@/components/DataDeletionForm";
 
 const PrivacyPolicy = () => {
   const lastUpdated = "21 December 2024";
@@ -227,7 +228,18 @@ const PrivacyPolicy = () => {
               </section>
 
               <section>
-                <h2 className="text-2xl font-heading mb-4">13. Contact Us</h2>
+                <h2 className="text-2xl font-heading mb-4">13. Request Data Deletion</h2>
+                <p className="text-muted-foreground mb-4">
+                  You have the right to request deletion of your personal data. Use the form below to submit a data deletion request, 
+                  and we'll process it within 30 days as required by GDPR.
+                </p>
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <DataDeletionForm />
+                </div>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-heading mb-4">14. Contact Us</h2>
                 <p className="text-muted-foreground mb-2">
                   If you have questions about this policy or how your data is handled:
                 </p>
