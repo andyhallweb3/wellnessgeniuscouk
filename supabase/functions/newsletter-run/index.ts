@@ -407,7 +407,7 @@ function generateEmailHTML(
                 You're receiving this because you subscribed to Wellness Genius insights.
               </p>
               <p style="margin: 0;">
-                <a href="https://wellnessgenius.co.uk/unsubscribe${unsubscribeToken ? `?token=${unsubscribeToken}` : ''}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
+                <a href="https://wellnessgeniuscouk.lovable.app/unsubscribe${unsubscribeToken ? `?token=${unsubscribeToken}` : ''}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
                   Unsubscribe
                 </a>
                 <span style="color: #94a3b8; font-size: 11px;"> • </span>
