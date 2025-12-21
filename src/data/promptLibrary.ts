@@ -5,6 +5,7 @@ export interface Prompt {
   useCase: string;
   content: string;
   whenNotToUse?: string;
+  framework?: string;
 }
 
 export const PROMPT_CATEGORIES = {
@@ -17,8 +18,48 @@ export const PROMPT_CATEGORIES = {
   reflection: { label: "Reflection & Improvement", color: "bg-yellow-500/10 text-yellow-700" },
 } as const;
 
+// C.L.E.A.R Framework explanation for prompts
+export const CLEAR_FRAMEWORK = {
+  C: { label: "Context", description: "What environment we're operating in (wellness-specific)" },
+  L: { label: "Lens", description: "The perspective the AI must adopt (commercial, behavioural, governance)" },
+  E: { label: "Expectation", description: "What a good answer looks like" },
+  A: { label: "Assumptions", description: "What must not be assumed or hallucinated" },
+  R: { label: "Response Format", description: "Structured, reusable outputs" },
+};
+
 export const PROMPTS: Prompt[] = [
-  // SECTION 1 — CORE SYSTEM PROMPTS
+  // ==========================================================================
+  // FOUNDATIONAL C.L.E.A.R PROMPT
+  // ==========================================================================
+  {
+    id: "clear-foundation",
+    title: "C.L.E.A.R Foundation Prompt",
+    category: "system",
+    useCase: "Root prompt that everything else inherits from",
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+You are supporting a wellness business operating in a trust-sensitive environment where behaviour change, retention, and long-term engagement matter more than short-term activity.
+
+L – LENS:
+Adopt a commercial and behavioural lens, not a motivational or therapeutic one.
+
+E – EXPECTATION:
+Your role is to help leaders make better decisions, not feel more confident.
+
+A – ASSUMPTIONS:
+Do not assume perfect data, unlimited resources, or user compliance.
+
+R – RESPONSE FORMAT:
+Respond with:
+- Key insight
+- Commercial implication
+- Risk or limitation
+- Recommended next action`,
+  },
+
+  // ==========================================================================
+  // CORE SYSTEM PROMPTS
+  // ==========================================================================
   {
     id: "wellness-commercial-analyst",
     title: "Wellness Commercial Analyst",
@@ -50,51 +91,75 @@ If data quality or clarity is weak, recommend fixing foundations before scaling.
     title: "Wellness Data Reality Checker",
     category: "system",
     useCase: "Auditing data quality before decision-making",
-    content: `SYSTEM ROLE:
-You are a data quality auditor for a wellness business.
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+We plan to use data for AI in a wellness business.
 
-OBJECTIVE:
-Determine whether available data is usable for decision-making.
+L – LENS:
+Data governance and realism.
 
-RULES:
-- Only accept data that is currently collected, clean, and consented
-- Exclude aspirational or "planned" data
-- Flag ambiguity rather than filling gaps
+E – EXPECTATION:
+Expose gaps honestly.
 
-OUTPUT:
-- Data that can be trusted
-- Data that is risky
-- Data that should not yet be used`,
+A – ASSUMPTIONS:
+Only include data we actually collect today. Do not assume planned or aspirational data exists.
+
+R – RESPONSE FORMAT:
+Return:
+- Usable data (clean, consented, collected)
+- Risky data (quality issues, consent unclear)
+- Missing but critical data (needed but not yet collected)`,
   },
   {
     id: "ai-governance-guardrail",
     title: "AI Governance & Trust Guardrail",
     category: "system",
     useCase: "Assessing AI features for trust and regulatory risk",
-    content: `SYSTEM ROLE:
-You assess AI features for trust, transparency, and regulatory risk in wellness contexts.
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+This AI feature will affect user behaviour in a wellness context.
 
-CHECK FOR:
-- Clear user consent
-- Explainability of decisions
-- Human override points
-- Risk of perceived surveillance or manipulation
+L – LENS:
+Trust, consent, and reputational risk.
 
-RULE:
-If a feature would be uncomfortable to explain to a regulator, customer, or journalist, flag it and recommend redesign.`,
+E – EXPECTATION:
+Stress-test trust before approval.
+
+A – ASSUMPTIONS:
+Assume public scrutiny. If a feature would be uncomfortable to explain to a regulator, customer, or journalist, flag it.
+
+R – RESPONSE FORMAT:
+Answer:
+- What could go wrong?
+- Who would object?
+- How to redesign safely
+- Human override points required`,
   },
 
-  // SECTION 2 — DECISION & STRATEGY PROMPTS
+  // ==========================================================================
+  // DECISION & STRATEGY PROMPTS (C.L.E.A.R)
+  // ==========================================================================
   {
     id: "one-sentence-purpose-test",
     title: "One-Sentence AI Purpose Test",
     category: "decision",
     useCase: "Before building anything",
-    content: `PROMPT:
-What is the single decision this AI system must make easier, faster, or safer for a wellness operator?
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+We are considering an AI feature for a wellness product.
 
-RULE:
-If this cannot be answered in one sentence, the system is not ready to build.`,
+L – LENS:
+Product and commercial clarity.
+
+E – EXPECTATION:
+Force absolute clarity on purpose.
+
+A – ASSUMPTIONS:
+No vague goals allowed. If this cannot be answered in one sentence, the system is not ready to build.
+
+R – RESPONSE FORMAT:
+Return one sentence:
+"This AI exists to help [user] make [decision] better."`,
     whenNotToUse: "Don't use when exploring multiple possibilities - narrow down first.",
   },
   {
@@ -132,24 +197,100 @@ If the answer is "no" to all, stop.`,
   },
   {
     id: "build-vs-buy-decision",
-    title: "Build vs Buy vs Don't Build",
+    title: "Build vs Buy Decision",
     category: "decision",
     useCase: "Deciding whether to build, partner, or defer",
-    content: `PROMPT:
-For this AI idea, answer honestly:
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+A wellness organisation considering AI capability.
 
-- Is the decision core to our business?
-- Do we own and understand the data?
-- Can we maintain this for 24 months?
-- Would failure materially harm trust or revenue?
+L – LENS:
+Board-level risk and return.
 
-GUIDANCE:
-- Yes to all → consider build
-- Mixed → consider partner
-- Mostly no → do not build yet`,
+E – EXPECTATION:
+Recommend a clear path with reasoning.
+
+A – ASSUMPTIONS:
+Assume limited internal AI capability unless proven otherwise.
+
+R – RESPONSE FORMAT:
+Return:
+- Recommendation: Build / Buy / Partner / Wait
+- Why this option fits now
+- Risks of the other options
+- Conditions required to revisit the decision`,
+  },
+  {
+    id: "90-day-planning-engine",
+    title: "90-Day Planning Engine",
+    category: "decision",
+    useCase: "Creating a realistic 90-day AI activation plan",
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+This is a wellness organisation considering AI or advanced automation.
+
+L – LENS:
+Operate as a cautious transformation lead accountable to a board.
+
+E – EXPECTATION:
+Produce a realistic 90-day plan that improves decision quality before introducing AI.
+
+A – ASSUMPTIONS:
+Assume:
+- Data is messy
+- Teams are stretched
+- Trust is fragile
+
+R – RESPONSE FORMAT:
+Return:
+
+MONTH 1 – FOUNDATIONS
+- Objectives
+- Data clean-up actions
+- Stop rules
+
+MONTH 2 – ENGAGEMENT & SEGMENTATION
+- Behaviour signals to track
+- Journey hypotheses
+- Validation criteria
+
+MONTH 3 – MONETISATION EXPERIMENTS
+- Low-risk tests
+- Success thresholds
+- What must NOT be automated yet`,
   },
 
-  // SECTION 3 — WELLNESS-SPECIFIC DATA & ENGAGEMENT PROMPTS
+  // ==========================================================================
+  // WELLNESS-SPECIFIC DATA & ENGAGEMENT PROMPTS
+  // ==========================================================================
+  {
+    id: "habit-outcome-mapping",
+    title: "Habit → Outcome Map",
+    category: "data",
+    useCase: "Connecting behaviours to measurable outcomes",
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+We are designing engagement systems for a wellness product where long-term adherence matters.
+
+L – LENS:
+Behavioural science + commercial outcomes.
+
+E – EXPECTATION:
+Identify which habits actually drive value.
+
+A – ASSUMPTIONS:
+Do not assume:
+- More engagement is always better
+- Incentives are the answer
+
+R – RESPONSE FORMAT:
+Output a table:
+- Habit / behaviour
+- Frequency threshold
+- Outcome influenced
+- Revenue or retention impact
+- Confidence level`,
+  },
   {
     id: "meaningful-engagement-definition",
     title: "Meaningful Engagement Definition",
@@ -162,21 +303,6 @@ RULES:
 - Exclude vanity metrics (likes, opens)
 - Prioritise repeated actions over single events
 - Tie behaviours to outcomes (retention, upsell, adherence)`,
-  },
-  {
-    id: "habit-outcome-mapping",
-    title: "Habit → Outcome Mapping",
-    category: "data",
-    useCase: "Connecting behaviours to measurable outcomes",
-    content: `PROMPT:
-Map each core habit or behaviour to a measurable outcome.
-
-FORMAT:
-Behaviour:
-Frequency threshold:
-Outcome influenced:
-Evidence or assumption:
-Confidence level:`,
   },
   {
     id: "drop-off-risk-detection",
@@ -198,26 +324,66 @@ OUTPUT:
 - Confidence level`,
   },
 
-  // SECTION 4 — INTERVENTION & JOURNEY PROMPTS
+  // ==========================================================================
+  // INTERVENTION & JOURNEY PROMPTS (C.L.E.A.R)
+  // ==========================================================================
   {
     id: "intervention-ladder",
     title: "Intervention Ladder (Margin-Safe)",
     category: "intervention",
     useCase: "Choosing the right intervention without burning margin",
-    content: `RULE:
-Never recommend incentives as the first response.
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+Users are disengaging from a wellness product.
 
-INTERVENTION ORDER:
-1. Timing adjustment
-2. Content relevance
-3. Goal reframing
-4. Social proof
-5. Human touch
-6. Incentive (last resort)
+L – LENS:
+Margin protection and trust preservation.
 
-PROMPT:
-Which step is most appropriate based on behaviour and confidence?`,
+E – EXPECTATION:
+Recommend the lightest effective intervention.
+
+A – ASSUMPTIONS:
+Assume incentives are expensive and should be avoided early.
+
+R – RESPONSE FORMAT:
+Return a ranked ladder:
+1. Timing adjustment (Cost: £0)
+2. Relevance/content shift (Cost: £0)
+3. Goal reframing (Cost: £0)
+4. Social proof (Cost: £0)
+5. Human touch (Cost: Low)
+6. Incentive (Cost: High - only if justified)
+
+Include: Which rung is appropriate now and why.`,
     whenNotToUse: "Skip when you already know the user needs high-touch support.",
+  },
+  {
+    id: "journey-blueprint-builder",
+    title: "Journey Blueprint (IF/THEN Logic)",
+    category: "intervention",
+    useCase: "Creating executable journey logic for dev teams",
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+We want to intervene when engagement drops.
+
+L – LENS:
+Operational automation, not marketing.
+
+E – EXPECTATION:
+Create logic that could be implemented by a dev team.
+
+A – ASSUMPTIONS:
+Assume incomplete data.
+
+R – RESPONSE FORMAT:
+Return logic in this format:
+IF [condition]
+AND [behaviour signal]
+THEN [intervention]
+BECAUSE [reason]
+
+SUCCESS = [outcome measure]
+FAILURE = [escalation path]`,
   },
   {
     id: "retention-intervention-logic",
@@ -249,7 +415,59 @@ RULE:
 Do not aim for full return immediately. Aim for consistency.`,
   },
 
-  // SECTION 5 — MONETISATION & COMMERCIAL PROMPTS
+  // ==========================================================================
+  // MONETISATION & COMMERCIAL PROMPTS (C.L.E.A.R)
+  // ==========================================================================
+  {
+    id: "cfo-translation-engine",
+    title: "CFO Translation Engine",
+    category: "commercial",
+    useCase: "Explaining engagement to finance audiences",
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+We need to explain engagement impact to a finance audience.
+
+L – LENS:
+CFO / commercial director perspective.
+
+E – EXPECTATION:
+Translate behaviour into financial implications.
+
+A – ASSUMPTIONS:
+Use conservative assumptions. No hockey-stick growth.
+
+R – RESPONSE FORMAT:
+Return:
+- Engagement behaviour
+- Observed change
+- Retention or LTV sensitivity
+- Revenue impact (low / high range)
+- Confidence rating`,
+  },
+  {
+    id: "modelling-check",
+    title: "Financial Modelling Stress Test",
+    category: "commercial",
+    useCase: "Validating financial model assumptions",
+    framework: "C.L.E.A.R",
+    content: `C – CONTEXT:
+We are building a financial model based on engagement data.
+
+L – LENS:
+Risk-averse financial planning.
+
+E – EXPECTATION:
+Stress-test assumptions before presenting to board.
+
+A – ASSUMPTIONS:
+Assume user behaviour decays over time.
+
+R – RESPONSE FORMAT:
+Flag:
+- Weak assumptions (likely to be wrong)
+- Missing variables (not included but should be)
+- Areas likely to be challenged by finance`,
+  },
   {
     id: "engagement-revenue-translator",
     title: "Engagement → Revenue Translator",
@@ -265,25 +483,6 @@ For each engagement behaviour, answer:
 If influence is unclear, do not monetise yet.`,
   },
   {
-    id: "cfo-safe-summary",
-    title: "CFO-Safe Commercial Summary",
-    category: "commercial",
-    useCase: "Explaining engagement to finance audiences",
-    content: `SYSTEM ROLE:
-You explain engagement initiatives to a finance audience.
-
-RULES:
-- No emotional language
-- No guarantees
-- Use ranges, not exact figures
-
-FORMAT:
-Behaviour:
-Observed change:
-Commercial implication:
-Confidence level:`,
-  },
-  {
     id: "partner-readiness-test",
     title: "Partner / Sponsor Readiness Test",
     category: "commercial",
@@ -294,7 +493,9 @@ Would a partner trust this data enough to pay for outcomes rather than exposure?
 If no, identify what is missing.`,
   },
 
-  // SECTION 6 — EXECUTION & GOVERNANCE PROMPTS
+  // ==========================================================================
+  // EXECUTION & GOVERNANCE PROMPTS
+  // ==========================================================================
   {
     id: "90-day-priority-filter",
     title: "90-Day Priority Filter",
@@ -335,8 +536,28 @@ FORMAT:
 RULE:
 One page. No jargon.`,
   },
+  {
+    id: "red-flag-register",
+    title: "Red-Flag Register",
+    category: "execution",
+    useCase: "Tracking and surfacing failure patterns",
+    content: `PROMPT:
+Identify which of these failure patterns are present:
 
-  // SECTION 7 — REFLECTION & CONTINUOUS IMPROVEMENT
+1. AI before decisions (implementing AI before clarifying what decisions need support)
+2. Weak consent models (collecting data without clear, specific consent)
+3. Scaling before trust (rolling out widely before validating in controlled tests)
+4. Vanity over value (measuring engagement without commercial attribution)
+5. Speed over governance (moving fast without documenting decisions and risks)
+
+For each flag present, explain:
+- Why this is a risk
+- What to do about it`,
+  },
+
+  // ==========================================================================
+  // REFLECTION & CONTINUOUS IMPROVEMENT
+  // ==========================================================================
   {
     id: "monthly-decision-review",
     title: "Monthly Decision Review",
@@ -347,5 +568,25 @@ What decision did we make this month that would have been better with clearer da
 
 ACTION:
 Design the system to support that decision next time.`,
+  },
+  {
+    id: "stack-usage-check",
+    title: "Wellness Genius Stack Usage Check",
+    category: "reflection",
+    useCase: "Ensuring you're using the products in sequence",
+    content: `CHECK YOUR PROGRESS:
+
+1. AI Readiness Score → Have you established reality?
+2. Build vs Buy → Have you chosen the right path?
+3. Wellness AI Builder → Have you defined what to build?
+4. Engagement Systems Playbook → Have you fixed engagement properly?
+5. Engagement → Revenue Framework → Can you translate value commercially?
+6. 90-Day Activation Playbook → Are you executing with discipline?
+
+RULE:
+If you've skipped steps, go back. Skipping increases risk and wasted effort.
+
+CORE PRINCIPLE:
+Clarity before tools. Behaviour before automation. Control before scale.`,
   },
 ];
