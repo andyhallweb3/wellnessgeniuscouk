@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import FloatingCoachButton from "@/components/coach/FloatingCoachButton";
+import SiteOnboarding from "@/components/onboarding/SiteOnboarding";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Bundles from "./pages/Bundles";
@@ -80,6 +81,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <FloatingCoachButton />
+          <SiteOnboarding />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
