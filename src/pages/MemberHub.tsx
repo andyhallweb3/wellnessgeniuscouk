@@ -33,6 +33,7 @@ import {
 } from "@/lib/pdf-generators";
 import PromptLibrary from "@/components/hub/PromptLibrary";
 import SavedInsights from "@/components/hub/SavedInsights";
+import OnboardingBanner from "@/components/hub/OnboardingBanner";
 
 interface Purchase {
   id: string;
@@ -209,6 +210,9 @@ const MemberHub = () => {
               </Button>
             </div>
           </div>
+
+          {/* Onboarding Banner */}
+          <OnboardingBanner />
 
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
