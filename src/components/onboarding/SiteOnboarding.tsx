@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.png";
 import { useAuth } from "@/contexts/AuthContext";
-
-const ONBOARDING_COMPLETED_KEY = "wellness-genius-onboarding-completed";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 interface OnboardingStep {
   id: string;
@@ -74,21 +73,20 @@ const steps: OnboardingStep[] = [
 const SiteOnboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOnboardingOpen, setIsOnboardingOpen, hasCompletedOnboarding, completeOnboarding } = useOnboarding();
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     
-    const completed = localStorage.getItem(ONBOARDING_COMPLETED_KEY);
-    if (!completed) {
+    if (!hasCompletedOnboarding()) {
       // Show onboarding after a delay
       const timer = setTimeout(() => {
-        setIsOpen(true);
+        setIsOnboardingOpen(true);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [user]);
+  }, [user, hasCompletedOnboarding, setIsOnboardingOpen]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -107,18 +105,13 @@ const SiteOnboarding = () => {
     navigate(href);
   };
 
-  const completeOnboarding = () => {
-    localStorage.setItem(ONBOARDING_COMPLETED_KEY, "true");
-    setIsOpen(false);
-  };
-
   const step = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
 
   if (!user) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleSkip()}>
+    <Dialog open={isOnboardingOpen} onOpenChange={(open) => !open && handleSkip()}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden border-accent/20">
         {/* Close button */}
         <button 
