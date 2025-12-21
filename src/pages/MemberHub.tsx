@@ -18,7 +18,8 @@ import {
   Terminal,
   MessageCircle,
   Bookmark,
-  RotateCcw
+  RotateCcw,
+  Library
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -518,6 +519,12 @@ const MemberHub = () => {
                     <div className="rounded-xl border border-border bg-card p-6">
                       <h3 className="font-heading mb-4">Quick Actions</h3>
                       <div className="space-y-2">
+                        <Button variant="outline" className="w-full justify-start" asChild>
+                          <Link to="/hub/downloads">
+                            <Library size={16} />
+                            Downloads Library
+                          </Link>
+                        </Button>
                         <Button variant="outline" className="w-full justify-start" asChild>
                           <Link to="/ai-readiness">
                             <Sparkles size={16} />
