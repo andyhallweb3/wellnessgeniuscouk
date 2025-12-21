@@ -16,6 +16,7 @@ import MemberHub from "./pages/MemberHub";
 import DownloadsLibrary from "./pages/DownloadsLibrary";
 import AICoach from "./pages/AICoach";
 import AIGenius from "./pages/AIGenius";
+import Genie from "./pages/Genie";
 import AIReadinessLanding from "./pages/AIReadinessLanding";
 import AIReadinessAssessmentFree from "./pages/AIReadinessAssessmentFree";
 import AIReadinessAssessmentPaid from "./pages/AIReadinessAssessmentPaid";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/hub/coach" element={<AICoach />} />
             <Route path="/ai-coach" element={<AICoach />} />
             <Route path="/ai-genius" element={<AIGenius />} />
+            <Route path="/genie" element={<Genie />} />
             <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
             <Route path="/ai-readiness/full/:id" element={<AIReadinessAssessmentPaid />} />
             <Route path="/ai-readiness/results/:id" element={<AIReadinessResults />} />

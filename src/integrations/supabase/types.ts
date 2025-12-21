@@ -239,6 +239,60 @@ export type Database = {
         }
         Relationships: []
       }
+      business_memory: {
+        Row: {
+          annual_revenue_band: string | null
+          biggest_challenge: string | null
+          business_name: string | null
+          business_type: string | null
+          communication_style: string | null
+          created_at: string
+          decision_style: string | null
+          id: string
+          key_metrics: string[] | null
+          known_weak_spots: string[] | null
+          primary_goal: string | null
+          revenue_model: string | null
+          team_size: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          annual_revenue_band?: string | null
+          biggest_challenge?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          communication_style?: string | null
+          created_at?: string
+          decision_style?: string | null
+          id?: string
+          key_metrics?: string[] | null
+          known_weak_spots?: string[] | null
+          primary_goal?: string | null
+          revenue_model?: string | null
+          team_size?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          annual_revenue_band?: string | null
+          biggest_challenge?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          communication_style?: string | null
+          created_at?: string
+          decision_style?: string | null
+          id?: string
+          key_metrics?: string[] | null
+          known_weak_spots?: string[] | null
+          primary_goal?: string | null
+          revenue_model?: string | null
+          team_size?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       coach_credits: {
         Row: {
           balance: number
@@ -473,6 +527,102 @@ export type Database = {
           template_type?: string
           updated_at?: string
           variables?: Json | null
+        }
+        Relationships: []
+      }
+      genie_decisions: {
+        Row: {
+          context: string | null
+          created_at: string
+          decision_summary: string
+          id: string
+          mode: string | null
+          outcome: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          decision_summary: string
+          id?: string
+          mode?: string | null
+          outcome?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          decision_summary?: string
+          id?: string
+          mode?: string | null
+          outcome?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      genie_insights: {
+        Row: {
+          content: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          insight_type: string
+          relevance_score: number | null
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          insight_type: string
+          relevance_score?: number | null
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          insight_type?: string
+          relevance_score?: number | null
+          source?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      genie_sessions: {
+        Row: {
+          ended_at: string | null
+          id: string
+          messages: Json
+          mode: string
+          started_at: string
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          messages?: Json
+          mode: string
+          started_at?: string
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          messages?: Json
+          mode?: string
+          started_at?: string
+          summary?: string | null
+          user_id?: string
         }
         Relationships: []
       }
