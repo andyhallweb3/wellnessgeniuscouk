@@ -1,15 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { 
-  X, 
   Send, 
   Loader2, 
-  Bot, 
   User, 
   RotateCcw, 
-  FileText, 
-  Upload,
   FolderOpen,
-  Minimize2
+  Minimize2,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +18,7 @@ import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 import MarkdownRenderer from "./MarkdownRenderer";
 import DocumentLibrary from "./DocumentLibrary";
+import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.png";
 
 interface Message {
   role: "user" | "assistant";
@@ -188,8 +186,8 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
         <SheetHeader className="p-4 border-b shrink-0">
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2">
-              <Bot size={20} className="text-accent" />
-              AI Coach
+              <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-6 w-6 object-contain" />
+              Wellness Genie
               {documents.length > 0 && (
                 <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">
                   {documents.length} docs
@@ -212,7 +210,7 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-4 mt-2 shrink-0">
             <TabsTrigger value="chat" className="flex-1">
-              <Bot size={14} className="mr-1" />
+              <MessageSquare size={14} className="mr-1" />
               Chat
             </TabsTrigger>
             <TabsTrigger value="library" className="flex-1">
@@ -226,7 +224,7 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
             <div className="flex-1 overflow-y-auto space-y-3 mb-4">
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                  <Bot size={32} className="text-accent mb-3" />
+                  <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-12 w-12 object-contain mb-3" />
                   <p className="text-sm text-muted-foreground mb-2">
                     Your personal wellness business assistant
                   </p>
@@ -243,8 +241,8 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
                     className={`flex gap-2 ${message.role === "user" ? "justify-end" : ""}`}
                   >
                     {message.role === "assistant" && (
-                      <div className="p-1.5 rounded-full bg-accent/10 h-fit shrink-0">
-                        <Bot size={14} className="text-accent" />
+                      <div className="p-1 rounded-full bg-accent/10 h-fit shrink-0">
+                        <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
                       </div>
                     )}
                     <div
@@ -268,10 +266,10 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
                   </div>
                 ))
               )}
-              {isStreaming && messages[messages.length - 1]?.role === "user" && (
+                {isStreaming && messages[messages.length - 1]?.role === "user" && (
                 <div className="flex gap-2">
-                  <div className="p-1.5 rounded-full bg-accent/10 h-fit">
-                    <Bot size={14} className="text-accent" />
+                  <div className="p-1 rounded-full bg-accent/10 h-fit">
+                    <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
                   </div>
                   <div className="rounded-xl px-3 py-2 bg-secondary">
                     <Loader2 className="h-4 w-4 animate-spin" />
