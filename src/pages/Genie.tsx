@@ -7,18 +7,18 @@ import {
   Send, 
   Loader2, 
   ArrowLeft,
-  Bot,
+  Brain,
   User,
   RotateCcw,
-  Settings,
-  Brain,
-  Sparkles
+  Sparkles,
+  Settings
 } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import GenieModeSelector from "@/components/genie/GenieModeSelector";
+import GenieOnboarding from "@/components/genie/GenieOnboarding";
 import { GENIE_MODES, getModeById } from "@/components/genie/GenieModes";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
@@ -28,6 +28,20 @@ import CreditDisplay from "@/components/coach/CreditDisplay";
 interface Message {
   role: "user" | "assistant";
   content: string;
+}
+
+interface GenieOnboardingData {
+  business_name: string;
+  business_type: string;
+  revenue_model: string;
+  annual_revenue_band: string;
+  team_size: string;
+  primary_goal: string;
+  biggest_challenge: string;
+  known_weak_spots: string[];
+  key_metrics: string[];
+  communication_style: string;
+  decision_style: string;
 }
 
 const Genie = () => {
@@ -40,8 +54,9 @@ const Genie = () => {
   const [selectedMode, setSelectedMode] = useState("daily_operator");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { getMemoryContext, memory, loading: memoryLoading } = useBusinessMemory();
+  const { getMemoryContext, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -49,9 +64,44 @@ const Genie = () => {
     }
   }, [user, authLoading, navigate]);
 
+  // Show onboarding if no memory exists
+  useEffect(() => {
+    if (!memoryLoading && !memory && user) {
+      setShowOnboarding(true);
+    }
+  }, [memoryLoading, memory, user]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleOnboardingComplete = async (data: GenieOnboardingData) => {
+    const success = await saveMemory({
+      business_name: data.business_name,
+      business_type: data.business_type,
+      revenue_model: data.revenue_model,
+      annual_revenue_band: data.annual_revenue_band,
+      team_size: data.team_size,
+      primary_goal: data.primary_goal,
+      biggest_challenge: data.biggest_challenge,
+      known_weak_spots: data.known_weak_spots,
+      key_metrics: data.key_metrics,
+      communication_style: data.communication_style,
+      decision_style: data.decision_style,
+    });
+    
+    if (success) {
+      toast.success("Business profile saved. The Genie will remember this.");
+      setShowOnboarding(false);
+      await refetchMemory();
+    } else {
+      toast.error("Failed to save profile. Please try again.");
+    }
+  };
+
+  const handleSkipOnboarding = () => {
+    setShowOnboarding(false);
+  };
 
   const streamChat = useCallback(async (userMessages: Message[], mode: string) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genie-chat`;
@@ -187,6 +237,30 @@ const Genie = () => {
     );
   }
 
+  // Show onboarding flow
+  if (showOnboarding) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Helmet>
+          <title>Setup | Wellness Genie</title>
+        </Helmet>
+        <Header />
+        <main className="pt-24 pb-16">
+          <div className="container-narrow section-padding">
+            <Button variant="ghost" size="sm" className="mb-8" onClick={() => navigate("/hub")}>
+              <ArrowLeft size={16} />
+              Back to Hub
+            </Button>
+            <GenieOnboarding 
+              onComplete={handleOnboardingComplete} 
+              onSkip={handleSkipOnboarding}
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   const currentMode = getModeById(selectedMode);
 
   return (
@@ -218,7 +292,15 @@ const Genie = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowOnboarding(true)}
+                title="Edit business profile"
+              >
+                <Settings size={14} />
+              </Button>
               {messages.length > 0 && (
                 <Button variant="outline" size="sm" onClick={handleNewConversation}>
                   <RotateCcw size={14} />
