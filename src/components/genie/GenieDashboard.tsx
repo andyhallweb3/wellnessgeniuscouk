@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   Brain, 
   Lightbulb, 
@@ -12,14 +13,22 @@ import {
   ChevronRight,
   Sparkles,
   Eye,
-  X
+  X,
+  Settings
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { BusinessMemory, GenieInsight, GenieDecision } from "@/hooks/useBusinessMemory";
 import { GenieNotification } from "@/hooks/useGenieNotifications";
+import NotificationPreferences from "./NotificationPreferences";
 import { formatDistanceToNow } from "date-fns";
 
 interface GenieDashboardProps {
@@ -111,6 +120,7 @@ const GenieDashboard = ({
   onMarkNotificationRead
 }: GenieDashboardProps) => {
   const unreadCount = notifications.filter(n => !n.read).length;
+  const [showPreferences, setShowPreferences] = useState(false);
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -231,15 +241,25 @@ const GenieDashboard = ({
         {/* Notifications */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Bell size={18} className="text-accent" />
-              Notifications
-              {unreadCount > 0 && (
-                <Badge variant="default" className="ml-auto bg-accent text-accent-foreground">
-                  {unreadCount}
-                </Badge>
-              )}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Bell size={18} className="text-accent" />
+                Notifications
+                {unreadCount > 0 && (
+                  <Badge variant="default" className="bg-accent text-accent-foreground">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowPreferences(true)}
+                title="Notification settings"
+              >
+                <Settings size={14} />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {notifications.length > 0 ? (
@@ -371,6 +391,16 @@ const GenieDashboard = ({
           </CardContent>
         </Card>
       </div>
+
+      {/* Notification Preferences Dialog */}
+      <Dialog open={showPreferences} onOpenChange={setShowPreferences}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Notification Preferences</DialogTitle>
+          </DialogHeader>
+          <NotificationPreferences onClose={() => setShowPreferences(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
