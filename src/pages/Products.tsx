@@ -496,9 +496,16 @@ const Products = () => {
             <h1 className="text-4xl md:text-5xl font-heading mb-4">
               Products & Downloads
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground mb-6">
               Practical intelligence for wellness leaders who need clarity, not hype.
             </p>
+            <Link 
+              to="/how-to-use" 
+              className="inline-flex items-center gap-2 text-accent hover:underline font-medium"
+            >
+              <BookOpen size={18} />
+              Learn how to use the stack →
+            </Link>
           </div>
 
           {/* Free Products */}

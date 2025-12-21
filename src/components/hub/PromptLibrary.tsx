@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { Copy, Check, Terminal, AlertCircle, Search } from "lucide-react";
+import { Copy, Check, Terminal, AlertCircle, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { PROMPTS, PROMPT_CATEGORIES, type Prompt } from "@/data/promptLibrary";
+import { PROMPTS, PROMPT_CATEGORIES, CLEAR_FRAMEWORK, type Prompt } from "@/data/promptLibrary";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const PromptLibrary = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -32,6 +37,7 @@ const PromptLibrary = () => {
   });
 
   const categories = Object.entries(PROMPT_CATEGORIES);
+  const clearPromptCount = PROMPTS.filter(p => p.framework === "C.L.E.A.R").length;
 
   return (
     <section>
@@ -44,6 +50,32 @@ const PromptLibrary = () => {
           <p className="text-sm text-muted-foreground">
             Production-grade prompts for wellness businesses
           </p>
+        </div>
+      </div>
+
+      {/* C.L.E.A.R Framework Banner */}
+      <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 border border-primary/20">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="text-primary" size={18} />
+          <span className="font-heading text-sm">C.L.E.A.R Framework</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+            {clearPromptCount} prompts
+          </span>
+        </div>
+        <div className="grid grid-cols-5 gap-2 text-xs">
+          {Object.entries(CLEAR_FRAMEWORK).map(([key, value]) => (
+            <Tooltip key={key}>
+              <TooltipTrigger asChild>
+                <div className="px-2 py-1.5 rounded-md bg-background/50 text-center cursor-help">
+                  <span className="font-heading text-primary">{key}</span>
+                  <span className="text-muted-foreground ml-1">– {value.label}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">{value.description}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
         </div>
       </div>
 
@@ -131,10 +163,26 @@ const PromptCard = ({ prompt, isCopied, onCopy }: PromptCardProps) => {
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className={`text-xs px-2 py-1 rounded-full ${categoryInfo.color}`}>
                 {categoryInfo.label}
               </span>
+              {prompt.framework === "C.L.E.A.R" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-primary/10 text-primary cursor-help">
+                      <Sparkles size={12} />
+                      C.L.E.A.R
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="font-medium mb-1">C.L.E.A.R Framework Prompt</p>
+                    <p className="text-xs text-muted-foreground">
+                      Context → Lens → Expectation → Assumptions → Response Format
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
             <h3 className="font-heading text-base mb-1">{prompt.title}</h3>
             <p className="text-sm text-muted-foreground">{prompt.useCase}</p>
