@@ -9,22 +9,29 @@ const corsHeaders = {
 
 // Product price mapping - Updated pricing Dec 2025
 const PRODUCT_PRICES: Record<string, string> = {
-  "prompt-pack": "price_1SgLn2ADyJKZqOM99i15KWE2",           // £49 - unchanged
-  "revenue-framework": "price_1SgLn4ADyJKZqOM9wGt6k508",    // £49 - unchanged
-  "build-vs-buy": "price_1SgLn7ADyJKZqOM94XoVJeuz",         // £29 - unchanged
-  "activation-playbook": "price_1SgnXvADyJKZqOM9KBzNvcYl",  // £99 - was £49
-  "engagement-playbook": "price_1SgnXxADyJKZqOM9w9RFk8Cv",  // £59 - was £79
-  "ai-builder": "price_1SgnXzADyJKZqOM9EqRorM6Y",           // £69 - new product ID
-  "gamification-playbook": "price_1SgnxxADyJKZqOM9d81AolFD", // £79 - Gamification Playbook
+  // Entry Paid (Impulse / Low Risk)
+  "quick-check-lite": "price_1Sgo3PADyJKZqOM9XllFtFwq",        // £9.99 - AI Readiness Quick Check Lite+
+  "prompt-pack": "price_1Sgo3QADyJKZqOM921ictSFp",             // £19.99 - Wellness AI Prompt Pack
+  
+  // Core Paid Products
+  "readiness-score": "price_1Sgo3TADyJKZqOM9InUIggBX",         // £39.99 - AI Readiness Score Commercial Edition
+  "gamification-playbook": "price_1Sgo3UADyJKZqOM9Ymc9WSCI",   // £39.99 - Gamification, Rewards & Incentives
+  "engagement-playbook": "price_1Sgo3WADyJKZqOM94CXxzWnX",     // £29.99 - Wellness Engagement Systems
+  
+  // Execution / Advanced
+  "activation-playbook": "price_1Sgo3YADyJKZqOM9o9CJBiad",     // £49.99 - 90-Day AI Activation Playbook
+  
   // Bundles
-  "operator-pack": "price_1SgnYuADyJKZqOM9O4PVP440",        // £179 - Operator Pack bundle
-  "execution-pack": "price_1SgnYvADyJKZqOM9p9SWnBFn",       // £149 - Execution Pack bundle
+  "operator-bundle": "price_1Sgo3aADyJKZqOM9lS4M5Zvj",         // £79.99 - Wellness AI Operator Bundle
+  "gamification-bundle": "price_1Sgo3bADyJKZqOM9A9pUIvOj",     // £69.99 - Gamification & Personalisation Bundle
+  "execution-bundle": "price_1Sgo3dADyJKZqOM9aF85jdNZ",        // £89.99 - Execution Bundle
 };
 
 // Bundle product mappings for PDF downloads
 const BUNDLE_PRODUCTS: Record<string, string[]> = {
-  "operator-pack": ["ai-builder", "engagement-playbook"],   // AI Readiness Score handled separately
-  "execution-pack": ["activation-playbook"],                // AI Readiness Score handled separately
+  "operator-bundle": ["prompt-pack", "engagement-playbook"],
+  "gamification-bundle": ["engagement-playbook", "gamification-playbook"],
+  "execution-bundle": ["activation-playbook", "gamification-playbook"],
 };
 
 // AI Coach subscription product ID

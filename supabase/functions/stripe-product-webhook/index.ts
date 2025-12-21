@@ -549,13 +549,15 @@ const PRODUCT_INFO: Record<string, { name: string; filename: string; generator: 
 
 // Bundle definitions - maps bundle ID to included product IDs
 const BUNDLE_PRODUCTS: Record<string, string[]> = {
-  "operator-pack": ["ai-builder", "engagement-playbook"],
-  "execution-pack": ["activation-playbook"],
+  "operator-bundle": ["prompt-pack", "engagement-playbook"],
+  "gamification-bundle": ["engagement-playbook", "gamification-playbook"],
+  "execution-bundle": ["activation-playbook", "gamification-playbook"],
 };
 
 const BUNDLE_INFO: Record<string, { name: string }> = {
-  "operator-pack": { name: "Wellness AI Operator Pack" },
-  "execution-pack": { name: "Execution Pack" },
+  "operator-bundle": { name: "Wellness AI Operator Bundle" },
+  "gamification-bundle": { name: "Gamification & Personalisation Bundle" },
+  "execution-bundle": { name: "Execution Bundle" },
 };
 
 const logStep = (step: string, details?: unknown) => {
