@@ -38,6 +38,7 @@ import OnboardingBanner from "@/components/hub/OnboardingBanner";
 import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import DownloadHistory from "@/components/hub/DownloadHistory";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useDownloadTracking } from "@/hooks/useDownloadTracking";
 import { generateGamificationPlaybook } from "@/lib/pdf-generators";
 
 interface Purchase {
@@ -83,6 +84,7 @@ const MemberHub = () => {
   const [savedOutputs, setSavedOutputs] = useState<SavedOutput[]>([]);
   const [freeDownloads, setFreeDownloads] = useState<FreeDownload[]>([]);
   const { restartOnboarding } = useOnboarding();
+  const { trackDownload } = useDownloadTracking();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -152,7 +154,7 @@ const MemberHub = () => {
     navigate("/");
   };
 
-  const handleDownload = (productId: string) => {
+  const handleDownload = async (productId: string, productName: string, isPaid: boolean = true) => {
     try {
       let doc;
       let filename = "wellness-genius-download.pdf";
@@ -190,6 +192,13 @@ const MemberHub = () => {
       if (doc) {
         doc.save(filename);
         toast.success("Download started!");
+        
+        // Track the download
+        await trackDownload({
+          productId,
+          productName,
+          downloadType: isPaid ? "redownload" : "free",
+        });
       }
     } catch (error) {
       console.error("Download error:", error);
@@ -324,7 +333,7 @@ const MemberHub = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDownload(purchase.product_id)}
+                                onClick={() => handleDownload(purchase.product_id, purchase.product_name, true)}
                               >
                                 <Download size={14} />
                                 Download

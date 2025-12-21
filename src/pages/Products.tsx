@@ -23,6 +23,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import EmailGateModal from "@/components/EmailGateModal";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { 
   generatePromptPack, 
@@ -527,6 +528,7 @@ const ProductCard = ({
 
 const Products = () => {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const [emailGateModal, setEmailGateModal] = useState<{
     isOpen: boolean;
     product: Product | null;
@@ -535,6 +537,24 @@ const Products = () => {
 
   const freeProducts = products.filter(p => p.type === "free");
   const paidProducts = products.filter(p => p.type === "paid");
+
+  // Helper function to track downloads for logged-in users
+  const trackPaidDownload = async (productId: string, productName: string) => {
+    if (!user?.email) return;
+    
+    try {
+      await supabase.from("product_downloads").insert({
+        email: user.email,
+        name: user.user_metadata?.full_name || null,
+        product_id: productId,
+        product_name: productName,
+        download_type: "paid",
+        product_type: "paid",
+      });
+    } catch (err) {
+      console.error("[Download Tracking] Error:", err);
+    }
+  };
 
   // Handle payment success/cancel from URL params
   useEffect(() => {
@@ -545,40 +565,49 @@ const Products = () => {
       toast.success("Payment successful! Your PDF(s) are downloading and will also be emailed to you.");
       
       // Helper function to generate and download a PDF
-      const downloadPdf = (id: string) => {
+      const downloadPdf = async (id: string, productName?: string) => {
         try {
           let doc;
           let filename = "wellness-genius-download.pdf";
+          let name = productName || id;
           
           switch (id) {
             case "prompt-pack":
               doc = generatePromptPack();
               filename = "wellness-ai-prompt-pack.pdf";
+              name = "AI Prompt Pack";
               break;
             case "revenue-framework":
               doc = generateRevenueFramework();
               filename = "engagement-revenue-framework.pdf";
+              name = "Engagement Revenue Framework";
               break;
             case "build-vs-buy":
               doc = generateBuildVsBuy();
               filename = "build-vs-buy-guide.pdf";
+              name = "Build vs Buy Guide";
               break;
             case "activation-playbook":
               doc = generateActivationPlaybook();
               filename = "90-day-activation-playbook.pdf";
+              name = "90-Day Activation Playbook";
               break;
             case "engagement-playbook":
               doc = generateEngagementPlaybook();
               filename = "wellness-engagement-systems-playbook.pdf";
+              name = "Engagement Systems Playbook";
               break;
             case "gamification-playbook":
               doc = generateGamificationPlaybook();
               filename = "gamification-rewards-incentives-playbook.pdf";
+              name = "Gamification Playbook";
               break;
           }
           
           if (doc) {
             doc.save(filename);
+            // Track the paid download
+            await trackPaidDownload(id, name);
           }
         } catch (error) {
           console.error(`Failed to generate PDF for ${id}:`, error);
@@ -602,7 +631,7 @@ const Products = () => {
     } else if (payment === "cancelled") {
       toast.info("Payment was cancelled.");
     }
-  }, [searchParams]);
+  }, [searchParams, user]);
 
   const handleDownloadClick = (product: Product) => {
     setEmailGateModal({ isOpen: true, product });
