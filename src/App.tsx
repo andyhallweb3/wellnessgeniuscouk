@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import MemberHub from "./pages/MemberHub";
 import DownloadsLibrary from "./pages/DownloadsLibrary";
 import AICoach from "./pages/AICoach";
+import ServicesPage from "./pages/ServicesPage";
 import AIGenius from "./pages/AIGenius";
 import Genie from "./pages/Genie";
 import AIReadinessLanding from "./pages/AIReadinessLanding";
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="/ai-readiness/report/:id" element={<AIReadinessReport />} />
             <Route path="/ai-readiness/share/:token" element={<SharedReport />} />
             <Route path="/speaker-kit" element={<SpeakerKit />} />
+            <Route path="/services" element={<ServicesPage />} />
             <Route path="/insights" element={<Insights />} />
             <Route path="/insights/:slug" element={<BlogPost />} />
             <Route path="/news" element={<LatestNews />} />

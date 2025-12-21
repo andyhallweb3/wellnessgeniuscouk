@@ -20,10 +20,9 @@ const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const mainNavLinks = [
+    { href: "/genie", label: "AI Advisor", isRoute: true },
     { href: "/ai-readiness", label: "AI Assessment", isRoute: true },
     { href: "/insights", label: "Insights", isRoute: true },
-    { href: "/news", label: "News", isRoute: true },
-    { href: "/speaker-kit", label: "Speaking", isRoute: true },
   ];
 
   const productLinks = [
@@ -31,15 +30,15 @@ const Header = () => {
     { href: "/bundles", label: "Bundles & Deals" },
   ];
 
-  const serviceLinks = [
-    { href: "/#services", label: "Services", isAnchor: true },
-    { href: "/#proof", label: "Proof", isAnchor: true },
-    { href: "/#how-it-works", label: "How It Works", isAnchor: true },
+  const aboutLinks = [
+    { href: "/services", label: "Consulting Services", isRoute: true },
+    { href: "/news", label: "Latest News", isRoute: true },
+    { href: "/speaker-kit", label: "Speaking", isRoute: true },
   ];
 
   const hubLinks = [
     { href: "/hub", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/hub/coach", label: "Wellness Genie", icon: Sparkles },
+    { href: "/genie", label: "AI Advisor", icon: Sparkles },
     { href: "/hub/insights", label: "Saved Insights", icon: Bookmark },
   ];
   return (
@@ -95,11 +94,11 @@ const Header = () => {
                 <ChevronDown size={14} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="bg-popover border border-border shadow-lg z-50">
-                {serviceLinks.map((link) => (
+                {aboutLinks.map((link) => (
                   <DropdownMenuItem key={link.href} asChild>
-                    <a href={link.href} className="w-full">
+                    <Link to={link.href} className="w-full">
                       {link.label}
-                    </a>
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -205,15 +204,15 @@ const Header = () => {
 
               {/* About Section */}
               <p className="text-xs font-medium text-muted-foreground px-2 pt-4 pb-1">About</p>
-              {serviceLinks.map((link) => (
-                <a
+              {aboutLinks.map((link) => (
+                <Link
                   key={link.href}
-                  href={link.href}
+                  to={link.href}
                   className="px-3 py-2 text-base font-medium text-foreground hover:bg-accent/5 transition-colors rounded-md"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
 
               <div className="flex flex-col gap-2 pt-6 border-t border-border/30 mt-4">
