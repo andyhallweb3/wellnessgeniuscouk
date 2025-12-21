@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import CreditPurchase from "@/components/advisor/CreditPurchase";
 import LowCreditWarning from "@/components/advisor/LowCreditWarning";
 import GenieOnboarding from "@/components/genie/GenieOnboarding";
-import DailyBriefCard, { BriefData } from "@/components/genie/DailyBriefCard";
+import DailyBriefCard from "@/components/genie/DailyBriefCard";
 import ModeButtons from "@/components/genie/ModeButtons";
 import WhatChangedTimeline, { ChangeEntry } from "@/components/genie/WhatChangedTimeline";
 import DecisionDrawer, { DecisionContext } from "@/components/genie/DecisionDrawer";
@@ -29,6 +29,7 @@ import { ADVISOR_MODES, getModeById } from "@/components/advisor/AdvisorModes";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useGenieSessions } from "@/hooks/useGenieSessions";
+import { useDailyBrief } from "@/hooks/useDailyBrief";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
@@ -77,9 +78,8 @@ const Genie = () => {
   const [showChat, setShowChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Brief state
-  const [briefData, setBriefData] = useState<BriefData | null>(null);
-  const [isBriefLoading, setIsBriefLoading] = useState(false);
+  // Brief state - use the hook
+  const { brief: briefData, isLoading: isBriefLoading, generateBrief } = useDailyBrief();
   const [isVoicePlaying, setIsVoicePlaying] = useState(false);
 
   // Decision drawer state
@@ -93,7 +93,6 @@ const Genie = () => {
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession, summarizeSession, updateSessionTags, allTags } = useGenieSessions();
   const [showOnboarding, setShowOnboarding] = useState(false);
-
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth?redirect=/genie");
@@ -295,52 +294,22 @@ const Genie = () => {
   };
 
   const handleGenerateBrief = async () => {
-    setIsBriefLoading(true);
+    const modeConfig = getModeById("daily_briefing");
     
-    try {
-      const modeConfig = getModeById("daily_briefing");
-      
-      if (credits.balance < modeConfig.creditCost) {
-        toast.error("Not enough credits for daily briefing.");
-        return;
-      }
+    if (credits.balance < modeConfig.creditCost) {
+      toast.error("Not enough credits for daily briefing.");
+      return;
+    }
 
-      const deducted = await deductCredits(modeConfig.creditCost, "daily_briefing");
-      if (!deducted) throw new Error("Failed to deduct credits");
+    const deducted = await deductCredits(modeConfig.creditCost, "daily_briefing");
+    if (!deducted) {
+      toast.error("Failed to deduct credits");
+      return;
+    }
 
-      // Generate brief via chat
-      const briefPrompt = "Generate my daily brief. What do I need to know today? Give me: 1) A one-line headline summary, 2) What changed (max 3 bullet points with direction indicators), 3) What to do next (max 3 actions), 4) Your confidence level (high/medium/low based on data available).";
-      
-      const response = await streamChat([{ role: "user", content: briefPrompt }], "daily_briefing");
-      
-      // Parse the response into brief format (simplified parsing)
-      const brief: BriefData = {
-        headline: response.split("\n")[0]?.replace(/^#*\s*/, "") || "Your business is tracking steadily.",
-        changes: [
-          { text: "Engagement metrics analyzed", direction: "neutral" as const, severity: "neutral" as const },
-          { text: "Key indicators reviewed", direction: "neutral" as const, severity: "neutral" as const },
-        ],
-        actions: [
-          "Review your dashboard for detailed metrics",
-          "Check any flagged items",
-          "Plan your priorities for today"
-        ],
-        confidence: "medium" as const,
-        generatedAt: new Date()
-      };
-      
-      setBriefData(brief);
-      // Store the full response for chat context
-      setMessages([
-        { role: "user", content: briefPrompt },
-        { role: "assistant", content: response }
-      ]);
+    const result = await generateBrief();
+    if (result) {
       setSelectedMode("daily_briefing");
-    } catch (error) {
-      console.error("Brief generation error:", error);
-      toast.error("Failed to generate brief");
-    } finally {
-      setIsBriefLoading(false);
     }
   };
 
