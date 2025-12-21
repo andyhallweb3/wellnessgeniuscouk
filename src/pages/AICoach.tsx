@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import CoachOnboarding from "@/components/coach/CoachOnboarding";
 import ModeSelector, { COACH_MODES } from "@/components/coach/ModeSelector";
 import CreditDisplay from "@/components/coach/CreditDisplay";
+import TierBadge from "@/components/coach/TierBadge";
 import CoachPromptLibrary from "@/components/coach/CoachPromptLibrary";
 import ProfileEditor from "@/components/coach/ProfileEditor";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
@@ -523,6 +524,11 @@ const AICoach = () => {
                 <div>
                   <h1 className="text-base font-heading">Wellness Genius AI Coach</h1>
                 </div>
+                <TierBadge 
+                  tier={credits.tier} 
+                  monthlyAllowance={credits.monthlyAllowance}
+                  onUpgrade={() => navigate("/products")}
+                />
               </div>
             </div>
             <div className="flex items-center gap-2">
