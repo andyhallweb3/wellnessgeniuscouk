@@ -12,21 +12,22 @@ import {
   RotateCcw,
   Sparkles,
   Settings,
-  LayoutDashboard,
-  History
+  History,
+  MessageSquare
 } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import AdvisorModeSelector from "@/components/advisor/AdvisorModeSelector";
 import CreditPurchase from "@/components/advisor/CreditPurchase";
 import LowCreditWarning from "@/components/advisor/LowCreditWarning";
 import GenieOnboarding from "@/components/genie/GenieOnboarding";
-import GenieDashboard from "@/components/genie/GenieDashboard";
+import DailyBriefCard, { BriefData } from "@/components/genie/DailyBriefCard";
+import ModeButtons from "@/components/genie/ModeButtons";
+import WhatChangedTimeline, { ChangeEntry } from "@/components/genie/WhatChangedTimeline";
+import DecisionDrawer, { DecisionContext } from "@/components/genie/DecisionDrawer";
 import { ADVISOR_MODES, getModeById } from "@/components/advisor/AdvisorModes";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
-import { useGenieNotifications } from "@/hooks/useGenieNotifications";
 import { useGenieSessions } from "@/hooks/useGenieSessions";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import CreditDisplay from "@/components/coach/CreditDisplay";
@@ -60,6 +61,8 @@ interface GenieOnboardingData {
   decision_style: string;
 }
 
+type ViewMode = "brief" | "modes" | "chat";
+
 const Genie = () => {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -68,18 +71,26 @@ const Genie = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selectedMode, setSelectedMode] = useState(() => {
-    const modeFromUrl = searchParams.get("mode");
-    const validModes = ADVISOR_MODES.map(m => m.id);
-    return modeFromUrl && validModes.includes(modeFromUrl) ? modeFromUrl : "daily_briefing";
-  });
-  const [showDashboard, setShowDashboard] = useState(() => !searchParams.get("mode"));
+  const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("brief");
   const [showHistory, setShowHistory] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { getMemoryContext, memory, insights, recentDecisions, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
+  // Brief state
+  const [briefData, setBriefData] = useState<BriefData | null>(null);
+  const [isBriefLoading, setIsBriefLoading] = useState(false);
+  const [isVoicePlaying, setIsVoicePlaying] = useState(false);
+
+  // Decision drawer state
+  const [decisionDrawerOpen, setDecisionDrawerOpen] = useState(false);
+  const [decisionContext, setDecisionContext] = useState<DecisionContext | null>(null);
+
+  // Mock change data - in production, this would come from the backend
+  const [changes] = useState<ChangeEntry[]>([]);
+
+  const { getMemoryContext, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
-  const { notifications, dismiss: dismissNotification, markAsRead: markNotificationRead } = useGenieNotifications();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession, summarizeSession, updateSessionTags, allTags } = useGenieSessions();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -95,6 +106,15 @@ const Genie = () => {
       setShowOnboarding(true);
     }
   }, [memoryLoading, memory, user]);
+
+  // Handle URL mode parameter
+  useEffect(() => {
+    const modeFromUrl = searchParams.get("mode");
+    if (modeFromUrl && ADVISOR_MODES.some(m => m.id === modeFromUrl)) {
+      setSelectedMode(modeFromUrl);
+      setViewMode("chat");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -130,7 +150,6 @@ const Genie = () => {
 
   const streamChat = useCallback(async (userMessages: Message[], mode: string) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genie-chat`;
-    
     const memoryContext = getMemoryContext();
 
     const resp = await fetch(CHAT_URL, {
@@ -202,7 +221,7 @@ const Genie = () => {
   }, [getMemoryContext]);
 
   const handleSend = async () => {
-    if (!input.trim() || isStreaming) return;
+    if (!input.trim() || isStreaming || !selectedMode) return;
 
     const modeConfig = getModeById(selectedMode);
     
@@ -216,6 +235,7 @@ const Genie = () => {
     setMessages(newMessages);
     setInput("");
     setIsStreaming(true);
+    setShowChat(true);
 
     try {
       const deducted = await deductCredits(modeConfig.creditCost, selectedMode);
@@ -224,10 +244,6 @@ const Genie = () => {
       }
 
       await streamChat(newMessages, selectedMode);
-      
-      // Auto-save session after each exchange
-      const updatedMessages = [...newMessages];
-      // We'll get the latest messages from state after streaming completes
     } catch (error) {
       console.error("Chat error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to get response");
@@ -244,7 +260,7 @@ const Genie = () => {
 
   // Auto-save session when messages change
   useEffect(() => {
-    if (messages.length > 0 && !isStreaming) {
+    if (messages.length > 0 && !isStreaming && selectedMode) {
       saveSession(selectedMode, messages, currentSessionId);
     }
   }, [messages, isStreaming, selectedMode, currentSessionId, saveSession]);
@@ -258,20 +274,92 @@ const Genie = () => {
 
   const handleNewConversation = () => {
     setMessages([]);
-    setSelectedMode("daily_briefing");
+    setSelectedMode(null);
     setCurrentSessionId(null);
+    setShowChat(false);
+    setViewMode("brief");
   };
 
   const handleLoadSession = (session: { id: string; mode: string; messages: Message[] }) => {
     loadSession(session as Parameters<typeof loadSession>[0]);
     setMessages(session.messages);
     setSelectedMode(session.mode);
-    setShowDashboard(false);
+    setViewMode("chat");
+    setShowChat(true);
     setShowHistory(false);
   };
 
-  const handleExampleClick = (example: string) => {
-    setInput(example);
+  const handleModeSelect = (mode: string) => {
+    setSelectedMode(mode);
+    setViewMode("chat");
+  };
+
+  const handleGenerateBrief = async () => {
+    setIsBriefLoading(true);
+    
+    try {
+      const modeConfig = getModeById("daily_briefing");
+      
+      if (credits.balance < modeConfig.creditCost) {
+        toast.error("Not enough credits for daily briefing.");
+        return;
+      }
+
+      const deducted = await deductCredits(modeConfig.creditCost, "daily_briefing");
+      if (!deducted) throw new Error("Failed to deduct credits");
+
+      // Generate brief via chat
+      const briefPrompt = "Generate my daily brief. What do I need to know today? Give me: 1) A one-line headline summary, 2) What changed (max 3 bullet points with direction indicators), 3) What to do next (max 3 actions), 4) Your confidence level (high/medium/low based on data available).";
+      
+      const response = await streamChat([{ role: "user", content: briefPrompt }], "daily_briefing");
+      
+      // Parse the response into brief format (simplified parsing)
+      const brief: BriefData = {
+        headline: response.split("\n")[0]?.replace(/^#*\s*/, "") || "Your business is tracking steadily.",
+        changes: [
+          { text: "Engagement metrics analyzed", direction: "neutral" as const, severity: "neutral" as const },
+          { text: "Key indicators reviewed", direction: "neutral" as const, severity: "neutral" as const },
+        ],
+        actions: [
+          "Review your dashboard for detailed metrics",
+          "Check any flagged items",
+          "Plan your priorities for today"
+        ],
+        confidence: "medium" as const,
+        generatedAt: new Date()
+      };
+      
+      setBriefData(brief);
+      // Store the full response for chat context
+      setMessages([
+        { role: "user", content: briefPrompt },
+        { role: "assistant", content: response }
+      ]);
+      setSelectedMode("daily_briefing");
+    } catch (error) {
+      console.error("Brief generation error:", error);
+      toast.error("Failed to generate brief");
+    } finally {
+      setIsBriefLoading(false);
+    }
+  };
+
+  const handlePlayVoice = async () => {
+    if (!briefData) return;
+    setIsVoicePlaying(true);
+    // Voice playback would be implemented here
+    setTimeout(() => setIsVoicePlaying(false), 3000);
+  };
+
+  const handleStopVoice = () => {
+    setIsVoicePlaying(false);
+  };
+
+  const handleBriefActionClick = (action: string) => {
+    setInput(action);
+    setSelectedMode("daily_briefing");
+    setViewMode("chat");
+    setShowChat(true);
   };
 
   const handlePurchaseCredits = async (packId: string) => {
@@ -288,6 +376,13 @@ const Genie = () => {
       console.error('Purchase error:', error);
       toast.error('Failed to start checkout. Please try again.');
     }
+  };
+
+  const handleDecisionDrawerAsk = (question: string) => {
+    setInput(question);
+    setSelectedMode("decision_support");
+    setViewMode("chat");
+    setShowChat(true);
   };
 
   if (authLoading || creditsLoading || memoryLoading) {
@@ -322,19 +417,19 @@ const Genie = () => {
     );
   }
 
-  const currentMode = getModeById(selectedMode);
+  const currentMode = selectedMode ? getModeById(selectedMode) : null;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
         <title>AI Advisor | Wellness Genius</title>
-        <meta name="description" content="Your AI business advisor for wellness decisions." />
+        <meta name="description" content="Your AI business advisor. See what changed, what matters, and what to do next." />
       </Helmet>
       
       <Header />
       
       <main className="pt-24 pb-4 flex-1 flex flex-col">
-        <div className="container-wide section-padding flex-1 flex flex-col max-h-[calc(100vh-180px)]">
+        <div className="container-wide section-padding flex-1 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between mb-6 shrink-0">
             <div className="flex items-center gap-4">
@@ -349,7 +444,7 @@ const Genie = () => {
                 </div>
                 <div>
                   <h1 className="text-lg font-heading">AI Advisor</h1>
-                  <p className="text-xs text-muted-foreground">Strategic partner, not chatbot</p>
+                  <p className="text-xs text-muted-foreground">What changed, what matters, what to do next</p>
                 </div>
               </div>
             </div>
@@ -358,16 +453,13 @@ const Genie = () => {
                 memoryContext={getMemoryContext()}
                 onTranscript={(text, role) => {
                   setMessages(prev => [...prev, { role, content: text }]);
-                  if (showDashboard) setShowDashboard(false);
+                  setViewMode("chat");
+                  setShowChat(true);
                 }}
               />
               <Sheet open={showHistory} onOpenChange={setShowHistory}>
                 <SheetTrigger asChild>
-                  <Button 
-                    variant="ghost"
-                    size="sm" 
-                    title="Conversation history"
-                  >
+                  <Button variant="ghost" size="sm" title="Conversation history">
                     <History size={14} />
                   </Button>
                 </SheetTrigger>
@@ -389,14 +481,6 @@ const Genie = () => {
                 </SheetContent>
               </Sheet>
               <Button 
-                variant={showDashboard ? "secondary" : "ghost"}
-                size="sm" 
-                onClick={() => setShowDashboard(true)}
-                title="Dashboard"
-              >
-                <LayoutDashboard size={14} />
-              </Button>
-              <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setShowOnboarding(true)}
@@ -404,7 +488,7 @@ const Genie = () => {
               >
                 <Settings size={14} />
               </Button>
-              {(messages.length > 0 || !showDashboard) && (
+              {(messages.length > 0 || showChat) && (
                 <Button variant="outline" size="sm" onClick={handleNewConversation}>
                   <RotateCcw size={14} />
                   New
@@ -430,104 +514,78 @@ const Genie = () => {
             onPurchase={handlePurchaseCredits}
           />
 
-          {/* Main Content */}
-          {showDashboard && messages.length === 0 ? (
-            /* Dashboard View */
-            <GenieDashboard
-              memory={memory}
-              insights={insights}
-              recentDecisions={recentDecisions}
-              notifications={notifications}
-              onStartChat={() => setShowDashboard(false)}
-              onEditProfile={() => setShowOnboarding(true)}
-              onDismissNotification={dismissNotification}
-              onMarkNotificationRead={markNotificationRead}
-            />
-          ) : messages.length === 0 ? (
-            /* Mode Selection View */
-            <div className="flex-1 flex flex-col lg:flex-row gap-8">
-              {/* Left: Mode Selector */}
-              <div className="lg:w-1/2">
-                <h2 className="text-sm font-medium text-muted-foreground mb-4">What do you need?</h2>
-                <AdvisorModeSelector 
-                  selectedMode={selectedMode} 
-                  onSelectMode={setSelectedMode}
-                  credits={credits.balance}
+          {/* Main Content Area */}
+          {!showChat ? (
+            /* Brief-First View */
+            <div className="flex-1 grid lg:grid-cols-3 gap-6">
+              {/* Left: Daily Brief Card */}
+              <div className="lg:col-span-2">
+                <DailyBriefCard
+                  brief={briefData}
+                  isLoading={isBriefLoading}
+                  isPlaying={isVoicePlaying}
+                  onGenerateBrief={handleGenerateBrief}
+                  onPlayVoice={handlePlayVoice}
+                  onStopVoice={handleStopVoice}
+                  onActionClick={handleBriefActionClick}
+                  businessName={memory?.business_name}
                 />
+
+                {/* Mode Buttons */}
+                <div className="mt-6">
+                  <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-4">
+                    Or choose a mode
+                  </h2>
+                  <ModeButtons
+                    selectedMode={selectedMode}
+                    onSelectMode={handleModeSelect}
+                    credits={credits.balance}
+                  />
+                </div>
               </div>
 
-              {/* Right: Selected Mode + Examples */}
-              <div className="lg:w-1/2 flex flex-col">
-                <div className="rounded-xl border border-border bg-card p-6 flex-1">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-3xl">{currentMode.icon}</span>
-                    <div>
-                      <h3 className="font-heading text-lg">{currentMode.name}</h3>
-                      <p className="text-sm text-accent">"{currentMode.tagline}"</p>
-                    </div>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mb-6">
-                    {currentMode.description}
-                  </p>
+              {/* Right: What Changed + Context */}
+              <div className="space-y-6">
+                <WhatChangedTimeline 
+                  changes={changes}
+                  onChangeClick={(change) => {
+                    setInput(`Tell me more about: ${change.text}`);
+                    setSelectedMode("diagnostic");
+                    setViewMode("chat");
+                    setShowChat(true);
+                  }}
+                />
 
-                  <div className="space-y-2 mb-6">
-                    <p className="text-xs font-medium text-muted-foreground">Try asking:</p>
-                    {currentMode.examples.map((example, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleExampleClick(example)}
-                        className="w-full text-left text-sm px-4 py-3 rounded-lg bg-secondary/50 hover:bg-secondary border border-border/50 transition-colors"
-                      >
-                        {example}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Input */}
-                  <div className="flex gap-2">
-                    <Textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Ask your AI Advisor..."
-                      className="min-h-[56px] max-h-[120px] resize-none"
-                      disabled={isStreaming}
-                    />
-                    <Button
-                      variant="accent"
-                      size="icon"
-                      className="h-14 w-14 shrink-0"
-                      onClick={handleSend}
-                      disabled={!input.trim() || isStreaming || credits.balance < currentMode.creditCost}
-                    >
-                      {isStreaming ? (
-                        <Loader2 className="animate-spin" size={20} />
-                      ) : (
-                        <Send size={20} />
-                      )}
-                    </Button>
-                  </div>
-                  
-                  {credits.balance < currentMode.creditCost && (
-                    <p className="text-xs text-destructive mt-2">
-                      Not enough credits. Try a different mode.
-                    </p>
-                  )}
-                </div>
-
-                {/* Business Context Status */}
+                {/* Business Context */}
                 {memory && (
-                  <div className="mt-4 p-3 rounded-lg bg-accent/5 border border-accent/20">
-                    <div className="flex items-center gap-2 text-sm">
+                  <div className="p-4 rounded-xl bg-accent/5 border border-accent/20">
+                    <div className="flex items-center gap-2 text-sm mb-2">
                       <Sparkles size={14} className="text-accent" />
-                      <span className="text-accent font-medium">Memory active</span>
-                      <span className="text-muted-foreground">
-                        — {memory.business_name || "Your business"}
-                      </span>
+                      <span className="text-accent font-medium">Memory Active</span>
                     </div>
+                    <p className="text-sm text-muted-foreground">
+                      {memory.business_name || "Your business"} • {memory.business_type || "Business"}
+                    </p>
+                    {memory.primary_goal && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Goal: {memory.primary_goal}
+                      </p>
+                    )}
                   </div>
                 )}
+
+                {/* Quick Chat Access */}
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-2"
+                  onClick={() => {
+                    setSelectedMode("quick_question");
+                    setShowChat(true);
+                  }}
+                >
+                  <MessageSquare size={16} />
+                  Ask a quick question
+                </Button>
               </div>
             </div>
           ) : (
@@ -535,10 +593,14 @@ const Genie = () => {
             <div className="flex-1 flex flex-col min-h-0">
               {/* Mode Badge */}
               <div className="flex items-center gap-2 mb-4 shrink-0">
-                <span className="text-lg">{currentMode.icon}</span>
-                <span className="text-sm font-medium">{currentMode.name}</span>
+                {currentMode && (
+                  <>
+                    <span className="text-lg">{currentMode.icon}</span>
+                    <span className="text-sm font-medium">{currentMode.name}</span>
+                  </>
+                )}
                 <select
-                  value={selectedMode}
+                  value={selectedMode || ""}
                   onChange={(e) => setSelectedMode(e.target.value)}
                   className="text-xs bg-secondary border border-border rounded px-2 py-1 ml-2"
                   disabled={isStreaming}
@@ -549,11 +611,39 @@ const Genie = () => {
                     </option>
                   ))}
                 </select>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="ml-auto"
+                  onClick={() => setShowChat(false)}
+                >
+                  Back to Brief
+                </Button>
               </div>
 
               {/* Messages */}
               <div className="flex-1 overflow-y-auto rounded-xl border border-border bg-card p-4 mb-4">
                 <div className="space-y-4">
+                  {messages.length === 0 && currentMode && (
+                    <div className="text-center py-12">
+                      <span className="text-4xl mb-4 block">{currentMode.icon}</span>
+                      <h3 className="font-heading text-lg mb-2">{currentMode.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                        {currentMode.description}
+                      </p>
+                      <div className="space-y-2 max-w-md mx-auto">
+                        {currentMode.examples.map((example, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setInput(example)}
+                            className="w-full text-left text-sm px-4 py-3 rounded-lg bg-secondary/50 hover:bg-secondary border border-border/50 transition-colors"
+                          >
+                            {example}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {messages.map((message, index) => (
                     <div
                       key={index}
@@ -607,7 +697,7 @@ const Genie = () => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Continue the conversation..."
+                    placeholder={currentMode ? `Ask in ${currentMode.name} mode...` : "Ask your AI Advisor..."}
                     className="min-h-[56px] max-h-[120px] resize-none"
                     disabled={isStreaming}
                   />
@@ -616,7 +706,7 @@ const Genie = () => {
                     size="icon"
                     className="h-14 w-14 shrink-0"
                     onClick={handleSend}
-                    disabled={!input.trim() || isStreaming || credits.balance < currentMode.creditCost}
+                    disabled={!input.trim() || isStreaming || !selectedMode || credits.balance < (currentMode?.creditCost || 0)}
                   >
                     {isStreaming ? (
                       <Loader2 className="animate-spin" size={20} />
@@ -630,6 +720,14 @@ const Genie = () => {
           )}
         </div>
       </main>
+
+      {/* Decision Drawer */}
+      <DecisionDrawer
+        open={decisionDrawerOpen}
+        onClose={() => setDecisionDrawerOpen(false)}
+        context={decisionContext}
+        onAskMore={handleDecisionDrawerAsk}
+      />
     </div>
   );
 };
