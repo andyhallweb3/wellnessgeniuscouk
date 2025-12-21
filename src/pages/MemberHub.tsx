@@ -19,7 +19,11 @@ import {
   MessageCircle,
   Bookmark,
   RotateCcw,
-  Library
+  Library,
+  Brain,
+  Mic,
+  ArrowRight,
+  History as HistoryIcon
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -262,6 +266,69 @@ const MemberHub = () => {
                 <LogOut size={16} />
                 Sign Out
               </Button>
+            </div>
+          </div>
+
+          {/* Genie Hero Section */}
+          <div className="mb-12 rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/10 via-accent/5 to-background overflow-hidden">
+            <div className="grid md:grid-cols-2 gap-6 p-6 md:p-8">
+              <div className="flex flex-col justify-center">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-2 rounded-full bg-accent/20">
+                    <Brain size={24} className="text-accent" />
+                  </div>
+                  <span className="text-xs font-medium uppercase tracking-wider text-accent">Your AI Business Partner</span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-heading mb-3">Wellness Genie</h2>
+                <p className="text-muted-foreground mb-6">
+                  Your always-on business operator. Get strategic guidance, make better decisions, and solve operational challenges with AI that understands your wellness business.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="accent" size="lg" asChild>
+                    <Link to="/genie">
+                      <Brain size={18} />
+                      Open Genie
+                      <ArrowRight size={16} />
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="lg" asChild>
+                    <Link to="/hub/coach">
+                      <MessageCircle size={18} />
+                      AI Coach
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-background/60 border border-border/50 p-4">
+                  <div className="p-2 rounded-lg bg-blue-500/10 w-fit mb-2">
+                    <Mic size={18} className="text-blue-400" />
+                  </div>
+                  <h4 className="font-medium text-sm mb-1">Voice Mode</h4>
+                  <p className="text-xs text-muted-foreground">Talk naturally with hands-free voice conversations</p>
+                </div>
+                <div className="rounded-xl bg-background/60 border border-border/50 p-4">
+                  <div className="p-2 rounded-lg bg-purple-500/10 w-fit mb-2">
+                    <Sparkles size={18} className="text-purple-400" />
+                  </div>
+                  <h4 className="font-medium text-sm mb-1">Smart Memory</h4>
+                  <p className="text-xs text-muted-foreground">Remembers your business context across sessions</p>
+                </div>
+                <div className="rounded-xl bg-background/60 border border-border/50 p-4">
+                  <div className="p-2 rounded-lg bg-green-500/10 w-fit mb-2">
+                    <BarChart3 size={18} className="text-green-400" />
+                  </div>
+                  <h4 className="font-medium text-sm mb-1">Decision Support</h4>
+                  <p className="text-xs text-muted-foreground">Get data-driven recommendations for key choices</p>
+                </div>
+                <div className="rounded-xl bg-background/60 border border-border/50 p-4">
+                  <div className="p-2 rounded-lg bg-orange-500/10 w-fit mb-2">
+                    <HistoryIcon size={18} className="text-orange-400" />
+                  </div>
+                  <h4 className="font-medium text-sm mb-1">Session History</h4>
+                  <p className="text-xs text-muted-foreground">Search and resume past conversations anytime</p>
+                </div>
+              </div>
             </div>
           </div>
 
