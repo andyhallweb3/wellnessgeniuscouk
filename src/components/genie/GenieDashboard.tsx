@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { 
   Brain, 
   Lightbulb, 
@@ -12,51 +11,27 @@ import {
   DollarSign,
   ChevronRight,
   Sparkles,
-  Clock,
-  Eye
+  Eye,
+  X
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BusinessMemory, GenieInsight, GenieDecision } from "@/hooks/useBusinessMemory";
+import { GenieNotification } from "@/hooks/useGenieNotifications";
 import { formatDistanceToNow } from "date-fns";
 
 interface GenieDashboardProps {
   memory: BusinessMemory | null;
   insights: GenieInsight[];
   recentDecisions: GenieDecision[];
+  notifications: GenieNotification[];
   onStartChat: () => void;
   onEditProfile: () => void;
+  onDismissNotification: (id: string) => void;
+  onMarkNotificationRead: (id: string) => void;
 }
-
-// Mock notifications - in a real implementation these would come from the backend
-const MOCK_NOTIFICATIONS = [
-  {
-    id: "1",
-    type: "alert" as const,
-    title: "Monthly revenue review due",
-    message: "Based on your business cycle, now is a good time to review Q4 performance.",
-    priority: "high" as const,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-  },
-  {
-    id: "2", 
-    type: "insight" as const,
-    title: "Retention opportunity spotted",
-    message: "Your team size suggests you might benefit from documenting SOPs for key processes.",
-    priority: "medium" as const,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-  },
-  {
-    id: "3",
-    type: "reminder" as const,
-    title: "Follow up on last decision",
-    message: "You made a decision 3 days ago. Time to check the outcome?",
-    priority: "low" as const,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-  },
-];
 
 const InsightTypeBadge = ({ type }: { type: GenieInsight["insight_type"] }) => {
   const config = {
@@ -76,7 +51,13 @@ const InsightTypeBadge = ({ type }: { type: GenieInsight["insight_type"] }) => {
   );
 };
 
-const NotificationCard = ({ notification }: { notification: typeof MOCK_NOTIFICATIONS[0] }) => {
+interface NotificationCardProps {
+  notification: GenieNotification;
+  onDismiss: (id: string) => void;
+  onMarkRead: (id: string) => void;
+}
+
+const NotificationCard = ({ notification, onDismiss, onMarkRead }: NotificationCardProps) => {
   const priorityColors = {
     high: "border-l-destructive bg-destructive/5",
     medium: "border-l-accent bg-accent/5",
@@ -87,19 +68,31 @@ const NotificationCard = ({ notification }: { notification: typeof MOCK_NOTIFICA
     alert: AlertTriangle,
     insight: Lightbulb,
     reminder: Bell,
+    nudge: Sparkles,
   };
   
   const Icon = icons[notification.type] || Bell;
   
   return (
-    <div className={`p-3 rounded-lg border-l-4 ${priorityColors[notification.priority]}`}>
+    <div 
+      className={`p-3 rounded-lg border-l-4 ${priorityColors[notification.priority]} ${!notification.read ? 'ring-1 ring-accent/20' : ''}`}
+      onClick={() => !notification.read && onMarkRead(notification.id)}
+    >
       <div className="flex items-start gap-3">
         <Icon size={16} className="text-muted-foreground mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">{notification.title}</p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-medium">{notification.title}</p>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onDismiss(notification.id); }}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
           <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
           <p className="text-xs text-muted-foreground/60 mt-2">
-            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
           </p>
         </div>
       </div>
@@ -110,15 +103,14 @@ const NotificationCard = ({ notification }: { notification: typeof MOCK_NOTIFICA
 const GenieDashboard = ({ 
   memory, 
   insights, 
-  recentDecisions, 
+  recentDecisions,
+  notifications,
   onStartChat,
-  onEditProfile 
+  onEditProfile,
+  onDismissNotification,
+  onMarkNotificationRead
 }: GenieDashboardProps) => {
-  const [dismissedNotifications, setDismissedNotifications] = useState<string[]>([]);
-  
-  const activeNotifications = MOCK_NOTIFICATIONS.filter(
-    n => !dismissedNotifications.includes(n.id)
-  );
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -242,18 +234,23 @@ const GenieDashboard = ({
             <CardTitle className="text-base flex items-center gap-2">
               <Bell size={18} className="text-accent" />
               Notifications
-              {activeNotifications.length > 0 && (
+              {unreadCount > 0 && (
                 <Badge variant="default" className="ml-auto bg-accent text-accent-foreground">
-                  {activeNotifications.length}
+                  {unreadCount}
                 </Badge>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {activeNotifications.length > 0 ? (
+            {notifications.length > 0 ? (
               <div className="space-y-3">
-                {activeNotifications.map((notification) => (
-                  <NotificationCard key={notification.id} notification={notification} />
+                {notifications.map((notification) => (
+                  <NotificationCard 
+                    key={notification.id} 
+                    notification={notification} 
+                    onDismiss={onDismissNotification}
+                    onMarkRead={onMarkNotificationRead}
+                  />
                 ))}
               </div>
             ) : (

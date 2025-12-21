@@ -23,6 +23,7 @@ import GenieDashboard from "@/components/genie/GenieDashboard";
 import { GENIE_MODES, getModeById } from "@/components/genie/GenieModes";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
+import { useGenieNotifications } from "@/hooks/useGenieNotifications";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 
@@ -58,6 +59,7 @@ const Genie = () => {
 
   const { getMemoryContext, memory, insights, recentDecisions, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
+  const { notifications, dismiss: dismissNotification, markAsRead: markNotificationRead } = useGenieNotifications();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -333,8 +335,11 @@ const Genie = () => {
               memory={memory}
               insights={insights}
               recentDecisions={recentDecisions}
+              notifications={notifications}
               onStartChat={() => setShowDashboard(false)}
               onEditProfile={() => setShowOnboarding(true)}
+              onDismissNotification={dismissNotification}
+              onMarkNotificationRead={markNotificationRead}
             />
           ) : messages.length === 0 ? (
             /* Mode Selection View */
