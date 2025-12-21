@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Mic, Users, Lightbulb, Bot, TrendingUp, BookOpen } from "lucide-react";
+import { ArrowRight, Mic, Users, Lightbulb, Bot, TrendingUp, BookOpen, Linkedin, Twitter, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import andyHeadshot from "@/assets/andy-headshot.jpeg";
 import beyondRepsCover from "@/assets/beyond-reps-cover.jpeg";
@@ -86,7 +86,17 @@ const SpeakerKit = () => {
             <div className="space-y-4 text-muted-foreground">
               <p>
                 Andy Hall is the founder of Wellness Genius, helping wellness, fitness, and hospitality 
-                businesses scale through intelligent automation and AI agents.
+                businesses scale through intelligent automation and AI agents. He also chairs the{" "}
+                <a 
+                  href="https://globalwellnessinstitute.org/ai-initiative/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-accent hover:underline inline-flex items-center gap-1"
+                >
+                  Global Wellness Institute AI Initiative
+                  <ExternalLink size={14} />
+                </a>
+                , shaping policy and best practices for AI adoption across the wellness sector.
               </p>
               <p>
                 With a background spanning digital transformation, product development, and the wellness 
@@ -98,6 +108,37 @@ const SpeakerKit = () => {
                 and Awake Meditation, helping them streamline operations, deploy AI agents, and 
                 build custom digital products.
               </p>
+            </div>
+            
+            {/* Social Links */}
+            <div className="flex flex-wrap gap-3 mt-6">
+              <a
+                href="https://www.linkedin.com/in/andyweb3"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border/50 text-sm hover:border-accent/30 transition-colors"
+              >
+                <Linkedin size={16} className="text-accent" />
+                LinkedIn
+              </a>
+              <a
+                href="https://twitter.com/andy_web_3"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border/50 text-sm hover:border-accent/30 transition-colors"
+              >
+                <Twitter size={16} className="text-accent" />
+                @andy_web_3
+              </a>
+              <a
+                href="https://www.linkedin.com/company/global-wellness-institute-ai-initiative/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border/50 text-sm hover:border-accent/30 transition-colors"
+              >
+                <Linkedin size={16} className="text-accent" />
+                GWI AI Initiative
+              </a>
             </div>
           </div>
         </div>
