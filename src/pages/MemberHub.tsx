@@ -16,7 +16,8 @@ import {
   Sparkles,
   Loader2,
   Terminal,
-  MessageCircle
+  MessageCircle,
+  Bookmark
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -31,6 +32,7 @@ import {
   generateEngagementPlaybook
 } from "@/lib/pdf-generators";
 import PromptLibrary from "@/components/hub/PromptLibrary";
+import SavedInsights from "@/components/hub/SavedInsights";
 
 interface Purchase {
   id: string;
@@ -218,6 +220,10 @@ const MemberHub = () => {
                 <TabsTrigger value="products" className="flex items-center gap-2">
                   <Package size={16} />
                   Products & Reports
+                </TabsTrigger>
+                <TabsTrigger value="insights" className="flex items-center gap-2">
+                  <Bookmark size={16} />
+                  Saved Insights
                 </TabsTrigger>
                 <TabsTrigger value="prompts" className="flex items-center gap-2">
                   <Terminal size={16} />
@@ -415,6 +421,10 @@ const MemberHub = () => {
                     </div>
                   </div>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="insights">
+                <SavedInsights />
               </TabsContent>
 
               <TabsContent value="prompts">
