@@ -557,7 +557,8 @@ const AICoach = () => {
               )}
               <CreditDisplay 
                 balance={credits.balance} 
-                monthlyAllowance={credits.monthlyAllowance} 
+                monthlyAllowance={credits.monthlyAllowance}
+                nextResetDate={credits.nextResetDate}
                 compact 
               />
             </div>
