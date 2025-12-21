@@ -540,6 +540,11 @@ const PRODUCT_INFO: Record<string, { name: string; filename: string; generator: 
     filename: "wellness-engagement-systems-playbook.pdf",
     generator: generateEngagementPlaybookPDF,
   },
+  "gamification-playbook": {
+    name: "Gamification, Rewards & Incentives Playbook",
+    filename: "gamification-rewards-incentives-playbook.pdf",
+    generator: generateEngagementPlaybookPDF, // Uses engagement as base, full version in frontend
+  },
 };
 
 // Bundle definitions - maps bundle ID to included product IDs

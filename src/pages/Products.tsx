@@ -26,7 +26,8 @@ import {
   generateRevenueFramework, 
   generateBuildVsBuy,
   generateActivationPlaybook,
-  generateEngagementPlaybook
+  generateEngagementPlaybook,
+  generateGamificationPlaybook
 } from "@/lib/pdf-generators";
 
 interface Product {
@@ -179,6 +180,25 @@ const products: Product[] = [
     cta: "Buy Now",
     link: "#activation-playbook",
     isStripeProduct: true,
+  },
+  {
+    id: "gamification-playbook",
+    name: "Gamification, Rewards & Incentives Playbook",
+    description: "Evidence-led operating system for gamification, rewards, incentives, and hyper-personalisation. 8 plug-and-play templates included.",
+    price: "£79",
+    type: "paid",
+    icon: <Zap size={24} />,
+    features: [
+      "6-layer operator model",
+      "Intervention ladder (margin-safe)",
+      "8 editable templates (A–H)",
+      "JITAI decision rules",
+      "Compliance & fairness checklist",
+    ],
+    cta: "Buy Now",
+    link: "#gamification-playbook",
+    isStripeProduct: true,
+    badge: "New",
   },
 ];
 
@@ -465,6 +485,10 @@ const Products = () => {
             case "engagement-playbook":
               doc = generateEngagementPlaybook();
               filename = "wellness-engagement-systems-playbook.pdf";
+              break;
+            case "gamification-playbook":
+              doc = generateGamificationPlaybook();
+              filename = "gamification-rewards-incentives-playbook.pdf";
               break;
           }
           
