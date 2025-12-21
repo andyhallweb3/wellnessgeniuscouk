@@ -12,7 +12,8 @@ import {
   RotateCcw,
   Sparkles,
   Settings,
-  LayoutDashboard
+  LayoutDashboard,
+  History
 } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,9 +25,18 @@ import { GENIE_MODES, getModeById } from "@/components/genie/GenieModes";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useGenieNotifications } from "@/hooks/useGenieNotifications";
+import { useGenieSessions } from "@/hooks/useGenieSessions";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
+import SessionHistory from "@/components/genie/SessionHistory";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface Message {
   role: "user" | "assistant";
@@ -56,11 +66,13 @@ const Genie = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedMode, setSelectedMode] = useState("daily_operator");
   const [showDashboard, setShowDashboard] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { getMemoryContext, memory, insights, recentDecisions, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { notifications, dismiss: dismissNotification, markAsRead: markNotificationRead } = useGenieNotifications();
+  const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession } = useGenieSessions();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -204,6 +216,10 @@ const Genie = () => {
       }
 
       await streamChat(newMessages, selectedMode);
+      
+      // Auto-save session after each exchange
+      const updatedMessages = [...newMessages];
+      // We'll get the latest messages from state after streaming completes
     } catch (error) {
       console.error("Chat error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to get response");
@@ -218,6 +234,13 @@ const Genie = () => {
     }
   };
 
+  // Auto-save session when messages change
+  useEffect(() => {
+    if (messages.length > 0 && !isStreaming) {
+      saveSession(selectedMode, messages, currentSessionId);
+    }
+  }, [messages, isStreaming, selectedMode, currentSessionId, saveSession]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -228,6 +251,15 @@ const Genie = () => {
   const handleNewConversation = () => {
     setMessages([]);
     setSelectedMode("daily_operator");
+    setCurrentSessionId(null);
+  };
+
+  const handleLoadSession = (session: { id: string; mode: string; messages: Message[] }) => {
+    loadSession(session as Parameters<typeof loadSession>[0]);
+    setMessages(session.messages);
+    setSelectedMode(session.mode);
+    setShowDashboard(false);
+    setShowHistory(false);
   };
 
   const handleExampleClick = (example: string) => {
@@ -305,6 +337,30 @@ const Genie = () => {
                   if (showDashboard) setShowDashboard(false);
                 }}
               />
+              <Sheet open={showHistory} onOpenChange={setShowHistory}>
+                <SheetTrigger asChild>
+                  <Button 
+                    variant="ghost"
+                    size="sm" 
+                    title="Conversation history"
+                  >
+                    <History size={14} />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[350px] sm:w-[400px]">
+                  <SheetHeader>
+                    <SheetTitle>Conversation History</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4 h-[calc(100vh-100px)]">
+                    <SessionHistory
+                      sessions={sessions}
+                      loading={sessionsLoading}
+                      onLoadSession={handleLoadSession}
+                      currentSessionId={currentSessionId}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
               <Button 
                 variant={showDashboard ? "secondary" : "ghost"}
                 size="sm" 
