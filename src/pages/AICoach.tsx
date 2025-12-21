@@ -19,7 +19,10 @@ import {
   RotateCcw,
   Settings,
   BookOpen,
-  UserCog
+  UserCog,
+  FileText,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -33,7 +36,9 @@ import TierBadge from "@/components/coach/TierBadge";
 import CoachPromptLibrary from "@/components/coach/CoachPromptLibrary";
 import ProfileEditor from "@/components/coach/ProfileEditor";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
+import DocumentLibrary from "@/components/coach/DocumentLibrary";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
+import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 
 interface Message {
   role: "user" | "assistant";
@@ -59,7 +64,10 @@ const AICoach = () => {
   const [openingPortal, setOpeningPortal] = useState(false);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [showDocuments, setShowDocuments] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { documents, getDocumentContext } = useCoachDocuments();
 
   const { 
     credits, 
@@ -207,6 +215,9 @@ const AICoach = () => {
 
   const streamChat = useCallback(async (userMessages: Message[], mode: string) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach-chat`;
+    
+    // Get document context for AI
+    const documentContext = getDocumentContext();
 
     const resp = await fetch(CHAT_URL, {
       method: "POST",
@@ -230,6 +241,7 @@ const AICoach = () => {
           biggest_win: profile.biggest_win,
           decision_style: profile.decision_style,
         } : undefined,
+        documentContext: documentContext || undefined,
       }),
     });
 
@@ -286,7 +298,7 @@ const AICoach = () => {
     }
 
     return assistantContent;
-  }, [profile]);
+  }, [profile, getDocumentContext]);
 
   const handleSend = async () => {
     if (!input.trim() || isStreaming) return;
@@ -536,6 +548,18 @@ const AICoach = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
+                onClick={() => setShowDocuments(!showDocuments)}
+                title="Business documents"
+                className={showDocuments ? "bg-accent/10" : ""}
+              >
+                <FileText size={14} />
+                {documents.length > 0 && (
+                  <span className="ml-1 text-xs text-muted-foreground">{documents.length}</span>
+                )}
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
                 onClick={() => setShowProfileEditor(true)}
                 title="Edit profile"
               >
@@ -577,8 +601,10 @@ const AICoach = () => {
             </div>
           )}
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto rounded-xl border border-border bg-card p-4 mb-4">
+          {/* Main Content Area with optional Document Sidebar */}
+          <div className="flex-1 flex gap-4 min-h-0 mb-4">
+            {/* Messages */}
+            <div className={`flex-1 overflow-y-auto rounded-xl border border-border bg-card p-4 ${showDocuments ? 'w-2/3' : 'w-full'}`}>
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8">
                 <div className="p-4 rounded-full bg-accent/10 mb-4">
@@ -662,7 +688,31 @@ const AICoach = () => {
                     </div>
                   </div>
                 )}
-                <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} />
+              </div>
+            )}
+            </div>
+
+            {/* Document Library Sidebar */}
+            {showDocuments && (
+              <div className="w-1/3 min-w-[280px] max-w-[360px] rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between p-3 border-b border-border bg-secondary/30">
+                  <div className="flex items-center gap-2">
+                    <FileText size={16} className="text-accent" />
+                    <span className="text-sm font-medium">Business Documents</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6" 
+                    onClick={() => setShowDocuments(false)}
+                  >
+                    <ChevronRight size={14} />
+                  </Button>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <DocumentLibrary />
+                </div>
               </div>
             )}
           </div>
