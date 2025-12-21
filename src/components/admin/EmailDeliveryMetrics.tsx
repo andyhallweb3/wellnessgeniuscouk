@@ -1,21 +1,29 @@
 import { useState, useEffect } from "react";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Mail, 
   AlertTriangle, 
   XCircle, 
   Clock, 
-  CheckCircle,
   RefreshCw,
   ChevronDown,
   ChevronRight,
   Loader2,
   TrendingUp,
   Eye,
-  MousePointer
+  MousePointer,
+  CalendarIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface EmailMetrics {
   totalOpens: number;
@@ -47,12 +55,44 @@ const EmailDeliveryMetrics = ({ getAuthHeaders }: EmailDeliveryMetricsProps) => 
   const [metrics, setMetrics] = useState<EmailMetrics | null>(null);
   const [recentEvents, setRecentEvents] = useState<EmailEvent[]>([]);
   const [issueEvents, setIssueEvents] = useState<EmailEvent[]>([]);
+  
+  // Date range state - default to last 30 days
+  const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30));
+  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [datePreset, setDatePreset] = useState<string>('30d');
+
+  const applyPreset = (preset: string) => {
+    const now = new Date();
+    setDatePreset(preset);
+    setEndDate(now);
+    
+    switch (preset) {
+      case '7d':
+        setStartDate(subDays(now, 7));
+        break;
+      case '30d':
+        setStartDate(subDays(now, 30));
+        break;
+      case '90d':
+        setStartDate(subDays(now, 90));
+        break;
+      case 'all':
+        setStartDate(new Date('2020-01-01'));
+        break;
+      default:
+        setStartDate(subDays(now, 30));
+    }
+  };
 
   const fetchMetrics = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('newsletter-run', {
-        body: { action: 'email-metrics' },
+        body: { 
+          action: 'email-metrics',
+          startDate: startOfDay(startDate).toISOString(),
+          endDate: endOfDay(endDate).toISOString(),
+        },
         headers: getAuthHeaders(),
       });
 
@@ -78,6 +118,13 @@ const EmailDeliveryMetrics = ({ getAuthHeaders }: EmailDeliveryMetricsProps) => 
       fetchMetrics();
     }
   }, [expanded]);
+
+  // Refetch when date range changes
+  useEffect(() => {
+    if (expanded && metrics) {
+      fetchMetrics();
+    }
+  }, [startDate, endDate]);
 
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
@@ -129,6 +176,102 @@ const EmailDeliveryMetrics = ({ getAuthHeaders }: EmailDeliveryMetricsProps) => 
           {expanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
       </button>
+
+      {/* Date Range Filter */}
+      {expanded && (
+        <div className="flex flex-wrap items-center gap-3 mt-4 p-3 bg-secondary/30 rounded-lg border border-border">
+          <span className="text-sm text-muted-foreground">Period:</span>
+          
+          {/* Preset buttons */}
+          <div className="flex gap-1">
+            {[
+              { value: '7d', label: '7 days' },
+              { value: '30d', label: '30 days' },
+              { value: '90d', label: '90 days' },
+              { value: 'all', label: 'All time' },
+            ].map((preset) => (
+              <Button
+                key={preset.value}
+                variant={datePreset === preset.value ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => applyPreset(preset.value)}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+          
+          <span className="text-muted-foreground">|</span>
+          
+          {/* Custom date pickers */}
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-8 justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "dd MMM yyyy") : "Start date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setStartDate(date);
+                      setDatePreset('custom');
+                    }
+                  }}
+                  disabled={(date) => date > endDate || date > new Date()}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <span className="text-muted-foreground">to</span>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-8 justify-start text-left font-normal",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "dd MMM yyyy") : "End date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setEndDate(date);
+                      setDatePreset('custom');
+                    }
+                  }}
+                  disabled={(date) => date < startDate || date > new Date()}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+      )}
 
       {/* Summary Stats - Always Visible */}
       {metrics && (
@@ -227,10 +370,10 @@ const EmailDeliveryMetrics = ({ getAuthHeaders }: EmailDeliveryMetricsProps) => 
               <div>
                 <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
                   <Mail size={18} className="text-blue-400" />
-                  Recent Email Events
+                  Email Events ({recentEvents.length})
                 </h3>
                 {recentEvents.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No email events recorded yet.</p>
+                  <p className="text-muted-foreground text-center py-8">No email events in this date range.</p>
                 ) : (
                   <div className="card-tech overflow-x-auto">
                     <table className="w-full">
