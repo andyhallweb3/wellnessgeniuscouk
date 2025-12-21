@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -14,6 +14,7 @@ interface GenieSession {
   started_at: string;
   ended_at: string | null;
   summary: string | null;
+  tags: string[];
 }
 
 export function useGenieSessions() {
@@ -43,6 +44,7 @@ export function useGenieSessions() {
       const parsedSessions = (data || []).map((session) => ({
         ...session,
         messages: (session.messages as unknown as Message[]) || [],
+        tags: (session.tags as string[]) || [],
       }));
       
       setSessions(parsedSessions);
@@ -158,6 +160,28 @@ export function useGenieSessions() {
     [sessions, user, generateAISummary, fetchSessions]
   );
 
+  const updateSessionTags = useCallback(
+    async (sessionId: string, tags: string[]) => {
+      if (!user) return false;
+
+      try {
+        const { error } = await supabase
+          .from("genie_sessions")
+          .update({ tags })
+          .eq("id", sessionId)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+        await fetchSessions();
+        return true;
+      } catch (error) {
+        console.error("Error updating session tags:", error);
+        return false;
+      }
+    },
+    [user, fetchSessions]
+  );
+
   const endSession = useCallback(
     async (sessionId: string) => {
       if (!user) return;
@@ -197,6 +221,14 @@ export function useGenieSessions() {
     [user, endSession]
   );
 
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    sessions.forEach(session => {
+      session.tags?.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [sessions]);
+
   return {
     sessions,
     loading,
@@ -207,6 +239,8 @@ export function useGenieSessions() {
     loadSession,
     deleteSession,
     summarizeSession,
+    updateSessionTags,
+    allTags,
     refetch: fetchSessions,
   };
 }
