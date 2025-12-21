@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogIn, ChevronDown, Sparkles } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, Bookmark, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import logo from "@/assets/wellness-genius-logo-teal.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +37,11 @@ const Header = () => {
     { href: "/#how-it-works", label: "How It Works", isAnchor: true },
   ];
 
+  const hubLinks = [
+    { href: "/hub", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/hub/coach", label: "Wellness Genie", icon: Sparkles },
+    { href: "/hub/insights", label: "Saved Insights", icon: Bookmark },
+  ];
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/30">
       <div className="container-wide px-6 lg:px-12">
@@ -105,21 +111,43 @@ const Header = () => {
           <div className="hidden lg:flex items-center gap-3">
             {!isLoading && (
               user ? (
-                <Link
-                  to="/hub"
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all ${
-                    isActive("/hub") || location.pathname.startsWith("/hub")
-                      ? "border-accent bg-accent text-accent-foreground"
-                      : "border-accent/50 bg-accent/10 text-accent hover:bg-accent/20 hover:border-accent"
-                  }`}
-                >
-                  <img src={logo} alt="" className="h-5 w-5 object-contain" />
-                  My Hub
-                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all animate-[pulse-glow_2s_ease-in-out_infinite] ${
+                      isActive("/hub") || location.pathname.startsWith("/hub")
+                        ? "border-accent bg-accent text-accent-foreground shadow-[0_0_15px_hsl(var(--accent)/0.4)]"
+                        : "border-accent/50 bg-accent/10 text-accent hover:bg-accent/20 hover:border-accent shadow-[0_0_10px_hsl(var(--accent)/0.2)]"
+                    }`}
+                  >
+                    <img src={logo} alt="" className="h-5 w-5 object-contain" />
+                    My Hub
+                    <ChevronDown size={14} />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-popover border border-border shadow-lg z-50 min-w-[180px]">
+                    {hubLinks.map((link) => (
+                      <DropdownMenuItem key={link.href} asChild>
+                        <Link 
+                          to={link.href} 
+                          className={`w-full flex items-center gap-2 ${isActive(link.href) ? "text-accent font-medium" : ""}`}
+                        >
+                          <link.icon size={16} />
+                          {link.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/hub" className="w-full flex items-center gap-2">
+                        <LayoutDashboard size={16} />
+                        Go to Hub
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
                 <Link
                   to="/auth"
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full border-2 border-accent/50 bg-accent/10 text-accent hover:bg-accent/20 hover:border-accent transition-all"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full border-2 border-accent/50 bg-accent/10 text-accent hover:bg-accent/20 hover:border-accent transition-all animate-[pulse-glow_2s_ease-in-out_infinite] shadow-[0_0_10px_hsl(var(--accent)/0.2)]"
                 >
                   <img src={logo} alt="" className="h-5 w-5 object-contain" />
                   Sign In

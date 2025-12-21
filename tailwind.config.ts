@@ -113,8 +113,14 @@ export default {
           to: { opacity: "1", transform: "scale(1)" },
         },
         "pulse-glow": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.7" },
+          "0%, 100%": { 
+            opacity: "1",
+            boxShadow: "0 0 15px hsl(var(--accent) / 0.4)"
+          },
+          "50%": { 
+            opacity: "0.9",
+            boxShadow: "0 0 25px hsl(var(--accent) / 0.6)"
+          },
         },
       },
       animation: {
