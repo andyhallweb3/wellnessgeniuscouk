@@ -386,6 +386,10 @@ const EmailTemplatesAdmin = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sampleData, setSampleData] = useState({
+    firstname: "Sarah",
+    siteUrl: "https://wellnessgenius.co",
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -588,16 +592,10 @@ const EmailTemplatesAdmin = () => {
     setIsEditing(true);
   };
 
-  const SAMPLE_DATA: Record<string, string> = {
-    "{{contact.firstname}}": "Sarah",
-    "{{site_url}}": "https://wellnessgenius.co",
-  };
-
   const renderWithSampleData = (html: string): string => {
     let rendered = html;
-    Object.entries(SAMPLE_DATA).forEach(([variable, value]) => {
-      rendered = rendered.split(variable).join(value);
-    });
+    rendered = rendered.split("{{contact.firstname}}").join(sampleData.firstname);
+    rendered = rendered.split("{{site_url}}").join(sampleData.siteUrl);
     return rendered;
   };
 
@@ -878,14 +876,27 @@ const EmailTemplatesAdmin = () => {
             <TabsContent value="preview" className="mt-4">
               <div className="mb-3 p-3 rounded-lg bg-muted/50 border border-border">
                 <p className="text-xs text-muted-foreground mb-2">
-                  <strong>Sample data applied:</strong>
+                  <strong>Edit sample data for preview:</strong>
                 </p>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  {Object.entries(SAMPLE_DATA).map(([variable, value]) => (
-                    <span key={variable} className="px-2 py-1 rounded bg-background border border-border">
-                      {variable} → <strong>{value}</strong>
-                    </span>
-                  ))}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{"{{contact.firstname}}"}</Label>
+                    <Input
+                      value={sampleData.firstname}
+                      onChange={(e) => setSampleData({ ...sampleData, firstname: e.target.value })}
+                      placeholder="First name"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{"{{site_url}}"}</Label>
+                    <Input
+                      value={sampleData.siteUrl}
+                      onChange={(e) => setSampleData({ ...sampleData, siteUrl: e.target.value })}
+                      placeholder="Site URL"
+                      className="h-8 text-sm"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="rounded-lg border border-border overflow-hidden bg-white">
@@ -927,14 +938,27 @@ const EmailTemplatesAdmin = () => {
             )}
             <div className="mb-3 p-3 rounded-lg bg-muted/50 border border-border">
               <p className="text-xs text-muted-foreground mb-2">
-                <strong>Sample data applied:</strong>
+                <strong>Edit sample data for preview:</strong>
               </p>
-              <div className="flex flex-wrap gap-2 text-xs">
-                {Object.entries(SAMPLE_DATA).map(([variable, value]) => (
-                  <span key={variable} className="px-2 py-1 rounded bg-background border border-border">
-                    {variable} → <strong>{value}</strong>
-                  </span>
-                ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">{"{{contact.firstname}}"}</Label>
+                  <Input
+                    value={sampleData.firstname}
+                    onChange={(e) => setSampleData({ ...sampleData, firstname: e.target.value })}
+                    placeholder="First name"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{"{{site_url}}"}</Label>
+                  <Input
+                    value={sampleData.siteUrl}
+                    onChange={(e) => setSampleData({ ...sampleData, siteUrl: e.target.value })}
+                    placeholder="Site URL"
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
             </div>
             <div className="rounded-lg border border-border overflow-hidden bg-white">
