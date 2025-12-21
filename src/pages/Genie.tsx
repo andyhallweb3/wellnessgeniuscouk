@@ -18,10 +18,11 @@ import {
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import GenieModeSelector from "@/components/genie/GenieModeSelector";
+import AdvisorModeSelector from "@/components/advisor/AdvisorModeSelector";
+import CreditPurchase from "@/components/advisor/CreditPurchase";
 import GenieOnboarding from "@/components/genie/GenieOnboarding";
 import GenieDashboard from "@/components/genie/GenieDashboard";
-import { GENIE_MODES, getModeById } from "@/components/genie/GenieModes";
+import { ADVISOR_MODES, getModeById } from "@/components/advisor/AdvisorModes";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useGenieNotifications } from "@/hooks/useGenieNotifications";
@@ -30,6 +31,7 @@ import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
 import SessionHistory from "@/components/genie/SessionHistory";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
   SheetContent,
@@ -67,8 +69,8 @@ const Genie = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedMode, setSelectedMode] = useState(() => {
     const modeFromUrl = searchParams.get("mode");
-    const validModes = ["daily_operator", "weekly_review", "decision_support", "board_mode", "build_mode"];
-    return modeFromUrl && validModes.includes(modeFromUrl) ? modeFromUrl : "daily_operator";
+    const validModes = ADVISOR_MODES.map(m => m.id);
+    return modeFromUrl && validModes.includes(modeFromUrl) ? modeFromUrl : "daily_briefing";
   });
   const [showDashboard, setShowDashboard] = useState(() => !searchParams.get("mode"));
   const [showHistory, setShowHistory] = useState(false);
@@ -255,7 +257,7 @@ const Genie = () => {
 
   const handleNewConversation = () => {
     setMessages([]);
-    setSelectedMode("daily_operator");
+    setSelectedMode("daily_briefing");
     setCurrentSessionId(null);
   };
 
@@ -269,6 +271,22 @@ const Genie = () => {
 
   const handleExampleClick = (example: string) => {
     setInput(example);
+  };
+
+  const handlePurchaseCredits = async (packId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-credit-checkout', {
+        body: { packId },
+      });
+      
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      toast.error('Failed to start checkout. Please try again.');
+    }
   };
 
   if (authLoading || creditsLoading || memoryLoading) {
@@ -308,8 +326,8 @@ const Genie = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
-        <title>Wellness Genie | Wellness Genius</title>
-        <meta name="description" content="Your AI business operator for wellness decisions." />
+        <title>AI Advisor | Wellness Genius</title>
+        <meta name="description" content="Your AI business advisor for wellness decisions." />
       </Helmet>
       
       <Header />
@@ -329,8 +347,8 @@ const Genie = () => {
                   <Brain size={20} className="text-accent" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-heading">Wellness Genie</h1>
-                  <p className="text-xs text-muted-foreground">Business operator, not chatbot</p>
+                  <h1 className="text-lg font-heading">AI Advisor</h1>
+                  <p className="text-xs text-muted-foreground">Strategic partner, not chatbot</p>
                 </div>
               </div>
             </div>
@@ -391,6 +409,10 @@ const Genie = () => {
                   New
                 </Button>
               )}
+              <CreditPurchase
+                currentCredits={credits.balance}
+                onPurchase={handlePurchaseCredits}
+              />
               <CreditDisplay 
                 balance={credits.balance} 
                 monthlyAllowance={credits.monthlyAllowance}
@@ -419,7 +441,7 @@ const Genie = () => {
               {/* Left: Mode Selector */}
               <div className="lg:w-1/2">
                 <h2 className="text-sm font-medium text-muted-foreground mb-4">What do you need?</h2>
-                <GenieModeSelector 
+                <AdvisorModeSelector 
                   selectedMode={selectedMode} 
                   onSelectMode={setSelectedMode}
                   credits={credits.balance}
@@ -460,7 +482,7 @@ const Genie = () => {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ask the Genie..."
+                      placeholder="Ask your AI Advisor..."
                       className="min-h-[56px] max-h-[120px] resize-none"
                       disabled={isStreaming}
                     />
@@ -513,7 +535,7 @@ const Genie = () => {
                   className="text-xs bg-secondary border border-border rounded px-2 py-1 ml-2"
                   disabled={isStreaming}
                 >
-                  {GENIE_MODES.map((mode) => (
+                  {ADVISOR_MODES.map((mode) => (
                     <option key={mode.id} value={mode.id} disabled={credits.balance < mode.creditCost}>
                       {mode.icon} {mode.name} ({mode.creditCost} credits)
                     </option>
