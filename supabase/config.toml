@@ -119,3 +119,6 @@ verify_jwt = false
 
 [functions.extract-document-text]
 verify_jwt = false
+
+[functions.send-data-deletion-request]
+verify_jwt = false
