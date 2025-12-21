@@ -11,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, ArrowLeft, Brain, Target, AlertTriangle, Sparkles, Building2, Users } from "lucide-react";
+import { ArrowRight, ArrowLeft, Brain, Target, AlertTriangle, Sparkles, Building2, Users, FileText, Upload } from "lucide-react";
+import DocumentLibrary from "./DocumentLibrary";
 
 interface CoachOnboardingProps {
   onComplete: (profile: {
@@ -46,7 +47,7 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
     decision_style: "",
   });
 
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   const handleNext = () => {
     if (step < totalSteps) {
@@ -75,6 +76,8 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
       case 5:
         return profile.ai_experience;
       case 6:
+        return true; // Documents optional
+      case 7:
         return true;
       default:
         return false;
@@ -138,6 +141,13 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
               </li>
             </ul>
           </div>
+          
+          <div className="bg-accent/5 border border-accent/20 rounded-lg p-4 text-left">
+            <p className="text-sm font-medium text-accent mb-2">🎯 Personalised to you</p>
+            <p className="text-xs text-muted-foreground">
+              Over the next few steps, you'll build your coach profile. The more context you share about your business, the more relevant and actionable the guidance becomes.
+            </p>
+          </div>
         </div>
       )}
 
@@ -196,9 +206,16 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
               <Building2 size={32} className="text-accent" />
             </div>
-            <h2 className="text-2xl font-heading mb-2">Tell me about your business</h2>
+            <h2 className="text-2xl font-heading mb-2">Your Business Profile</h2>
             <p className="text-sm text-muted-foreground">
-              This helps me give you relevant, specific guidance.
+              This context shapes every response. Be specific for better guidance.
+            </p>
+          </div>
+
+          <div className="bg-secondary/50 rounded-lg p-3 mb-2">
+            <p className="text-xs text-muted-foreground text-center">
+              <Users size={12} className="inline mr-1" />
+              Your profile is used to personalise all AI coach responses
             </p>
           </div>
 
@@ -309,9 +326,15 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
               <Target size={32} className="text-accent" />
             </div>
-            <h2 className="text-2xl font-heading mb-2">What matters most right now?</h2>
+            <h2 className="text-2xl font-heading mb-2">Your Priorities</h2>
             <p className="text-sm text-muted-foreground">
-              I will tailor my guidance to your priorities.
+              The coach will tailor advice to what matters most to you right now.
+            </p>
+          </div>
+
+          <div className="bg-secondary/50 rounded-lg p-3 mb-2">
+            <p className="text-xs text-muted-foreground text-center">
+              💡 Tip: The more honest you are about frustrations, the better the guidance
             </p>
           </div>
 
@@ -426,8 +449,41 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
         </div>
       )}
 
-      {/* Step 6: Mode Education */}
+      {/* Step 6: Document Upload */}
       {step === 6 && (
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
+              <FileText size={32} className="text-accent" />
+            </div>
+            <h2 className="text-2xl font-heading mb-2">Share Business Documents</h2>
+            <p className="text-sm text-muted-foreground">
+              Upload documents to give the coach deeper context about your business.
+            </p>
+          </div>
+
+          <div className="bg-secondary/50 rounded-lg p-3">
+            <p className="text-xs text-muted-foreground text-center">
+              <Upload size={12} className="inline mr-1" />
+              Optional but recommended: business plans, financials, member data exports, competitor research
+            </p>
+          </div>
+
+          <div className="border border-border rounded-xl overflow-hidden max-h-[320px]">
+            <DocumentLibrary />
+          </div>
+
+          <div className="bg-accent/5 border border-accent/20 rounded-lg p-4">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-accent">Why share documents?</span><br />
+              The coach can reference your actual data, business plans, and metrics to give more specific, actionable advice tailored to your situation.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Step 7: Mode Education */}
+      {step === 7 && (
         <div className="space-y-6">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
@@ -480,9 +536,12 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
             ))}
           </div>
 
-          <div className="bg-accent/10 rounded-lg p-4 text-center">
+          <div className="bg-accent/10 rounded-lg p-4 text-center space-y-2">
             <p className="text-sm text-accent font-medium">
-              You are all set. I have saved your context and will use it to give you personalised guidance.
+              ✅ Your profile is saved
+            </p>
+            <p className="text-xs text-muted-foreground">
+              All your context (business info, goals, documents) will be used to personalise every response. You can update your profile anytime from the settings.
             </p>
           </div>
         </div>
