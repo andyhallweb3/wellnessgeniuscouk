@@ -7,12 +7,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const AI_COACH_PRODUCT_ID = "prod_TddVXSB3jlACob";
+// AI Coach subscription product IDs
+const AI_COACH_PRODUCTS: Record<string, { tier: string; credits: number }> = {
+  "prod_Te6NWkwhVOKfzo": { tier: "pro", credits: 40 },      // AI Coach Pro - £19.99/month
+  "prod_Te6NnelwNeqd6v": { tier: "expert", credits: 120 },  // AI Coach Expert - £39.99/month
+  "prod_TddVXSB3jlACob": { tier: "pro", credits: 40 },      // Legacy AI Coach product
+};
 
-// Whitelisted emails with free access
+// Whitelisted emails with free access (Expert tier)
 const FREE_ACCESS_EMAILS = [
   "andyhall0708@gmail.com",
 ];
+
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[CHECK-COACH-SUBSCRIPTION] ${step}${detailsStr}`);
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -26,11 +36,15 @@ serve(async (req) => {
   );
 
   try {
+    logStep("Function started");
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    logStep("Stripe key verified");
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
+    logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
@@ -38,14 +52,16 @@ serve(async (req) => {
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
+    logStep("User authenticated", { userId: user.id, email: user.email });
 
-    console.log("[CHECK-COACH-SUBSCRIPTION] Checking for:", user.email);
-
-    // Check if user has free access
+    // Check if user has free access (grants Expert tier)
     if (FREE_ACCESS_EMAILS.includes(user.email.toLowerCase())) {
-      console.log("[CHECK-COACH-SUBSCRIPTION] Free access granted for:", user.email);
+      logStep("Free access granted - Expert tier", { email: user.email });
       return new Response(JSON.stringify({
         subscribed: true,
+        tier: "expert",
+        credits: 120,
+        monthly_allowance: 120,
         subscription_end: null,
         free_access: true,
       }), {
@@ -58,15 +74,20 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
     if (customers.data.length === 0) {
-      console.log("[CHECK-COACH-SUBSCRIPTION] No customer found");
-      return new Response(JSON.stringify({ subscribed: false }), {
+      logStep("No Stripe customer found");
+      return new Response(JSON.stringify({ 
+        subscribed: false,
+        tier: null,
+        credits: 0,
+        monthly_allowance: 0,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
     const customerId = customers.data[0].id;
-    console.log("[CHECK-COACH-SUBSCRIPTION] Customer found:", customerId);
+    logStep("Found Stripe customer", { customerId });
 
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
@@ -74,33 +95,51 @@ serve(async (req) => {
       limit: 10,
     });
 
-    // Check if any active subscription is for the AI Coach product
-    const hasCoachSubscription = subscriptions.data.some((sub: any) => 
-      sub.items.data.some((item: any) => item.price.product === AI_COACH_PRODUCT_ID)
-    );
+    // Find the AI Coach subscription and determine tier
+    let foundTier: string | null = null;
+    let foundCredits = 0;
+    let subscriptionEnd: string | null = null;
+    let productId: string | null = null;
 
-    let subscriptionEnd = null;
-    if (hasCoachSubscription) {
-      const coachSub = subscriptions.data.find((sub: any) => 
-        sub.items.data.some((item: any) => item.price.product === AI_COACH_PRODUCT_ID)
-      );
-      if (coachSub) {
-        subscriptionEnd = new Date(coachSub.current_period_end * 1000).toISOString();
+    for (const sub of subscriptions.data) {
+      for (const item of sub.items.data) {
+        const prodId = item.price.product as string;
+        if (AI_COACH_PRODUCTS[prodId]) {
+          const productInfo = AI_COACH_PRODUCTS[prodId];
+          // If we already found a subscription, prefer Expert over Pro
+          if (!foundTier || (productInfo.tier === "expert" && foundTier === "pro")) {
+            foundTier = productInfo.tier;
+            foundCredits = productInfo.credits;
+            productId = prodId;
+            subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
+          }
+          break;
+        }
       }
     }
 
-    console.log("[CHECK-COACH-SUBSCRIPTION] Has subscription:", hasCoachSubscription);
+    const hasCoachSubscription = foundTier !== null;
+    logStep("Subscription check complete", { 
+      hasSubscription: hasCoachSubscription, 
+      tier: foundTier,
+      credits: foundCredits,
+      productId
+    });
 
     return new Response(JSON.stringify({
       subscribed: hasCoachSubscription,
+      tier: foundTier,
+      credits: foundCredits,
+      monthly_allowance: foundCredits,
       subscription_end: subscriptionEnd,
+      product_id: productId,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("[CHECK-COACH-SUBSCRIPTION] Error:", errorMessage);
+    logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
