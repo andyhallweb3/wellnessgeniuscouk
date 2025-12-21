@@ -652,6 +652,7 @@ export type Database = {
           mode: string
           started_at: string
           summary: string | null
+          tags: string[] | null
           user_id: string
         }
         Insert: {
@@ -661,6 +662,7 @@ export type Database = {
           mode: string
           started_at?: string
           summary?: string | null
+          tags?: string[] | null
           user_id: string
         }
         Update: {
@@ -670,6 +672,7 @@ export type Database = {
           mode?: string
           started_at?: string
           summary?: string | null
+          tags?: string[] | null
           user_id?: string
         }
         Relationships: []
