@@ -588,6 +588,19 @@ const EmailTemplatesAdmin = () => {
     setIsEditing(true);
   };
 
+  const SAMPLE_DATA: Record<string, string> = {
+    "{{contact.firstname}}": "Sarah",
+    "{{site_url}}": "https://wellnessgenius.co",
+  };
+
+  const renderWithSampleData = (html: string): string => {
+    let rendered = html;
+    Object.entries(SAMPLE_DATA).forEach(([variable, value]) => {
+      rendered = rendered.split(variable).join(value);
+    });
+    return rendered;
+  };
+
   const copyHtml = async (template: EmailTemplate) => {
     try {
       await navigator.clipboard.writeText(template.html_content);
@@ -863,9 +876,21 @@ const EmailTemplatesAdmin = () => {
             </TabsContent>
 
             <TabsContent value="preview" className="mt-4">
+              <div className="mb-3 p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-xs text-muted-foreground mb-2">
+                  <strong>Sample data applied:</strong>
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {Object.entries(SAMPLE_DATA).map(([variable, value]) => (
+                    <span key={variable} className="px-2 py-1 rounded bg-background border border-border">
+                      {variable} → <strong>{value}</strong>
+                    </span>
+                  ))}
+                </div>
+              </div>
               <div className="rounded-lg border border-border overflow-hidden bg-white">
                 <iframe
-                  srcDoc={formData.html_content || "<p>No content to preview</p>"}
+                  srcDoc={renderWithSampleData(formData.html_content) || "<p>No content to preview</p>"}
                   className="w-full h-[500px]"
                   title="Email Preview"
                 />
@@ -900,9 +925,21 @@ const EmailTemplatesAdmin = () => {
                 <strong>Preview:</strong> {selectedTemplate.preview_text}
               </div>
             )}
+            <div className="mb-3 p-3 rounded-lg bg-muted/50 border border-border">
+              <p className="text-xs text-muted-foreground mb-2">
+                <strong>Sample data applied:</strong>
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {Object.entries(SAMPLE_DATA).map(([variable, value]) => (
+                  <span key={variable} className="px-2 py-1 rounded bg-background border border-border">
+                    {variable} → <strong>{value}</strong>
+                  </span>
+                ))}
+              </div>
+            </div>
             <div className="rounded-lg border border-border overflow-hidden bg-white">
               <iframe
-                srcDoc={selectedTemplate?.html_content || ""}
+                srcDoc={selectedTemplate ? renderWithSampleData(selectedTemplate.html_content) : ""}
                 className="w-full h-[500px]"
                 title="Email Preview"
               />
