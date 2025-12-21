@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Clock, Mail } from "lucide-react";
 import { useNewsletter } from "@/hooks/useNewsletter";
@@ -88,6 +89,7 @@ const Insights = () => {
         {/* Hero Section */}
         <section className="section-padding pb-12">
           <div className="container-wide">
+            <PageBreadcrumb items={[{ label: "Insights" }]} />
             <div className="max-w-3xl animate-fade-up">
               <span className="badge-tech mb-6">Insights & Ideas</span>
               <h1 className="mb-6">

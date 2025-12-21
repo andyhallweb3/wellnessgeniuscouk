@@ -1,13 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Linkedin, Twitter } from "lucide-react";
+import { ArrowRight, Linkedin, Twitter, Bot } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.png";
 import gwiLogo from "@/assets/logos/gwi-logo.svg";
 import { useNewsletter } from "@/hooks/useNewsletter";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Footer = () => {
   const { email, setEmail, isSubmitting, subscribe } = useNewsletter();
+  const { user } = useAuth();
 
   const currentYear = new Date().getFullYear();
 
@@ -140,6 +142,16 @@ const Footer = () => {
               <h3 className="font-medium mb-4">Resources</h3>
               <ul className="space-y-3 text-sm text-primary-foreground/70">
                 <li>
+                  <Link to="/products" className="hover:text-primary-foreground transition-colors">
+                    Products
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/bundles" className="hover:text-primary-foreground transition-colors">
+                    Bundles
+                  </Link>
+                </li>
+                <li>
                   <Link to="/insights" className="hover:text-primary-foreground transition-colors">
                     Insights
                   </Link>
@@ -150,10 +162,23 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/ai-readiness" className="hover:text-primary-foreground transition-colors">
+                    AI Readiness Assessment
+                  </Link>
+                </li>
+                <li>
                   <Link to="/speaker-kit" className="hover:text-primary-foreground transition-colors">
                     Speaker Kit
                   </Link>
                 </li>
+                {user && (
+                  <li>
+                    <Link to="/hub/coach" className="hover:text-primary-foreground transition-colors flex items-center gap-1.5">
+                      <Bot size={14} />
+                      AI Coach
+                    </Link>
+                  </li>
+                )}
               </ul>
             </div>
 
