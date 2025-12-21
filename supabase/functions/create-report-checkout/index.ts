@@ -7,8 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// AI Readiness Full Report - £99
-const REPORT_PRICE_ID = "price_1SgBfJADyJKZqOM9p340o6MI";
+// AI Readiness Full Report - £39.99
+const REPORT_PRICE_ID = "price_1Sgo9CADyJKZqOM9Y7mMcM86";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';

@@ -195,7 +195,7 @@ const AIReadinessLanding = () => {
                 </div>
                 <div className="mb-6">
                   <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Complete Diagnostic</p>
-                  <p className="text-3xl font-heading">£99</p>
+                  <p className="text-3xl font-heading">£39.99</p>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {paidFeatures.map((feature) => (
