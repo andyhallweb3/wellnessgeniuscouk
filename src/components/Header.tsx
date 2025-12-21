@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogIn, ChevronDown, Bot, Sparkles } from "lucide-react";
+import { Menu, X, LogIn, ChevronDown, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -99,39 +99,31 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* AI Coach Link - only for logged in users */}
-            {user && (
-              <Link
-                to="/hub/coach"
-                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors rounded-md ${
-                  isActive("/hub/coach") || isActive("/ai-coach")
-                    ? "text-accent bg-accent/10" 
-                    : "text-accent hover:bg-accent/10"
-                }`}
-              >
-                <Bot size={14} />
-                AI Coach
-              </Link>
-            )}
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-3">
             {!isLoading && (
               user ? (
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/hub">
-                    <User size={16} />
-                    Hub
-                  </Link>
-                </Button>
+                <Link
+                  to="/hub"
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all ${
+                    isActive("/hub") || location.pathname.startsWith("/hub")
+                      ? "border-accent bg-accent text-accent-foreground"
+                      : "border-accent/50 bg-accent/10 text-accent hover:bg-accent/20 hover:border-accent"
+                  }`}
+                >
+                  <img src={logo} alt="" className="h-5 w-5 object-contain" />
+                  My Hub
+                </Link>
               ) : (
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/auth">
-                    <LogIn size={16} />
-                    Sign In
-                  </Link>
-                </Button>
+                <Link
+                  to="/auth"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full border-2 border-accent/50 bg-accent/10 text-accent hover:bg-accent/20 hover:border-accent transition-all"
+                >
+                  <img src={logo} alt="" className="h-5 w-5 object-contain" />
+                  Sign In
+                </Link>
               )
             )}
             <Button variant="accent" size="sm" asChild>
@@ -196,37 +188,26 @@ const Header = () => {
                 </a>
               ))}
 
-              {/* AI Coach for logged in users */}
-              {user && (
-                <>
-                  <p className="text-xs font-medium text-muted-foreground px-2 pt-4 pb-1">AI Tools</p>
-                  <Link
-                    to="/hub/coach"
-                    className="flex items-center gap-2 px-3 py-2 text-base font-medium text-accent hover:bg-accent/5 transition-colors rounded-md"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Bot size={16} />
-                    AI Coach
-                  </Link>
-                </>
-              )}
-
               <div className="flex flex-col gap-2 pt-6 border-t border-border/30 mt-4">
                 {!isLoading && (
                   user ? (
-                    <Button variant="outline" asChild>
-                      <Link to="/hub" onClick={() => setIsMenuOpen(false)}>
-                        <User size={16} />
-                        My Hub
-                      </Link>
-                    </Button>
+                    <Link
+                      to="/hub"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 px-4 py-3 text-base font-semibold rounded-full border-2 border-accent bg-accent/10 text-accent hover:bg-accent/20 transition-all"
+                    >
+                      <img src={logo} alt="" className="h-6 w-6 object-contain" />
+                      My Hub
+                    </Link>
                   ) : (
-                    <Button variant="outline" asChild>
-                      <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                        <LogIn size={16} />
-                        Sign In
-                      </Link>
-                    </Button>
+                    <Link
+                      to="/auth"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 px-4 py-3 text-base font-semibold rounded-full border-2 border-accent bg-accent/10 text-accent hover:bg-accent/20 transition-all"
+                    >
+                      <img src={logo} alt="" className="h-6 w-6 object-contain" />
+                      Sign In
+                    </Link>
                   )
                 )}
                 <Button variant="accent" asChild>
