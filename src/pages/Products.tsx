@@ -42,6 +42,8 @@ interface Product {
   badge?: string;
   isDownload?: boolean;
   isStripeProduct?: boolean;
+  upsellText?: string;
+  upsellProduct?: string;
 }
 
 const products: Product[] = [
@@ -66,36 +68,42 @@ const products: Product[] = [
   {
     id: "myths-deck",
     name: "The Wellness AI Myths Deck",
-    description: "10 slides that cut through the noise. Essential reading for exec teams and innovation leads.",
+    description: "10 evidence-based slides using the C.L.E.A.R framework to cut through AI hype. Essential reading for exec teams and innovation leads.",
     price: "Free",
     type: "free",
     icon: <FileText size={24} />,
     features: [
       "Why 'we need AI' is the wrong starting point",
-      "Engagement ≠ insight",
+      "Engagement ≠ insight (behavioural lens)",
       "Why most wellness data can't be monetised",
-      "AI without governance increases risk",
+      "C.L.E.A.R framework introduction",
     ],
     cta: "Download PDF",
     link: "/downloads/ai-myths-deck.pdf",
     isDownload: true,
+    badge: "C.L.E.A.R Framework",
+    upsellText: "Go deeper with the full Wellness AI Builder – Operator Edition →",
+    upsellProduct: "prompt-pack",
   },
   {
     id: "reality-checklist",
     name: "90-Day AI Reality Checklist",
-    description: "One-page practical checklist for busy operators. Pin it to your wall.",
+    description: "Structured one-page checklist built on the C.L.E.A.R planning engine. Pin it to your wall, run it with your team.",
     price: "Free",
     type: "free",
     icon: <CheckCircle size={24} />,
     features: [
-      "Data foundations",
-      "Engagement loops",
-      "Monetisation clarity",
-      "Trust & compliance",
+      "Month 1: Data foundations & stop rules",
+      "Month 2: Engagement & segmentation",
+      "Month 3: Monetisation experiments",
+      "C.L.E.A.R validation criteria",
     ],
     cta: "Download PDF",
     link: "/downloads/90-day-ai-checklist.pdf",
     isDownload: true,
+    badge: "C.L.E.A.R Framework",
+    upsellText: "Get the full execution plan: 90-Day AI Activation Playbook →",
+    upsellProduct: "activation-playbook",
   },
   // Paid Products
   {
@@ -244,17 +252,23 @@ const ProductCard = ({
   product, 
   onDownloadClick,
   onBuyClick,
-  isProcessing
+  isProcessing,
+  allProducts
 }: { 
   product: Product; 
   onDownloadClick?: (product: Product) => void;
   onBuyClick?: (product: Product) => void;
   isProcessing?: string | null;
+  allProducts?: Product[];
 }) => {
   const isInternal = product.link.startsWith("/") && !product.isDownload && !product.isStripeProduct;
   const isDownload = product.isDownload;
   const isStripe = product.isStripeProduct;
   const isLoading = isProcessing === product.id;
+  
+  const upsellProduct = product.upsellProduct && allProducts 
+    ? allProducts.find(p => p.id === product.upsellProduct)
+    : null;
   
   const handleClick = () => {
     if (isDownload && onDownloadClick) {
@@ -263,11 +277,21 @@ const ProductCard = ({
       onBuyClick(product);
     }
   };
+
+  const handleUpsellClick = () => {
+    if (upsellProduct && onBuyClick) {
+      onBuyClick(upsellProduct);
+    }
+  };
   
   return (
     <div className={`rounded-xl border p-6 ${getTypeStyles(product.type)} relative flex flex-col h-full`}>
       {product.badge && (
-        <span className="absolute -top-3 left-4 px-3 py-1 rounded-full bg-accent text-accent-foreground text-xs font-medium">
+        <span className={`absolute -top-3 left-4 px-3 py-1 rounded-full text-xs font-medium ${
+          product.badge === "C.L.E.A.R Framework" 
+            ? "bg-purple-500/20 text-purple-600 border border-purple-500/30" 
+            : "bg-accent text-accent-foreground"
+        }`}>
           {product.badge}
         </span>
       )}
@@ -297,6 +321,21 @@ const ProductCard = ({
           </li>
         ))}
       </ul>
+
+      {/* Upsell teaser for free products */}
+      {product.upsellText && upsellProduct && (
+        <button
+          onClick={handleUpsellClick}
+          className="mb-4 p-3 rounded-lg bg-accent/5 border border-accent/20 text-left hover:bg-accent/10 transition-colors group"
+        >
+          <p className="text-xs text-accent font-medium group-hover:underline">
+            {product.upsellText}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {upsellProduct.price} • Full C.L.E.A.R framework
+          </p>
+        </button>
+      )}
       
       {isDownload ? (
         <Button 
@@ -525,6 +564,8 @@ const Products = () => {
                   key={product.id} 
                   product={product} 
                   onDownloadClick={handleDownloadClick}
+                  onBuyClick={handleBuyClick}
+                  allProducts={products}
                 />
               ))}
             </div>
