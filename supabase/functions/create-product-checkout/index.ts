@@ -7,13 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Product price mapping (TEST MODE)
+// Product price mapping - Updated pricing Dec 2025
 const PRODUCT_PRICES: Record<string, string> = {
-  "prompt-pack": "price_1SgLn2ADyJKZqOM99i15KWE2",
-  "revenue-framework": "price_1SgLn4ADyJKZqOM9wGt6k508",
-  "build-vs-buy": "price_1SgLn7ADyJKZqOM94XoVJeuz",
-  "activation-playbook": "price_1SgLn8ADyJKZqOM99yCT7KOH",
-  "engagement-playbook": "price_1SgM2iADyJKZqOM9R1jOSJP6",
+  "prompt-pack": "price_1SgLn2ADyJKZqOM99i15KWE2",           // £49 - unchanged
+  "revenue-framework": "price_1SgLn4ADyJKZqOM9wGt6k508",    // £49 - unchanged
+  "build-vs-buy": "price_1SgLn7ADyJKZqOM94XoVJeuz",         // £29 - unchanged
+  "activation-playbook": "price_1SgnXvADyJKZqOM9KBzNvcYl",  // £99 - was £49
+  "engagement-playbook": "price_1SgnXxADyJKZqOM9w9RFk8Cv",  // £59 - was £79
+  "ai-builder": "price_1SgnXzADyJKZqOM9EqRorM6Y",           // £69 - new product ID
 };
 
 // AI Coach subscription product ID
