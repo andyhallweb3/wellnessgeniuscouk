@@ -231,6 +231,44 @@ serve(async (req) => {
         continue;
       }
 
+      // Get user notification preferences
+      const { data: prefs } = await supabase
+        .from("notification_preferences")
+        .select("*")
+        .eq("user_id", memory.user_id)
+        .maybeSingle();
+
+      // Check quiet hours
+      if (prefs?.quiet_hours_enabled) {
+        const now = new Date();
+        const currentTime = now.toTimeString().slice(0, 5);
+        const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        
+        // Check if current day is a quiet day
+        if (prefs.quiet_days?.includes(currentDay)) {
+          console.log(`Skipping user ${memory.user_id} - quiet day`);
+          continue;
+        }
+        
+        // Check quiet hours
+        const start = prefs.quiet_hours_start?.slice(0, 5) || "22:00";
+        const end = prefs.quiet_hours_end?.slice(0, 5) || "08:00";
+        
+        if (start < end) {
+          // Simple range (e.g., 09:00-17:00)
+          if (currentTime >= start && currentTime < end) {
+            console.log(`Skipping user ${memory.user_id} - quiet hours`);
+            continue;
+          }
+        } else {
+          // Overnight range (e.g., 22:00-08:00)
+          if (currentTime >= start || currentTime < end) {
+            console.log(`Skipping user ${memory.user_id} - quiet hours`);
+            continue;
+          }
+        }
+      }
+
       // Generate notifications for this user
       const notifications = await generateNotificationsForUser(memory, lovableApiKey);
 
@@ -252,8 +290,18 @@ serve(async (req) => {
       for (const notification of notifications) {
         let emailSent = false;
         
-        // Send email for high priority if resend is configured
-        if (resend && profile?.email && notification.priority === "high") {
+        // Check if we should send email based on preferences
+        const shouldEmail = prefs?.email_enabled !== false && 
+          prefs?.email_frequency !== 'never' &&
+          (
+            prefs?.email_priority_threshold === 'all' ||
+            (prefs?.email_priority_threshold === 'medium_and_high' && ['medium', 'high'].includes(notification.priority)) ||
+            (prefs?.email_priority_threshold === 'high' && notification.priority === 'high') ||
+            (!prefs?.email_priority_threshold && notification.priority === 'high') // Default to high only
+          );
+        
+        // Send email if resend is configured and preferences allow
+        if (resend && profile?.email && shouldEmail && prefs?.email_frequency === 'instant') {
           emailSent = await sendNotificationEmail(
             resend,
             profile.email,

@@ -855,6 +855,57 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_enabled: boolean
+          email_frequency: string
+          email_priority_threshold: string
+          id: string
+          push_enabled: boolean
+          push_subscription: Json | null
+          quiet_days: string[] | null
+          quiet_hours_enabled: boolean
+          quiet_hours_end: string
+          quiet_hours_start: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean
+          email_frequency?: string
+          email_priority_threshold?: string
+          id?: string
+          push_enabled?: boolean
+          push_subscription?: Json | null
+          quiet_days?: string[] | null
+          quiet_hours_enabled?: boolean
+          quiet_hours_end?: string
+          quiet_hours_start?: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean
+          email_frequency?: string
+          email_priority_threshold?: string
+          id?: string
+          push_enabled?: boolean
+          push_subscription?: Json | null
+          quiet_days?: string[] | null
+          quiet_hours_enabled?: boolean
+          quiet_hours_end?: string
+          quiet_hours_start?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_downloads: {
         Row: {
           ab_subject_line: string | null
