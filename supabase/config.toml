@@ -137,3 +137,9 @@ verify_jwt = false
 
 [functions.genie-voice-token]
 verify_jwt = false
+
+[functions.create-credit-checkout]
+verify_jwt = false
+
+[functions.credit-purchase-webhook]
+verify_jwt = false

@@ -279,9 +279,9 @@ const MemberHub = () => {
                   </div>
                   <span className="text-xs font-medium uppercase tracking-wider text-accent">Your AI Business Partner</span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-heading mb-3">Wellness Genie</h2>
+                <h2 className="text-2xl md:text-3xl font-heading mb-3">AI Advisor</h2>
                 <p className="text-muted-foreground mb-4">
-                  Your always-on business operator. Get strategic guidance, make better decisions, and solve operational challenges with AI that understands your wellness business.
+                  Your strategic business partner. Get guidance, stress-test decisions, and build action plans with AI that understands your wellness business.
                 </p>
                 
                 {/* Quick Mode Starters */}
@@ -289,7 +289,7 @@ const MemberHub = () => {
                   <p className="text-xs text-muted-foreground mb-2">Quick start a conversation:</p>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" className="text-xs" asChild>
-                      <Link to="/genie?mode=daily_operator">
+                      <Link to="/genie?mode=daily_briefing">
                         <span className="mr-1">📊</span> Daily Briefing
                       </Link>
                     </Button>
@@ -299,13 +299,13 @@ const MemberHub = () => {
                       </Link>
                     </Button>
                     <Button variant="outline" size="sm" className="text-xs" asChild>
-                      <Link to="/genie?mode=weekly_review">
-                        <span className="mr-1">📈</span> Weekly Review
+                      <Link to="/genie?mode=commercial_lens">
+                        <span className="mr-1">📈</span> Commercial Lens
                       </Link>
                     </Button>
                     <Button variant="outline" size="sm" className="text-xs" asChild>
                       <Link to="/genie?mode=build_mode">
-                        <span className="mr-1">🔧</span> Build Mode
+                        <span className="mr-1">🔧</span> 90-Day Builder
                       </Link>
                     </Button>
                   </div>
@@ -315,14 +315,8 @@ const MemberHub = () => {
                   <Button variant="accent" size="lg" asChild>
                     <Link to="/genie">
                       <Brain size={18} />
-                      Open Genie
+                      Open AI Advisor
                       <ArrowRight size={16} />
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="lg" asChild>
-                    <Link to="/hub/coach">
-                      <MessageCircle size={18} />
-                      AI Coach
                     </Link>
                   </Button>
                 </div>
@@ -346,15 +340,15 @@ const MemberHub = () => {
                   <div className="p-2 rounded-lg bg-green-500/10 w-fit mb-2">
                     <BarChart3 size={18} className="text-green-400" />
                   </div>
-                  <h4 className="font-medium text-sm mb-1">Decision Support</h4>
-                  <p className="text-xs text-muted-foreground">Get data-driven recommendations for key choices</p>
+                  <h4 className="font-medium text-sm mb-1">8 Expert Modes</h4>
+                  <p className="text-xs text-muted-foreground">From quick questions to 90-day planning</p>
                 </div>
                 <div className="rounded-xl bg-background/60 border border-border/50 p-4">
                   <div className="p-2 rounded-lg bg-orange-500/10 w-fit mb-2">
                     <HistoryIcon size={18} className="text-orange-400" />
                   </div>
-                  <h4 className="font-medium text-sm mb-1">Session History</h4>
-                  <p className="text-xs text-muted-foreground">Search and resume past conversations anytime</p>
+                  <h4 className="font-medium text-sm mb-1">Pay As You Go</h4>
+                  <p className="text-xs text-muted-foreground">Buy credits when you need them, no subscription</p>
                 </div>
               </div>
             </div>

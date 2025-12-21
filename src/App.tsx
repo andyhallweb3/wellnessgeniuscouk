@@ -59,10 +59,11 @@ const App = () => (
             <Route path="/member-hub" element={<Navigate to="/hub" replace />} />
             <Route path="/hub" element={<MemberHub />} />
             <Route path="/hub/downloads" element={<DownloadsLibrary />} />
-            <Route path="/hub/coach" element={<AICoach />} />
-            <Route path="/ai-coach" element={<AICoach />} />
+            <Route path="/hub/coach" element={<Navigate to="/genie" replace />} />
+            <Route path="/ai-coach" element={<Navigate to="/genie" replace />} />
             <Route path="/ai-genius" element={<AIGenius />} />
             <Route path="/genie" element={<Genie />} />
+            <Route path="/advisor" element={<Navigate to="/genie" replace />} />
             <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
             <Route path="/ai-readiness/full/:id" element={<AIReadinessAssessmentPaid />} />
             <Route path="/ai-readiness/results/:id" element={<AIReadinessResults />} />

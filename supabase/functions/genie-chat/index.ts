@@ -58,8 +58,9 @@ Keep responses tight. No waffle. Every sentence should add value.`;
 
 // Mode-specific prompts that change behavior
 const MODE_CONFIGS: Record<string, { prompt: string; responseFormat: string }> = {
-  daily_operator: {
-    prompt: `MODE: Daily Operator
+  // Daily Operations
+  daily_briefing: {
+    prompt: `MODE: Daily Briefing
     
 You're giving a morning briefing. Be concise. Focus on:
 - What needs attention TODAY
@@ -70,18 +71,18 @@ You're giving a morning briefing. Be concise. Focus on:
 Keep it under 200 words unless critical issues require more.`,
     responseFormat: "brief",
   },
-  weekly_review: {
-    prompt: `MODE: Weekly Review
+  quick_question: {
+    prompt: `MODE: Quick Question
 
-Compare this week to last. Focus on:
-- What changed (delta, not absolutes)
-- Trends emerging (good and bad)
-- Where are we drifting from plan?
-- What needs course correction?
-
-Use a structured format with clear sections.`,
-    responseFormat: "structured",
+Simple, direct answer. No deep analysis unless asked.
+- Answer the specific question
+- Keep it short (under 100 words ideal)
+- Only add context if essential
+- No structured output needed`,
+    responseFormat: "brief",
   },
+  
+  // Strategic Thinking
   decision_support: {
     prompt: `MODE: Decision Support
 
@@ -94,6 +95,32 @@ The user is stress-testing a decision. Your job:
 
 Take a position. Don't hedge everything.`,
     responseFormat: "detailed",
+  },
+  diagnostic: {
+    prompt: `MODE: Diagnostic
+
+Find what's broken or missing. Your job:
+- Identify weak assumptions
+- Find missing inputs
+- Surface hidden risks
+- Point out blind spots
+- Be constructively critical
+
+Don't accept the premise at face value. Challenge it.`,
+    responseFormat: "detailed",
+  },
+  commercial_lens: {
+    prompt: `MODE: Commercial Lens
+
+Translate to financial implications. Focus on:
+- Revenue impact (ranges, not points)
+- Cost implications
+- ROI estimation
+- Risk quantification
+- Payback period
+
+Use conservative assumptions. Show your working.`,
+    responseFormat: "structured",
   },
   board_mode: {
     prompt: `MODE: Board / Investor
@@ -109,8 +136,22 @@ Speak in CFO language. The user needs to present to sophisticated audiences.
 Format for executive consumption.`,
     responseFormat: "structured",
   },
+  
+  // Planning & Building
+  weekly_review: {
+    prompt: `MODE: Weekly Review
+
+Compare this week to last. Focus on:
+- What changed (delta, not absolutes)
+- Trends emerging (good and bad)
+- Where are we drifting from plan?
+- What needs course correction?
+
+Use a structured format with clear sections.`,
+    responseFormat: "structured",
+  },
   build_mode: {
-    prompt: `MODE: Build Mode (90-Day Planning)
+    prompt: `MODE: 90-Day Builder
 
 Create a prioritised action plan. Focus on:
 - What to do FIRST (highest impact, lowest risk)
@@ -121,6 +162,18 @@ Create a prioritised action plan. Focus on:
 
 Be specific. "Improve retention" is not an action. "Implement a 7-day inactive member outreach sequence" is.`,
     responseFormat: "structured",
+  },
+  
+  // Legacy mode mappings for backwards compatibility
+  daily_operator: {
+    prompt: `MODE: Daily Briefing
+    
+You're giving a morning briefing. Be concise. Focus on:
+- What needs attention TODAY
+- Any risks that emerged
+- Quick wins available
+- What to ignore for now`,
+    responseFormat: "brief",
   },
 };
 
@@ -137,7 +190,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const modeConfig = MODE_CONFIGS[mode] || MODE_CONFIGS.daily_operator;
+    const modeConfig = MODE_CONFIGS[mode] || MODE_CONFIGS.daily_briefing;
     
     // Build full system prompt with context
     let fullSystemPrompt = GENIE_SYSTEM_PROMPT;
