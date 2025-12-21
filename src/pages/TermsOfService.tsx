@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const TermsOfService = () => {
-  const lastUpdated = "12 December 2024";
+  const lastUpdated = "21 December 2025";
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,7 +27,7 @@ const TermsOfService = () => {
                   Wellness Genius provides AI readiness assessments, advisory services, education, and AI agent solutions across wellness, fitness, hospitality, and related sectors.
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground">
-                  <li>Website: <a href="https://www.wellnessgenius.ai" className="text-accent hover:underline">https://www.wellnessgenius.ai</a></li>
+                  <li>Website: <a href="https://www.wellnessgenius.co.uk" className="text-accent hover:underline">https://www.wellnessgenius.co.uk</a></li>
                   <li>Contact: <a href="mailto:andy@wellnessgenius.co.uk" className="text-accent hover:underline">andy@wellnessgenius.co.uk</a></li>
                 </ul>
               </section>

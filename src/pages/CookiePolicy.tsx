@@ -1,8 +1,11 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
+import { openCookiePreferences } from "@/components/CookieConsent";
 
 const CookiePolicy = () => {
-  const lastUpdated = "12 December 2024";
+  const lastUpdated = "21 December 2025";
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,15 +31,15 @@ const CookiePolicy = () => {
               <section>
                 <h2 className="text-2xl font-heading mb-4">2. Types of Cookies We Use</h2>
 
-                <h3 className="text-xl font-medium mb-2">a) Strictly Necessary Cookies</h3>
+                <h3 className="text-xl font-medium mb-2">a) Essential Cookies</h3>
                 <p className="text-muted-foreground mb-2">
                   These cookies are required for the website to function properly and cannot be disabled.
                 </p>
                 <p className="text-muted-foreground mb-2">Examples:</p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-6">
-                  <li>Page navigation</li>
-                  <li>Form submissions</li>
-                  <li>Security and consent management</li>
+                  <li>Authentication and session management</li>
+                  <li>Cookie consent preferences</li>
+                  <li>Security features</li>
                 </ul>
 
                 <h3 className="text-xl font-medium mb-2">b) Analytics Cookies (Optional)</h3>
@@ -46,18 +49,27 @@ const CookiePolicy = () => {
                 <p className="text-muted-foreground mb-2">Examples:</p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4">
                   <li>Page views and interaction patterns</li>
-                  <li>Traffic sources</li>
+                  <li>Traffic sources and referrers</li>
+                  <li>Site performance metrics</li>
                 </ul>
                 <p className="text-muted-foreground mb-6">
                   We use privacy-friendly analytics tools where possible. These cookies are only used with your consent.
                 </p>
 
-                <h3 className="text-xl font-medium mb-2">c) Functional Cookies (Optional)</h3>
+                <h3 className="text-xl font-medium mb-2">c) Marketing Cookies (Optional)</h3>
+                <p className="text-muted-foreground mb-2">
+                  These cookies may be used to track visitors across websites to display relevant content.
+                </p>
+                <p className="text-muted-foreground mb-6">
+                  We currently do not use advertising or behavioural targeting cookies. If this changes, we will update this policy.
+                </p>
+
+                <h3 className="text-xl font-medium mb-2">d) Functional Cookies (Optional)</h3>
                 <p className="text-muted-foreground mb-2">Used to remember preferences such as:</p>
                 <ul className="list-disc pl-6 text-muted-foreground">
-                  <li>Language</li>
-                  <li>Form inputs</li>
-                  <li>Session settings</li>
+                  <li>Theme preferences (light/dark mode)</li>
+                  <li>Language settings</li>
+                  <li>Previously entered form data</li>
                 </ul>
               </section>
 
@@ -67,20 +79,30 @@ const CookiePolicy = () => {
                 <ul className="list-disc pl-6 text-muted-foreground">
                   <li>Use advertising or behavioural targeting cookies</li>
                   <li>Sell or share cookie data with advertisers</li>
+                  <li>Use cookies to build profiles for targeted advertising</li>
                 </ul>
               </section>
 
               <section>
                 <h2 className="text-2xl font-heading mb-4">4. Managing Cookie Preferences</h2>
-                <p className="text-muted-foreground mb-2">You can:</p>
+                <p className="text-muted-foreground mb-4">You can:</p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4">
                   <li>Accept or reject non-essential cookies via our cookie banner</li>
+                  <li>Customise which categories of cookies you accept</li>
                   <li>Change or withdraw consent at any time</li>
                   <li>Manage cookies through your browser settings</li>
                 </ul>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-4">
                   Disabling cookies may affect site functionality.
                 </p>
+                <Button 
+                  variant="outline" 
+                  onClick={openCookiePreferences}
+                  className="gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  Manage Cookie Preferences
+                </Button>
               </section>
 
               <section>
