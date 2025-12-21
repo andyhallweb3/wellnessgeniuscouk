@@ -759,51 +759,94 @@ Deno.serve(async (req) => {
 
     // Email metrics endpoint for admin dashboard
     if (body.action === 'email-metrics') {
-      // Get aggregated metrics
-      const { data: openEvents } = await supabase
+      const startDate = body.startDate || null;
+      const endDate = body.endDate || null;
+      
+      console.log(`Fetching email metrics${startDate ? ` from ${startDate}` : ''}${endDate ? ` to ${endDate}` : ''}`);
+
+      // Build base query with optional date filters
+      let openQuery = supabase
         .from('newsletter_events')
         .select('subscriber_email')
         .eq('event_type', 'open');
-
-      const { data: clickEvents } = await supabase
+      
+      let clickQuery = supabase
         .from('newsletter_events')
         .select('subscriber_email')
         .eq('event_type', 'click');
 
-      const { count: bounceCount } = await supabase
+      let bounceQuery = supabase
         .from('newsletter_events')
         .select('*', { count: 'exact', head: true })
         .eq('event_type', 'bounce');
 
-      const { count: complaintCount } = await supabase
+      let complaintQuery = supabase
         .from('newsletter_events')
         .select('*', { count: 'exact', head: true })
         .eq('event_type', 'complaint');
 
-      const { count: delayCount } = await supabase
+      let delayQuery = supabase
         .from('newsletter_events')
         .select('*', { count: 'exact', head: true })
         .eq('event_type', 'delivery_delayed');
 
-      const totalOpens = openEvents?.length || 0;
-      const uniqueOpens = new Set(openEvents?.map(e => e.subscriber_email)).size;
-      const totalClicks = clickEvents?.length || 0;
-      const uniqueClicks = new Set(clickEvents?.map(e => e.subscriber_email)).size;
-
-      // Get recent events (last 50)
-      const { data: recentEvents } = await supabase
+      let recentQuery = supabase
         .from('newsletter_events')
         .select('id, event_type, subscriber_email, send_id, link_url, created_at')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
-      // Get delivery issues (bounces, complaints, delays)
-      const { data: issueEvents } = await supabase
+      let issueQuery = supabase
         .from('newsletter_events')
         .select('id, event_type, subscriber_email, send_id, link_url, created_at')
         .in('event_type', ['bounce', 'complaint', 'delivery_delayed'])
         .order('created_at', { ascending: false })
         .limit(100);
+
+      // Apply date filters if provided
+      if (startDate) {
+        openQuery = openQuery.gte('created_at', startDate);
+        clickQuery = clickQuery.gte('created_at', startDate);
+        bounceQuery = bounceQuery.gte('created_at', startDate);
+        complaintQuery = complaintQuery.gte('created_at', startDate);
+        delayQuery = delayQuery.gte('created_at', startDate);
+        recentQuery = recentQuery.gte('created_at', startDate);
+        issueQuery = issueQuery.gte('created_at', startDate);
+      }
+      
+      if (endDate) {
+        openQuery = openQuery.lte('created_at', endDate);
+        clickQuery = clickQuery.lte('created_at', endDate);
+        bounceQuery = bounceQuery.lte('created_at', endDate);
+        complaintQuery = complaintQuery.lte('created_at', endDate);
+        delayQuery = delayQuery.lte('created_at', endDate);
+        recentQuery = recentQuery.lte('created_at', endDate);
+        issueQuery = issueQuery.lte('created_at', endDate);
+      }
+
+      // Execute all queries
+      const [openResult, clickResult, bounceResult, complaintResult, delayResult, recentResult, issueResult] = await Promise.all([
+        openQuery,
+        clickQuery,
+        bounceQuery,
+        complaintQuery,
+        delayQuery,
+        recentQuery,
+        issueQuery,
+      ]);
+
+      const openEvents = openResult.data || [];
+      const clickEvents = clickResult.data || [];
+      const bounceCount = bounceResult.count || 0;
+      const complaintCount = complaintResult.count || 0;
+      const delayCount = delayResult.count || 0;
+      const recentEvents = recentResult.data || [];
+      const issueEvents = issueResult.data || [];
+
+      const totalOpens = openEvents.length;
+      const uniqueOpens = new Set(openEvents.map(e => e.subscriber_email)).size;
+      const totalClicks = clickEvents.length;
+      const uniqueClicks = new Set(clickEvents.map(e => e.subscriber_email)).size;
 
       return new Response(
         JSON.stringify({
@@ -813,12 +856,13 @@ Deno.serve(async (req) => {
             uniqueOpens,
             totalClicks,
             uniqueClicks,
-            bounces: bounceCount || 0,
-            complaints: complaintCount || 0,
-            deliveryDelays: delayCount || 0,
+            bounces: bounceCount,
+            complaints: complaintCount,
+            deliveryDelays: delayCount,
           },
-          recentEvents: recentEvents || [],
-          issueEvents: issueEvents || [],
+          recentEvents,
+          issueEvents,
+          dateRange: { startDate, endDate },
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
