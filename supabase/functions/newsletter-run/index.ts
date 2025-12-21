@@ -180,8 +180,8 @@ function generateEmailHTML(
   // Generate Editor's Choice / Top Story section
   const editorChoiceHTML = topStory ? `
     <tr>
-      <td style="padding: 24px 32px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%); border-radius: 12px; overflow: hidden;">
+      <td class="content-bg" style="padding: 24px 32px 0; background-color: #ffffff;">
+        <table width="100%" cellpadding="0" cellspacing="0" class="editor-choice-bg" style="background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%); border-radius: 12px; overflow: hidden;">
           <tr>
             <td style="padding: 20px 24px;">
               <table width="100%" cellpadding="0" cellspacing="0">
@@ -194,30 +194,30 @@ function generateEmailHTML(
                 </tr>
                 <tr>
                   <td style="padding-top: 12px;">
-                    <a href="${trackLink(topStory.url)}" style="color: #0f172a; font-size: 20px; font-weight: 700; text-decoration: none; line-height: 1.3;">
+                    <a class="dark-text" href="${trackLink(topStory.url)}" style="color: #0f172a; font-size: 20px; font-weight: 700; text-decoration: none; line-height: 1.3;">
                       ${topStory.title}
                     </a>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding-top: 8px; color: #115e59; font-size: 12px; font-weight: 500;">
+                  <td class="editor-choice-text" style="padding-top: 8px; color: #115e59; font-size: 12px; font-weight: 500;">
                     ${topStory.source} • ${topStory.category} • ${new Date(topStory.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding-top: 12px; color: #134e4a; font-size: 15px; line-height: 1.6;">
+                  <td class="editor-choice-text" style="padding-top: 12px; color: #134e4a; font-size: 15px; line-height: 1.6;">
                     ${topStory.ai_summary}
                   </td>
                 </tr>
                 <tr>
                   <td style="padding-top: 16px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(255,255,255,0.7); border-radius: 8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" class="editor-choice-card" style="background: rgba(255,255,255,0.7); border-radius: 8px;">
                       <tr>
                         <td style="padding: 14px;">
-                          <p style="margin: 0 0 8px 0; color: #0f766e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                          <p class="link-color" style="margin: 0 0 8px 0; color: #0f766e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
                             Why it matters
                           </p>
-                          <ul style="margin: 0; padding-left: 18px; color: #115e59; font-size: 14px; line-height: 1.7;">
+                          <ul class="editor-choice-text" style="margin: 0; padding-left: 18px; color: #115e59; font-size: 14px; line-height: 1.7;">
                             ${topStory.ai_why_it_matters.map(point => `<li>${point}</li>`).join('')}
                           </ul>
                         </td>
@@ -227,7 +227,7 @@ function generateEmailHTML(
                 </tr>
                 <tr>
                   <td style="padding-top: 12px;">
-                    <p style="margin: 0; color: #115e59; font-size: 13px; background: rgba(255,255,255,0.5); padding: 10px 14px; border-radius: 6px;">
+                    <p class="editor-choice-text editor-choice-card" style="margin: 0; color: #115e59; font-size: 13px; background: rgba(255,255,255,0.5); padding: 10px 14px; border-radius: 6px;">
                       <strong>💡 Commercial angle:</strong> ${topStory.ai_commercial_angle}
                     </p>
                   </td>
@@ -250,7 +250,7 @@ function generateEmailHTML(
   // Generate remaining articles
   const articleItems = remainingArticles.map((article, index) => `
     <tr>
-      <td style="padding: 24px 0; border-bottom: 1px solid #e5e7eb;">
+      <td class="border-color" style="padding: 24px 0; border-bottom: 1px solid #e5e7eb;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td>
@@ -261,30 +261,30 @@ function generateEmailHTML(
           </tr>
           <tr>
             <td style="padding-top: 8px;">
-              <a href="${trackLink(article.url)}" style="color: #0f172a; font-size: 18px; font-weight: 600; text-decoration: none; line-height: 1.4;">
+              <a class="dark-text" href="${trackLink(article.url)}" style="color: #0f172a; font-size: 18px; font-weight: 600; text-decoration: none; line-height: 1.4;">
                 ${article.title}
               </a>
             </td>
           </tr>
           <tr>
-            <td style="padding-top: 8px; color: #64748b; font-size: 12px;">
+            <td class="muted-text" style="padding-top: 8px; color: #64748b; font-size: 12px;">
               ${article.source} • ${new Date(article.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
             </td>
           </tr>
           <tr>
-            <td style="padding-top: 12px; color: #374151; font-size: 14px; line-height: 1.6;">
+            <td class="light-text" style="padding-top: 12px; color: #374151; font-size: 14px; line-height: 1.6;">
               ${article.ai_summary}
             </td>
           </tr>
           <tr>
             <td style="padding-top: 16px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 8px;">
+              <table width="100%" cellpadding="0" cellspacing="0" class="why-matters-bg" style="background: #f8fafc; border-radius: 8px;">
                 <tr>
                   <td style="padding: 16px;">
-                    <p style="margin: 0 0 8px 0; color: #0d9488; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <p class="link-color" style="margin: 0 0 8px 0; color: #0d9488; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
                       Why it matters
                     </p>
-                    <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 14px; line-height: 1.8;">
+                    <ul class="light-text" style="margin: 0; padding-left: 20px; color: #374151; font-size: 14px; line-height: 1.8;">
                       ${article.ai_why_it_matters.map(point => `<li>${point}</li>`).join('')}
                     </ul>
                   </td>
@@ -294,10 +294,10 @@ function generateEmailHTML(
           </tr>
           <tr>
             <td style="padding-top: 12px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border-radius: 8px;">
+              <table width="100%" cellpadding="0" cellspacing="0" class="commercial-bg" style="background: #fef3c7; border-radius: 8px;">
                 <tr>
                   <td style="padding: 12px 16px;">
-                    <p style="margin: 0; color: #92400e; font-size: 13px;">
+                    <p class="commercial-text" style="margin: 0; color: #92400e; font-size: 13px;">
                       <strong>💡 Commercial angle:</strong> ${article.ai_commercial_angle}
                     </p>
                   </td>
@@ -307,7 +307,7 @@ function generateEmailHTML(
           </tr>
           <tr>
             <td style="padding-top: 16px;">
-              <a href="${trackLink(article.url)}" style="display: inline-block; color: #0d9488; font-size: 14px; font-weight: 500; text-decoration: none;">
+              <a class="link-color" href="${trackLink(article.url)}" style="display: inline-block; color: #0d9488; font-size: 14px; font-weight: 500; text-decoration: none;">
                 Read full article →
               </a>
             </td>
@@ -328,14 +328,58 @@ function generateEmailHTML(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <title>Wellness Genius Weekly</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    :root {
+      color-scheme: light dark;
+      supported-color-schemes: light dark;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .email-bg { background-color: #1a1a1a !important; }
+      .email-container { background-color: #262626 !important; }
+      .content-bg { background-color: #262626 !important; }
+      .light-text { color: #e5e5e5 !important; }
+      .dark-text { color: #f5f5f5 !important; }
+      .muted-text { color: #a3a3a3 !important; }
+      .border-color { border-color: #404040 !important; }
+      .card-bg { background-color: #333333 !important; }
+      .footer-bg { background-color: #1f1f1f !important; }
+      .link-color { color: #5eead4 !important; }
+      .why-matters-bg { background-color: #1f2937 !important; }
+      .commercial-bg { background-color: #422006 !important; }
+      .commercial-text { color: #fcd34d !important; }
+      .editor-choice-bg { background: linear-gradient(135deg, #134e4a 0%, #115e59 100%) !important; }
+      .editor-choice-text { color: #ccfbf1 !important; }
+      .editor-choice-card { background-color: rgba(0,0,0,0.3) !important; }
+    }
+    
+    /* Gmail dark mode */
+    u + .body .email-bg { background-color: #1a1a1a !important; }
+    u + .body .email-container { background-color: #262626 !important; }
+    
+    /* Apple Mail dark mode */
+    [data-ogsc] .email-bg { background-color: #1a1a1a !important; }
+    [data-ogsc] .email-container { background-color: #262626 !important; }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6;">
+<body class="body" style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-bg" style="background-color: #f3f4f6;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
+        <table width="100%" cellpadding="0" cellspacing="0" class="email-container" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <!-- Header - kept dark as it works in both modes -->
           <tr>
             <td style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 40px 32px; text-align: center;">
               <h1 style="margin: 0; color: #2dd4bf; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
@@ -349,8 +393,8 @@ function generateEmailHTML(
           
           <!-- Intro -->
           <tr>
-            <td style="padding: 32px 32px 0;">
-              <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+            <td class="content-bg" style="padding: 32px 32px 0; background-color: #ffffff;">
+              <p class="light-text" style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
                 Here are the top stories from the intersection of AI, wellness, and fitness this week—with insights on why they matter for your business.
               </p>
             </td>
@@ -362,8 +406,8 @@ function generateEmailHTML(
           <!-- More Stories Header -->
           ${remainingArticles.length > 0 ? `
           <tr>
-            <td style="padding: 32px 32px 0;">
-              <h2 style="margin: 0; color: #0f172a; font-size: 18px; font-weight: 700; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px;">
+            <td class="content-bg" style="padding: 32px 32px 0; background-color: #ffffff;">
+              <h2 class="dark-text border-color" style="margin: 0; color: #0f172a; font-size: 18px; font-weight: 700; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px;">
                 More Stories
               </h2>
             </td>
@@ -372,16 +416,16 @@ function generateEmailHTML(
           
           <!-- Articles -->
           <tr>
-            <td style="padding: 24px 32px;">
+            <td class="content-bg" style="padding: 24px 32px; background-color: #ffffff;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 ${articleItems}
               </table>
             </td>
           </tr>
           
-          <!-- CTA -->
+          <!-- CTA - kept teal as it works in both modes -->
           <tr>
-            <td style="padding: 16px 32px 32px;">
+            <td class="content-bg" style="padding: 16px 32px 32px; background-color: #ffffff;">
               <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); border-radius: 12px;">
                 <tr>
                   <td style="padding: 24px; text-align: center;">
@@ -399,19 +443,19 @@ function generateEmailHTML(
           
           <!-- Footer -->
           <tr>
-            <td style="background: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
-              <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px;">
+            <td class="footer-bg border-color" style="background-color: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p class="muted-text" style="margin: 0 0 8px 0; color: #64748b; font-size: 12px;">
                 © ${new Date().getFullYear()} Wellness Genius. All rights reserved.
               </p>
-              <p style="margin: 0 0 12px 0; color: #94a3b8; font-size: 11px;">
+              <p class="muted-text" style="margin: 0 0 12px 0; color: #94a3b8; font-size: 11px;">
                 You're receiving this because you subscribed to Wellness Genius insights.
               </p>
               <p style="margin: 0;">
-                <a href="https://wellnessgeniuscouk.lovable.app/unsubscribe${unsubscribeToken ? `?token=${unsubscribeToken}` : ''}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
+                <a class="link-color" href="https://wellnessgeniuscouk.lovable.app/unsubscribe${unsubscribeToken ? `?token=${unsubscribeToken}` : ''}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
                   Unsubscribe
                 </a>
-                <span style="color: #94a3b8; font-size: 11px;"> • </span>
-                <a href="${trackLink('https://wellnessgenius.co.uk/privacy-policy')}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
+                <span class="muted-text" style="color: #94a3b8; font-size: 11px;"> • </span>
+                <a class="link-color" href="${trackLink('https://wellnessgenius.co.uk/privacy-policy')}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
                   Privacy Policy
                 </a>
               </p>
