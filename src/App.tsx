@@ -53,6 +53,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/hub" element={<MemberHub />} />
             <Route path="/hub/coach" element={<AICoach />} />
+            <Route path="/ai-coach" element={<AICoach />} />
             <Route path="/ai-genius" element={<AIGenius />} />
             <Route path="/ai-readiness" element={<AIReadinessLanding />} />
             <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
