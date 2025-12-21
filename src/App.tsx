@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
+import FloatingCoachButton from "@/components/coach/FloatingCoachButton";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Bundles from "./pages/Bundles";
@@ -78,6 +79,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <FloatingCoachButton />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
