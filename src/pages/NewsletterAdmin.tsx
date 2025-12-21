@@ -51,7 +51,8 @@ import {
   Sun,
   Monitor,
   Tablet,
-  Smartphone
+  Smartphone,
+  Info
 } from "lucide-react";
 import {
   Dialog,
@@ -2639,6 +2640,51 @@ const NewsletterAdmin = () => {
                       style={previewDarkMode ? { colorScheme: 'dark' } : undefined}
                     />
                   </div>
+                  
+                  {/* Email Client Compatibility Info */}
+                  {previewDarkMode && (
+                    <div className="px-4 py-3 bg-muted/50 border-t border-border">
+                      <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <Info size={14} className="mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-foreground mb-1">Dark Mode Email Client Support</p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1">
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                              Apple Mail (iOS/macOS)
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                              Outlook (iOS/Android)
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                              Gmail (iOS/Android)
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                              Gmail (Web) - partial
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                              Outlook (Windows) - partial
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                              Outlook (Web) - no support
+                            </span>
+                          </div>
+                          <p className="mt-2 text-muted-foreground/80">
+                            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> Full support</span>
+                            <span className="mx-2">•</span>
+                            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500"></span> Partial (may override colors)</span>
+                            <span className="mx-2">•</span>
+                            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span> No dark mode support</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
