@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const PrivacyPolicy = () => {
-  const lastUpdated = "12 December 2024";
+  const lastUpdated = "21 December 2024";
 
   return (
     <div className="min-h-screen bg-background">
@@ -103,15 +103,44 @@ const PrivacyPolicy = () => {
               </section>
 
               <section>
+                <h2 className="text-2xl font-heading mb-4">5a. AI Coach & Newsletter Services</h2>
+                <p className="text-muted-foreground mb-4">
+                  When you use our AI Coach feature or subscribe to our newsletter, we collect and process additional data:
+                </p>
+                <h3 className="text-xl font-medium mb-2">AI Coach</h3>
+                <ul className="list-disc pl-6 text-muted-foreground mb-4">
+                  <li>Chat messages and prompts you submit</li>
+                  <li>Business profile information you provide during onboarding</li>
+                  <li>Documents you upload for context (stored securely and only accessible to you)</li>
+                  <li>Usage data including credit consumption and session history</li>
+                </ul>
+                <p className="text-muted-foreground mb-4">
+                  AI Coach responses are generated using third-party AI services. Your prompts are sent to these services for processing but are not used to train their models. We retain chat history to improve your experience and for quality assurance.
+                </p>
+                <h3 className="text-xl font-medium mb-2">Newsletter</h3>
+                <ul className="list-disc pl-6 text-muted-foreground mb-4">
+                  <li>Email address and name (if provided)</li>
+                  <li>Subscription source and date</li>
+                  <li>Email engagement metrics (opens, clicks) for service improvement</li>
+                  <li>IP address at time of subscription</li>
+                </ul>
+                <p className="text-muted-foreground">
+                  You can unsubscribe from our newsletter at any time using the link in any email or by contacting us directly.
+                </p>
+              </section>
+
+              <section>
                 <h2 className="text-2xl font-heading mb-4">6. Data Sharing & Third Parties</h2>
                 <p className="text-muted-foreground mb-2">
                   We may share limited data with trusted service providers strictly for operational purposes, including:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4">
-                  <li>CRM and email platforms (e.g. HubSpot)</li>
+                  <li>Email delivery services (Resend)</li>
+                  <li>AI processing services (Google Gemini, OpenAI via Lovable AI)</li>
+                  <li>Payment processing (Stripe)</li>
+                  <li>Database and hosting (Supabase, Lovable)</li>
                   <li>Scheduling tools (e.g. Calendly)</li>
                   <li>Analytics providers (privacy-friendly where possible)</li>
-                  <li>Website hosting providers</li>
                 </ul>
                 <p className="text-muted-foreground">
                   All third parties are required to meet appropriate data protection standards.
