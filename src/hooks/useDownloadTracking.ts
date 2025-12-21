@@ -5,28 +5,36 @@ interface TrackDownloadParams {
   productId: string;
   productName: string;
   downloadType: "free" | "paid" | "redownload";
+  /** The actual product tier (not the action). */
+  productType?: "free" | "paid";
 }
 
 export const useDownloadTracking = () => {
   const { user } = useAuth();
 
-  const trackDownload = async ({ productId, productName, downloadType }: TrackDownloadParams) => {
+  const trackDownload = async ({
+    productId,
+    productName,
+    downloadType,
+    productType,
+  }: TrackDownloadParams) => {
     if (!user?.email) {
       console.log("[Download Tracking] No user email, skipping tracking");
       return;
     }
 
+    const resolvedProductType: "free" | "paid" =
+      productType ?? (downloadType === "free" ? "free" : "paid");
+
     try {
-      const { error } = await supabase
-        .from("product_downloads")
-        .insert({
-          email: user.email,
-          name: user.user_metadata?.full_name || null,
-          product_id: productId,
-          product_name: productName,
-          download_type: downloadType,
-          product_type: downloadType === "paid" ? "paid" : "free",
-        });
+      const { error } = await supabase.from("product_downloads").insert({
+        email: user.email,
+        name: user.user_metadata?.full_name || null,
+        product_id: productId,
+        product_name: productName,
+        download_type: downloadType,
+        product_type: resolvedProductType,
+      });
 
       if (error) {
         console.error("[Download Tracking] Failed to track download:", error);

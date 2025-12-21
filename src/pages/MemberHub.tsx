@@ -58,11 +58,13 @@ interface SavedOutput {
   created_at: string;
 }
 
-interface FreeDownload {
+interface RecentDownload {
   id: string;
   product_id: string;
   product_name: string;
   created_at: string;
+  download_type: string;
+  product_type: string;
 }
 
 const PRODUCT_ICONS: Record<string, React.ReactNode> = {
@@ -82,7 +84,7 @@ const MemberHub = () => {
   const navigate = useNavigate();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [savedOutputs, setSavedOutputs] = useState<SavedOutput[]>([]);
-  const [freeDownloads, setFreeDownloads] = useState<FreeDownload[]>([]);
+  const [recentDownloads, setRecentDownloads] = useState<RecentDownload[]>([]);
   const { restartOnboarding } = useOnboarding();
   const { trackDownload } = useDownloadTracking();
   const [isLoading, setIsLoading] = useState(true);
@@ -120,25 +122,24 @@ const MemberHub = () => {
       if (outputError) throw outputError;
       setSavedOutputs(outputData || []);
 
-      // Fetch free downloads (linked by email)
+      // Fetch recent downloads (free + paid)
       const { data: downloadData, error: downloadError } = await supabase
         .from("product_downloads")
-        .select("id, product_id, product_name, created_at")
-        .eq("download_type", "free")
+        .select("id, product_id, product_name, created_at, download_type, product_type")
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(20);
 
       if (downloadError) {
         console.error("Error fetching downloads:", downloadError);
       } else {
         // Deduplicate by product_id (keep most recent)
         const seen = new Set<string>();
-        const uniqueDownloads = (downloadData || []).filter(d => {
+        const uniqueDownloads = (downloadData || []).filter((d) => {
           if (seen.has(d.product_id)) return false;
           seen.add(d.product_id);
           return true;
         });
-        setFreeDownloads(uniqueDownloads);
+        setRecentDownloads(uniqueDownloads);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -198,6 +199,7 @@ const MemberHub = () => {
           productId,
           productName,
           downloadType: isPaid ? "redownload" : "free",
+          productType: isPaid ? "paid" : "free",
         });
       }
     } catch (error) {
@@ -344,49 +346,58 @@ const MemberHub = () => {
                       )}
                     </section>
 
-                    {/* Free Downloads */}
-                    {freeDownloads.length > 0 && (
+                    {/* Recent Downloads */}
+                    {recentDownloads.length > 0 && (
                       <section>
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="p-2 rounded-lg bg-green-500/10">
-                            <Download size={20} className="text-green-600" />
+                          <div className="p-2 rounded-lg bg-accent/10">
+                            <Download size={20} className="text-accent" />
                           </div>
-                          <h2 className="text-xl font-heading">Recent Free Downloads</h2>
+                          <h2 className="text-xl font-heading">Recent Downloads</h2>
                         </div>
 
                         <div className="space-y-4">
-                          {freeDownloads.map((download) => (
-                            <div
-                              key={download.id}
-                              className="rounded-xl border border-green-500/20 bg-green-500/5 p-5 flex flex-col sm:flex-row sm:items-center gap-4"
-                            >
-                              <div className="p-3 rounded-lg bg-green-500/10 shrink-0">
-                                {PRODUCT_ICONS[download.product_id] || <FileText size={20} className="text-green-600" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-heading text-base mb-1">{download.product_name}</h3>
-                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-500/10 text-green-600">
-                                    Free
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Clock size={14} />
-                                    {formatDate(download.created_at)}
-                                  </span>
-                                </div>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                asChild
+                          {recentDownloads.map((download) => {
+                            const isFree =
+                              download.product_type === "free" || download.download_type === "free";
+
+                            return (
+                              <div
+                                key={download.id}
+                                className="rounded-xl border border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center gap-4"
                               >
-                                <Link to="/products">
-                                  <Download size={14} />
-                                  Re-download
-                                </Link>
-                              </Button>
-                            </div>
-                          ))}
+                                <div className="p-3 rounded-lg bg-muted shrink-0">
+                                  {PRODUCT_ICONS[download.product_id] || <FileText size={20} />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-heading text-base mb-1">
+                                    {download.product_name}
+                                  </h3>
+                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <span
+                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
+                                        isFree
+                                          ? "bg-green-500/10 text-green-600"
+                                          : "bg-accent/10 text-accent"
+                                      }`}
+                                    >
+                                      {isFree ? "Free" : "Paid"}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Clock size={14} />
+                                      {formatDate(download.created_at)}
+                                    </span>
+                                  </div>
+                                </div>
+                                <Button variant="outline" size="sm" asChild>
+                                  <Link to="/products">
+                                    <Download size={14} />
+                                    Download again
+                                  </Link>
+                                </Button>
+                              </div>
+                            );
+                          })}
                         </div>
                       </section>
                     )}
