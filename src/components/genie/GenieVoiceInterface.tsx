@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Loader2, Phone, PhoneOff } from "lucide-react";
+import { Loader2, Phone, PhoneOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import VoiceWaveform from "./VoiceWaveform";
 
 interface GenieVoiceInterfaceProps {
   memoryContext?: string;
@@ -176,23 +177,14 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       ) : (
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/30">
-            {isSpeaking ? (
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Mic className="h-4 w-4 text-accent" />
-                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-accent rounded-full animate-pulse" />
-                </div>
-                <span className="text-xs text-accent">Genie speaking...</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Mic className="h-4 w-4 text-green-500" />
-                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                </div>
-                <span className="text-xs text-muted-foreground">Listening...</span>
-              </div>
-            )}
+            <VoiceWaveform isActive={true} isSpeaking={isSpeaking} barCount={5} />
+            <span className="text-xs text-muted-foreground">
+              {isSpeaking ? (
+                <span className="text-accent">Genie speaking...</span>
+              ) : (
+                "Listening..."
+              )}
+            </span>
           </div>
           <Button
             variant="destructive"
