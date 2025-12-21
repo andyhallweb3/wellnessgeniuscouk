@@ -464,10 +464,60 @@ const generateActivationPlaybookPDF = (): string => {
   return doc.output("datauristring").split(",")[1];
 };
 
+// Generate Engagement Playbook PDF
+const generateEngagementPlaybookPDF = (): string => {
+  const doc = new jsPDF();
+  
+  addHeader(doc, 1, 8);
+  doc.setFontSize(32);
+  doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+  doc.text("Wellness Engagement", 105, 90, { align: "center" });
+  doc.setFontSize(24);
+  doc.setTextColor(BRAND.teal[0], BRAND.teal[1], BRAND.teal[2]);
+  doc.text("Systems Playbook", 105, 115, { align: "center" });
+  doc.setFontSize(12);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+  doc.text("Operating systems for wellness engagement", 105, 145, { align: "center" });
+
+  const pages = [
+    { title: "The Engagement Problem", content: ["Most wellness products confuse activity with outcome.", "", "This playbook gives you operating systems that:", "→ Link habits to measurable outcomes", "→ Protect margin while increasing engagement", "→ Create executable intervention logic"] },
+    { title: "Habit → Outcome Mapping", content: ["Map every habit to a business outcome:", "", "Habit: Daily check-in", "→ Outcome: Increased retention", "→ Evidence: Users who check in 3x/week retain 40% longer", "", "If you can't complete this, the habit doesn't matter."] },
+    { title: "6-Rung Intervention Ladder", content: ["1. Information (free, scalable)", "2. Reminder (low cost)", "3. Social proof (peer comparison)", "4. Challenge (gamification)", "5. Accountability (human touch)", "6. Incentive (use sparingly - margin risk)", "", "Always start at rung 1. Only escalate when data proves necessity."] },
+    { title: "Engagement KPI Canon", content: ["Approved metrics by outcome:", "", "RETENTION: 7-day return rate, session frequency", "ACTIVATION: Time-to-first-value, onboarding completion", "REVENUE: Upgrade rate, LTV by cohort", "", "If it doesn't link to these, question whether to track it."] },
+    { title: "Intervention Register Template", content: ["For each intervention, document:", "", "→ Trigger: What fires this?", "→ Cost: Time and £", "→ Expected outcome: Be specific", "→ Actual outcome: Measure", "→ Decision: Keep / Kill / Adjust"] },
+    { title: "MVP Segment Definition", content: ["Your Most Valuable Players share:", "", "→ High visit frequency (3x+/week)", "→ Long tenure (6+ months)", "→ Referral behaviour", "→ Premium feature usage", "", "Identify them. Protect them. Learn from them."] },
+    { title: "What To Do Next", content: ["☐ Foundations unclear → Re-run AI Readiness Score", "☐ Decisions unclear → Use AI Coach", "☐ Execution blocked → 90-Day Activation Playbook", "☐ Strategic confidence low → Book working session", "", "wellnessgenius.io"] },
+  ];
+
+  pages.forEach((p, i) => {
+    doc.addPage();
+    addHeader(doc, i + 2, 8);
+    doc.setFontSize(18);
+    doc.setTextColor(BRAND.white[0], BRAND.white[1], BRAND.white[2]);
+    doc.text(p.title, 20, 35);
+    let yPos = 55;
+    p.content.forEach((line) => {
+      if (line === "") { yPos += 8; return; }
+      doc.setFontSize(10);
+      doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
+      const lines = doc.splitTextToSize(line, 170);
+      doc.text(lines, 20, yPos);
+      yPos += lines.length * 6 + 4;
+    });
+  });
+
+  return doc.output("datauristring").split(",")[1];
+};
+
 const PRODUCT_INFO: Record<string, { name: string; filename: string; generator: () => string }> = {
   "prompt-pack": {
     name: "Wellness AI Builder – Prompt Pack",
     filename: "wellness-ai-prompt-pack.pdf",
+    generator: generatePromptPackPDF,
+  },
+  "ai-builder": {
+    name: "Wellness AI Builder – Operator Edition",
+    filename: "wellness-ai-builder-operator.pdf",
     generator: generatePromptPackPDF,
   },
   "revenue-framework": {
@@ -485,6 +535,22 @@ const PRODUCT_INFO: Record<string, { name: string; filename: string; generator: 
     filename: "90-day-activation-playbook.pdf",
     generator: generateActivationPlaybookPDF,
   },
+  "engagement-playbook": {
+    name: "Wellness Engagement Systems Playbook",
+    filename: "wellness-engagement-systems-playbook.pdf",
+    generator: generateEngagementPlaybookPDF,
+  },
+};
+
+// Bundle definitions - maps bundle ID to included product IDs
+const BUNDLE_PRODUCTS: Record<string, string[]> = {
+  "operator-pack": ["ai-builder", "engagement-playbook"],
+  "execution-pack": ["activation-playbook"],
+};
+
+const BUNDLE_INFO: Record<string, { name: string }> = {
+  "operator-pack": { name: "Wellness AI Operator Pack" },
+  "execution-pack": { name: "Execution Pack" },
 };
 
 const logStep = (step: string, details?: unknown) => {
@@ -531,78 +597,170 @@ serve(async (req) => {
         });
       }
 
-      const product = PRODUCT_INFO[productId];
-      if (!product) {
-        logStep("Unknown product", { productId });
-        return new Response(JSON.stringify({ received: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      logStep("Generating PDF", { productId });
-      const pdfBase64 = product.generator();
+      // Check if this is a bundle
+      const bundleProductIds = BUNDLE_PRODUCTS[productId];
+      const isBundle = !!bundleProductIds;
       
-      logStep("Sending email", { to: customerEmail, product: product.name });
-      
-      const emailResult = await resend.emails.send({
-        from: "Wellness Genius <hello@wellnessgenius.io>",
-        to: [customerEmail],
-        subject: `Your ${product.name} is ready!`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #18181b; color: #ffffff; padding: 40px 20px; margin: 0;">
-            <div style="max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(to right, #2dd4bf, #14b8a6); height: 4px; border-radius: 2px; margin-bottom: 32px;"></div>
-              
-              <h1 style="font-size: 28px; margin-bottom: 16px; color: #ffffff;">Thank you for your purchase!</h1>
-              
-              <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-                Your <strong style="color: #2dd4bf;">${product.name}</strong> is attached to this email.
-              </p>
-              
-              <div style="background-color: #27272a; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
-                <h2 style="font-size: 18px; margin: 0 0 12px 0; color: #ffffff;">What's next?</h2>
-                <ul style="color: #a1a1aa; padding-left: 20px; margin: 0;">
-                  <li style="margin-bottom: 8px;">Download the attached PDF</li>
-                  <li style="margin-bottom: 8px;">Work through the frameworks at your own pace</li>
-                  <li style="margin-bottom: 8px;">Reply to this email if you have questions</li>
-                </ul>
-              </div>
-              
-              <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-                Want more personalised guidance? Take our free 
-                <a href="https://wellnessgenius.io/ai-readiness" style="color: #2dd4bf; text-decoration: none;">AI Readiness Assessment</a>
-                for tailored recommendations.
-              </p>
-              
-              <p style="color: #71717a; font-size: 14px; margin-top: 32px;">
-                Best,<br>
-                <strong style="color: #a1a1aa;">Andy @ Wellness Genius</strong>
-              </p>
-              
-              <div style="border-top: 1px solid #27272a; margin-top: 32px; padding-top: 24px;">
-                <p style="color: #52525b; font-size: 12px; margin: 0;">
-                  Wellness Genius • <a href="https://wellnessgenius.io" style="color: #52525b;">wellnessgenius.io</a>
+      if (isBundle) {
+        // Handle bundle - generate and attach all included PDFs
+        const bundleInfo = BUNDLE_INFO[productId];
+        logStep("Processing bundle", { productId, includedProducts: bundleProductIds });
+        
+        const attachments: { filename: string; content: string }[] = [];
+        const productNames: string[] = [];
+        
+        for (const includedId of bundleProductIds) {
+          const product = PRODUCT_INFO[includedId];
+          if (product) {
+            logStep("Generating bundle PDF", { includedId });
+            const pdfBase64 = product.generator();
+            attachments.push({
+              filename: product.filename,
+              content: pdfBase64,
+            });
+            productNames.push(product.name);
+          }
+        }
+        
+        logStep("Sending bundle email", { to: customerEmail, attachmentCount: attachments.length });
+        
+        const emailResult = await resend.emails.send({
+          from: "Wellness Genius <hello@wellnessgenius.io>",
+          to: [customerEmail],
+          subject: `Your ${bundleInfo.name} is ready!`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #18181b; color: #ffffff; padding: 40px 20px; margin: 0;">
+              <div style="max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(to right, #2dd4bf, #14b8a6); height: 4px; border-radius: 2px; margin-bottom: 32px;"></div>
+                
+                <h1 style="font-size: 28px; margin-bottom: 16px; color: #ffffff;">Thank you for your purchase!</h1>
+                
+                <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+                  Your <strong style="color: #2dd4bf;">${bundleInfo.name}</strong> includes ${attachments.length} products, all attached to this email.
                 </p>
+                
+                <div style="background-color: #27272a; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+                  <h2 style="font-size: 18px; margin: 0 0 12px 0; color: #ffffff;">What's included:</h2>
+                  <ul style="color: #a1a1aa; padding-left: 20px; margin: 0;">
+                    ${productNames.map(name => `<li style="margin-bottom: 8px;">${name}</li>`).join('')}
+                  </ul>
+                </div>
+                
+                <div style="background-color: #27272a; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+                  <h2 style="font-size: 18px; margin: 0 0 12px 0; color: #ffffff;">What's next?</h2>
+                  <ul style="color: #a1a1aa; padding-left: 20px; margin: 0;">
+                    <li style="margin-bottom: 8px;">Download all ${attachments.length} attached PDFs</li>
+                    <li style="margin-bottom: 8px;">Start with the AI Readiness Score to get your baseline</li>
+                    <li style="margin-bottom: 8px;">Work through the playbooks in order</li>
+                    <li style="margin-bottom: 8px;">Reply to this email if you have questions</li>
+                  </ul>
+                </div>
+                
+                <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+                  Want personalised guidance? Take our free 
+                  <a href="https://wellnessgenius.io/ai-readiness/start" style="color: #2dd4bf; text-decoration: none;">AI Readiness Assessment</a>
+                  for tailored recommendations.
+                </p>
+                
+                <p style="color: #71717a; font-size: 14px; margin-top: 32px;">
+                  Best,<br>
+                  <strong style="color: #a1a1aa;">Andy @ Wellness Genius</strong>
+                </p>
+                
+                <div style="border-top: 1px solid #27272a; margin-top: 32px; padding-top: 24px;">
+                  <p style="color: #52525b; font-size: 12px; margin: 0;">
+                    Wellness Genius • <a href="https://wellnessgenius.io" style="color: #52525b;">wellnessgenius.io</a>
+                  </p>
+                </div>
               </div>
-            </div>
-          </body>
-          </html>
-        `,
-        attachments: [
-          {
-            filename: product.filename,
-            content: pdfBase64,
-          },
-        ],
-      });
+            </body>
+            </html>
+          `,
+          attachments,
+        });
 
-      logStep("Email sent", { result: emailResult });
+        logStep("Bundle email sent", { result: emailResult });
+      } else {
+        // Handle single product
+        const product = PRODUCT_INFO[productId];
+        if (!product) {
+          logStep("Unknown product", { productId });
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        logStep("Generating PDF", { productId });
+        const pdfBase64 = product.generator();
+        
+        logStep("Sending email", { to: customerEmail, product: product.name });
+        
+        const emailResult = await resend.emails.send({
+          from: "Wellness Genius <hello@wellnessgenius.io>",
+          to: [customerEmail],
+          subject: `Your ${product.name} is ready!`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #18181b; color: #ffffff; padding: 40px 20px; margin: 0;">
+              <div style="max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(to right, #2dd4bf, #14b8a6); height: 4px; border-radius: 2px; margin-bottom: 32px;"></div>
+                
+                <h1 style="font-size: 28px; margin-bottom: 16px; color: #ffffff;">Thank you for your purchase!</h1>
+                
+                <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+                  Your <strong style="color: #2dd4bf;">${product.name}</strong> is attached to this email.
+                </p>
+                
+                <div style="background-color: #27272a; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+                  <h2 style="font-size: 18px; margin: 0 0 12px 0; color: #ffffff;">What's next?</h2>
+                  <ul style="color: #a1a1aa; padding-left: 20px; margin: 0;">
+                    <li style="margin-bottom: 8px;">Download the attached PDF</li>
+                    <li style="margin-bottom: 8px;">Work through the frameworks at your own pace</li>
+                    <li style="margin-bottom: 8px;">Reply to this email if you have questions</li>
+                  </ul>
+                </div>
+                
+                <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+                  Want more personalised guidance? Take our free 
+                  <a href="https://wellnessgenius.io/ai-readiness/start" style="color: #2dd4bf; text-decoration: none;">AI Readiness Assessment</a>
+                  for tailored recommendations.
+                </p>
+                
+                <p style="color: #71717a; font-size: 14px; margin-top: 32px;">
+                  Best,<br>
+                  <strong style="color: #a1a1aa;">Andy @ Wellness Genius</strong>
+                </p>
+                
+                <div style="border-top: 1px solid #27272a; margin-top: 32px; padding-top: 24px;">
+                  <p style="color: #52525b; font-size: 12px; margin: 0;">
+                    Wellness Genius • <a href="https://wellnessgenius.io" style="color: #52525b;">wellnessgenius.io</a>
+                  </p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `,
+          attachments: [
+            {
+              filename: product.filename,
+              content: pdfBase64,
+            },
+          ],
+        });
+
+        logStep("Email sent", { result: emailResult });
+      }
     }
 
     return new Response(JSON.stringify({ received: true }), {
