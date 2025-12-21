@@ -11,14 +11,15 @@ import {
   User,
   RotateCcw,
   Sparkles,
-  Settings
+  Settings,
+  LayoutDashboard
 } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import GenieModeSelector from "@/components/genie/GenieModeSelector";
 import GenieOnboarding from "@/components/genie/GenieOnboarding";
+import GenieDashboard from "@/components/genie/GenieDashboard";
 import { GENIE_MODES, getModeById } from "@/components/genie/GenieModes";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
@@ -52,9 +53,10 @@ const Genie = () => {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedMode, setSelectedMode] = useState("daily_operator");
+  const [showDashboard, setShowDashboard] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { getMemoryContext, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
+  const { getMemoryContext, memory, insights, recentDecisions, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -294,6 +296,14 @@ const Genie = () => {
             </div>
             <div className="flex items-center gap-2">
               <Button 
+                variant={showDashboard ? "secondary" : "ghost"}
+                size="sm" 
+                onClick={() => setShowDashboard(true)}
+                title="Dashboard"
+              >
+                <LayoutDashboard size={14} />
+              </Button>
+              <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setShowOnboarding(true)}
@@ -301,7 +311,7 @@ const Genie = () => {
               >
                 <Settings size={14} />
               </Button>
-              {messages.length > 0 && (
+              {(messages.length > 0 || !showDashboard) && (
                 <Button variant="outline" size="sm" onClick={handleNewConversation}>
                   <RotateCcw size={14} />
                   New
@@ -317,7 +327,16 @@ const Genie = () => {
           </div>
 
           {/* Main Content */}
-          {messages.length === 0 ? (
+          {showDashboard && messages.length === 0 ? (
+            /* Dashboard View */
+            <GenieDashboard
+              memory={memory}
+              insights={insights}
+              recentDecisions={recentDecisions}
+              onStartChat={() => setShowDashboard(false)}
+              onEditProfile={() => setShowOnboarding(true)}
+            />
+          ) : messages.length === 0 ? (
             /* Mode Selection View */
             <div className="flex-1 flex flex-col lg:flex-row gap-8">
               {/* Left: Mode Selector */}
