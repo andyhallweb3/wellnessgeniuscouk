@@ -32,6 +32,7 @@ import { useGenieSessions } from "@/hooks/useGenieSessions";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { useVoiceBrief } from "@/hooks/useVoiceBrief";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
+import GenieMessage from "@/components/genie/GenieMessage";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
 import SessionHistory from "@/components/genie/SessionHistory";
@@ -616,31 +617,20 @@ const Genie = () => {
                   {messages.map((message, index) => (
                     <div
                       key={index}
-                      className={`flex gap-3 ${message.role === "user" ? "justify-end" : ""}`}
+                      className={`${message.role === "user" ? "flex gap-3 justify-end" : ""}`}
                     >
-                      {message.role === "assistant" && (
-                        <div className="p-2 rounded-full bg-accent/10 h-fit shrink-0">
-                          <Brain size={16} className="text-accent" />
-                        </div>
-                      )}
-                      <div
-                        className={`rounded-xl px-4 py-3 max-w-[80%] ${
-                          message.role === "user"
-                            ? "bg-accent text-accent-foreground"
-                            : "bg-secondary"
-                        }`}
-                      >
-                        {message.role === "assistant" ? (
-                          <MarkdownRenderer content={message.content} />
-                        ) : (
-                          <div className="text-sm whitespace-pre-wrap leading-relaxed">
-                            {message.content}
+                      {message.role === "assistant" ? (
+                        <GenieMessage content={message.content} mode={selectedMode || undefined} />
+                      ) : (
+                        <div className="flex gap-3 justify-end">
+                          <div className="rounded-xl px-4 py-3 max-w-[80%] bg-accent text-accent-foreground">
+                            <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                              {message.content}
+                            </div>
                           </div>
-                        )}
-                      </div>
-                      {message.role === "user" && (
-                        <div className="p-2 rounded-full bg-secondary h-fit shrink-0">
-                          <User size={16} />
+                          <div className="p-2 rounded-full bg-secondary h-fit shrink-0">
+                            <User size={16} />
+                          </div>
                         </div>
                       )}
                     </div>
