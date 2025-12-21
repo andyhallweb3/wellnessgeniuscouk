@@ -64,14 +64,34 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
     };
 
     const parseInline = (text: string): React.ReactNode => {
-      // Bold
-      text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      // Italic
-      text = text.replace(/\*(.+?)\*/g, "<em>$1</em>");
-      // Code
-      text = text.replace(/`(.+?)`/g, "<code class='bg-secondary px-1 py-0.5 rounded text-xs'>$1</code>");
+      // Safe React rendering without dangerouslySetInnerHTML
+      // Split by markdown patterns and render as React elements
+      const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
       
-      return <span dangerouslySetInnerHTML={{ __html: text }} />;
+      return (
+        <span>
+          {parts.map((part, i) => {
+            // Bold: **text**
+            if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+              return <strong key={i}>{part.slice(2, -2)}</strong>;
+            }
+            // Italic: *text* (but not **text**)
+            if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**') && part.length > 2) {
+              return <em key={i}>{part.slice(1, -1)}</em>;
+            }
+            // Code: `text`
+            if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+              return (
+                <code key={i} className="bg-secondary px-1 py-0.5 rounded text-xs">
+                  {part.slice(1, -1)}
+                </code>
+              );
+            }
+            // Plain text
+            return part;
+          })}
+        </span>
+      );
     };
 
     while (i < lines.length) {
