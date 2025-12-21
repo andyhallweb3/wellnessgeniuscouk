@@ -89,14 +89,14 @@ export const useCoachDocuments = () => {
 
       if (uploadError) throw uploadError;
 
-      // Extract text for text-based files
+      // Extract text for text-based files directly
       let extractedText: string | null = null;
       if (file.type === "text/plain" || file.type === "text/csv") {
         extractedText = await file.text();
       }
 
-      // Insert document record
-      const { error: insertError } = await supabase
+      // Insert document record first
+      const { data: insertedDoc, error: insertError } = await supabase
         .from("coach_documents")
         .insert({
           user_id: user.id,
@@ -107,9 +107,41 @@ export const useCoachDocuments = () => {
           extracted_text: extractedText,
           description: description || null,
           category: category || "general"
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) throw insertError;
+
+      // For PDFs, Word, and Excel files, call the extraction function
+      const needsExtraction = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      ].includes(file.type);
+
+      if (needsExtraction && insertedDoc) {
+        // Get session for auth
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.access_token) {
+          // Call extraction function in background
+          supabase.functions.invoke("extract-document-text", {
+            body: {
+              storagePath,
+              fileType: file.type,
+              documentId: insertedDoc.id
+            },
+            headers: {
+              Authorization: `Bearer ${sessionData.session.access_token}`
+            }
+          }).then(() => {
+            // Refresh documents after extraction completes
+            fetchDocuments();
+          }).catch(console.error);
+        }
+      }
 
       toast.success("Document uploaded successfully");
       await fetchDocuments();
