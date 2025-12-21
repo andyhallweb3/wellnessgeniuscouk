@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { 
   ArrowRight, 
   Download, 
@@ -705,6 +706,8 @@ const Products = () => {
       
       <main className="pt-24 pb-16">
         <div className="container-wide section-padding">
+          <PageBreadcrumb items={[{ label: "Products" }]} />
+          
           {/* Hero */}
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h1 className="text-4xl md:text-5xl font-heading mb-4">
@@ -713,13 +716,22 @@ const Products = () => {
             <p className="text-lg text-muted-foreground mb-6">
               Practical intelligence for wellness leaders who need clarity, not hype.
             </p>
-            <Link 
-              to="/how-to-use" 
-              className="inline-flex items-center gap-2 text-accent hover:underline font-medium"
-            >
-              <BookOpen size={18} />
-              Learn how to use the stack →
-            </Link>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link 
+                to="/bundles" 
+                className="inline-flex items-center gap-2 text-accent hover:underline font-medium"
+              >
+                <Package size={18} />
+                View bundle deals →
+              </Link>
+              <Link 
+                to="/how-to-use" 
+                className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium"
+              >
+                <BookOpen size={18} />
+                How to use the stack
+              </Link>
+            </div>
           </div>
 
           {/* Free Products */}

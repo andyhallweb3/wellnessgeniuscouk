@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, BarChart3, FileText, Lock, CheckCircle } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 
 const targetAudience = [
   "Gym & fitness operators",
@@ -46,6 +47,8 @@ const AIReadinessLanding = () => {
         {/* Hero Section */}
         <section className="section-padding">
           <div className="container-narrow text-center">
+            <PageBreadcrumb items={[{ label: "AI Readiness Assessment" }]} />
+            
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
               Commercial Diagnostic
             </div>

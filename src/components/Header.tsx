@@ -1,24 +1,39 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogIn } from "lucide-react";
+import { Menu, X, User, LogIn, ChevronDown, Bot, Sparkles } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import logo from "@/assets/wellness-genius-logo-teal.png";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isLoading } = useAuth();
+  const location = useLocation();
 
-  const navLinks = [
-    { href: "/ai-readiness", label: "Free AI Assessment", isRoute: true },
-    { href: "/products", label: "Products", isRoute: true },
-    { href: "/bundles", label: "Bundles", isRoute: true },
-    { href: "/#services", label: "Services", isRoute: false },
-    { href: "/#proof", label: "Proof", isRoute: false },
-    { href: "/#how-it-works", label: "How It Works", isRoute: false },
+  const isActive = (path: string) => location.pathname === path;
+
+  const mainNavLinks = [
+    { href: "/ai-readiness", label: "AI Assessment", isRoute: true },
     { href: "/insights", label: "Insights", isRoute: true },
-    { href: "/news", label: "Latest News", isRoute: true },
-    { href: "/speaker-kit", label: "Speaker Kit", isRoute: true },
+    { href: "/news", label: "News", isRoute: true },
+    { href: "/speaker-kit", label: "Speaking", isRoute: true },
+  ];
+
+  const productLinks = [
+    { href: "/products", label: "All Products" },
+    { href: "/bundles", label: "Bundles & Deals" },
+  ];
+
+  const serviceLinks = [
+    { href: "/#services", label: "Services", isAnchor: true },
+    { href: "/#proof", label: "Proof", isAnchor: true },
+    { href: "/#how-it-works", label: "How It Works", isAnchor: true },
   ];
 
   return (
@@ -31,36 +46,83 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              link.isRoute ? (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className="text-sm font-medium text-accent hover:text-accent/80 transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </a>
-              )
+          <nav className="hidden lg:flex items-center gap-1">
+            {/* Products Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent/5">
+                Products
+                <ChevronDown size={14} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-popover border border-border shadow-lg z-50">
+                {productLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <Link 
+                      to={link.href} 
+                      className={`w-full ${isActive(link.href) ? "text-accent font-medium" : ""}`}
+                    >
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Main Nav Links */}
+            {mainNavLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+                  isActive(link.href) 
+                    ? "text-accent bg-accent/5" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/5"
+                }`}
+              >
+                {link.label}
+              </Link>
             ))}
+
+            {/* About Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent/5">
+                About
+                <ChevronDown size={14} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-popover border border-border shadow-lg z-50">
+                {serviceLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <a href={link.href} className="w-full">
+                      {link.label}
+                    </a>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* AI Coach Link - only for logged in users */}
+            {user && (
+              <Link
+                to="/hub/coach"
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+                  isActive("/hub/coach") || isActive("/ai-coach")
+                    ? "text-accent bg-accent/10" 
+                    : "text-accent hover:bg-accent/10"
+                }`}
+              >
+                <Bot size={14} />
+                AI Coach
+              </Link>
+            )}
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2">
             {!isLoading && (
               user ? (
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/hub">
                     <User size={16} />
-                    My Hub
+                    Hub
                   </Link>
                 </Button>
               ) : (
@@ -72,7 +134,7 @@ const Header = () => {
                 </Button>
               )
             )}
-            <Button variant="accent" size="default" asChild>
+            <Button variant="accent" size="sm" asChild>
               <a href="#contact">Book a Call</a>
             </Button>
           </div>
@@ -90,29 +152,66 @@ const Header = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="lg:hidden py-6 border-t border-border/30 animate-fade-in">
-            <nav className="flex flex-col gap-4">
-              {navLinks.map((link) => (
-                link.isRoute ? (
-                  <Link
-                    key={link.href}
-                    to={link.href}
-                    className="text-base font-medium text-accent hover:text-accent/80 transition-colors py-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ) : (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className="text-base font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {link.label}
-                  </a>
-                )
+            <nav className="flex flex-col gap-1">
+              {/* Products Section */}
+              <p className="text-xs font-medium text-muted-foreground px-2 pt-2 pb-1">Products</p>
+              {productLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`px-3 py-2 text-base font-medium transition-colors rounded-md ${
+                    isActive(link.href) ? "text-accent bg-accent/5" : "text-foreground hover:bg-accent/5"
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
               ))}
-              <div className="flex flex-col gap-3 pt-4">
+
+              {/* Main Nav */}
+              <p className="text-xs font-medium text-muted-foreground px-2 pt-4 pb-1">Resources</p>
+              {mainNavLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`px-3 py-2 text-base font-medium transition-colors rounded-md ${
+                    isActive(link.href) ? "text-accent bg-accent/5" : "text-foreground hover:bg-accent/5"
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              {/* About Section */}
+              <p className="text-xs font-medium text-muted-foreground px-2 pt-4 pb-1">About</p>
+              {serviceLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="px-3 py-2 text-base font-medium text-foreground hover:bg-accent/5 transition-colors rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </a>
+              ))}
+
+              {/* AI Coach for logged in users */}
+              {user && (
+                <>
+                  <p className="text-xs font-medium text-muted-foreground px-2 pt-4 pb-1">AI Tools</p>
+                  <Link
+                    to="/hub/coach"
+                    className="flex items-center gap-2 px-3 py-2 text-base font-medium text-accent hover:bg-accent/5 transition-colors rounded-md"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Bot size={16} />
+                    AI Coach
+                  </Link>
+                </>
+              )}
+
+              <div className="flex flex-col gap-2 pt-6 border-t border-border/30 mt-4">
                 {!isLoading && (
                   user ? (
                     <Button variant="outline" asChild>

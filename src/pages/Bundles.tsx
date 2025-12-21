@@ -14,10 +14,12 @@ import {
   Loader2,
   Phone,
   X,
-  Trophy
+  Trophy,
+  ArrowLeft
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -173,6 +175,11 @@ const Bundles = () => {
       
       <main className="pt-24 pb-16">
         <div className="container-wide section-padding">
+          <PageBreadcrumb items={[
+            { label: "Products", href: "/products" },
+            { label: "Bundles" }
+          ]} />
+          
           {/* Hero */}
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 text-amber-600 text-sm font-medium mb-6">
@@ -186,7 +193,7 @@ const Bundles = () => {
               Stop buying piecemeal. Get everything you need in one purchase, 
               at a price that makes sense. Built for operators who are serious about AI.
             </p>
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground mb-6">
               <span className="flex items-center gap-2">
                 <CheckCircle size={16} className="text-green-500" />
                 Instant PDF delivery
@@ -200,6 +207,13 @@ const Bundles = () => {
                 One-time purchase
               </span>
             </div>
+            <Link 
+              to="/products" 
+              className="inline-flex items-center gap-2 text-accent hover:underline font-medium"
+            >
+              <ArrowLeft size={16} />
+              View individual products
+            </Link>
           </div>
 
           {/* Bundle Cards */}
