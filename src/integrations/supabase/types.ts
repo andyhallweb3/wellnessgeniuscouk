@@ -565,6 +565,7 @@ export type Database = {
         Row: {
           email: string
           id: string
+          ip_address: string | null
           is_active: boolean
           name: string | null
           source: string | null
@@ -573,6 +574,7 @@ export type Database = {
         Insert: {
           email: string
           id?: string
+          ip_address?: string | null
           is_active?: boolean
           name?: string | null
           source?: string | null
@@ -581,6 +583,7 @@ export type Database = {
         Update: {
           email?: string
           id?: string
+          ip_address?: string | null
           is_active?: boolean
           name?: string | null
           source?: string | null
