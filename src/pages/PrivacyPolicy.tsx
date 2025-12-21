@@ -35,7 +35,7 @@ const PrivacyPolicy = () => {
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground mt-2">
                   <li>Email: <a href="mailto:andy@wellnessgenius.co.uk" className="text-accent hover:underline">andy@wellnessgenius.co.uk</a></li>
-                  <li>Website: <a href="https://www.wellnessgenius.ai" className="text-accent hover:underline">https://www.wellnessgenius.ai</a></li>
+                  <li>Website: <a href="https://www.wellnessgenius.co.uk" className="text-accent hover:underline">https://www.wellnessgenius.co.uk</a></li>
                 </ul>
               </section>
 
