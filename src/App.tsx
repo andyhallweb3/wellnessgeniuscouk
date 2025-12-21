@@ -39,6 +39,10 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
 import HowToUseStack from "./pages/HowToUseStack";
+import PrivacyPlaybook from "./pages/PrivacyPlaybook";
+import PrivacyReadinessLanding from "./pages/PrivacyReadinessLanding";
+import PrivacyReadinessAssessment from "./pages/PrivacyReadinessAssessment";
+import PrivacyReadinessResults from "./pages/PrivacyReadinessResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +75,10 @@ const App = () => (
             <Route path="/ai-readiness/checkout/:id" element={<AIReadinessCheckout />} />
             <Route path="/ai-readiness/report/:id" element={<AIReadinessReport />} />
             <Route path="/ai-readiness/share/:token" element={<SharedReport />} />
+            <Route path="/privacy-playbook" element={<PrivacyPlaybook />} />
+            <Route path="/privacy-readiness" element={<PrivacyReadinessLanding />} />
+            <Route path="/privacy-readiness/start" element={<PrivacyReadinessAssessment />} />
+            <Route path="/privacy-readiness/results" element={<PrivacyReadinessResults />} />
             <Route path="/speaker-kit" element={<SpeakerKit />} />
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/insights" element={<Insights />} />
