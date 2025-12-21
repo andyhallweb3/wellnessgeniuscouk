@@ -30,6 +30,7 @@ interface DailyBriefCardProps {
   brief: BriefData | null;
   isLoading: boolean;
   isPlaying: boolean;
+  isVoiceLoading?: boolean;
   onGenerateBrief: () => void;
   onPlayVoice: () => void;
   onStopVoice: () => void;
@@ -69,6 +70,7 @@ const DailyBriefCard = ({
   brief,
   isLoading,
   isPlaying,
+  isVoiceLoading,
   onGenerateBrief,
   onPlayVoice,
   onStopVoice,
@@ -124,10 +126,11 @@ const DailyBriefCard = ({
               variant="outline"
               size="sm"
               onClick={isPlaying ? onStopVoice : onPlayVoice}
+              disabled={isVoiceLoading}
               className="gap-2"
             >
-              {isPlaying ? <Pause size={14} /> : <Volume2 size={14} />}
-              {isPlaying ? "Stop" : "Listen"}
+              {isVoiceLoading ? <Loader2 size={14} className="animate-spin" /> : isPlaying ? <Pause size={14} /> : <Volume2 size={14} />}
+              {isVoiceLoading ? "Loading..." : isPlaying ? "Stop" : "Listen"}
             </Button>
           </div>
         </div>

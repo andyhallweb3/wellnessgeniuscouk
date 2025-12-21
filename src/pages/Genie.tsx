@@ -30,6 +30,7 @@ import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useGenieSessions } from "@/hooks/useGenieSessions";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
+import { useVoiceBrief } from "@/hooks/useVoiceBrief";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
@@ -80,7 +81,6 @@ const Genie = () => {
 
   // Brief state - use the hook
   const { brief: briefData, isLoading: isBriefLoading, generateBrief } = useDailyBrief();
-  const [isVoicePlaying, setIsVoicePlaying] = useState(false);
 
   // Decision drawer state
   const [decisionDrawerOpen, setDecisionDrawerOpen] = useState(false);
@@ -92,6 +92,7 @@ const Genie = () => {
   const { getMemoryContext, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession, summarizeSession, updateSessionTags, allTags } = useGenieSessions();
+  const { isLoading: voiceLoading, isPlaying: isVoicePlaying, playDailyBrief, stopPlayback: stopVoice } = useVoiceBrief();
   const [showOnboarding, setShowOnboarding] = useState(false);
   useEffect(() => {
     if (!authLoading && !user) {
@@ -315,13 +316,11 @@ const Genie = () => {
 
   const handlePlayVoice = async () => {
     if (!briefData) return;
-    setIsVoicePlaying(true);
-    // Voice playback would be implemented here
-    setTimeout(() => setIsVoicePlaying(false), 3000);
+    await playDailyBrief(briefData, memory?.business_name);
   };
 
   const handleStopVoice = () => {
-    setIsVoicePlaying(false);
+    stopVoice();
   };
 
   const handleBriefActionClick = (action: string) => {
@@ -493,6 +492,7 @@ const Genie = () => {
                   brief={briefData}
                   isLoading={isBriefLoading}
                   isPlaying={isVoicePlaying}
+                  isVoiceLoading={voiceLoading}
                   onGenerateBrief={handleGenerateBrief}
                   onPlayVoice={handlePlayVoice}
                   onStopVoice={handleStopVoice}
