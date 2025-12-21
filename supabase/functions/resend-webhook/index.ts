@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Webhook } from "https://esm.sh/svix@1.15.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,11 +15,9 @@ interface ResendWebhookEvent {
     to: string[];
     subject: string;
     created_at: string;
-    // For bounce/complaint events
     bounce?: {
       message: string;
     };
-    // For click events
     click?: {
       link: string;
       timestamp: string;
@@ -34,26 +33,49 @@ Deno.serve(async (req) => {
   try {
     const webhookSecret = Deno.env.get("RESEND_WEBHOOK_SECRET");
     
-    // Verify webhook signature if secret is configured
-    if (webhookSecret) {
-      const svixId = req.headers.get("svix-id");
-      const svixTimestamp = req.headers.get("svix-timestamp");
-      const svixSignature = req.headers.get("svix-signature");
-      
-      if (!svixId || !svixTimestamp || !svixSignature) {
-        console.error("Missing Svix headers");
-        return new Response(
-          JSON.stringify({ error: "Missing webhook signature headers" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      // Note: For full signature verification, you'd use the Svix library
-      // For now, we just check headers are present
-      console.log("Webhook signature headers present");
+    if (!webhookSecret) {
+      console.error("RESEND_WEBHOOK_SECRET not configured");
+      return new Response(
+        JSON.stringify({ error: "Webhook secret not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const event: ResendWebhookEvent = await req.json();
+    // Get Svix headers for signature verification
+    const svixId = req.headers.get("svix-id");
+    const svixTimestamp = req.headers.get("svix-timestamp");
+    const svixSignature = req.headers.get("svix-signature");
+
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      console.error("Missing Svix headers");
+      return new Response(
+        JSON.stringify({ error: "Missing webhook signature headers" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Get raw body for signature verification
+    const payload = await req.text();
+
+    // Verify the webhook signature using Svix
+    const wh = new Webhook(webhookSecret);
+    let event: ResendWebhookEvent;
+    
+    try {
+      event = wh.verify(payload, {
+        "svix-id": svixId,
+        "svix-timestamp": svixTimestamp,
+        "svix-signature": svixSignature,
+      }) as ResendWebhookEvent;
+      console.log("Webhook signature verified successfully");
+    } catch (err) {
+      console.error("Webhook signature verification failed:", err);
+      return new Response(
+        JSON.stringify({ error: "Invalid webhook signature" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log(`Received Resend webhook: ${event.type}`, JSON.stringify(event.data));
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -72,7 +94,6 @@ Deno.serve(async (req) => {
         
       case "email.opened":
         console.log(`Email opened: ${event.data.email_id}`);
-        // Update newsletter_events if this is a newsletter email
         if (event.data.to?.[0]) {
           await supabase.from("newsletter_events").insert({
             event_type: "open",
@@ -96,7 +117,6 @@ Deno.serve(async (req) => {
         
       case "email.bounced":
         console.log(`Email bounced: ${event.data.email_id}, reason: ${event.data.bounce?.message}`);
-        // Optionally mark subscriber as inactive
         if (event.data.to?.[0]) {
           await supabase
             .from("newsletter_subscribers")
@@ -107,7 +127,6 @@ Deno.serve(async (req) => {
         
       case "email.complained":
         console.log(`Email complaint: ${event.data.email_id}`);
-        // Mark subscriber as inactive on complaint
         if (event.data.to?.[0]) {
           await supabase
             .from("newsletter_subscribers")
