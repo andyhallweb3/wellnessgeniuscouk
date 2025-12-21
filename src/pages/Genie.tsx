@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,12 +60,17 @@ interface GenieOnboardingData {
 const Genie = () => {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selectedMode, setSelectedMode] = useState("daily_operator");
-  const [showDashboard, setShowDashboard] = useState(true);
+  const [selectedMode, setSelectedMode] = useState(() => {
+    const modeFromUrl = searchParams.get("mode");
+    const validModes = ["daily_operator", "weekly_review", "decision_support", "board_mode", "build_mode"];
+    return modeFromUrl && validModes.includes(modeFromUrl) ? modeFromUrl : "daily_operator";
+  });
+  const [showDashboard, setShowDashboard] = useState(() => !searchParams.get("mode"));
   const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
