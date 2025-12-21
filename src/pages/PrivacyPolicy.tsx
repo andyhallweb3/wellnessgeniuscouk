@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 
 const PrivacyPolicy = () => {
-  const lastUpdated = "21 December 2024";
+  const lastUpdated = "21 December 2025";
   return (
     <div className="min-h-screen bg-background">
       <Header />
