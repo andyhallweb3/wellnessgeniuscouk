@@ -48,7 +48,10 @@ import {
   Save,
   FolderOpen,
   Moon,
-  Sun
+  Sun,
+  Monitor,
+  Tablet,
+  Smartphone
 } from "lucide-react";
 import {
   Dialog,
@@ -205,6 +208,9 @@ const NewsletterAdmin = () => {
   
   // Dark mode preview toggle
   const [previewDarkMode, setPreviewDarkMode] = useState(false);
+  
+  // Preview width mode: 'desktop' | 'tablet' | 'mobile'
+  const [previewWidth, setPreviewWidth] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
   interface AdminUser {
     id: string;
@@ -2516,15 +2522,42 @@ const NewsletterAdmin = () => {
                 )}
 
                 {/* HTML Preview */}
-                <div className={`border border-border rounded-xl overflow-hidden ${previewDarkMode ? 'bg-neutral-900' : 'bg-white'}`}>
-                  <div className="bg-secondary px-4 py-2 flex items-center justify-between border-b border-border">
+                <div className={`border border-border rounded-xl overflow-hidden ${previewDarkMode ? 'bg-neutral-900' : 'bg-muted/30'}`}>
+                  <div className="bg-secondary px-4 py-2 flex items-center justify-between border-b border-border flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-red-500"></div>
                       <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                       <div className="w-3 h-3 rounded-full bg-green-500"></div>
                       <span className="ml-2 text-xs text-muted-foreground">Email Preview</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Device Width Toggle */}
+                      <div className="flex items-center border border-border rounded-md overflow-hidden">
+                        <Button
+                          size="sm"
+                          variant={previewWidth === 'desktop' ? "default" : "ghost"}
+                          className="gap-1 text-xs h-7 rounded-none border-0"
+                          onClick={() => setPreviewWidth('desktop')}
+                        >
+                          <Monitor size={14} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={previewWidth === 'tablet' ? "default" : "ghost"}
+                          className="gap-1 text-xs h-7 rounded-none border-0"
+                          onClick={() => setPreviewWidth('tablet')}
+                        >
+                          <Tablet size={14} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={previewWidth === 'mobile' ? "default" : "ghost"}
+                          className="gap-1 text-xs h-7 rounded-none border-0"
+                          onClick={() => setPreviewWidth('mobile')}
+                        >
+                          <Smartphone size={14} />
+                        </Button>
+                      </div>
                       {/* Dark Mode Toggle */}
                       <Button
                         size="sm"
@@ -2573,33 +2606,39 @@ const NewsletterAdmin = () => {
                       </Button>
                     </div>
                   </div>
-                  <iframe
-                    srcDoc={previewDarkMode 
-                      ? previewHtml.replace('</style>', `
-                        /* Force dark mode for preview */
-                        .email-bg { background-color: #1a1a1a !important; }
-                        .email-container { background-color: #262626 !important; }
-                        .content-bg { background-color: #262626 !important; }
-                        .light-text { color: #e5e5e5 !important; }
-                        .dark-text { color: #f5f5f5 !important; }
-                        .muted-text { color: #a3a3a3 !important; }
-                        .border-color { border-color: #404040 !important; }
-                        .card-bg { background-color: #333333 !important; }
-                        .footer-bg { background-color: #1f1f1f !important; }
-                        .link-color { color: #5eead4 !important; }
-                        .why-matters-bg { background-color: #1f2937 !important; }
-                        .commercial-bg { background-color: #422006 !important; }
-                        .commercial-text { color: #fcd34d !important; }
-                        .editor-choice-bg { background: linear-gradient(135deg, #134e4a 0%, #115e59 100%) !important; }
-                        .editor-choice-text { color: #ccfbf1 !important; }
-                        .editor-choice-card { background-color: rgba(0,0,0,0.3) !important; }
-                      </style>`)
-                      : previewHtml
-                    }
-                    className={`w-full h-[800px] border-0 ${previewDarkMode ? 'bg-neutral-900' : ''}`}
-                    title="Newsletter Preview"
-                    style={previewDarkMode ? { colorScheme: 'dark' } : undefined}
-                  />
+                  <div className={`flex justify-center py-4 transition-all ${previewDarkMode ? 'bg-neutral-800' : 'bg-muted/50'}`}>
+                    <iframe
+                      srcDoc={previewDarkMode 
+                        ? previewHtml.replace('</style>', `
+                          /* Force dark mode for preview */
+                          .email-bg { background-color: #1a1a1a !important; }
+                          .email-container { background-color: #262626 !important; }
+                          .content-bg { background-color: #262626 !important; }
+                          .light-text { color: #e5e5e5 !important; }
+                          .dark-text { color: #f5f5f5 !important; }
+                          .muted-text { color: #a3a3a3 !important; }
+                          .border-color { border-color: #404040 !important; }
+                          .card-bg { background-color: #333333 !important; }
+                          .footer-bg { background-color: #1f1f1f !important; }
+                          .link-color { color: #5eead4 !important; }
+                          .why-matters-bg { background-color: #1f2937 !important; }
+                          .commercial-bg { background-color: #422006 !important; }
+                          .commercial-text { color: #fcd34d !important; }
+                          .editor-choice-bg { background: linear-gradient(135deg, #134e4a 0%, #115e59 100%) !important; }
+                          .editor-choice-text { color: #ccfbf1 !important; }
+                          .editor-choice-card { background-color: rgba(0,0,0,0.3) !important; }
+                        </style>`)
+                        : previewHtml
+                      }
+                      className={`h-[800px] border-0 transition-all duration-300 ${previewDarkMode ? 'bg-neutral-900' : 'bg-white'} ${
+                        previewWidth === 'desktop' ? 'w-full' : 
+                        previewWidth === 'tablet' ? 'w-[768px] rounded-lg shadow-lg' : 
+                        'w-[375px] rounded-2xl shadow-lg'
+                      }`}
+                      title="Newsletter Preview"
+                      style={previewDarkMode ? { colorScheme: 'dark' } : undefined}
+                    />
+                  </div>
                 </div>
               </div>
             )}
