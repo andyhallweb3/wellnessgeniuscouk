@@ -280,9 +280,37 @@ const MemberHub = () => {
                   <span className="text-xs font-medium uppercase tracking-wider text-accent">Your AI Business Partner</span>
                 </div>
                 <h2 className="text-2xl md:text-3xl font-heading mb-3">Wellness Genie</h2>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground mb-4">
                   Your always-on business operator. Get strategic guidance, make better decisions, and solve operational challenges with AI that understands your wellness business.
                 </p>
+                
+                {/* Quick Mode Starters */}
+                <div className="mb-5">
+                  <p className="text-xs text-muted-foreground mb-2">Quick start a conversation:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" className="text-xs" asChild>
+                      <Link to="/genie?mode=daily_operator">
+                        <span className="mr-1">📊</span> Daily Briefing
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-xs" asChild>
+                      <Link to="/genie?mode=decision_support">
+                        <span className="mr-1">🧠</span> Decision Support
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-xs" asChild>
+                      <Link to="/genie?mode=weekly_review">
+                        <span className="mr-1">📈</span> Weekly Review
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-xs" asChild>
+                      <Link to="/genie?mode=build_mode">
+                        <span className="mr-1">🔧</span> Build Mode
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+                
                 <div className="flex flex-wrap gap-3">
                   <Button variant="accent" size="lg" asChild>
                     <Link to="/genie">
