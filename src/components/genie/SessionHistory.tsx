@@ -1,9 +1,10 @@
 import { formatDistanceToNow } from "date-fns";
-import { MessageSquare, Clock, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { MessageSquare, Clock, ChevronRight, Sparkles, Loader2, Search, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface Message {
   role: "user" | "assistant";
@@ -43,6 +44,22 @@ export default function SessionHistory({
   onSummarize,
 }: SessionHistoryProps) {
   const [summarizingId, setSummarizingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredSessions = useMemo(() => {
+    if (!searchQuery.trim()) return sessions;
+    
+    const query = searchQuery.toLowerCase();
+    return sessions.filter(session => {
+      // Search in summary
+      if (session.summary?.toLowerCase().includes(query)) return true;
+      
+      // Search in messages
+      return session.messages.some(msg => 
+        msg.content.toLowerCase().includes(query)
+      );
+    });
+  }, [sessions, searchQuery]);
 
   const handleSummarize = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
@@ -73,75 +90,111 @@ export default function SessionHistory({
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="space-y-1 p-2">
-        {sessions.map((session) => {
-          const hasAISummary = session.summary && session.summary.length > 100;
-          const canSummarize = session.messages.length >= 4 && !hasAISummary;
-          
-          return (
-            <button
-              key={session.id}
-              onClick={() => onLoadSession(session)}
-              className={cn(
-                "w-full text-left p-3 rounded-lg border transition-colors",
-                currentSessionId === session.id
-                  ? "bg-accent/10 border-accent/30"
-                  : "bg-secondary/50 border-border/50 hover:bg-secondary"
-              )}
+    <div className="flex flex-col h-full">
+      {/* Search Input */}
+      <div className="p-2 border-b border-border/50">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search conversations..."
+            className="pl-9 pr-8 h-9 text-sm"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
             >
-              <div className="flex items-start gap-2">
-                <span className="text-lg shrink-0">
-                  {MODE_ICONS[session.mode] || "💬"}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium truncate flex-1">
-                      {session.summary || "Conversation"}
-                    </p>
-                    {hasAISummary && (
-                      <Sparkles className="h-3 w-3 text-accent shrink-0" />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>
-                      {formatDistanceToNow(new Date(session.started_at), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                    <span className="text-muted-foreground/50">•</span>
-                    <MessageSquare className="h-3 w-3" />
-                    <span>{session.messages.length} messages</span>
-                  </div>
-                  {canSummarize && onSummarize && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => handleSummarize(e, session.id)}
-                      disabled={summarizingId === session.id}
-                      className="mt-2 h-6 text-xs text-accent hover:text-accent"
-                    >
-                      {summarizingId === session.id ? (
-                        <>
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Summarizing...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          Generate AI Summary
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
-              </div>
-            </button>
-          );
-        })}
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+        {searchQuery && (
+          <p className="text-xs text-muted-foreground mt-1.5 px-1">
+            {filteredSessions.length} result{filteredSessions.length !== 1 ? 's' : ''} found
+          </p>
+        )}
       </div>
-    </ScrollArea>
+
+      <ScrollArea className="flex-1">
+        <div className="space-y-1 p-2">
+          {filteredSessions.length === 0 ? (
+            <div className="p-4 text-center text-muted-foreground text-sm">
+              No conversations match "{searchQuery}"
+            </div>
+          ) : (
+            filteredSessions.map((session) => {
+              const hasAISummary = session.summary && session.summary.length > 100;
+              const canSummarize = session.messages.length >= 4 && !hasAISummary;
+              
+              return (
+                <button
+                  key={session.id}
+                  onClick={() => onLoadSession(session)}
+                  className={cn(
+                    "w-full text-left p-3 rounded-lg border transition-colors",
+                    currentSessionId === session.id
+                      ? "bg-accent/10 border-accent/30"
+                      : "bg-secondary/50 border-border/50 hover:bg-secondary"
+                  )}
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="text-lg shrink-0">
+                      {MODE_ICONS[session.mode] || "💬"}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium truncate flex-1">
+                          {session.summary || "Conversation"}
+                        </p>
+                        {hasAISummary && (
+                          <Sparkles className="h-3 w-3 text-accent shrink-0" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {formatDistanceToNow(new Date(session.started_at), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                        <span className="text-muted-foreground/50">•</span>
+                        <MessageSquare className="h-3 w-3" />
+                        <span>{session.messages.length} messages</span>
+                      </div>
+                      {canSummarize && onSummarize && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleSummarize(e, session.id)}
+                          disabled={summarizingId === session.id}
+                          className="mt-2 h-6 text-xs text-accent hover:text-accent"
+                        >
+                          {summarizingId === session.id ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Summarizing...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              Generate AI Summary
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </ScrollArea>
+    </div>
   );
 }
