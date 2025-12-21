@@ -1,10 +1,13 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DataDeletionForm from "@/components/DataDeletionForm";
+import DataExportForm from "@/components/DataExportForm";
+import { openCookiePreferences } from "@/components/CookieConsent";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
 
 const PrivacyPolicy = () => {
   const lastUpdated = "21 December 2024";
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -200,9 +203,17 @@ const PrivacyPolicy = () => {
                   <li>Understand how visitors use our site</li>
                   <li>Improve performance and content</li>
                 </ul>
-                <p className="text-muted-foreground">
-                  Non-essential cookies are only used with your consent. You can manage preferences via our cookie banner.
+                <p className="text-muted-foreground mb-4">
+                  Non-essential cookies are only used with your consent. You can manage your preferences at any time.
                 </p>
+                <Button 
+                  variant="outline" 
+                  onClick={openCookiePreferences}
+                  className="gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  Manage Cookie Preferences
+                </Button>
               </section>
 
               <section>
@@ -228,7 +239,18 @@ const PrivacyPolicy = () => {
               </section>
 
               <section>
-                <h2 className="text-2xl font-heading mb-4">13. Request Data Deletion</h2>
+                <h2 className="text-2xl font-heading mb-4">13. Export Your Data</h2>
+                <p className="text-muted-foreground mb-4">
+                  You have the right to receive a copy of all personal data we hold about you (data portability). 
+                  Use the form below to export your data in a machine-readable format.
+                </p>
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <DataExportForm />
+                </div>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-heading mb-4">14. Request Data Deletion</h2>
                 <p className="text-muted-foreground mb-4">
                   You have the right to request deletion of your personal data. Use the form below to submit a data deletion request, 
                   and we'll process it within 30 days as required by GDPR.
@@ -239,7 +261,7 @@ const PrivacyPolicy = () => {
               </section>
 
               <section>
-                <h2 className="text-2xl font-heading mb-4">14. Contact Us</h2>
+                <h2 className="text-2xl font-heading mb-4">15. Contact Us</h2>
                 <p className="text-muted-foreground mb-2">
                   If you have questions about this policy or how your data is handled:
                 </p>
