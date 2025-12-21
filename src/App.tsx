@@ -12,6 +12,7 @@ import Products from "./pages/Products";
 import Bundles from "./pages/Bundles";
 import Auth from "./pages/Auth";
 import MemberHub from "./pages/MemberHub";
+import DownloadsLibrary from "./pages/DownloadsLibrary";
 import AICoach from "./pages/AICoach";
 import AIGenius from "./pages/AIGenius";
 import AIReadinessLanding from "./pages/AIReadinessLanding";
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/member-hub" element={<Navigate to="/hub" replace />} />
             <Route path="/hub" element={<MemberHub />} />
+            <Route path="/hub/downloads" element={<DownloadsLibrary />} />
             <Route path="/hub/coach" element={<AICoach />} />
             <Route path="/ai-coach" element={<AICoach />} />
             <Route path="/ai-genius" element={<AIGenius />} />
