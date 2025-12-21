@@ -14,7 +14,9 @@ import {
   Users,
   Package,
   Loader2,
-  Phone
+  Phone,
+  Bot,
+  Crown
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -36,7 +38,7 @@ interface Product {
   description: string;
   price: string;
   originalPrice?: string;
-  type: "free" | "paid" | "premium" | "bundle";
+  type: "free" | "paid" | "premium" | "bundle" | "subscription";
   icon: React.ReactNode;
   features: string[];
   cta: string;
@@ -44,8 +46,10 @@ interface Product {
   badge?: string;
   isDownload?: boolean;
   isStripeProduct?: boolean;
+  isSubscription?: boolean;
   upsellText?: string;
   upsellProduct?: string;
+  priceSubtext?: string;
 }
 
 const products: Product[] = [
@@ -266,6 +270,52 @@ const bundles: Product[] = [
   },
 ];
 
+// AI Coach Subscription Tiers
+const subscriptions: Product[] = [
+  {
+    id: "ai-coach-pro",
+    name: "AI Coach Pro",
+    description: "40 credits/month. Diagnostic, Decision & Commercial modes. Access to all paid templates (read-only).",
+    price: "£19.99",
+    priceSubtext: "/month",
+    type: "subscription",
+    icon: <Bot size={24} />,
+    features: [
+      "40 credits per month",
+      "Diagnostic mode",
+      "Decision mode",
+      "Commercial mode",
+      "Access to all templates",
+    ],
+    cta: "Subscribe",
+    link: "#ai-coach-pro",
+    isSubscription: true,
+    badge: "Most Popular",
+    upsellText: "Need more credits? Upgrade to Expert →",
+    upsellProduct: "ai-coach-expert",
+  },
+  {
+    id: "ai-coach-expert",
+    name: "AI Coach Expert",
+    description: "120 credits/month. All modes unlocked, saved insights, re-runs & comparisons, full downloads library included.",
+    price: "£39.99",
+    priceSubtext: "/month",
+    type: "subscription",
+    icon: <Crown size={24} />,
+    features: [
+      "120 credits per month",
+      "All modes unlocked",
+      "Saved insights & history",
+      "Re-runs & comparisons",
+      "Full downloads library included",
+    ],
+    cta: "Subscribe",
+    link: "#ai-coach-expert",
+    isSubscription: true,
+    badge: "Premium",
+  },
+];
+
 // Bundle to product mapping for downloads
 const BUNDLE_PRODUCTS: Record<string, string[]> = {
   "operator-bundle": ["prompt-pack", "engagement-playbook"],
@@ -283,6 +333,8 @@ const getTypeStyles = (type: Product["type"]) => {
       return "border-purple-500/20 bg-purple-500/5";
     case "bundle":
       return "border-amber-500/20 bg-amber-500/5";
+    case "subscription":
+      return "border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-accent/10";
     default:
       return "border-border bg-card";
   }
@@ -298,6 +350,8 @@ const getTypeBadge = (type: Product["type"]) => {
       return "bg-purple-500/10 text-purple-600";
     case "bundle":
       return "bg-amber-500/10 text-amber-600";
+    case "subscription":
+      return "bg-purple-500/10 text-purple-600";
     default:
       return "bg-secondary text-muted-foreground";
   }
@@ -316,9 +370,10 @@ const ProductCard = ({
   isProcessing?: string | null;
   allProducts?: Product[];
 }) => {
-  const isInternal = product.link.startsWith("/") && !product.isDownload && !product.isStripeProduct;
+  const isInternal = product.link.startsWith("/") && !product.isDownload && !product.isStripeProduct && !product.isSubscription;
   const isDownload = product.isDownload;
   const isStripe = product.isStripeProduct;
+  const isSubscription = product.isSubscription;
   const isLoading = isProcessing === product.id;
   
   const upsellProduct = product.upsellProduct && allProducts 
@@ -328,7 +383,7 @@ const ProductCard = ({
   const handleClick = () => {
     if (isDownload && onDownloadClick) {
       onDownloadClick(product);
-    } else if (isStripe && onBuyClick) {
+    } else if ((isStripe || isSubscription) && onBuyClick) {
       onBuyClick(product);
     }
   };
@@ -362,6 +417,9 @@ const ProductCard = ({
             </span>
           )}
           <span className="text-xl font-heading">{product.price}</span>
+          {product.priceSubtext && (
+            <span className="text-sm text-muted-foreground">{product.priceSubtext}</span>
+          )}
         </div>
       </div>
       
@@ -402,7 +460,7 @@ const ProductCard = ({
             <Download size={16} />
             {product.cta}
           </Button>
-        ) : isStripe ? (
+        ) : isStripe || isSubscription ? (
           <>
             <Button 
               variant="accent" 
@@ -417,7 +475,7 @@ const ProductCard = ({
                 </>
               ) : (
                 <>
-                  <ArrowRight size={16} />
+                  {isSubscription ? <Bot size={16} /> : <ArrowRight size={16} />}
                   {product.cta}
                 </>
               )}
@@ -557,6 +615,22 @@ const Products = () => {
     setProcessingProductId(product.id);
 
     try {
+      // Handle subscription products differently
+      if (product.isSubscription) {
+        const { data, error } = await supabase.functions.invoke("create-coach-subscription", {
+          body: { tier: product.id },
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.open(data.url, "_blank");
+        } else {
+          throw new Error("No checkout URL returned");
+        }
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("create-product-checkout", {
         body: { productId: product.id },
       });
@@ -725,6 +799,33 @@ const Products = () => {
                 />
               ))}
             </div>
+          </section>
+
+          {/* AI Coach Subscriptions */}
+          <section className="mt-16">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                <Bot size={20} className="text-purple-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-heading">AI Coach</h2>
+                <p className="text-sm text-muted-foreground">Your AI-powered strategic advisor for wellness operations.</p>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl">
+              {subscriptions.map(subscription => (
+                <ProductCard 
+                  key={subscription.id} 
+                  product={subscription} 
+                  onBuyClick={handleBuyClick}
+                  isProcessing={processingProductId}
+                  allProducts={subscriptions}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              Cancel anytime. Billed monthly. Existing members can manage subscriptions from the Member Hub.
+            </p>
           </section>
 
           {/* CTA */}
