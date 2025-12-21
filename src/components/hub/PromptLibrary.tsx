@@ -26,14 +26,17 @@ const PromptLibrary = () => {
     }
   };
 
+  const [filterClear, setFilterClear] = useState(false);
+
   const filteredPrompts = PROMPTS.filter((prompt) => {
     const matchesCategory = !selectedCategory || prompt.category === selectedCategory;
+    const matchesClear = !filterClear || prompt.framework === "C.L.E.A.R";
     const matchesSearch =
       !searchQuery ||
       prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       prompt.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
       prompt.useCase.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesClear && matchesSearch;
   });
 
   const categories = Object.entries(PROMPT_CATEGORIES);
@@ -55,12 +58,23 @@ const PromptLibrary = () => {
 
       {/* C.L.E.A.R Framework Banner */}
       <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 border border-primary/20">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="text-primary" size={18} />
-          <span className="font-heading text-sm">C.L.E.A.R Framework</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
-            {clearPromptCount} prompts
-          </span>
+        <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Sparkles className="text-primary" size={18} />
+            <span className="font-heading text-sm">C.L.E.A.R Framework</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+              {clearPromptCount} prompts
+            </span>
+          </div>
+          <Button
+            variant={filterClear ? "accent" : "outline"}
+            size="sm"
+            onClick={() => setFilterClear(!filterClear)}
+            className="gap-1.5"
+          >
+            <Sparkles size={14} />
+            {filterClear ? "Showing C.L.E.A.R only" : "Filter C.L.E.A.R"}
+          </Button>
         </div>
         <div className="grid grid-cols-5 gap-2 text-xs">
           {Object.entries(CLEAR_FRAMEWORK).map(([key, value]) => (

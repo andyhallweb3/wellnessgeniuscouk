@@ -15,11 +15,25 @@ import {
   Lightbulb,
   Building2,
   TrendingUp,
-  Shield
+  Shield,
+  RotateCcw,
+  Circle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useStackProgress, STACK_STEP_IDS, type StackStepId } from "@/hooks/useStackProgress";
 
 const HowToUseStack = () => {
+  const { 
+    toggleStep, 
+    isStepCompleted, 
+    getCompletionPercentage, 
+    resetProgress,
+    completedCount,
+    totalSteps,
+    isLoaded 
+  } = useStackProgress();
+
   return (
     <>
       <Helmet>
@@ -83,30 +97,84 @@ const HowToUseStack = () => {
             </div>
           </section>
 
-          {/* Stack Overview */}
+          {/* Progress Tracker */}
           <section className="container mx-auto px-4 mb-16">
             <div className="max-w-4xl mx-auto">
-              <h2 className="text-2xl font-heading mb-8 text-center">The Stack at a Glance</h2>
-              <div className="space-y-3">
-                {STACK_STEPS.map((step, index) => (
-                  <div 
-                    key={step.title}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 font-heading text-primary">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-heading">{step.title}</h3>
-                      <p className="text-sm text-muted-foreground">{step.purpose}</p>
-                    </div>
-                    <step.icon className="text-muted-foreground shrink-0" size={20} />
+              <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
+                <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+                  <div>
+                    <h2 className="text-xl font-heading">Your Progress</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Track your journey through the stack
+                    </p>
                   </div>
-                ))}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <span className="text-2xl font-heading text-primary">{completedCount}</span>
+                      <span className="text-muted-foreground">/{totalSteps}</span>
+                      <p className="text-xs text-muted-foreground">steps completed</p>
+                    </div>
+                    {completedCount > 0 && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={resetProgress}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <RotateCcw size={14} className="mr-1" />
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <Progress value={getCompletionPercentage()} className="h-2 mb-6" />
+                
+                <div className="space-y-2">
+                  {STACK_STEPS.map((step, index) => {
+                    const stepId = STACK_STEP_IDS[index];
+                    const completed = isLoaded && isStepCompleted(stepId);
+                    
+                    return (
+                      <button
+                        key={step.title}
+                        onClick={() => toggleStep(stepId)}
+                        className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
+                          completed 
+                            ? "bg-primary/5 border-primary/30" 
+                            : "bg-card border-border hover:border-primary/30"
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                          completed ? "bg-primary text-primary-foreground" : "bg-primary/10"
+                        }`}>
+                          {completed ? (
+                            <CheckCircle2 size={20} />
+                          ) : (
+                            <span className="font-heading text-primary">{index + 1}</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`font-heading ${completed ? "text-primary" : ""}`}>
+                            {step.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">{step.purpose}</p>
+                        </div>
+                        <div className={`shrink-0 ${completed ? "text-primary" : "text-muted-foreground"}`}>
+                          {completed ? (
+                            <CheckCircle2 size={20} />
+                          ) : (
+                            <Circle size={20} />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <p className="text-center text-sm text-muted-foreground mt-6">
+                  Click a step to mark it complete. Progress is saved automatically.
+                </p>
               </div>
-              <p className="text-center text-sm text-muted-foreground mt-6">
-                You do not need to use everything at once.
-              </p>
             </div>
           </section>
 
