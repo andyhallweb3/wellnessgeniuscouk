@@ -15,6 +15,15 @@ const PRODUCT_PRICES: Record<string, string> = {
   "activation-playbook": "price_1SgnXvADyJKZqOM9KBzNvcYl",  // £99 - was £49
   "engagement-playbook": "price_1SgnXxADyJKZqOM9w9RFk8Cv",  // £59 - was £79
   "ai-builder": "price_1SgnXzADyJKZqOM9EqRorM6Y",           // £69 - new product ID
+  // Bundles
+  "operator-pack": "price_1SgnYuADyJKZqOM9O4PVP440",        // £179 - Operator Pack bundle
+  "execution-pack": "price_1SgnYvADyJKZqOM9p9SWnBFn",       // £149 - Execution Pack bundle
+};
+
+// Bundle product mappings for PDF downloads
+const BUNDLE_PRODUCTS: Record<string, string[]> = {
+  "operator-pack": ["ai-builder", "engagement-playbook"],   // AI Readiness Score handled separately
+  "execution-pack": ["activation-playbook"],                // AI Readiness Score handled separately
 };
 
 // AI Coach subscription product ID

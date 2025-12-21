@@ -200,6 +200,7 @@ const bundles: Product[] = [
     cta: "Buy Bundle",
     link: "#operator-pack",
     badge: "Best Value",
+    isStripeProduct: true,
   },
   {
     id: "execution-pack",
@@ -216,8 +217,15 @@ const bundles: Product[] = [
     ],
     cta: "Buy Bundle",
     link: "#execution-pack",
+    isStripeProduct: true,
   },
 ];
+
+// Bundle to product mapping for downloads
+const BUNDLE_PRODUCTS: Record<string, string[]> = {
+  "operator-pack": ["prompt-pack", "engagement-playbook"],
+  "execution-pack": ["activation-playbook"],
+};
 
 const getTypeStyles = (type: Product["type"]) => {
   switch (type) {
@@ -429,15 +437,15 @@ const Products = () => {
     const productId = searchParams.get("product");
     
     if (payment === "success") {
-      toast.success("Payment successful! Your PDF is downloading and will also be emailed to you.");
+      toast.success("Payment successful! Your PDF(s) are downloading and will also be emailed to you.");
       
-      // Trigger immediate download based on product
-      if (productId) {
+      // Helper function to generate and download a PDF
+      const downloadPdf = (id: string) => {
         try {
           let doc;
           let filename = "wellness-genius-download.pdf";
           
-          switch (productId) {
+          switch (id) {
             case "prompt-pack":
               doc = generatePromptPack();
               filename = "wellness-ai-prompt-pack.pdf";
@@ -464,7 +472,22 @@ const Products = () => {
             doc.save(filename);
           }
         } catch (error) {
-          console.error("Failed to generate PDF:", error);
+          console.error(`Failed to generate PDF for ${id}:`, error);
+        }
+      };
+      
+      // Trigger immediate download based on product
+      if (productId) {
+        // Check if it's a bundle
+        const bundleProducts = BUNDLE_PRODUCTS[productId];
+        if (bundleProducts) {
+          // Download all products in the bundle with a small delay between each
+          bundleProducts.forEach((id, index) => {
+            setTimeout(() => downloadPdf(id), index * 500);
+          });
+        } else {
+          // Single product download
+          downloadPdf(productId);
         }
       }
     } else if (payment === "cancelled") {
@@ -635,7 +658,12 @@ const Products = () => {
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               {bundles.map(bundle => (
-                <ProductCard key={bundle.id} product={bundle} />
+                <ProductCard 
+                  key={bundle.id} 
+                  product={bundle} 
+                  onBuyClick={handleBuyClick}
+                  isProcessing={processingProductId}
+                />
               ))}
             </div>
           </section>
