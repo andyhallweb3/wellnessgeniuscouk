@@ -37,6 +37,7 @@ import SavedInsights from "@/components/hub/SavedInsights";
 import OnboardingBanner from "@/components/hub/OnboardingBanner";
 import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { generateGamificationPlaybook } from "@/lib/pdf-generators";
 
 interface Purchase {
   id: string;
@@ -143,6 +144,10 @@ const MemberHub = () => {
         case "engagement-playbook":
           doc = generateEngagementPlaybook();
           filename = "wellness-engagement-systems-playbook.pdf";
+          break;
+        case "gamification-playbook":
+          doc = generateGamificationPlaybook();
+          filename = "gamification-rewards-incentives-playbook.pdf";
           break;
         default:
           toast.error("Download not available for this product");

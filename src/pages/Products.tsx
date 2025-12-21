@@ -668,6 +668,10 @@ const Products = () => {
               doc = generateEngagementPlaybook();
               filename = "wellness-engagement-systems-playbook.pdf";
               break;
+            case "gamification-playbook":
+              doc = generateGamificationPlaybook();
+              filename = "gamification-rewards-incentives-playbook.pdf";
+              break;
           }
           
           if (doc) {
