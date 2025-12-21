@@ -12,6 +12,7 @@ const Header = () => {
   const navLinks = [
     { href: "/ai-readiness", label: "Free AI Assessment", isRoute: true },
     { href: "/products", label: "Products", isRoute: true },
+    { href: "/bundles", label: "Bundles", isRoute: true },
     { href: "/#services", label: "Services", isRoute: false },
     { href: "/#proof", label: "Proof", isRoute: false },
     { href: "/#how-it-works", label: "How It Works", isRoute: false },
