@@ -23,6 +23,7 @@ import BlogPost from "./pages/BlogPost";
 import LatestNews from "./pages/LatestNews";
 import NewsletterAdmin from "./pages/NewsletterAdmin";
 import DownloadsAdmin from "./pages/DownloadsAdmin";
+import EmailTemplatesAdmin from "./pages/EmailTemplatesAdmin";
 import Unsubscribe from "./pages/Unsubscribe";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/news" element={<LatestNews />} />
             <Route path="/news/admin" element={<NewsletterAdmin />} />
             <Route path="/downloads/admin" element={<DownloadsAdmin />} />
+            <Route path="/emails/admin" element={<EmailTemplatesAdmin />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
