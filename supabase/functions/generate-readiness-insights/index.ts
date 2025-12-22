@@ -1,51 +1,59 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface SectionScores {
-  data: number[];
-  engagement: number[];
-  monetisation: number[];
-  automation: number[];
-  trust: number[];
-}
+// Input validation schemas
+const BusinessProfileSchema = z.object({
+  businessType: z.string().max(100),
+  region: z.string().max(100),
+  sizeBand: z.string().max(50).optional(),
+  arpuBand: z.string().max(50),
+  churnBand: z.string().max(50),
+  activeRateBand: z.string().max(50),
+  unknownArpu: z.boolean().optional(),
+  unknownChurn: z.boolean().optional(),
+  unknownActiveRate: z.boolean().optional(),
+}).optional();
 
-interface BusinessProfile {
-  businessType: string;
-  region: string;
-  sizeBand: string;
-  arpuBand: string;
-  churnBand: string;
-  activeRateBand: string;
-  unknownArpu: boolean;
-  unknownChurn: boolean;
-  unknownActiveRate: boolean;
-}
+const SectionScoresSchema = z.object({
+  data: z.array(z.number().min(0).max(4)).max(10),
+  engagement: z.array(z.number().min(0).max(4)).max(10),
+  monetisation: z.array(z.number().min(0).max(4)).max(10),
+  automation: z.array(z.number().min(0).max(4)).max(10),
+  trust: z.array(z.number().min(0).max(4)).max(10),
+}).optional();
 
-interface QuestionAnswer {
-  questionId: string;
-  pillar: string;
-  questionText: string;
-  score: number;
-}
+const QuestionAnswerSchema = z.object({
+  questionId: z.string().max(100),
+  pillar: z.string().max(100),
+  questionText: z.string().max(500),
+  score: z.number().min(0).max(5),
+});
 
-interface InsightRequest {
-  businessProfile?: BusinessProfile;
-  sectionScores?: SectionScores;
-  questionAnswers?: QuestionAnswer[];
-  completionId?: string;
+const PillarScoreSchema = z.object({
+  pillar: z.string().max(100),
+  score: z.number().min(0).max(100),
+  status: z.string().max(50),
+});
+
+const InsightRequestSchema = z.object({
+  businessProfile: BusinessProfileSchema,
+  sectionScores: SectionScoresSchema,
+  questionAnswers: z.array(QuestionAnswerSchema).max(50).optional(),
+  completionId: z.string().uuid().optional(),
   // Legacy support
-  businessType?: string;
-  companySize?: string;
-  industry?: string;
-  overallScore?: number;
-  pillarScores?: { pillar: string; score: number; status: string }[];
-  role?: string;
-  company?: string;
-}
+  businessType: z.string().max(100).optional(),
+  companySize: z.string().max(50).optional(),
+  industry: z.string().max(100).optional(),
+  overallScore: z.number().min(0).max(100).optional(),
+  pillarScores: z.array(PillarScoreSchema).max(10).optional(),
+  role: z.string().max(100).optional(),
+  company: z.string().max(255).optional(),
+});
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -81,8 +89,20 @@ serve(async (req) => {
     }
     logStep("Synta API key verified");
 
-    const body: InsightRequest = await req.json();
-    logStep("Request parsed", { 
+    const rawBody = await req.json();
+    
+    // Validate input
+    const validationResult = InsightRequestSchema.safeParse(rawBody);
+    if (!validationResult.success) {
+      logStep("Validation error", { errors: validationResult.error.errors });
+      return new Response(
+        JSON.stringify({ error: 'Invalid request format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const body = validationResult.data;
+    logStep("Request parsed and validated", { 
       hasBusinessProfile: !!body.businessProfile,
       hasSectionScores: !!body.sectionScores,
       hasQuestionAnswers: !!body.questionAnswers,
@@ -508,7 +528,7 @@ All estimates must be conservative. No hype. British English.`;
     logStep("ERROR", { message: errorMessage });
     
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'Failed to generate insights. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

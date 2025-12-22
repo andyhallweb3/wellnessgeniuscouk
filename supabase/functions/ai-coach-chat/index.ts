@@ -1,9 +1,37 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schemas
+const MessageSchema = z.object({
+  role: z.enum(["user", "assistant", "system"]),
+  content: z.string().max(10000, "Message content must be less than 10,000 characters"),
+});
+
+const UserContextSchema = z.object({
+  business_name: z.string().max(255).optional(),
+  business_type: z.string().max(100).optional(),
+  business_size_band: z.string().max(50).optional(),
+  team_size: z.string().max(50).optional(),
+  role: z.string().max(100).optional(),
+  primary_goal: z.string().max(500).optional(),
+  frustration: z.string().max(500).optional(),
+  ai_experience: z.string().max(255).optional(),
+  current_tech: z.string().max(500).optional(),
+  decision_style: z.string().max(100).optional(),
+  biggest_win: z.string().max(500).optional(),
+}).optional();
+
+const RequestSchema = z.object({
+  messages: z.array(MessageSchema).max(50, "Maximum 50 messages allowed"),
+  mode: z.enum(["general", "strategy", "retention", "monetisation", "risk", "planning"]).default("general"),
+  userContext: UserContextSchema,
+  documentContext: z.string().max(50000, "Document context must be less than 50,000 characters").optional(),
+});
 
 // C.L.E.A.R Framework system prompt
 const CLEAR_SYSTEM_PROMPT = `You are the Wellness Genius AI Coach — a commercial advisor for wellness, fitness, and health-adjacent businesses.
@@ -164,7 +192,19 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, mode = "general", userContext, documentContext } = await req.json();
+    // Parse and validate input
+    const rawBody = await req.json();
+    const validationResult = RequestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error("[AI-COACH] Validation error:", validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ error: "Invalid request format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { messages, mode, userContext, documentContext } = validationResult.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -193,7 +233,7 @@ serve(async (req) => {
       }
     }
 
-    // Add document context if provided
+    // Add document context if provided (already validated for length)
     if (documentContext && documentContext.trim()) {
       contextString += `\n\nBUSINESS DOCUMENTS (use this information to provide more relevant, personalised advice):\n${documentContext}`;
     }
@@ -248,7 +288,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("[AI-COACH] Error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "Request failed. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
