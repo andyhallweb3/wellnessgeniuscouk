@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { analyzeMessages, logSecurityEvent } from "../_shared/prompt-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -634,6 +635,32 @@ serve(async (req) => {
 
   try {
     const { messages, mode = "daily_operator", memoryContext, documentContext } = await req.json();
+    
+    // Prompt injection detection
+    if (messages && Array.isArray(messages)) {
+      const promptGuardResult = analyzeMessages(messages);
+      if (!promptGuardResult.isSafe) {
+        logSecurityEvent("blocked", {
+          riskScore: promptGuardResult.riskScore,
+          patterns: promptGuardResult.detectedPatterns,
+          mode,
+        });
+        return new Response(
+          JSON.stringify({ error: "Your message could not be processed. Please rephrase and try again." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Log warnings for suspicious but allowed requests
+      if (promptGuardResult.riskScore > 10) {
+        logSecurityEvent("warning", {
+          riskScore: promptGuardResult.riskScore,
+          patterns: promptGuardResult.detectedPatterns,
+          mode,
+        });
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
