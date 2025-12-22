@@ -7,6 +7,14 @@ const corsHeaders = {
 };
 
 // Genie Score calculation types
+interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  hasMomentumBadge: boolean;
+  momentumTier: "none" | "bronze" | "silver" | "gold" | "platinum";
+  lastActiveWeek: string | null;
+}
+
 interface SessionSignals {
   totalSessions: number;
   activeWeeks: number;
@@ -14,6 +22,7 @@ interface SessionSignals {
   hasVoiceInteraction: boolean;
   averageSessionLength: number;
   lastSessionDate: string | null;
+  streak: StreakData;
 }
 
 interface GenieScore {
@@ -63,18 +72,154 @@ const MODE_POINTS: Record<string, number> = {
 
 const MAX_MODE_POINTS = 75; // Reasonable max for scoring
 
+// Get ISO week number
+function getISOWeek(date: Date): { year: number; week: number } {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return { year: d.getUTCFullYear(), week: weekNum };
+}
+
+// Calculate consecutive week streak
+function calculateStreak(sessions: any[]): StreakData {
+  if (!sessions || sessions.length === 0) {
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      hasMomentumBadge: false,
+      momentumTier: "none",
+      lastActiveWeek: null,
+    };
+  }
+
+  // Get all unique weeks with activity, sorted descending
+  const activeWeeks = new Map<string, boolean>();
+  sessions.forEach((session: any) => {
+    const date = new Date(session.started_at);
+    const { year, week } = getISOWeek(date);
+    const weekKey = `${year}-W${week.toString().padStart(2, "0")}`;
+    activeWeeks.set(weekKey, true);
+  });
+
+  // Sort weeks descending (most recent first)
+  const sortedWeeks = Array.from(activeWeeks.keys()).sort().reverse();
+  
+  if (sortedWeeks.length === 0) {
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      hasMomentumBadge: false,
+      momentumTier: "none",
+      lastActiveWeek: null,
+    };
+  }
+
+  // Get current week
+  const now = new Date();
+  const currentWeekData = getISOWeek(now);
+  const currentWeekKey = `${currentWeekData.year}-W${currentWeekData.week.toString().padStart(2, "0")}`;
+  
+  // Check if last active week was current or previous week (streak still active)
+  const lastActiveWeek = sortedWeeks[0];
+  const lastWeekData = getISOWeek(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+  const lastWeekKey = `${lastWeekData.year}-W${lastWeekData.week.toString().padStart(2, "0")}`;
+  
+  const isCurrentlyActive = lastActiveWeek === currentWeekKey || lastActiveWeek === lastWeekKey;
+  
+  // Calculate current streak (consecutive weeks from most recent)
+  let currentStreak = 0;
+  if (isCurrentlyActive) {
+    const startWeek = lastActiveWeek === currentWeekKey ? currentWeekKey : lastWeekKey;
+    let checkDate = new Date();
+    if (lastActiveWeek === lastWeekKey) {
+      checkDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+    
+    for (let i = 0; i < 52; i++) {
+      const { year, week } = getISOWeek(checkDate);
+      const weekKey = `${year}-W${week.toString().padStart(2, "0")}`;
+      
+      if (activeWeeks.has(weekKey)) {
+        currentStreak++;
+        // Go back one week
+        checkDate = new Date(checkDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+      } else {
+        break;
+      }
+    }
+  }
+
+  // Calculate longest streak ever (simplified - scan all weeks)
+  let longestStreak = 0;
+  let tempStreak = 0;
+  
+  // Need to iterate through calendar weeks to find longest
+  if (sessions.length > 0) {
+    const oldestSession = sessions[sessions.length - 1];
+    let checkDate = new Date(oldestSession.started_at);
+    const endDate = new Date();
+    
+    while (checkDate <= endDate) {
+      const { year, week } = getISOWeek(checkDate);
+      const weekKey = `${year}-W${week.toString().padStart(2, "0")}`;
+      
+      if (activeWeeks.has(weekKey)) {
+        tempStreak++;
+        longestStreak = Math.max(longestStreak, tempStreak);
+      } else {
+        tempStreak = 0;
+      }
+      
+      checkDate = new Date(checkDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    }
+  }
+
+  // Determine momentum badge tier (12+ weeks = badge)
+  let momentumTier: "none" | "bronze" | "silver" | "gold" | "platinum" = "none";
+  const streakForBadge = Math.max(currentStreak, longestStreak);
+  
+  if (streakForBadge >= 48) {
+    momentumTier = "platinum"; // 1 year
+  } else if (streakForBadge >= 24) {
+    momentumTier = "gold"; // 6 months
+  } else if (streakForBadge >= 16) {
+    momentumTier = "silver"; // 4 months
+  } else if (streakForBadge >= 12) {
+    momentumTier = "bronze"; // 3 months
+  }
+
+  return {
+    currentStreak: Math.min(currentStreak, 52), // Cap display at 52 weeks
+    longestStreak: Math.min(longestStreak, 52),
+    hasMomentumBadge: momentumTier !== "none",
+    momentumTier,
+    lastActiveWeek,
+  };
+}
+
 async function fetchSessionSignals(supabase: any, userId: string): Promise<SessionSignals> {
-  const twentyEightDaysAgo = new Date();
-  twentyEightDaysAgo.setDate(twentyEightDaysAgo.getDate() - 28);
+  // Fetch more sessions for streak calculation (up to 1 year)
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+  const defaultStreak: StreakData = {
+    currentStreak: 0,
+    longestStreak: 0,
+    hasMomentumBadge: false,
+    momentumTier: "none",
+    lastActiveWeek: null,
+  };
 
   try {
     const { data: sessions, error } = await supabase
       .from("genie_sessions")
       .select("id, mode, started_at, ended_at, messages")
       .eq("user_id", userId)
-      .gte("started_at", twentyEightDaysAgo.toISOString())
+      .gte("started_at", oneYearAgo.toISOString())
       .order("started_at", { ascending: false })
-      .limit(100);
+      .limit(500);
 
     if (error) {
       console.error("[GENIE] Error fetching sessions:", error);
@@ -85,6 +230,7 @@ async function fetchSessionSignals(supabase: any, userId: string): Promise<Sessi
         hasVoiceInteraction: false,
         averageSessionLength: 0,
         lastSessionDate: null,
+        streak: defaultStreak,
       };
     }
 
@@ -96,35 +242,47 @@ async function fetchSessionSignals(supabase: any, userId: string): Promise<Sessi
         hasVoiceInteraction: false,
         averageSessionLength: 0,
         lastSessionDate: null,
+        streak: defaultStreak,
       };
     }
 
-    // Calculate active weeks (weeks with at least 1 interaction)
+    // Calculate streak
+    const streak = calculateStreak(sessions);
+
+    // Filter to last 28 days for other metrics
+    const twentyEightDaysAgo = new Date();
+    twentyEightDaysAgo.setDate(twentyEightDaysAgo.getDate() - 28);
+    const recentSessions = sessions.filter((s: any) => 
+      new Date(s.started_at) >= twentyEightDaysAgo
+    );
+
+    // Calculate active weeks (weeks with at least 1 interaction in last 28 days)
     const weekSet = new Set<string>();
-    sessions.forEach((session: any) => {
+    recentSessions.forEach((session: any) => {
       const date = new Date(session.started_at);
-      const weekKey = `${date.getFullYear()}-W${Math.ceil((date.getDate() + new Date(date.getFullYear(), date.getMonth(), 1).getDay()) / 7)}`;
-      weekSet.add(weekKey);
+      const { year, week } = getISOWeek(date);
+      weekSet.add(`${year}-W${week}`);
     });
 
     // Get unique modes
-    const uniqueModes = Array.from(new Set(sessions.map((s: any) => String(s.mode || "")))) as string[];
+    const uniqueModes = Array.from(new Set(recentSessions.map((s: any) => String(s.mode || "")))) as string[];
 
     // Calculate average session length (by message count)
-    const totalMessages = sessions.reduce((acc: number, s: any) => {
+    const totalMessages = recentSessions.reduce((acc: number, s: any) => {
       const msgs = Array.isArray(s.messages) ? s.messages.length : 0;
       return acc + msgs;
     }, 0);
 
     return {
-      totalSessions: sessions.length,
+      totalSessions: recentSessions.length,
       activeWeeks: Math.min(weekSet.size, 4),
       modesUsed: uniqueModes,
-      hasVoiceInteraction: uniqueModes.includes("voice") || sessions.some((s: any) => 
+      hasVoiceInteraction: uniqueModes.includes("voice") || recentSessions.some((s: any) => 
         s.mode?.includes("voice") || JSON.stringify(s.messages || []).includes("voice")
       ),
-      averageSessionLength: sessions.length > 0 ? Math.round(totalMessages / sessions.length) : 0,
+      averageSessionLength: recentSessions.length > 0 ? Math.round(totalMessages / recentSessions.length) : 0,
       lastSessionDate: sessions[0]?.started_at || null,
+      streak,
     };
   } catch (err) {
     console.error("[GENIE] Session fetch error:", err);
@@ -135,6 +293,7 @@ async function fetchSessionSignals(supabase: any, userId: string): Promise<Sessi
       hasVoiceInteraction: false,
       averageSessionLength: 0,
       lastSessionDate: null,
+      streak: defaultStreak,
     };
   }
 }
@@ -492,6 +651,13 @@ serve(async (req) => {
       hasVoiceInteraction: false,
       averageSessionLength: 0,
       lastSessionDate: null,
+      streak: {
+        currentStreak: 0,
+        longestStreak: 0,
+        hasMomentumBadge: false,
+        momentumTier: "none",
+        lastActiveWeek: null,
+      },
     };
 
     // Try to get session data if we have auth
