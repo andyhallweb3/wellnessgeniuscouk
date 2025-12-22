@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { analyzeMessages, logSecurityEvent } from "../_shared/prompt-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -205,6 +206,30 @@ serve(async (req) => {
     }
 
     const { messages, mode, userContext, documentContext } = validationResult.data;
+
+    // Prompt injection detection
+    const promptGuardResult = analyzeMessages(messages);
+    if (!promptGuardResult.isSafe) {
+      logSecurityEvent("blocked", {
+        riskScore: promptGuardResult.riskScore,
+        patterns: promptGuardResult.detectedPatterns,
+        mode,
+      });
+      return new Response(
+        JSON.stringify({ error: "Your message could not be processed. Please rephrase and try again." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Log warnings for suspicious but allowed requests
+    if (promptGuardResult.riskScore > 10) {
+      logSecurityEvent("warning", {
+        riskScore: promptGuardResult.riskScore,
+        patterns: promptGuardResult.detectedPatterns,
+        mode,
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
