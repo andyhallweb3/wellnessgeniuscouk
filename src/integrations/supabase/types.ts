@@ -680,6 +680,42 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_entries: {
+        Row: {
+          business_type: string | null
+          created_at: string
+          id: string
+          last_updated: string
+          opted_in: boolean
+          score_band: string
+          size_band: string | null
+          streak_weeks: number | null
+          user_id: string
+        }
+        Insert: {
+          business_type?: string | null
+          created_at?: string
+          id?: string
+          last_updated?: string
+          opted_in?: boolean
+          score_band?: string
+          size_band?: string | null
+          streak_weeks?: number | null
+          user_id: string
+        }
+        Update: {
+          business_type?: string | null
+          created_at?: string
+          id?: string
+          last_updated?: string
+          opted_in?: boolean
+          score_band?: string
+          size_band?: string | null
+          streak_weeks?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       newsletter_events: {
         Row: {
           created_at: string
@@ -1191,6 +1227,16 @@ export type Database = {
     }
     Functions: {
       get_current_user_email: { Args: never; Returns: string }
+      get_leaderboard_stats: {
+        Args: { p_business_type?: string; p_size_band?: string }
+        Returns: {
+          avg_streak: number
+          business_type: string
+          score_band: string
+          size_band: string
+          user_count: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
