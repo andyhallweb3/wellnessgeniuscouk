@@ -38,6 +38,7 @@ import { useTrustSettings } from "@/hooks/useTrustSettings";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
 import SessionHistory from "@/components/genie/SessionHistory";
+import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
@@ -480,12 +481,19 @@ const Genie = () => {
                     <Settings size={14} />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[320px]">
+                <SheetContent side="right" className="w-[350px] sm:w-[400px] overflow-y-auto">
                   <SheetHeader>
                     <SheetTitle>Genie Settings</SheetTitle>
                   </SheetHeader>
-                  <div className="mt-6 space-y-4">
+                  <div className="mt-6 space-y-6">
                     <TrustSettingsToggle />
+                    
+                    {/* Leaderboard */}
+                    <GenieLeaderboard 
+                      currentScore={currentTrustMetadata?.genieScore?.overall || 0}
+                      currentStreak={currentTrustMetadata?.sessionSignals?.streak?.currentStreak || 0}
+                    />
+                    
                     <Button 
                       variant="outline" 
                       className="w-full"
