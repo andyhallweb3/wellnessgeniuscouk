@@ -5,6 +5,122 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Trust metadata calculation based on actual data signals
+interface TrustMetadata {
+  confidenceLevel: "high" | "medium" | "low";
+  dataSensitivity: "standard" | "sensitive" | "health-adjacent";
+  isInference: boolean;
+  dataSignals: {
+    hasBusinessProfile: boolean;
+    hasRecentSessions: boolean;
+    hasDocuments: boolean;
+    hasMetrics: boolean;
+    memoryCompleteness: number; // 0-100
+  };
+  explanation: string;
+  factors: string[];
+}
+
+function calculateTrustMetadata(
+  mode: string,
+  memoryContext: string | undefined,
+  documentContext: string | undefined
+): TrustMetadata {
+  const hasMemory = !!memoryContext && memoryContext.trim().length > 50;
+  const hasDocs = !!documentContext && documentContext.trim().length > 0;
+  
+  // Parse memory context to check completeness
+  const memoryFields = [
+    "business_name", "business_type", "revenue_model", "team_size",
+    "primary_goal", "biggest_challenge", "key_metrics", "known_weak_spots"
+  ];
+  
+  let filledFields = 0;
+  if (memoryContext) {
+    memoryFields.forEach(field => {
+      if (memoryContext.toLowerCase().includes(field.replace("_", " ")) || 
+          memoryContext.toLowerCase().includes(field)) {
+        filledFields++;
+      }
+    });
+  }
+  
+  const memoryCompleteness = Math.round((filledFields / memoryFields.length) * 100);
+  
+  // Determine confidence level based on data signals
+  let confidenceLevel: "high" | "medium" | "low" = "low";
+  if (memoryCompleteness >= 70 && hasMemory) {
+    confidenceLevel = "high";
+  } else if (memoryCompleteness >= 40 || hasMemory) {
+    confidenceLevel = "medium";
+  }
+  
+  // Documents boost confidence
+  if (hasDocs && confidenceLevel !== "high") {
+    confidenceLevel = confidenceLevel === "low" ? "medium" : "high";
+  }
+  
+  // Determine data sensitivity based on mode and context
+  let dataSensitivity: "standard" | "sensitive" | "health-adjacent" = "standard";
+  const sensitiveKeywords = ["behavior", "behaviour", "usage", "engagement", "retention", "churn"];
+  const healthKeywords = ["wellness", "health", "fitness", "stress", "recovery", "sleep", "mood", "mental"];
+  
+  const contextLower = (memoryContext || "").toLowerCase();
+  
+  if (healthKeywords.some(k => contextLower.includes(k))) {
+    dataSensitivity = "health-adjacent";
+  } else if (sensitiveKeywords.some(k => contextLower.includes(k))) {
+    dataSensitivity = "sensitive";
+  }
+  
+  // Mode-based adjustments
+  const inferentialModes = ["diagnostic", "decision_support", "commercial_lens"];
+  const isInference = inferentialModes.includes(mode);
+  
+  // Build explanation and factors
+  const factors: string[] = [];
+  let explanation = "";
+  
+  if (hasMemory) {
+    factors.push(`Business profile (${memoryCompleteness}% complete)`);
+  } else {
+    factors.push("No business profile configured");
+  }
+  
+  if (hasDocs) {
+    factors.push("Uploaded documents available");
+  }
+  
+  factors.push(`Mode: ${mode.replace(/_/g, " ")}`);
+  
+  switch (confidenceLevel) {
+    case "high":
+      explanation = "Based on your complete business profile and provided context.";
+      break;
+    case "medium":
+      explanation = "Based on partial business information. Complete your profile for better insights.";
+      break;
+    case "low":
+      explanation = "Limited data available. Add your business profile for personalised insights.";
+      break;
+  }
+  
+  return {
+    confidenceLevel,
+    dataSensitivity,
+    isInference,
+    dataSignals: {
+      hasBusinessProfile: hasMemory,
+      hasRecentSessions: false, // Could be enhanced with session data
+      hasDocuments: hasDocs,
+      hasMetrics: memoryContext?.includes("key_metrics") || false,
+      memoryCompleteness,
+    },
+    explanation,
+    factors,
+  };
+}
+
 // Genie Core System Prompt - Business Operator, not Coach
 const GENIE_SYSTEM_PROMPT = `You are the Wellness Genie — a senior business operator for wellness, fitness, and health businesses.
 
@@ -192,6 +308,9 @@ serve(async (req) => {
 
     const modeConfig = MODE_CONFIGS[mode] || MODE_CONFIGS.daily_briefing;
     
+    // Calculate trust metadata based on actual data signals
+    const trustMetadata = calculateTrustMetadata(mode, memoryContext, documentContext);
+    
     // Build full system prompt with context
     let fullSystemPrompt = GENIE_SYSTEM_PROMPT;
     
@@ -205,7 +324,7 @@ serve(async (req) => {
     
     fullSystemPrompt += `\n\n${modeConfig.prompt}`;
 
-    console.log("[GENIE] Mode:", mode, "Messages:", messages.length);
+    console.log("[GENIE] Mode:", mode, "Messages:", messages.length, "Trust:", trustMetadata.confidenceLevel);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -246,7 +365,29 @@ serve(async (req) => {
       });
     }
 
-    return new Response(response.body, {
+    // Create a transform stream to prepend trust metadata
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+    const reader = response.body!.getReader();
+
+    // Send trust metadata as first event
+    const trustEvent = `data: ${JSON.stringify({ type: "trust_metadata", ...trustMetadata })}\n\n`;
+    
+    (async () => {
+      try {
+        await writer.write(new TextEncoder().encode(trustEvent));
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          await writer.write(value);
+        }
+      } finally {
+        await writer.close();
+      }
+    })();
+
+    return new Response(readable, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {

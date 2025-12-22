@@ -254,6 +254,7 @@ export type Database = {
           primary_goal: string | null
           revenue_model: string | null
           team_size: string | null
+          trust_display_mode: string | null
           updated_at: string
           user_id: string
         }
@@ -271,6 +272,7 @@ export type Database = {
           primary_goal?: string | null
           revenue_model?: string | null
           team_size?: string | null
+          trust_display_mode?: string | null
           updated_at?: string
           user_id: string
         }
@@ -288,6 +290,7 @@ export type Database = {
           primary_goal?: string | null
           revenue_model?: string | null
           team_size?: string | null
+          trust_display_mode?: string | null
           updated_at?: string
           user_id?: string
         }

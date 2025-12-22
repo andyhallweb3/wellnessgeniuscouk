@@ -32,7 +32,9 @@ import { useGenieSessions } from "@/hooks/useGenieSessions";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { useVoiceBrief } from "@/hooks/useVoiceBrief";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
-import GenieMessage from "@/components/genie/GenieMessage";
+import GenieMessage, { TrustMetadata } from "@/components/genie/GenieMessage";
+import TrustSettingsToggle from "@/components/genie/TrustSettingsToggle";
+import { useTrustSettings } from "@/hooks/useTrustSettings";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
 import SessionHistory from "@/components/genie/SessionHistory";
@@ -48,6 +50,7 @@ import {
 interface Message {
   role: "user" | "assistant";
   content: string;
+  trustMetadata?: TrustMetadata;
 }
 
 interface GenieOnboardingData {
@@ -94,6 +97,8 @@ const Genie = () => {
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession, summarizeSession, updateSessionTags, allTags } = useGenieSessions();
   const { isLoading: voiceLoading, isPlaying: isVoicePlaying, playDailyBrief, stopPlayback: stopVoice } = useVoiceBrief();
+  const { displayMode: trustDisplayMode } = useTrustSettings();
+  const [currentTrustMetadata, setCurrentTrustMetadata] = useState<TrustMetadata | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   useEffect(() => {
     if (!authLoading && !user) {
@@ -160,7 +165,7 @@ const Genie = () => {
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
       body: JSON.stringify({ 
-        messages: userMessages,
+        messages: userMessages.map(m => ({ role: m.role, content: m.content })),
         mode,
         memoryContext: memoryContext || undefined,
       }),
@@ -177,6 +182,7 @@ const Genie = () => {
     const decoder = new TextDecoder();
     let textBuffer = "";
     let assistantContent = "";
+    let trustMetadata: TrustMetadata | null = null;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -198,6 +204,21 @@ const Genie = () => {
 
         try {
           const parsed = JSON.parse(jsonStr);
+          
+          // Check for trust metadata event
+          if (parsed.type === "trust_metadata") {
+            trustMetadata = {
+              confidenceLevel: parsed.confidenceLevel,
+              dataSensitivity: parsed.dataSensitivity,
+              isInference: parsed.isInference,
+              dataSignals: parsed.dataSignals,
+              explanation: parsed.explanation,
+              factors: parsed.factors,
+            };
+            setCurrentTrustMetadata(trustMetadata);
+            continue;
+          }
+          
           const content = parsed.choices?.[0]?.delta?.content;
           if (content) {
             assistantContent += content;
@@ -205,10 +226,10 @@ const Genie = () => {
               const last = prev[prev.length - 1];
               if (last?.role === "assistant") {
                 return prev.map((m, i) => 
-                  i === prev.length - 1 ? { ...m, content: assistantContent } : m
+                  i === prev.length - 1 ? { ...m, content: assistantContent, trustMetadata: trustMetadata || undefined } : m
                 );
               }
-              return [...prev, { role: "assistant", content: assistantContent }];
+              return [...prev, { role: "assistant", content: assistantContent, trustMetadata: trustMetadata || undefined }];
             });
           }
         } catch {
@@ -449,14 +470,32 @@ const Genie = () => {
                   </div>
                 </SheetContent>
               </Sheet>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowOnboarding(true)}
-                title="Edit business profile"
-              >
-                <Settings size={14} />
-              </Button>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    title="Settings"
+                  >
+                    <Settings size={14} />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[320px]">
+                  <SheetHeader>
+                    <SheetTitle>Genie Settings</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6 space-y-4">
+                    <TrustSettingsToggle />
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setShowOnboarding(true)}
+                    >
+                      Edit Business Profile
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
               {(messages.length > 0 || showChat) && (
                 <Button variant="outline" size="sm" onClick={handleNewConversation}>
                   <RotateCcw size={14} />
@@ -620,7 +659,12 @@ const Genie = () => {
                       className={`${message.role === "user" ? "flex gap-3 justify-end" : ""}`}
                     >
                       {message.role === "assistant" ? (
-                        <GenieMessage content={message.content} mode={selectedMode || undefined} />
+                        <GenieMessage 
+                          content={message.content} 
+                          mode={selectedMode || undefined}
+                          trustMetadata={message.trustMetadata}
+                          displayMode={trustDisplayMode}
+                        />
                       ) : (
                         <div className="flex gap-3 justify-end">
                           <div className="rounded-xl px-4 py-3 max-w-[80%] bg-accent text-accent-foreground">
