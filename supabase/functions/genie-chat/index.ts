@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { analyzeMessages, logSecurityEvent } from "../_shared/prompt-guard.ts";
+import { analyzeMessages, logSecurityEvent, validateHoneypot } from "../_shared/prompt-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -634,8 +634,22 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, mode = "daily_operator", memoryContext, documentContext } = await req.json();
+    const { messages, mode = "daily_operator", memoryContext, documentContext, _hp_field } = await req.json();
     
+    // Honeypot validation - detect bots that fill hidden fields
+    const honeypotResult = validateHoneypot(_hp_field);
+    if (honeypotResult.isBot) {
+      logSecurityEvent("honeypot", {
+        reason: honeypotResult.reason,
+        mode,
+      });
+      // Return error to block the bot
+      return new Response(
+        JSON.stringify({ error: "Request could not be processed" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Prompt injection detection
     if (messages && Array.isArray(messages)) {
       const promptGuardResult = analyzeMessages(messages);

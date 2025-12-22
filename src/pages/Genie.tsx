@@ -169,6 +169,7 @@ const Genie = () => {
         messages: userMessages.map(m => ({ role: m.role, content: m.content })),
         mode,
         memoryContext: memoryContext || undefined,
+        _hp_field: "", // Honeypot field - must be empty for legitimate requests
       }),
     });
 

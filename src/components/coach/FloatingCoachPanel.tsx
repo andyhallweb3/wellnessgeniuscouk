@@ -74,6 +74,7 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
           decision_style: profile.decision_style,
         } : undefined,
         documentContext,
+        _hp_field: "", // Honeypot field - must be empty for legitimate requests
       }),
     });
 

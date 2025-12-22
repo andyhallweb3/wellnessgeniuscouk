@@ -250,6 +250,7 @@ const AICoach = () => {
           decision_style: profile.decision_style,
         } : undefined,
         documentContext: documentContext || undefined,
+        _hp_field: "", // Honeypot field - must be empty for legitimate requests
       }),
     });
 
