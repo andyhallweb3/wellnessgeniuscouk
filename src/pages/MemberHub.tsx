@@ -23,7 +23,10 @@ import {
   Brain,
   Mic,
   ArrowRight,
-  History as HistoryIcon
+  History as HistoryIcon,
+  Trophy,
+  Home,
+  Flame
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -35,16 +38,18 @@ import {
   generateRevenueFramework, 
   generateBuildVsBuy,
   generateActivationPlaybook,
-  generateEngagementPlaybook
+  generateEngagementPlaybook,
+  generateGamificationPlaybook
 } from "@/lib/pdf-generators";
 import PromptLibrary from "@/components/hub/PromptLibrary";
 import SavedInsights from "@/components/hub/SavedInsights";
 import OnboardingBanner from "@/components/hub/OnboardingBanner";
 import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import DownloadHistory from "@/components/hub/DownloadHistory";
+import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useDownloadTracking } from "@/hooks/useDownloadTracking";
-import { generateGamificationPlaybook } from "@/lib/pdf-generators";
+import { useLeaderboard } from "@/hooks/useLeaderboard";
 
 interface Purchase {
   id: string;
@@ -90,8 +95,9 @@ const MemberHub = () => {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [savedOutputs, setSavedOutputs] = useState<SavedOutput[]>([]);
   const [recentDownloads, setRecentDownloads] = useState<RecentDownload[]>([]);
-  const { restartOnboarding } = useOnboarding();
+  const { restartOnboarding, hasCompletedOnboarding } = useOnboarding();
   const { trackDownload } = useDownloadTracking();
+  const { userEntry } = useLeaderboard();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -109,7 +115,6 @@ const MemberHub = () => {
   const fetchUserData = async () => {
     setIsLoading(true);
     try {
-      // Fetch purchases
       const { data: purchaseData, error: purchaseError } = await supabase
         .from("user_purchases")
         .select("*")
@@ -118,7 +123,6 @@ const MemberHub = () => {
       if (purchaseError) throw purchaseError;
       setPurchases(purchaseData || []);
 
-      // Fetch saved outputs
       const { data: outputData, error: outputError } = await supabase
         .from("user_saved_outputs")
         .select("*")
@@ -127,7 +131,6 @@ const MemberHub = () => {
       if (outputError) throw outputError;
       setSavedOutputs(outputData || []);
 
-      // Fetch recent downloads (free + paid)
       const { data: downloadData, error: downloadError } = await supabase
         .from("product_downloads")
         .select("id, product_id, product_name, created_at, download_type, product_type")
@@ -137,7 +140,6 @@ const MemberHub = () => {
       if (downloadError) {
         console.error("Error fetching downloads:", downloadError);
       } else {
-        // Deduplicate by product_id (keep most recent)
         const seen = new Set<string>();
         const uniqueDownloads = (downloadData || []).filter((d) => {
           if (seen.has(d.product_id)) return false;
@@ -198,8 +200,6 @@ const MemberHub = () => {
       if (doc) {
         doc.save(filename);
         toast.success("Download started!");
-        
-        // Track the download
         await trackDownload({
           productId,
           productName,
@@ -248,7 +248,7 @@ const MemberHub = () => {
       <main className="pt-24 pb-16">
         <div className="container-wide section-padding">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-12">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl md:text-4xl font-heading mb-2">My Intelligence Hub</h1>
               <p className="text-muted-foreground">
@@ -269,92 +269,7 @@ const MemberHub = () => {
             </div>
           </div>
 
-          {/* Genie Hero Section */}
-          <div className="mb-12 rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/10 via-accent/5 to-background overflow-hidden">
-            <div className="grid md:grid-cols-2 gap-6 p-6 md:p-8">
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 rounded-full bg-accent/20">
-                    <Brain size={24} className="text-accent" />
-                  </div>
-                  <span className="text-xs font-medium uppercase tracking-wider text-accent">Your AI Business Partner</span>
-                </div>
-                <h2 className="text-2xl md:text-3xl font-heading mb-3">AI Advisor</h2>
-                <p className="text-muted-foreground mb-4">
-                  Your strategic business partner. Get guidance, stress-test decisions, and build action plans with AI that understands your wellness business.
-                </p>
-                
-                {/* Quick Mode Starters */}
-                <div className="mb-5">
-                  <p className="text-xs text-muted-foreground mb-2">Quick start a conversation:</p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" className="text-xs" asChild>
-                      <Link to="/genie?mode=daily_briefing">
-                        <span className="mr-1">📊</span> Daily Briefing
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-xs" asChild>
-                      <Link to="/genie?mode=decision_support">
-                        <span className="mr-1">🧠</span> Decision Support
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-xs" asChild>
-                      <Link to="/genie?mode=commercial_lens">
-                        <span className="mr-1">📈</span> Commercial Lens
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-xs" asChild>
-                      <Link to="/genie?mode=build_mode">
-                        <span className="mr-1">🔧</span> 90-Day Builder
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="accent" size="lg" asChild>
-                    <Link to="/genie">
-                      <Brain size={18} />
-                      Open AI Advisor
-                      <ArrowRight size={16} />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl bg-background/60 border border-border/50 p-4">
-                  <div className="p-2 rounded-lg bg-blue-500/10 w-fit mb-2">
-                    <Mic size={18} className="text-blue-400" />
-                  </div>
-                  <h4 className="font-medium text-sm mb-1">Voice Mode</h4>
-                  <p className="text-xs text-muted-foreground">Talk naturally with hands-free voice conversations</p>
-                </div>
-                <div className="rounded-xl bg-background/60 border border-border/50 p-4">
-                  <div className="p-2 rounded-lg bg-purple-500/10 w-fit mb-2">
-                    <Sparkles size={18} className="text-purple-400" />
-                  </div>
-                  <h4 className="font-medium text-sm mb-1">Smart Memory</h4>
-                  <p className="text-xs text-muted-foreground">Remembers your business context across sessions</p>
-                </div>
-                <div className="rounded-xl bg-background/60 border border-border/50 p-4">
-                  <div className="p-2 rounded-lg bg-green-500/10 w-fit mb-2">
-                    <BarChart3 size={18} className="text-green-400" />
-                  </div>
-                  <h4 className="font-medium text-sm mb-1">8 Expert Modes</h4>
-                  <p className="text-xs text-muted-foreground">From quick questions to 90-day planning</p>
-                </div>
-                <div className="rounded-xl bg-background/60 border border-border/50 p-4">
-                  <div className="p-2 rounded-lg bg-orange-500/10 w-fit mb-2">
-                    <HistoryIcon size={18} className="text-orange-400" />
-                  </div>
-                  <h4 className="font-medium text-sm mb-1">Pay As You Go</h4>
-                  <p className="text-xs text-muted-foreground">Buy credits when you need them, no subscription</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Onboarding Banner */}
+          {/* Onboarding Banner - Top Priority */}
           <OnboardingBanner />
 
           {isLoading ? (
@@ -362,25 +277,244 @@ const MemberHub = () => {
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
           ) : (
-            <Tabs defaultValue="products" className="w-full">
+            <Tabs defaultValue="overview" className="w-full">
               <TabsList className="mb-8">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <Home size={16} />
+                  Overview
+                </TabsTrigger>
                 <TabsTrigger value="products" className="flex items-center gap-2">
                   <Package size={16} />
-                  Products & Reports
+                  Products
                 </TabsTrigger>
-                <TabsTrigger value="insights" className="flex items-center gap-2">
-                  <Bookmark size={16} />
-                  Saved Insights
+                <TabsTrigger value="community" className="flex items-center gap-2">
+                  <Trophy size={16} />
+                  Community
                 </TabsTrigger>
-                <TabsTrigger value="prompts" className="flex items-center gap-2">
-                  <Terminal size={16} />
-                  Prompt Library
+                <TabsTrigger value="resources" className="flex items-center gap-2">
+                  <BookOpen size={16} />
+                  Resources
                 </TabsTrigger>
               </TabsList>
 
+              {/* OVERVIEW TAB */}
+              <TabsContent value="overview">
+                <div className="space-y-8">
+                  {/* AI Advisor Hero */}
+                  <div className="rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/10 via-accent/5 to-background overflow-hidden">
+                    <div className="grid md:grid-cols-2 gap-6 p-6 md:p-8">
+                      <div className="flex flex-col justify-center">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="p-2 rounded-full bg-accent/20">
+                            <Brain size={24} className="text-accent" />
+                          </div>
+                          <span className="text-xs font-medium uppercase tracking-wider text-accent">Your AI Business Partner</span>
+                        </div>
+                        <h2 className="text-2xl md:text-3xl font-heading mb-3">AI Advisor</h2>
+                        <p className="text-muted-foreground mb-4">
+                          Your strategic business partner. Get guidance, stress-test decisions, and build action plans with AI that understands your wellness business.
+                        </p>
+                        
+                        <div className="mb-5">
+                          <p className="text-xs text-muted-foreground mb-2">Quick start a conversation:</p>
+                          <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" size="sm" className="text-xs" asChild>
+                              <Link to="/genie?mode=daily_briefing">
+                                <span className="mr-1">📊</span> Daily Briefing
+                              </Link>
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-xs" asChild>
+                              <Link to="/genie?mode=decision_support">
+                                <span className="mr-1">🧠</span> Decision Support
+                              </Link>
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-xs" asChild>
+                              <Link to="/genie?mode=build_mode">
+                                <span className="mr-1">🔧</span> 90-Day Builder
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-3">
+                          <Button variant="accent" size="lg" asChild>
+                            <Link to="/genie">
+                              <Brain size={18} />
+                              Open AI Advisor
+                              <ArrowRight size={16} />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-xl bg-background/60 border border-border/50 p-4">
+                          <div className="p-2 rounded-lg bg-blue-500/10 w-fit mb-2">
+                            <Mic size={18} className="text-blue-400" />
+                          </div>
+                          <h4 className="font-medium text-sm mb-1">Voice Mode</h4>
+                          <p className="text-xs text-muted-foreground">Talk naturally with hands-free voice</p>
+                        </div>
+                        <div className="rounded-xl bg-background/60 border border-border/50 p-4">
+                          <div className="p-2 rounded-lg bg-purple-500/10 w-fit mb-2">
+                            <Sparkles size={18} className="text-purple-400" />
+                          </div>
+                          <h4 className="font-medium text-sm mb-1">Smart Memory</h4>
+                          <p className="text-xs text-muted-foreground">Remembers your business context</p>
+                        </div>
+                        <div className="rounded-xl bg-background/60 border border-border/50 p-4">
+                          <div className="p-2 rounded-lg bg-green-500/10 w-fit mb-2">
+                            <BarChart3 size={18} className="text-green-400" />
+                          </div>
+                          <h4 className="font-medium text-sm mb-1">8 Expert Modes</h4>
+                          <p className="text-xs text-muted-foreground">From quick questions to planning</p>
+                        </div>
+                        <div className="rounded-xl bg-background/60 border border-border/50 p-4">
+                          <div className="p-2 rounded-lg bg-orange-500/10 w-fit mb-2">
+                            <HistoryIcon size={18} className="text-orange-400" />
+                          </div>
+                          <h4 className="font-medium text-sm mb-1">Pay As You Go</h4>
+                          <p className="text-xs text-muted-foreground">Buy credits when you need them</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Stats Grid */}
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="rounded-xl border border-border bg-card p-5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 rounded-lg bg-accent/10">
+                          <Package size={18} className="text-accent" />
+                        </div>
+                        <span className="text-sm text-muted-foreground">Products</span>
+                      </div>
+                      <p className="text-2xl font-heading">{purchases.length}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-card p-5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 rounded-lg bg-purple-500/10">
+                          <Sparkles size={18} className="text-purple-500" />
+                        </div>
+                        <span className="text-sm text-muted-foreground">Saved Outputs</span>
+                      </div>
+                      <p className="text-2xl font-heading">{savedOutputs.length}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-card p-5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 rounded-lg bg-green-500/10">
+                          <Download size={18} className="text-green-500" />
+                        </div>
+                        <span className="text-sm text-muted-foreground">Downloads</span>
+                      </div>
+                      <p className="text-2xl font-heading">{recentDownloads.length}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-card p-5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 rounded-lg bg-amber-500/10">
+                          <Flame size={18} className="text-amber-500" />
+                        </div>
+                        <span className="text-sm text-muted-foreground">Streak</span>
+                      </div>
+                      <p className="text-2xl font-heading">{userEntry?.streak_weeks || 0}w</p>
+                    </div>
+                  </div>
+
+                  {/* Two Column Layout */}
+                  <div className="grid lg:grid-cols-3 gap-6">
+                    {/* Left: Onboarding Progress + Quick Actions */}
+                    <div className="lg:col-span-2 space-y-6">
+                      <OnboardingProgress />
+                      
+                      {/* Quick Actions */}
+                      <div className="rounded-xl border border-border bg-card p-6">
+                        <h3 className="font-heading mb-4">Quick Actions</h3>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                            <Link to="/ai-readiness">
+                              <Sparkles size={16} className="text-accent mr-2" />
+                              <div className="text-left">
+                                <p className="font-medium">AI Readiness Assessment</p>
+                                <p className="text-xs text-muted-foreground">Check your AI maturity</p>
+                              </div>
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                            <Link to="/hub/downloads">
+                              <Library size={16} className="text-accent mr-2" />
+                              <div className="text-left">
+                                <p className="font-medium">Downloads Library</p>
+                                <p className="text-xs text-muted-foreground">Access all your resources</p>
+                              </div>
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                            <Link to="/insights">
+                              <BookOpen size={16} className="text-accent mr-2" />
+                              <div className="text-left">
+                                <p className="font-medium">Latest Insights</p>
+                                <p className="text-xs text-muted-foreground">Read industry news</p>
+                              </div>
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                            <Link to="/hub/coach">
+                              <MessageCircle size={16} className="text-accent mr-2" />
+                              <div className="text-left">
+                                <p className="font-medium">AI Coach</p>
+                                <p className="text-xs text-muted-foreground">Get expert AI guidance</p>
+                              </div>
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Account + Help */}
+                    <div className="space-y-6">
+                      {/* Account Card */}
+                      <div className="rounded-xl border border-border bg-card p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="p-2 rounded-full bg-accent/10">
+                            <User size={20} className="text-accent" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">
+                              {user?.user_metadata?.full_name || "Member"}
+                            </p>
+                            <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                          </div>
+                        </div>
+                        <div className="pt-4 border-t border-border">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="w-full justify-start text-muted-foreground hover:text-foreground"
+                            onClick={restartOnboarding}
+                          >
+                            <RotateCcw size={14} />
+                            Restart Site Tour
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Help */}
+                      <div className="rounded-xl border border-accent/20 bg-accent/5 p-6">
+                        <h3 className="font-heading mb-2">Need Help?</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Questions about your products or downloads?
+                        </p>
+                        <Button variant="outline" size="sm" className="w-full" asChild>
+                          <a href="mailto:hello@wellnessgenius.io">Contact Support</a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* PRODUCTS TAB */}
               <TabsContent value="products">
                 <div className="grid lg:grid-cols-3 gap-8">
-                  {/* Main Content - Purchases */}
                   <div className="lg:col-span-2 space-y-8">
                     {/* Purchased Products */}
                     <section>
@@ -396,7 +530,7 @@ const MemberHub = () => {
                           <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                           <h3 className="text-lg font-heading mb-2">No purchases yet</h3>
                           <p className="text-muted-foreground mb-4">
-                            Your purchased products will appear here for easy access.
+                            Your purchased products will appear here.
                           </p>
                           <Button variant="accent" asChild>
                             <Link to="/products">Browse Products</Link>
@@ -447,10 +581,8 @@ const MemberHub = () => {
                         </div>
 
                         <div className="space-y-4">
-                          {recentDownloads.map((download) => {
-                            const isFree =
-                              download.product_type === "free" || download.download_type === "free";
-
+                          {recentDownloads.slice(0, 5).map((download) => {
+                            const isFree = download.product_type === "free" || download.download_type === "free";
                             return (
                               <div
                                 key={download.id}
@@ -460,17 +592,11 @@ const MemberHub = () => {
                                   {PRODUCT_ICONS[download.product_id] || <FileText size={20} />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="font-heading text-base mb-1">
-                                    {download.product_name}
-                                  </h3>
+                                  <h3 className="font-heading text-base mb-1">{download.product_name}</h3>
                                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                    <span
-                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
-                                        isFree
-                                          ? "bg-green-500/10 text-green-600"
-                                          : "bg-accent/10 text-accent"
-                                      }`}
-                                    >
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
+                                      isFree ? "bg-green-500/10 text-green-600" : "bg-accent/10 text-accent"
+                                    }`}>
                                       {isFree ? "Free" : "Paid"}
                                     </span>
                                     <span className="flex items-center gap-1">
@@ -532,79 +658,18 @@ const MemberHub = () => {
                                   </span>
                                 </div>
                               </div>
-                              <Button variant="outline" size="sm">
-                                View Report
-                              </Button>
+                              <Button variant="outline" size="sm">View Report</Button>
                             </div>
                           ))}
                         </div>
                       )}
                     </section>
                   </div>
+
                   {/* Sidebar */}
                   <div className="space-y-6">
-                    {/* Onboarding Progress */}
-                    <OnboardingProgress />
-                    
-                    {/* Download History */}
                     <DownloadHistory />
                     
-                    {/* Account Card */}
-                    <div className="rounded-xl border border-border bg-card p-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 rounded-full bg-accent/10">
-                          <User size={20} className="text-accent" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">
-                            {user?.user_metadata?.full_name || "Member"}
-                          </p>
-                          <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
-                        </div>
-                      </div>
-                      <div className="pt-4 border-t border-border space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Products owned</span>
-                          <span className="font-medium">{purchases.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Saved outputs</span>
-                          <span className="font-medium">{savedOutputs.length}</span>
-                        </div>
-                      </div>
-                      <div className="pt-4 border-t border-border mt-4">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="w-full justify-start text-muted-foreground hover:text-foreground"
-                          onClick={restartOnboarding}
-                        >
-                          <RotateCcw size={14} />
-                          Restart Site Tour
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* AI Coach CTA */}
-                    <div className="rounded-xl border-2 border-accent bg-gradient-to-br from-accent/10 to-accent/5 p-6">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 rounded-full bg-accent/20">
-                          <MessageCircle size={20} className="text-accent" />
-                        </div>
-                        <h3 className="font-heading">AI Coach</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Get expert AI guidance for building apps and strategic decisions.
-                      </p>
-                      <Button variant="accent" size="sm" className="w-full" asChild>
-                        <Link to="/hub/coach">
-                          <Sparkles size={14} />
-                          Open AI Coach
-                        </Link>
-                      </Button>
-                    </div>
-
-                    {/* Quick Actions */}
                     <div className="rounded-xl border border-border bg-card p-6">
                       <h3 className="font-heading mb-4">Quick Actions</h3>
                       <div className="space-y-2">
@@ -615,46 +680,56 @@ const MemberHub = () => {
                           </Link>
                         </Button>
                         <Button variant="outline" className="w-full justify-start" asChild>
-                          <Link to="/ai-readiness">
-                            <Sparkles size={16} />
-                            Take AI Readiness Assessment
-                          </Link>
-                        </Button>
-                        <Button variant="outline" className="w-full justify-start" asChild>
                           <Link to="/products">
                             <Package size={16} />
                             Browse All Products
                           </Link>
                         </Button>
-                        <Button variant="outline" className="w-full justify-start" asChild>
-                          <Link to="/insights">
-                            <BookOpen size={16} />
-                            Read Latest Insights
-                          </Link>
-                        </Button>
                       </div>
-                    </div>
-
-                    {/* Help */}
-                    <div className="rounded-xl border border-accent/20 bg-accent/5 p-6">
-                      <h3 className="font-heading mb-2">Need Help?</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Questions about your products or downloads? We're here to help.
-                      </p>
-                      <Button variant="outline" size="sm" className="w-full" asChild>
-                        <a href="mailto:hello@wellnessgenius.io">Contact Support</a>
-                      </Button>
                     </div>
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="insights">
-                <SavedInsights />
+              {/* COMMUNITY TAB */}
+              <TabsContent value="community">
+                <div className="grid lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2">
+                    <GenieLeaderboard />
+                  </div>
+                  <div className="space-y-6">
+                    <div className="rounded-xl border border-border bg-card p-6">
+                      <h3 className="font-heading mb-4">Community Highlights</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Opt in to the leaderboard to see how you compare with other operators in your segment.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </TabsContent>
 
-              <TabsContent value="prompts">
-                <PromptLibrary />
+              {/* RESOURCES TAB */}
+              <TabsContent value="resources">
+                <div className="grid lg:grid-cols-2 gap-8">
+                  <div>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 rounded-lg bg-accent/10">
+                        <Terminal size={20} className="text-accent" />
+                      </div>
+                      <h2 className="text-xl font-heading">Prompt Library</h2>
+                    </div>
+                    <PromptLibrary />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 rounded-lg bg-purple-500/10">
+                        <Bookmark size={20} className="text-purple-500" />
+                      </div>
+                      <h2 className="text-xl font-heading">Saved Insights</h2>
+                    </div>
+                    <SavedInsights />
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
           )}
