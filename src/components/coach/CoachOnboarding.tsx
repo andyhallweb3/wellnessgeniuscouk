@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, ArrowLeft, Brain, Target, AlertTriangle, Sparkles, Building2, Users, FileText, Upload } from "lucide-react";
+import { ArrowRight, ArrowLeft, Brain, Target, AlertTriangle, Sparkles, Building2, Users, FileText, Upload, HelpCircle } from "lucide-react";
 import DocumentLibrary from "./DocumentLibrary";
+import { GuidedOnboardingTooltip, OnboardingProgressFloat } from "./GuidedOnboardingTooltip";
+import { useGuidedOnboarding, COACH_GUIDED_STEPS } from "@/hooks/useGuidedOnboarding";
 
 interface CoachOnboardingProps {
   onComplete: (profile: {
@@ -48,6 +50,26 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
   });
 
   const totalSteps = 7;
+
+  const {
+    guidedStep,
+    showGuidedTour,
+    currentGuidedStepData,
+    totalGuidedSteps,
+    nextGuidedStep,
+    skipTour,
+    completeTour,
+    syncWithFormStep,
+    restartTour,
+    setShowGuidedTour,
+  } = useGuidedOnboarding();
+
+  // Sync guided tour with form steps
+  useEffect(() => {
+    syncWithFormStep(step);
+  }, [step, syncWithFormStep]);
+
+  const STEP_LABELS = ["Intro", "Acknowledge", "Business", "Goals", "Tech", "Docs", "Ready"];
 
   const handleNext = () => {
     if (step < totalSteps) {
@@ -85,18 +107,56 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
   };
 
   return (
-    <div className="max-w-xl mx-auto">
-      {/* Progress */}
-      <div className="flex gap-2 mb-8">
-        {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
-          <div
-            key={s}
-            className={`h-1 flex-1 rounded-full transition-colors ${
-              s <= step ? "bg-accent" : "bg-border"
-            }`}
-          />
-        ))}
+    <div className="max-w-xl mx-auto relative">
+      {/* Floating Progress Indicator */}
+      <OnboardingProgressFloat
+        currentStep={step}
+        totalSteps={totalSteps}
+        stepLabels={STEP_LABELS}
+      />
+
+      {/* Progress Bar */}
+      <div className="flex items-center gap-2 mb-8">
+        <div className="flex gap-2 flex-1">
+          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
+            <div
+              key={s}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                s <= step ? "bg-accent" : "bg-border"
+              }`}
+            />
+          ))}
+        </div>
+        <button
+          onClick={() => setShowGuidedTour(true)}
+          className="text-muted-foreground hover:text-accent transition-colors p-1"
+          title="Restart guided tour"
+        >
+          <HelpCircle size={18} />
+        </button>
       </div>
+
+      {/* Guided Tour Tooltip - Welcome */}
+      {showGuidedTour && step === 1 && guidedStep === 0 && (
+        <div className="mb-4">
+          <GuidedOnboardingTooltip
+            step={currentGuidedStepData}
+            currentStep={guidedStep + 1}
+            totalSteps={totalGuidedSteps}
+            onNext={nextGuidedStep}
+            onSkip={skipTour}
+            onComplete={completeTour}
+            isLast={guidedStep === totalGuidedSteps - 1}
+          >
+            <div className="bg-accent/5 border border-accent/20 rounded-lg p-4 text-center">
+              <p className="text-sm text-accent font-medium">👋 Welcome to the guided setup</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Follow along for tips on each step
+              </p>
+            </div>
+          </GuidedOnboardingTooltip>
+        </div>
+      )}
 
       {/* Step 1: Positioning */}
       {step === 1 && (
@@ -220,13 +280,32 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
           </div>
 
           <div className="space-y-4">
-            <div className="space-y-2">
+            {/* Business Type with Guided Tooltip */}
+            <div className="space-y-2 relative">
               <Label>What type of wellness business do you run?</Label>
+              {showGuidedTour && guidedStep === 1 && !profile.business_type && (
+                <div className="absolute right-0 top-0">
+                  <GuidedOnboardingTooltip
+                    step={COACH_GUIDED_STEPS[1]}
+                    currentStep={2}
+                    totalSteps={totalGuidedSteps}
+                    onNext={nextGuidedStep}
+                    onSkip={skipTour}
+                    onComplete={completeTour}
+                    isLast={false}
+                  >
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                  </GuidedOnboardingTooltip>
+                </div>
+              )}
               <Select
                 value={profile.business_type}
-                onValueChange={(v) => setProfile({ ...profile, business_type: v })}
+                onValueChange={(v) => {
+                  setProfile({ ...profile, business_type: v });
+                  if (showGuidedTour && guidedStep === 1) nextGuidedStep();
+                }}
               >
-                <SelectTrigger>
+                <SelectTrigger className={showGuidedTour && guidedStep === 1 ? "ring-2 ring-accent ring-offset-2" : ""}>
                   <SelectValue placeholder="Select your business type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -252,11 +331,30 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
               />
             </div>
 
-            <div className="space-y-2">
+            {/* Role with Guided Tooltip */}
+            <div className="space-y-2 relative">
               <Label>What is your role?</Label>
+              {showGuidedTour && guidedStep === 2 && !profile.role && (
+                <div className="absolute right-0 top-0">
+                  <GuidedOnboardingTooltip
+                    step={COACH_GUIDED_STEPS[2]}
+                    currentStep={3}
+                    totalSteps={totalGuidedSteps}
+                    onNext={nextGuidedStep}
+                    onSkip={skipTour}
+                    onComplete={completeTour}
+                    isLast={false}
+                  >
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                  </GuidedOnboardingTooltip>
+                </div>
+              )}
               <Select
                 value={profile.role}
-                onValueChange={(v) => setProfile({ ...profile, role: v })}
+                onValueChange={(v) => {
+                  setProfile({ ...profile, role: v });
+                  if (showGuidedTour && guidedStep === 2) nextGuidedStep();
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select your role" />
@@ -339,13 +437,32 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
           </div>
 
           <div className="space-y-4">
-            <div className="space-y-2">
+            {/* Primary Goal with Guided Tooltip */}
+            <div className="space-y-2 relative">
               <Label>Primary focus right now</Label>
+              {showGuidedTour && guidedStep === 3 && !profile.primary_goal && (
+                <div className="absolute right-0 top-0">
+                  <GuidedOnboardingTooltip
+                    step={COACH_GUIDED_STEPS[3]}
+                    currentStep={4}
+                    totalSteps={totalGuidedSteps}
+                    onNext={nextGuidedStep}
+                    onSkip={skipTour}
+                    onComplete={completeTour}
+                    isLast={false}
+                  >
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                  </GuidedOnboardingTooltip>
+                </div>
+              )}
               <Select
                 value={profile.primary_goal}
-                onValueChange={(v) => setProfile({ ...profile, primary_goal: v })}
+                onValueChange={(v) => {
+                  setProfile({ ...profile, primary_goal: v });
+                  if (showGuidedTour && guidedStep === 3) nextGuidedStep();
+                }}
               >
-                <SelectTrigger>
+                <SelectTrigger className={showGuidedTour && guidedStep === 3 ? "ring-2 ring-accent ring-offset-2" : ""}>
                   <SelectValue placeholder="What is your main priority?" />
                 </SelectTrigger>
                 <SelectContent>
@@ -398,13 +515,32 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
           </div>
 
           <div className="space-y-4">
-            <div className="space-y-2">
+            {/* AI Experience with Guided Tooltip */}
+            <div className="space-y-2 relative">
               <Label>How would you describe your AI experience?</Label>
+              {showGuidedTour && guidedStep === 4 && !profile.ai_experience && (
+                <div className="absolute right-0 top-0">
+                  <GuidedOnboardingTooltip
+                    step={COACH_GUIDED_STEPS[4]}
+                    currentStep={5}
+                    totalSteps={totalGuidedSteps}
+                    onNext={nextGuidedStep}
+                    onSkip={skipTour}
+                    onComplete={completeTour}
+                    isLast={false}
+                  >
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                  </GuidedOnboardingTooltip>
+                </div>
+              )}
               <Select
                 value={profile.ai_experience}
-                onValueChange={(v) => setProfile({ ...profile, ai_experience: v })}
+                onValueChange={(v) => {
+                  setProfile({ ...profile, ai_experience: v });
+                  if (showGuidedTour && guidedStep === 4) nextGuidedStep();
+                }}
               >
-                <SelectTrigger>
+                <SelectTrigger className={showGuidedTour && guidedStep === 4 ? "ring-2 ring-accent ring-offset-2" : ""}>
                   <SelectValue placeholder="Select your AI familiarity" />
                 </SelectTrigger>
                 <SelectContent>
@@ -462,12 +598,34 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
             </p>
           </div>
 
-          <div className="bg-secondary/50 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground text-center">
-              <Upload size={12} className="inline mr-1" />
-              Optional but recommended: business plans, financials, member data exports, competitor research
-            </p>
-          </div>
+          {/* Documents Guided Tooltip */}
+          {showGuidedTour && guidedStep === 5 && (
+            <GuidedOnboardingTooltip
+              step={COACH_GUIDED_STEPS[5]}
+              currentStep={6}
+              totalSteps={totalGuidedSteps}
+              onNext={nextGuidedStep}
+              onSkip={skipTour}
+              onComplete={completeTour}
+              isLast={false}
+            >
+              <div className="bg-secondary/50 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground text-center">
+                  <Upload size={12} className="inline mr-1" />
+                  Optional but recommended: business plans, financials, member data exports, competitor research
+                </p>
+              </div>
+            </GuidedOnboardingTooltip>
+          )}
+
+          {!showGuidedTour || guidedStep !== 5 ? (
+            <div className="bg-secondary/50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground text-center">
+                <Upload size={12} className="inline mr-1" />
+                Optional but recommended: business plans, financials, member data exports, competitor research
+              </p>
+            </div>
+          ) : null}
 
           <div className="border border-border rounded-xl overflow-hidden max-h-[320px]">
             <DocumentLibrary />
@@ -536,14 +694,36 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
             ))}
           </div>
 
-          <div className="bg-accent/10 rounded-lg p-4 text-center space-y-2">
-            <p className="text-sm text-accent font-medium">
-              ✅ Your profile is saved
-            </p>
-            <p className="text-xs text-muted-foreground">
-              All your context (business info, goals, documents) will be used to personalise every response. You can update your profile anytime from the settings.
-            </p>
-          </div>
+          {/* Completion Guided Tooltip */}
+          {showGuidedTour && guidedStep === 6 ? (
+            <GuidedOnboardingTooltip
+              step={COACH_GUIDED_STEPS[6]}
+              currentStep={7}
+              totalSteps={totalGuidedSteps}
+              onNext={completeTour}
+              onSkip={skipTour}
+              onComplete={completeTour}
+              isLast={true}
+            >
+              <div className="bg-accent/10 rounded-lg p-4 text-center space-y-2">
+                <p className="text-sm text-accent font-medium">
+                  ✅ Your profile is saved
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  All your context (business info, goals, documents) will be used to personalise every response. You can update your profile anytime from the settings.
+                </p>
+              </div>
+            </GuidedOnboardingTooltip>
+          ) : (
+            <div className="bg-accent/10 rounded-lg p-4 text-center space-y-2">
+              <p className="text-sm text-accent font-medium">
+                ✅ Your profile is saved
+              </p>
+              <p className="text-xs text-muted-foreground">
+                All your context (business info, goals, documents) will be used to personalise every response. You can update your profile anytime from the settings.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
