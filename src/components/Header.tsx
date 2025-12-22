@@ -22,17 +22,18 @@ const Header = () => {
   const mainNavLinks = [
     { href: "/genie", label: "AI Advisor", isRoute: true },
     { href: "/ai-readiness", label: "AI Assessment", isRoute: true },
-    { href: "/insights", label: "Insights", isRoute: true },
+    { href: "/news", label: "Industry News", isRoute: true },
   ];
 
   const productLinks = [
     { href: "/products", label: "All Products" },
     { href: "/bundles", label: "Bundles & Deals" },
+    { href: "/services", label: "Consulting" },
+    { href: "/services#software", label: "Software Development" },
   ];
 
   const aboutLinks = [
-    { href: "/services", label: "Consulting Services", isRoute: true },
-    { href: "/news", label: "Latest News", isRoute: true },
+    { href: "/news", label: "Industry News", isRoute: true },
     { href: "/speaker-kit", label: "Speaking", isRoute: true },
   ];
 
@@ -55,7 +56,7 @@ const Header = () => {
             {/* Products Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent/5">
-                Products
+                Products & Services
                 <ChevronDown size={14} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="bg-popover border border-border shadow-lg z-50">
@@ -172,8 +173,8 @@ const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden py-6 border-t border-border/30 animate-fade-in">
             <nav className="flex flex-col gap-1">
-              {/* Products Section */}
-              <p className="text-xs font-medium text-muted-foreground px-2 pt-2 pb-1">Products</p>
+              {/* Products & Services Section */}
+              <p className="text-xs font-medium text-muted-foreground px-2 pt-2 pb-1">Products & Services</p>
               {productLinks.map((link) => (
                 <Link
                   key={link.href}
