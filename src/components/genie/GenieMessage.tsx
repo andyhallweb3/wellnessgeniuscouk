@@ -3,6 +3,7 @@ import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import TrustModeIndicator, { ConfidenceLevel, DataSensitivity } from "./TrustModeIndicator";
 import ExplainabilityCard from "./ExplainabilityCard";
 import GenieScoreBadge from "./GenieScoreBadge";
+import StreakBadge, { StreakData } from "./StreakBadge";
 
 export interface SessionSignals {
   totalSessions: number;
@@ -11,6 +12,7 @@ export interface SessionSignals {
   hasVoiceInteraction: boolean;
   averageSessionLength: number;
   lastSessionDate: string | null;
+  streak?: StreakData;
 }
 
 export interface GenieScore {
@@ -142,7 +144,7 @@ const GenieMessage = ({
         {showTrustIndicators && (
           <div className="space-y-2">
             {isFullMode ? (
-              // Full mode - show detailed trust information including Genie Score
+              // Full mode - show detailed trust information including Genie Score and Streak
               <>
                 <div className="flex items-center gap-3 flex-wrap">
                   <TrustModeIndicator
@@ -151,8 +153,18 @@ const GenieMessage = ({
                     isInference={metadata.isInference}
                     compact={false}
                   />
+                  {metadata.sessionSignals?.streak && (
+                    <StreakBadge streak={metadata.sessionSignals.streak} compact />
+                  )}
+                </div>
+                
+                {/* Genie Score and Streak cards side by side */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {metadata.genieScore && (
                     <GenieScoreBadge score={metadata.genieScore} />
+                  )}
+                  {metadata.sessionSignals?.streak && metadata.sessionSignals.streak.currentStreak > 0 && (
+                    <StreakBadge streak={metadata.sessionSignals.streak} />
                   )}
                 </div>
                 
@@ -171,6 +183,9 @@ const GenieMessage = ({
                     {metadata.sessionSignals.activeWeeks}/4 active weeks • 
                     {metadata.sessionSignals.modesUsed.length} modes used
                     {metadata.sessionSignals.hasVoiceInteraction && " • Voice enabled"}
+                    {metadata.sessionSignals.streak && metadata.sessionSignals.streak.currentStreak > 0 && (
+                      <> • {metadata.sessionSignals.streak.currentStreak}w streak</>
+                    )}
                   </div>
                 )}
                 
@@ -185,7 +200,7 @@ const GenieMessage = ({
                 )}
               </>
             ) : (
-              // Compact mode - minimal trust badge with score
+              // Compact mode - minimal trust badge with score and streak
               <div className="flex items-center gap-2 flex-wrap">
                 <TrustModeIndicator
                   confidenceLevel={metadata.confidenceLevel}
@@ -195,6 +210,9 @@ const GenieMessage = ({
                 />
                 {metadata.genieScore && (
                   <GenieScoreBadge score={metadata.genieScore} compact />
+                )}
+                {metadata.sessionSignals?.streak && metadata.sessionSignals.streak.currentStreak > 0 && (
+                  <StreakBadge streak={metadata.sessionSignals.streak} compact />
                 )}
                 <span className="text-xs text-muted-foreground">
                   AI supports decisions; it doesn't make them for you.
