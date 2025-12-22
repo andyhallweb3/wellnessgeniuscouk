@@ -38,6 +38,7 @@ import ProfileEditor from "@/components/coach/ProfileEditor";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import DocumentLibrary from "@/components/coach/DocumentLibrary";
 import ProfileSummary from "@/components/coach/ProfileSummary";
+import PersonalizedQuickStart from "@/components/coach/PersonalizedQuickStart";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 
@@ -604,6 +605,17 @@ const AICoach = () => {
                 documentCount={documents.length}
                 onEditProfile={() => setShowProfileEditor(true)}
                 compact
+              />
+            </div>
+          )}
+
+          {/* Personalized Quick Start (when no messages) */}
+          {messages.length === 0 && profile && (
+            <div className="mb-4 shrink-0">
+              <PersonalizedQuickStart
+                profile={profile}
+                onSelectPrompt={setInput}
+                onSelectMode={setSelectedMode}
               />
             </div>
           )}
