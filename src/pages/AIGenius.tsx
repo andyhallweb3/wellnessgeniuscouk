@@ -101,6 +101,7 @@ const AIGenius = () => {
       body: JSON.stringify({ 
         messages: userMessages,
         mode,
+        _hp_field: "", // Honeypot field - must be empty for legitimate requests
       }),
     });
 

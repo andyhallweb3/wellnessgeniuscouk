@@ -8,6 +8,32 @@ export interface PromptGuardResult {
   riskScore: number; // 0-100
   detectedPatterns: string[];
   sanitizedContent?: string;
+  honeypotTriggered?: boolean;
+}
+
+/**
+ * Validates honeypot field - should always be empty for legitimate requests
+ * Bots typically fill all fields, so a filled honeypot indicates automation
+ */
+export function validateHoneypot(honeypotValue: string | undefined | null): {
+  isBot: boolean;
+  reason?: string;
+} {
+  // If honeypot is not provided at all, that's suspicious but not definitive
+  // Real clients should send an empty string
+  if (honeypotValue === undefined || honeypotValue === null) {
+    return { isBot: false };
+  }
+
+  // If honeypot has any content, it's definitely a bot
+  if (honeypotValue.trim().length > 0) {
+    return {
+      isBot: true,
+      reason: `honeypot_filled:${honeypotValue.substring(0, 50)}`,
+    };
+  }
+
+  return { isBot: false };
 }
 
 // Patterns that indicate potential prompt injection attempts
@@ -169,12 +195,14 @@ export function sanitizePrompt(content: string): string | undefined {
  * Log security event for monitoring
  */
 export function logSecurityEvent(
-  eventType: "blocked" | "warning" | "suspicious",
+  eventType: "blocked" | "warning" | "suspicious" | "honeypot",
   details: {
-    riskScore: number;
-    patterns: string[];
+    riskScore?: number;
+    patterns?: string[];
     userId?: string;
     mode?: string;
+    honeypotValue?: string;
+    reason?: string;
   }
 ): void {
   console.log(`[PROMPT-GUARD] ${eventType.toUpperCase()}:`, JSON.stringify({

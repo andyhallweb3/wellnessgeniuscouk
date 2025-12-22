@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { analyzeMessages, logSecurityEvent } from "../_shared/prompt-guard.ts";
+import { analyzeMessages, logSecurityEvent, validateHoneypot } from "../_shared/prompt-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,6 +32,8 @@ const RequestSchema = z.object({
   mode: z.enum(["general", "strategy", "retention", "monetisation", "risk", "planning"]).default("general"),
   userContext: UserContextSchema,
   documentContext: z.string().max(50000, "Document context must be less than 50,000 characters").optional(),
+  // Honeypot field - should always be empty for legitimate requests
+  _hp_field: z.string().optional(),
 });
 
 // C.L.E.A.R Framework system prompt
@@ -205,7 +207,21 @@ serve(async (req) => {
       );
     }
 
-    const { messages, mode, userContext, documentContext } = validationResult.data;
+    const { messages, mode, userContext, documentContext, _hp_field } = validationResult.data;
+
+    // Honeypot validation - detect bots that fill hidden fields
+    const honeypotResult = validateHoneypot(_hp_field);
+    if (honeypotResult.isBot) {
+      logSecurityEvent("honeypot", {
+        reason: honeypotResult.reason,
+        mode,
+      });
+      // Return success to not alert the bot, but don't process
+      return new Response(
+        JSON.stringify({ error: "Request could not be processed" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Prompt injection detection
     const promptGuardResult = analyzeMessages(messages);
