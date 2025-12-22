@@ -2,6 +2,29 @@ import { Brain } from "lucide-react";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import TrustModeIndicator, { ConfidenceLevel, DataSensitivity } from "./TrustModeIndicator";
 import ExplainabilityCard from "./ExplainabilityCard";
+import GenieScoreBadge from "./GenieScoreBadge";
+
+export interface SessionSignals {
+  totalSessions: number;
+  activeWeeks: number;
+  modesUsed: string[];
+  hasVoiceInteraction: boolean;
+  averageSessionLength: number;
+  lastSessionDate: string | null;
+}
+
+export interface GenieScore {
+  overall: number;
+  consistency: number;
+  engagementDepth: number;
+  dataHygiene: number;
+  breakdown: {
+    activeWeeks: number;
+    uniqueModes: number;
+    voiceBonus: boolean;
+    profileCompleteness: number;
+  };
+}
 
 export interface TrustMetadata {
   confidenceLevel: ConfidenceLevel;
@@ -14,6 +37,8 @@ export interface TrustMetadata {
     hasMetrics: boolean;
     memoryCompleteness: number;
   };
+  sessionSignals?: SessionSignals;
+  genieScore?: GenieScore;
   explanation: string;
   factors: string[];
 }
@@ -58,30 +83,35 @@ const analyzeMessageFallback = (content: string, mode?: string): TrustMetadata =
 // Generate how-to-change message based on data signals
 const getHowToChange = (trustMetadata: TrustMetadata): string => {
   const signals = trustMetadata.dataSignals;
-  
-  if (!signals) {
-    return "Provide more context or update your profile for better insights.";
-  }
+  const sessionSignals = trustMetadata.sessionSignals;
   
   const suggestions: string[] = [];
   
-  if (!signals.hasBusinessProfile || signals.memoryCompleteness < 50) {
+  if (!signals?.hasBusinessProfile || (signals.memoryCompleteness || 0) < 50) {
     suggestions.push("Complete your business profile");
   }
   
-  if (!signals.hasDocuments) {
+  if (!signals?.hasDocuments) {
     suggestions.push("Upload relevant documents");
   }
   
-  if (!signals.hasMetrics) {
+  if (!signals?.hasMetrics) {
     suggestions.push("Add key metrics you're tracking");
   }
   
-  if (suggestions.length === 0) {
-    return "Your profile is well configured. Ask follow-up questions for deeper analysis.";
+  if (sessionSignals && sessionSignals.activeWeeks < 3) {
+    suggestions.push("Use the Genie consistently each week");
   }
   
-  return suggestions.join(", ") + " to improve insight accuracy.";
+  if (sessionSignals && sessionSignals.modesUsed.length < 3) {
+    suggestions.push("Try different modes like Weekly Review or Decision Support");
+  }
+  
+  if (suggestions.length === 0) {
+    return "Your profile and usage are well configured. Ask follow-up questions for deeper analysis.";
+  }
+  
+  return suggestions.slice(0, 3).join(", ") + " to improve insight accuracy.";
 };
 
 const GenieMessage = ({ 
@@ -112,14 +142,20 @@ const GenieMessage = ({
         {showTrustIndicators && (
           <div className="space-y-2">
             {isFullMode ? (
-              // Full mode - show detailed trust information
+              // Full mode - show detailed trust information including Genie Score
               <>
-                <TrustModeIndicator
-                  confidenceLevel={metadata.confidenceLevel}
-                  dataSensitivity={metadata.dataSensitivity}
-                  isInference={metadata.isInference}
-                  compact={false}
-                />
+                <div className="flex items-center gap-3 flex-wrap">
+                  <TrustModeIndicator
+                    confidenceLevel={metadata.confidenceLevel}
+                    dataSensitivity={metadata.dataSensitivity}
+                    isInference={metadata.isInference}
+                    compact={false}
+                  />
+                  {metadata.genieScore && (
+                    <GenieScoreBadge score={metadata.genieScore} />
+                  )}
+                </div>
+                
                 <ExplainabilityCard
                   title="Why am I seeing this?"
                   explanation={metadata.explanation}
@@ -127,7 +163,18 @@ const GenieMessage = ({
                   howToChange={getHowToChange(metadata)}
                 />
                 
-                {/* Data signals breakdown in full mode */}
+                {/* Session signals breakdown in full mode */}
+                {metadata.sessionSignals && metadata.sessionSignals.totalSessions > 0 && (
+                  <div className="text-xs text-muted-foreground px-3 py-2 rounded-lg bg-secondary/30 border border-border/30">
+                    <span className="font-medium">Session history: </span>
+                    {metadata.sessionSignals.totalSessions} sessions • 
+                    {metadata.sessionSignals.activeWeeks}/4 active weeks • 
+                    {metadata.sessionSignals.modesUsed.length} modes used
+                    {metadata.sessionSignals.hasVoiceInteraction && " • Voice enabled"}
+                  </div>
+                )}
+                
+                {/* Data signals breakdown */}
                 {metadata.dataSignals && (
                   <div className="text-xs text-muted-foreground px-3 py-2 rounded-lg bg-secondary/30 border border-border/30">
                     <span className="font-medium">Data signals: </span>
@@ -138,14 +185,17 @@ const GenieMessage = ({
                 )}
               </>
             ) : (
-              // Compact mode - minimal trust badge
-              <div className="flex items-center gap-2">
+              // Compact mode - minimal trust badge with score
+              <div className="flex items-center gap-2 flex-wrap">
                 <TrustModeIndicator
                   confidenceLevel={metadata.confidenceLevel}
                   dataSensitivity={metadata.dataSensitivity}
                   isInference={metadata.isInference}
                   compact
                 />
+                {metadata.genieScore && (
+                  <GenieScoreBadge score={metadata.genieScore} compact />
+                )}
                 <span className="text-xs text-muted-foreground">
                   AI supports decisions; it doesn't make them for you.
                 </span>
