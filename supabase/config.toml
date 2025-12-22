@@ -149,3 +149,6 @@ verify_jwt = false
 
 [functions.genie-voice-brief]
 verify_jwt = false
+
+[functions.send-weekly-digest]
+verify_jwt = false
