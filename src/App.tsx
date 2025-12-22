@@ -69,6 +69,7 @@ const App = () => (
             <Route path="/ai-genius" element={<AIGenius />} />
             <Route path="/genie" element={<Genie />} />
             <Route path="/advisor" element={<Navigate to="/genie" replace />} />
+            <Route path="/ai-readiness" element={<AIReadinessLanding />} />
             <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
             <Route path="/ai-readiness/full/:id" element={<AIReadinessAssessmentPaid />} />
             <Route path="/ai-readiness/results/:id" element={<AIReadinessResults />} />
