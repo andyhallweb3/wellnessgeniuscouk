@@ -53,7 +53,8 @@ import {
   Tablet,
   Smartphone,
   Info,
-  Twitter
+  Twitter,
+  Linkedin
 } from "lucide-react";
 import {
   Dialog,
@@ -1273,6 +1274,52 @@ const NewsletterAdmin = () => {
     } finally {
       setPostingToTwitter(false);
     }
+  };
+
+  const generateLinkedInPost = () => {
+    if (!articles || articles.length === 0) {
+      return `📰 New edition of Wellness Genius Weekly is out!
+
+AI-powered insights for wellness, fitness and hospitality operators.
+
+This week's highlights:
+• Latest AI trends shaping the industry
+• Practical automation strategies
+• Real operator case studies
+
+📬 Subscribe for free: wellnessgenius.co
+
+#AI #WellnessIndustry #FitnessBusiness #HealthTech #Automation #DigitalTransformation #WellnessGenius`;
+    }
+
+    const topArticle = articles[0];
+    const otherArticles = articles.slice(1, 4);
+    
+    let post = `📰 This week in AI + Wellness:
+
+🔥 ${topArticle.title}`;
+
+    if (otherArticles.length > 0) {
+      post += `\n\nAlso in this edition:`;
+      otherArticles.forEach(article => {
+        post += `\n• ${article.title.length > 60 ? article.title.substring(0, 57) + "..." : article.title}`;
+      });
+    }
+
+    post += `\n\n📬 Get the full breakdown: wellnessgenius.co
+
+#AI #WellnessIndustry #FitnessBusiness #HealthTech #Automation #DigitalTransformation #WellnessGenius`;
+
+    return post;
+  };
+
+  const copyLinkedInPost = () => {
+    const post = generateLinkedInPost();
+    navigator.clipboard.writeText(post);
+    toast({
+      title: "LinkedIn Post Copied",
+      description: "Paste into LinkedIn to share your newsletter.",
+    });
   };
 
   const resumeSend = async (sendId: string) => {
@@ -2673,6 +2720,15 @@ const NewsletterAdmin = () => {
                       >
                         <Twitter size={14} />
                         Share on X
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-1 text-xs h-7"
+                        onClick={copyLinkedInPost}
+                      >
+                        <Linkedin size={14} />
+                        Copy for LinkedIn
                       </Button>
                     </div>
                   </div>
