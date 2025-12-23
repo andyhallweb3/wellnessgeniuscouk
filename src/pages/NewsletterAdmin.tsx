@@ -52,7 +52,8 @@ import {
   Monitor,
   Tablet,
   Smartphone,
-  Info
+  Info,
+  Twitter
 } from "lucide-react";
 import {
   Dialog,
@@ -212,6 +213,11 @@ const NewsletterAdmin = () => {
   
   // Preview width mode: 'desktop' | 'tablet' | 'mobile'
   const [previewWidth, setPreviewWidth] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+
+  // Twitter posting state
+  const [postingToTwitter, setPostingToTwitter] = useState(false);
+  const [showTwitterModal, setShowTwitterModal] = useState(false);
+  const [customTweet, setCustomTweet] = useState('');
 
   interface AdminUser {
     id: string;
@@ -1215,6 +1221,57 @@ const NewsletterAdmin = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateDefaultTweet = () => {
+    if (!articles || articles.length === 0) {
+      return "📰 New edition of Wellness Genius Weekly is out! AI insights for the wellness industry. Subscribe at wellnessgenius.co #AI #Wellness #Newsletter";
+    }
+    const topArticle = articles[0];
+    const title = topArticle.title || "industry insights";
+    const hashtags = "#AI #Wellness #FitnessTech";
+    const cta = "\n\n📬 Subscribe: wellnessgenius.co";
+    const fixedLength = hashtags.length + cta.length + 5;
+    const maxHeadline = 280 - fixedLength;
+    let headline = `🔥 ${title}`;
+    if (headline.length > maxHeadline) {
+      headline = headline.substring(0, maxHeadline - 3) + "...";
+    }
+    return `${headline}\n\n${hashtags}${cta}`;
+  };
+
+  const postToTwitter = async () => {
+    setPostingToTwitter(true);
+    try {
+      const tweetText = customTweet.trim() || generateDefaultTweet();
+      
+      const { data, error } = await supabase.functions.invoke('post-to-twitter', {
+        body: { 
+          articles: articles,
+          customTweet: tweetText
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Failed to post');
+
+      toast({
+        title: "Posted to Twitter!",
+        description: "Your newsletter summary has been shared on X.",
+      });
+      setShowTwitterModal(false);
+      setCustomTweet('');
+    } catch (error) {
+      console.error('Twitter post error:', error);
+      toast({
+        title: "Twitter Post Failed",
+        description: error instanceof Error ? error.message : "Failed to post to Twitter",
+        variant: "destructive",
+      });
+    } finally {
+      setPostingToTwitter(false);
     }
   };
 
@@ -2605,6 +2662,18 @@ const NewsletterAdmin = () => {
                         <FileDown size={14} />
                         Download
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-1 text-xs h-7"
+                        onClick={() => {
+                          setCustomTweet(generateDefaultTweet());
+                          setShowTwitterModal(true);
+                        }}
+                      >
+                        <Twitter size={14} />
+                        Share on X
+                      </Button>
                     </div>
                   </div>
                   <div className={`flex justify-center py-4 transition-all ${previewDarkMode ? 'bg-neutral-800' : 'bg-muted/50'}`}>
@@ -3695,6 +3764,66 @@ const NewsletterAdmin = () => {
               disabled={!blogPostForm.title || !blogPostForm.content}
             >
               {editingBlogPost ? 'Update' : 'Create'} Post
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Twitter Share Modal */}
+      <Dialog open={showTwitterModal} onOpenChange={setShowTwitterModal}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Twitter size={20} className="text-[#1DA1F2]" />
+              Share on X (Twitter)
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Post your newsletter summary to Twitter/X. Edit the text below or use the auto-generated summary.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="tweet-text">Tweet Text</Label>
+              <Textarea
+                id="tweet-text"
+                placeholder="Your tweet..."
+                value={customTweet}
+                onChange={(e) => setCustomTweet(e.target.value)}
+                className="bg-secondary border-border min-h-[120px]"
+                maxLength={280}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{customTweet.length}/280 characters</span>
+                <button 
+                  onClick={() => setCustomTweet(generateDefaultTweet())}
+                  className="text-accent hover:underline"
+                >
+                  Reset to default
+                </button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTwitterModal(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="accent" 
+              onClick={postToTwitter} 
+              disabled={postingToTwitter || customTweet.length === 0 || customTweet.length > 280}
+              className="gap-2"
+            >
+              {postingToTwitter ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Posting...
+                </>
+              ) : (
+                <>
+                  <Twitter size={16} />
+                  Post to X
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
