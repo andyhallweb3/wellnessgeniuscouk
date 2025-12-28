@@ -7,11 +7,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Lock, User, ArrowRight, ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -31,9 +32,16 @@ const signupSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
 
+const resetSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+type ResetFormData = z.infer<typeof resetSchema>;
+
 const Auth = () => {
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -52,6 +60,11 @@ const Auth = () => {
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
+  });
+
+  const resetForm = useForm<ResetFormData>({
+    resolver: zodResolver(resetSchema),
+    defaultValues: { email: "" },
   });
 
   const handleLogin = async (data: LoginFormData) => {
@@ -88,10 +101,25 @@ const Auth = () => {
     setIsSubmitting(false);
   };
 
+  const handlePasswordReset = async (data: ResetFormData) => {
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setResetSent(true);
+      toast.success("Check your email for the reset link");
+    }
+    setIsSubmitting(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{mode === "login" ? "Sign In" : "Create Account"} | Wellness Genius</title>
+        <title>{mode === "login" ? "Sign In" : mode === "signup" ? "Create Account" : "Reset Password"} | Wellness Genius</title>
         <meta name="description" content="Access your Wellness Genius account and downloads hub." />
       </Helmet>
       
@@ -103,39 +131,43 @@ const Auth = () => {
             {/* Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-heading mb-2">
-                {mode === "login" ? "Welcome Back" : "Create Your Account"}
+                {mode === "login" ? "Welcome Back" : mode === "signup" ? "Create Your Account" : "Reset Password"}
               </h1>
               <p className="text-muted-foreground">
                 {mode === "login" 
                   ? "Sign in to access your downloads and saved outputs."
-                  : "Join to access your purchased products and save your progress."
+                  : mode === "signup"
+                  ? "Join to access your purchased products and save your progress."
+                  : "Enter your email and we'll send you a reset link."
                 }
               </p>
             </div>
 
-            {/* Toggle */}
-            <div className="flex rounded-lg bg-secondary/50 p-1 mb-8">
-              <button
-                onClick={() => setMode("login")}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                  mode === "login" 
-                    ? "bg-background text-foreground shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => setMode("signup")}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                  mode === "signup" 
-                    ? "bg-background text-foreground shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Create Account
-              </button>
-            </div>
+            {/* Toggle - hide on reset mode */}
+            {mode !== "reset" && (
+              <div className="flex rounded-lg bg-secondary/50 p-1 mb-8">
+                <button
+                  onClick={() => setMode("login")}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                    mode === "login" 
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => setMode("signup")}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                    mode === "signup" 
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Create Account
+                </button>
+              </div>
+            )}
 
             {/* Login Form */}
             {mode === "login" && (
@@ -187,6 +219,14 @@ const Auth = () => {
                     </>
                   )}
                 </Button>
+
+                <button
+                  type="button"
+                  onClick={() => { setMode("reset"); setResetSent(false); }}
+                  className="w-full text-sm text-muted-foreground hover:text-accent transition-colors mt-2"
+                >
+                  Forgot your password?
+                </button>
               </form>
             )}
 
@@ -277,13 +317,82 @@ const Auth = () => {
               </form>
             )}
 
+            {/* Password Reset Form */}
+            {mode === "reset" && (
+              <>
+                {resetSent ? (
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto">
+                      <Mail className="h-8 w-8 text-accent" />
+                    </div>
+                    <h2 className="text-xl font-semibold">Check your email</h2>
+                    <p className="text-muted-foreground">
+                      We've sent a password reset link to your email address.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => { setMode("login"); setResetSent(false); }}
+                      className="mt-4"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back to Sign In
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={resetForm.handleSubmit(handlePasswordReset)} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="you@company.com"
+                          className="pl-10"
+                          {...resetForm.register("email")}
+                        />
+                      </div>
+                      {resetForm.formState.errors.email && (
+                        <p className="text-sm text-destructive">{resetForm.formState.errors.email.message}</p>
+                      )}
+                    </div>
+
+                    <Button type="submit" variant="accent" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          Send Reset Link
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMode("login")}
+                      className="w-full text-sm text-muted-foreground hover:text-accent transition-colors flex items-center justify-center gap-1"
+                    >
+                      <ArrowLeft className="h-3 w-3" />
+                      Back to Sign In
+                    </button>
+                  </form>
+                )}
+              </>
+            )}
+
             {/* Footer text */}
-            <p className="text-center text-sm text-muted-foreground mt-6">
-              By continuing, you agree to our{" "}
-              <a href="/terms" className="text-accent hover:underline">Terms of Service</a>
-              {" "}and{" "}
-              <a href="/privacy" className="text-accent hover:underline">Privacy Policy</a>.
-            </p>
+            {mode !== "reset" && (
+              <p className="text-center text-sm text-muted-foreground mt-6">
+                By continuing, you agree to our{" "}
+                <a href="/terms" className="text-accent hover:underline">Terms of Service</a>
+                {" "}and{" "}
+                <a href="/privacy" className="text-accent hover:underline">Privacy Policy</a>.
+              </p>
+            )}
           </div>
         </div>
       </main>
