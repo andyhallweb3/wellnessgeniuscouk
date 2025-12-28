@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,6 +57,112 @@ You MUST respond with ONLY valid JSON matching this exact schema - no markdown, 
 
 Focus on actionable, founder-relevant insights. Be direct and specific.`;
 
+// Function to fetch real data from the database
+async function fetchLiveData(): Promise<string> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("Missing Supabase credentials");
+    return "Unable to fetch live data - missing credentials.";
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  try {
+    // 1. Fetch total count of profiles (users)
+    const { count: profileCount, error: profileError } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true });
+
+    if (profileError) {
+      console.error("Error fetching profiles count:", profileError);
+    }
+
+    // 2. Fetch total newsletter subscribers
+    const { count: subscriberCount, error: subError } = await supabase
+      .from('newsletter_subscribers')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true);
+
+    if (subError) {
+      console.error("Error fetching subscriber count:", subError);
+    }
+
+    // 3. Fetch last 5 newsletter subscribers as recent activity
+    const { data: recentSubscribers, error: recentSubError } = await supabase
+      .from('newsletter_subscribers')
+      .select('email, subscribed_at, source')
+      .order('subscribed_at', { ascending: false })
+      .limit(5);
+
+    if (recentSubError) {
+      console.error("Error fetching recent subscribers:", recentSubError);
+    }
+
+    // 4. Fetch recent articles count
+    const { count: articleCount, error: articleError } = await supabase
+      .from('articles')
+      .select('*', { count: 'exact', head: true })
+      .eq('processed', true);
+
+    if (articleError) {
+      console.error("Error fetching article count:", articleError);
+    }
+
+    // 5. Fetch pending decisions count
+    const { count: pendingDecisions, error: decisionError } = await supabase
+      .from('genie_decisions')
+      .select('*', { count: 'exact', head: true })
+      .is('outcome', null);
+
+    if (decisionError) {
+      console.error("Error fetching decisions count:", decisionError);
+    }
+
+    // 6. Fetch recent product downloads
+    const { data: recentDownloads, error: downloadError } = await supabase
+      .from('product_downloads')
+      .select('product_name, email, created_at')
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (downloadError) {
+      console.error("Error fetching downloads:", downloadError);
+    }
+
+    // Build the current_stats string
+    const recentActivityList = recentSubscribers?.map(sub => 
+      `${sub.email.split('@')[0]}@... subscribed via ${sub.source || 'website'}`
+    ).join('; ') || 'No recent subscribers';
+
+    const recentDownloadList = recentDownloads?.map(dl => 
+      `${dl.product_name} downloaded`
+    ).join('; ') || 'No recent downloads';
+
+    const current_stats = `
+LIVE DATABASE SNAPSHOT (${new Date().toISOString()}):
+- Total Registered Users: ${profileCount || 0}
+- Active Newsletter Subscribers: ${subscriberCount || 0}
+- Published Articles: ${articleCount || 0}
+- Pending Decisions (no outcome): ${pendingDecisions || 0}
+
+RECENT ACTIVITY (Last 5 Subscribers):
+${recentActivityList}
+
+RECENT DOWNLOADS (Last 5):
+${recentDownloadList}
+`.trim();
+
+    console.log("Fetched live stats:", current_stats);
+    return current_stats;
+
+  } catch (error) {
+    console.error("Error fetching live data:", error);
+    return "Error fetching live data from database.";
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -70,10 +177,16 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Build the user message with business context
-    const userMessage = businessContext 
-      ? `Analyze this business context and provide strategic insights:\n\n${JSON.stringify(businessContext, null, 2)}`
-      : `Provide strategic insights for a wellness technology founder. Include realistic placeholder data based on a typical early-stage B2B wellness tech company.`;
+    // Fetch live data from the database
+    console.log("Fetching live data from database...");
+    const current_stats = await fetchLiveData();
+
+    // Build the user message with real data
+    const userMessage = `Here is the live data from the database:
+
+${current_stats}
+
+${businessContext ? `Additional business context:\n${JSON.stringify(businessContext, null, 2)}\n\n` : ''}Based on this real data, generate the founder brief with actionable insights for a wellness technology B2B company.`;
 
     console.log("Calling Lovable AI Gateway for founder insights...");
 
@@ -150,7 +263,7 @@ serve(async (req) => {
     }
     parsedData.meta.generated_at = new Date().toISOString();
 
-    console.log("Successfully generated founder insights");
+    console.log("Successfully generated founder insights with live data");
 
     return new Response(JSON.stringify(parsedData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
