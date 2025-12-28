@@ -560,6 +560,48 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_partnerships: {
+        Row: {
+          created_at: string
+          fit_score: number
+          id: string
+          insight: string | null
+          last_contact: string | null
+          name: string
+          next_move: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fit_score?: number
+          id?: string
+          insight?: string | null
+          last_contact?: string | null
+          name: string
+          next_move?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fit_score?: number
+          id?: string
+          insight?: string | null
+          last_contact?: string | null
+          name?: string
+          next_move?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       genie_decisions: {
         Row: {
           context: string | null
