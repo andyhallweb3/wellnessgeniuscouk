@@ -560,6 +560,27 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_journal: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       founder_partnership_contacts: {
         Row: {
           contacted_at: string

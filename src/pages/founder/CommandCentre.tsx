@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Drawer, 
   DrawerClose, 
@@ -26,10 +27,13 @@ import {
   ChevronRight,
   Clock,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Brain,
+  Save
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FocusItem {
   priority: string;
@@ -76,10 +80,15 @@ interface AgentData {
 }
 
 export default function CommandCentre() {
+  const { user } = useAuth();
   const [data, setData] = useState<AgentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
+  
+  // Brain dump state
+  const [brainDump, setBrainDump] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
 
   const fetchAgentData = async () => {
     setLoading(true);
@@ -105,6 +114,38 @@ export default function CommandCentre() {
       toast.error("Failed to load insights");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveNote = async () => {
+    if (!brainDump.trim() || !user) {
+      toast.error("Please enter some text");
+      return;
+    }
+
+    setSavingNote(true);
+    try {
+      const { error: insertError } = await supabase
+        .from('founder_journal')
+        .insert({
+          user_id: user.id,
+          content: brainDump.trim()
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      toast.success("Note saved! Refreshing insights...");
+      setBrainDump("");
+      
+      // Auto-refresh the dashboard to show agent's reaction
+      await fetchAgentData();
+    } catch (err) {
+      console.error("Error saving note:", err);
+      toast.error("Failed to save note");
+    } finally {
+      setSavingNote(false);
     }
   };
 
@@ -200,8 +241,8 @@ export default function CommandCentre() {
               </p>
             )}
           </div>
-          <Button onClick={fetchAgentData} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button onClick={fetchAgentData} variant="outline" size="sm" disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
@@ -327,6 +368,42 @@ export default function CommandCentre() {
                       </Badge>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Brain Dump Section */}
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Brain className="h-5 w-5 text-primary" />
+                  Brain Dump
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Share what's on your mind. The AI will factor this into its next analysis.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Textarea
+                  placeholder="What's on your mind? Any concerns, ideas, or context the AI should know about..."
+                  value={brainDump}
+                  onChange={(e) => setBrainDump(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleSaveNote} 
+                    disabled={savingNote || !brainDump.trim()}
+                    size="sm"
+                  >
+                    {savingNote ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Save & Refresh
+                  </Button>
                 </div>
               </CardContent>
             </Card>
