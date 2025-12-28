@@ -703,6 +703,8 @@ serve(async (req) => {
 
     // Try to get session data if we have auth
     const authHeader = req.headers.get("authorization");
+    let guardrailsContext = "";
+    
     if (authHeader && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -715,6 +717,33 @@ serve(async (req) => {
         if (user?.id) {
           userId = user.id;
           sessionSignals = await fetchSessionSignals(supabase, userId);
+          
+          // Fetch founder guardrails if user is admin
+          try {
+            const { data: guardrails } = await supabase
+              .from("founder_guardrails")
+              .select("section_id, items")
+              .eq("user_id", userId);
+            
+            if (guardrails && guardrails.length > 0) {
+              const sectionLabels: Record<string, string> = {
+                principles: "Non-negotiable Principles",
+                markets: "Markets to Ignore (do not recommend)",
+                language: "Language to Avoid",
+                ethics: "Ethical Red Lines (never violate)",
+                optimisation: "Do Not Optimise For"
+              };
+              
+              guardrailsContext = "\n\n## STRATEGIC GUARDRAILS (You must respect these boundaries)\n";
+              guardrails.forEach((g: any) => {
+                const label = sectionLabels[g.section_id] || g.section_id;
+                guardrailsContext += `\n### ${label}\n`;
+                guardrailsContext += g.items.map((item: string) => `- ${item}`).join("\n");
+              });
+            }
+          } catch (guardrailErr) {
+            console.log("[GENIE] Guardrails fetch skipped:", guardrailErr);
+          }
         }
       } catch (authErr) {
         console.log("[GENIE] Auth check skipped:", authErr);
@@ -751,6 +780,11 @@ serve(async (req) => {
     
     // Build full system prompt with context
     let fullSystemPrompt = GENIE_SYSTEM_PROMPT;
+    
+    // Add guardrails first (highest priority constraints)
+    if (guardrailsContext) {
+      fullSystemPrompt += guardrailsContext;
+    }
     
     if (memoryContext && memoryContext.trim()) {
       fullSystemPrompt += `\n\n## BUSINESS CONTEXT (Use this to personalise responses):\n${memoryContext}`;
