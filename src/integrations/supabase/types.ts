@@ -560,6 +560,41 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_partnership_contacts: {
+        Row: {
+          contacted_at: string
+          created_at: string
+          id: string
+          notes: string | null
+          partnership_id: string
+          user_id: string
+        }
+        Insert: {
+          contacted_at?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          partnership_id: string
+          user_id: string
+        }
+        Update: {
+          contacted_at?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          partnership_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "founder_partnership_contacts_partnership_id_fkey"
+            columns: ["partnership_id"]
+            isOneToOne: false
+            referencedRelation: "founder_partnerships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       founder_partnerships: {
         Row: {
           created_at: string
