@@ -201,6 +201,50 @@
   .glow-accent {
     box-shadow: 0 0 60px -15px hsl(var(--accent) / 0.5);
   }
+  
+  /* Founder Command Centre - Editorial Styling */
+  .founder-card {
+    @apply bg-card rounded-xl border border-border p-6;
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .founder-card-elevated {
+    @apply founder-card shadow-elegant;
+  }
+  
+  .founder-section-title {
+    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground mb-4;
+  }
+  
+  .founder-stat {
+    @apply text-3xl font-semibold tracking-tight text-foreground;
+  }
+  
+  .founder-stat-label {
+    @apply text-sm text-muted-foreground mt-1;
+  }
+  
+  .founder-signal-positive {
+    @apply text-accent;
+  }
+  
+  .founder-signal-negative {
+    @apply text-destructive;
+  }
+  
+  .founder-signal-neutral {
+    @apply text-muted-foreground;
+  }
+  
+  .founder-priority-card {
+    @apply bg-background border border-border rounded-lg p-4;
+    @apply transition-colors duration-200;
+    @apply hover:border-accent/30;
+  }
+  
+  .founder-insight-text {
+    @apply text-sm leading-relaxed text-foreground/90;
+  }
 }
 
 @layer utilities {
