@@ -51,6 +51,7 @@ import Narrative from "./pages/founder/Narrative";
 import Partnerships from "./pages/founder/Partnerships";
 import DecisionsLog from "./pages/founder/DecisionsLog";
 import Guardrails from "./pages/founder/Guardrails";
+import CommandCentre from "./pages/founder/CommandCentre";
 
 const queryClient = new QueryClient();
 
@@ -110,6 +111,7 @@ const App = () => (
             <Route path="/founder/partnerships" element={<Partnerships />} />
             <Route path="/founder/decisions" element={<DecisionsLog />} />
             <Route path="/founder/guardrails" element={<Guardrails />} />
+            <Route path="/founder/command" element={<CommandCentre />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -11,7 +11,8 @@ import {
   BookOpen,
   Shield,
   ChevronLeft,
-  LogOut
+  LogOut,
+  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ interface FounderLayoutProps {
 
 const navItems = [
   { path: "/founder", label: "Founder Today", icon: Compass },
+  { path: "/founder/command", label: "Command Centre", icon: LayoutDashboard },
   { path: "/founder/health", label: "Business Health", icon: Activity },
   { path: "/founder/growth", label: "Growth Levers", icon: TrendingUp },
   { path: "/founder/narrative", label: "Narrative & Content", icon: FileText },
