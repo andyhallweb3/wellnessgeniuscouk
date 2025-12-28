@@ -58,13 +58,13 @@ You MUST respond with ONLY valid JSON matching this exact schema - no markdown, 
 Focus on actionable, founder-relevant insights. Be direct and specific.`;
 
 // Function to fetch real data from the database
-async function fetchLiveData(): Promise<string> {
+async function fetchLiveData(): Promise<{ stats: string; journalEntries: string }> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error("Missing Supabase credentials");
-    return "Unable to fetch live data - missing credentials.";
+    return { stats: "Unable to fetch live data - missing credentials.", journalEntries: "" };
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -131,6 +131,17 @@ async function fetchLiveData(): Promise<string> {
       console.error("Error fetching downloads:", downloadError);
     }
 
+    // 7. Fetch last 3 founder journal entries
+    const { data: journalEntries, error: journalError } = await supabase
+      .from('founder_journal')
+      .select('content, created_at')
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    if (journalError) {
+      console.error("Error fetching journal entries:", journalError);
+    }
+
     // Build the current_stats string
     const recentActivityList = recentSubscribers?.map(sub => 
       `${sub.email.split('@')[0]}@... subscribed via ${sub.source || 'website'}`
@@ -140,7 +151,7 @@ async function fetchLiveData(): Promise<string> {
       `${dl.product_name} downloaded`
     ).join('; ') || 'No recent downloads';
 
-    const current_stats = `
+    const stats = `
 LIVE DATABASE SNAPSHOT (${new Date().toISOString()}):
 - Total Registered Users: ${profileCount || 0}
 - Active Newsletter Subscribers: ${subscriberCount || 0}
@@ -154,12 +165,19 @@ RECENT DOWNLOADS (Last 5):
 ${recentDownloadList}
 `.trim();
 
-    console.log("Fetched live stats:", current_stats);
-    return current_stats;
+    // Build journal context
+    const journalContext = journalEntries?.length 
+      ? journalEntries.map((entry, idx) => 
+          `[${new Date(entry.created_at).toLocaleDateString()}]: ${entry.content}`
+        ).join('\n\n')
+      : '';
+
+    console.log("Fetched live stats and journal entries");
+    return { stats, journalEntries: journalContext };
 
   } catch (error) {
     console.error("Error fetching live data:", error);
-    return "Error fetching live data from database.";
+    return { stats: "Error fetching live data from database.", journalEntries: "" };
   }
 }
 
@@ -179,14 +197,34 @@ serve(async (req) => {
 
     // Fetch live data from the database
     console.log("Fetching live data from database...");
-    const current_stats = await fetchLiveData();
+    const { stats, journalEntries } = await fetchLiveData();
 
-    // Build the user message with real data
-    const userMessage = `Here is the live data from the database:
+    // Build the user message with real data and founder context
+    let userMessage = `Here is the live data from the database:
 
-${current_stats}
+${stats}`;
 
-${businessContext ? `Additional business context:\n${JSON.stringify(businessContext, null, 2)}\n\n` : ''}Based on this real data, generate the founder brief with actionable insights for a wellness technology B2B company.`;
+    // Add founder journal entries if available
+    if (journalEntries) {
+      userMessage += `
+
+FOUNDER'S RECENT THOUGHTS/CONTEXT:
+${journalEntries}
+
+Use this context to refine the priorities and advice. The founder's notes reveal what's on their mind right now.`;
+    }
+
+    // Add any additional business context
+    if (businessContext) {
+      userMessage += `
+
+ADDITIONAL CONTEXT:
+${JSON.stringify(businessContext, null, 2)}`;
+    }
+
+    userMessage += `
+
+Based on this real data and founder context, generate the founder brief with actionable insights for a wellness technology B2B company.`;
 
     console.log("Calling Lovable AI Gateway for founder insights...");
 
