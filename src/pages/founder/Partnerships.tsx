@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import FounderLayout from "@/components/founder/FounderLayout";
-import { cn } from "@/lib/utils";
-import { MessageCircle, Clock, Pause, ArrowRight, Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { MessageCircle, Clock, Pause, ArrowRight, Plus, Pencil, Trash2, X, Check, Phone, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 
 type PartnershipStatus = 'active' | 'dormant' | 'paused';
 
@@ -26,6 +25,13 @@ interface Partnership {
   next_move: string | null;
   insight: string | null;
   user_id: string;
+}
+
+interface ContactLog {
+  id: string;
+  partnership_id: string;
+  notes: string | null;
+  contacted_at: string;
 }
 
 interface PartnershipForm {
@@ -52,6 +58,9 @@ export default function Partnerships() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PartnershipForm>(defaultForm);
+  const [loggingContactId, setLoggingContactId] = useState<string | null>(null);
+  const [contactNote, setContactNote] = useState('');
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   const { data: partnerships = [], isLoading } = useQuery({
     queryKey: ['founder-partnerships', user?.id],
@@ -64,6 +73,20 @@ export default function Partnerships() {
       
       if (error) throw error;
       return data as Partnership[];
+    },
+    enabled: !!user
+  });
+
+  const { data: contactLogs = [] } = useQuery({
+    queryKey: ['founder-partnership-contacts', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('founder_partnership_contacts')
+        .select('*')
+        .order('contacted_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ContactLog[];
     },
     enabled: !!user
   });
@@ -120,18 +143,33 @@ export default function Partnerships() {
     onError: () => toast.error('Failed to remove partnership')
   });
 
-  const touchContactMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
+  const logContactMutation = useMutation({
+    mutationFn: async ({ partnershipId, notes }: { partnershipId: string; notes: string }) => {
+      // Insert contact log
+      const { error: contactError } = await supabase
+        .from('founder_partnership_contacts')
+        .insert({
+          partnership_id: partnershipId,
+          user_id: user!.id,
+          notes: notes || null
+        });
+      if (contactError) throw contactError;
+
+      // Update last_contact on partnership
+      const { error: updateError } = await supabase
         .from('founder_partnerships')
         .update({ last_contact: new Date().toISOString() })
-        .eq('id', id);
-      if (error) throw error;
+        .eq('id', partnershipId);
+      if (updateError) throw updateError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['founder-partnerships'] });
+      queryClient.invalidateQueries({ queryKey: ['founder-partnership-contacts'] });
+      setLoggingContactId(null);
+      setContactNote('');
       toast.success('Contact logged');
-    }
+    },
+    onError: () => toast.error('Failed to log contact')
   });
 
   const startEdit = (partnership: Partnership) => {
@@ -145,6 +183,9 @@ export default function Partnerships() {
       insight: partnership.insight || ''
     });
   };
+
+  const getContactsForPartnership = (partnershipId: string) => 
+    contactLogs.filter(log => log.partnership_id === partnershipId);
 
   const StatusIcon = ({ status }: { status: PartnershipStatus }) => {
     switch (status) {
@@ -301,120 +342,194 @@ export default function Partnerships() {
 
       {/* Partnerships List */}
       <div className="space-y-4">
-        {partnerships.map((partnership) => (
-          <div key={partnership.id} className="founder-card">
-            {editingId === partnership.id ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium">Edit Partnership</h3>
-                  <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
-                    <X className="h-4 w-4" />
+        {partnerships.map((partnership) => {
+          const partnershipContacts = getContactsForPartnership(partnership.id);
+          const isExpanded = expandedHistoryId === partnership.id;
+          
+          return (
+            <div key={partnership.id} className="founder-card">
+              {editingId === partnership.id ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium">Edit Partnership</h3>
+                    <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input 
+                      placeholder="Partner name" 
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                    />
+                    <Input 
+                      placeholder="Type" 
+                      value={form.type}
+                      onChange={e => setForm({ ...form, type: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Select value={form.status} onValueChange={(v: PartnershipStatus) => setForm({ ...form, status: v })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="dormant">Dormant</SelectItem>
+                        <SelectItem value="paused">Paused</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      max={100} 
+                      value={form.fit_score}
+                      onChange={e => setForm({ ...form, fit_score: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <Input 
+                    placeholder="Next move" 
+                    value={form.next_move}
+                    onChange={e => setForm({ ...form, next_move: e.target.value })}
+                  />
+                  <Textarea 
+                    placeholder="Strategic insight" 
+                    value={form.insight}
+                    onChange={e => setForm({ ...form, insight: e.target.value })}
+                    rows={2}
+                  />
+                  <Button 
+                    size="sm" 
+                    onClick={() => updateMutation.mutate({ id: partnership.id, ...form })}
+                    disabled={updateMutation.isPending}
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Save
                   </Button>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input 
-                    placeholder="Partner name" 
-                    value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
-                  />
-                  <Input 
-                    placeholder="Type" 
-                    value={form.type}
-                    onChange={e => setForm({ ...form, type: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Select value={form.status} onValueChange={(v: PartnershipStatus) => setForm({ ...form, status: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="dormant">Dormant</SelectItem>
-                      <SelectItem value="paused">Paused</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input 
-                    type="number" 
-                    min={0} 
-                    max={100} 
-                    value={form.fit_score}
-                    onChange={e => setForm({ ...form, fit_score: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <Input 
-                  placeholder="Next move" 
-                  value={form.next_move}
-                  onChange={e => setForm({ ...form, next_move: e.target.value })}
-                />
-                <Textarea 
-                  placeholder="Strategic insight" 
-                  value={form.insight}
-                  onChange={e => setForm({ ...form, insight: e.target.value })}
-                  rows={2}
-                />
-                <Button 
-                  size="sm" 
-                  onClick={() => updateMutation.mutate({ id: partnership.id, ...form })}
-                  disabled={updateMutation.isPending}
-                >
-                  <Check className="h-4 w-4 mr-1" />
-                  Save
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-3">
-                    <StatusIcon status={partnership.status} />
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground">{partnership.name}</h3>
-                      <p className="text-xs text-muted-foreground">{partnership.type}</p>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start gap-3">
+                      <StatusIcon status={partnership.status} />
+                      <div>
+                        <h3 className="text-sm font-medium text-foreground">{partnership.name}</h3>
+                        <p className="text-xs text-muted-foreground">{partnership.type}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right mr-2">
+                        <p className="text-xs text-muted-foreground">Strategic fit</p>
+                        <FitScoreBar score={partnership.fit_score} />
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => startEdit(partnership)}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => deleteMutation.mutate(partnership.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right mr-2">
-                      <p className="text-xs text-muted-foreground">Strategic fit</p>
-                      <FitScoreBar score={partnership.fit_score} />
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => startEdit(partnership)}>
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => deleteMutation.mutate(partnership.id)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="h-3 w-3 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
 
-                {partnership.insight && (
-                  <p className="founder-insight-text mb-4">{partnership.insight}</p>
-                )}
-
-                <div className="flex items-center justify-between pt-4 border-t border-border">
-                  <button 
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => touchContactMutation.mutate(partnership.id)}
-                  >
-                    Last contact: {partnership.last_contact 
-                      ? formatDistanceToNow(new Date(partnership.last_contact), { addSuffix: true })
-                      : 'Never'}
-                  </button>
-                  {partnership.next_move && (
-                    <Button size="sm" variant="ghost" className="gap-1 text-xs h-7">
-                      {partnership.next_move}
-                      <ArrowRight className="h-3 w-3" />
-                    </Button>
+                  {partnership.insight && (
+                    <p className="founder-insight-text mb-4">{partnership.insight}</p>
                   )}
-                </div>
-              </>
-            )}
-          </div>
-        ))}
+
+                  {/* Log Contact Form */}
+                  {loggingContactId === partnership.id && (
+                    <div className="mb-4 p-3 bg-muted/50 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium">Log Contact</p>
+                        <Button variant="ghost" size="sm" onClick={() => { setLoggingContactId(null); setContactNote(''); }}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <Textarea 
+                        placeholder="What was discussed? (optional)"
+                        value={contactNote}
+                        onChange={e => setContactNote(e.target.value)}
+                        rows={2}
+                        className="text-sm"
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={() => logContactMutation.mutate({ partnershipId: partnership.id, notes: contactNote })}
+                        disabled={logContactMutation.isPending}
+                      >
+                        <Check className="h-3 w-3 mr-1" />
+                        Save Contact
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Contact History */}
+                  {partnershipContacts.length > 0 && (
+                    <div className="mb-4">
+                      <button 
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => setExpandedHistoryId(isExpanded ? null : partnership.id)}
+                      >
+                        {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        {partnershipContacts.length} contact{partnershipContacts.length !== 1 ? 's' : ''} logged
+                      </button>
+                      
+                      {isExpanded && (
+                        <div className="mt-2 space-y-2 pl-4 border-l-2 border-border">
+                          {partnershipContacts.slice(0, 5).map(log => (
+                            <div key={log.id} className="text-xs">
+                              <p className="text-muted-foreground">
+                                {format(new Date(log.contacted_at), 'MMM d, yyyy')}
+                              </p>
+                              {log.notes && (
+                                <p className="text-foreground mt-0.5">{log.notes}</p>
+                              )}
+                            </div>
+                          ))}
+                          {partnershipContacts.length > 5 && (
+                            <p className="text-xs text-muted-foreground">
+                              +{partnershipContacts.length - 5} more
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-4 border-t border-border">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        Last contact: {partnership.last_contact 
+                          ? formatDistanceToNow(new Date(partnership.last_contact), { addSuffix: true })
+                          : 'Never'}
+                      </span>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="gap-1 text-xs h-7"
+                        onClick={() => { setLoggingContactId(partnership.id); setContactNote(''); }}
+                        disabled={loggingContactId === partnership.id}
+                      >
+                        <Phone className="h-3 w-3" />
+                        Log contact
+                      </Button>
+                    </div>
+                    {partnership.next_move && (
+                      <Button size="sm" variant="ghost" className="gap-1 text-xs h-7">
+                        {partnership.next_move}
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </FounderLayout>
   );
