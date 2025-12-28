@@ -44,6 +44,13 @@ import PrivacyReadinessLanding from "./pages/PrivacyReadinessLanding";
 import PrivacyReadinessAssessment from "./pages/PrivacyReadinessAssessment";
 import PrivacyReadinessResults from "./pages/PrivacyReadinessResults";
 import NotFound from "./pages/NotFound";
+import FounderToday from "./pages/founder/FounderToday";
+import BusinessHealth from "./pages/founder/BusinessHealth";
+import GrowthLevers from "./pages/founder/GrowthLevers";
+import Narrative from "./pages/founder/Narrative";
+import Partnerships from "./pages/founder/Partnerships";
+import DecisionsLog from "./pages/founder/DecisionsLog";
+import Guardrails from "./pages/founder/Guardrails";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +102,14 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/cookies" element={<CookiePolicy />} />
+            {/* Founder Command Centre (admin only) */}
+            <Route path="/founder" element={<FounderToday />} />
+            <Route path="/founder/health" element={<BusinessHealth />} />
+            <Route path="/founder/growth" element={<GrowthLevers />} />
+            <Route path="/founder/narrative" element={<Narrative />} />
+            <Route path="/founder/partnerships" element={<Partnerships />} />
+            <Route path="/founder/decisions" element={<DecisionsLog />} />
+            <Route path="/founder/guardrails" element={<Guardrails />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
