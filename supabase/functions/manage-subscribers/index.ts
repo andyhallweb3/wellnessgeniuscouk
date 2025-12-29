@@ -42,6 +42,19 @@ Deno.serve(async (req) => {
 
     const { action, subscriber, emails, since } = await req.json();
 
+    // Helper to log admin actions
+    const logAudit = async (actionType: string, resourceCount?: number, details?: string) => {
+      await supabase.from('admin_audit_logs').insert({
+        admin_user_id: authResult.userId,
+        action: actionType,
+        resource_type: 'newsletter_subscribers',
+        resource_count: resourceCount,
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip'),
+        user_agent: req.headers.get('user-agent'),
+      });
+      console.log('Audit log:', actionType, 'newsletter_subscribers', details || '');
+    };
+
     switch (action) {
       case 'list': {
         let query = supabase
@@ -57,6 +70,8 @@ Deno.serve(async (req) => {
         const { data, error } = await query;
 
         if (error) throw error;
+
+        await logAudit('list', data?.length || 0);
 
         return new Response(
           JSON.stringify({ subscribers: data }),
@@ -92,6 +107,8 @@ Deno.serve(async (req) => {
           }
           throw error;
         }
+
+        await logAudit('add', 1, `email: ${subscriber.email}`);
 
         return new Response(
           JSON.stringify({ subscriber: data }),
@@ -130,6 +147,8 @@ Deno.serve(async (req) => {
           }
         }
 
+        await logAudit('bulk-add', added, `added: ${added}, skipped: ${skipped}`);
+
         return new Response(
           JSON.stringify({ added, skipped, total: emails.length }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -158,6 +177,8 @@ Deno.serve(async (req) => {
 
         if (error) throw error;
 
+        await logAudit('update', 1, `id: ${subscriber.id}`);
+
         return new Response(
           JSON.stringify({ subscriber: data }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -178,6 +199,8 @@ Deno.serve(async (req) => {
           .eq('id', subscriber.id);
 
         if (error) throw error;
+
+        await logAudit('delete', 1, `id: ${subscriber.id}`);
 
         return new Response(
           JSON.stringify({ success: true }),
