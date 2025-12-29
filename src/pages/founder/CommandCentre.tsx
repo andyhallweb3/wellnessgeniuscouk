@@ -41,6 +41,12 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -478,37 +484,60 @@ export default function CommandCentre() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Perspective Selector */}
-            <ToggleGroup 
-              type="single" 
-              value={perspective} 
-              onValueChange={(value) => value && handlePerspectiveChange(value as PerspectiveMode)}
-              className="bg-muted rounded-lg p-1"
-            >
-              <ToggleGroupItem 
-                value="ceo" 
-                aria-label="CEO perspective"
-                className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
+            <TooltipProvider delayDuration={300}>
+              <ToggleGroup 
+                type="single" 
+                value={perspective} 
+                onValueChange={(value) => value && handlePerspectiveChange(value as PerspectiveMode)}
+                className="bg-muted rounded-lg p-1"
               >
-                <Users className="h-3 w-3 mr-1.5" />
-                CEO
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="cmo" 
-                aria-label="CMO perspective"
-                className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
-              >
-                <Growth className="h-3 w-3 mr-1.5" />
-                CMO
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="investor" 
-                aria-label="Investor perspective"
-                className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
-              >
-                <DollarSign className="h-3 w-3 mr-1.5" />
-                Investor
-              </ToggleGroupItem>
-            </ToggleGroup>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <ToggleGroupItem 
+                      value="ceo" 
+                      aria-label="CEO perspective"
+                      className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
+                    >
+                      <Users className="h-3 w-3 mr-1.5" />
+                      CEO
+                    </ToggleGroupItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[200px]">
+                    <p className="text-xs">Balanced strategic view across all business areas</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <ToggleGroupItem 
+                      value="cmo" 
+                      aria-label="CMO perspective"
+                      className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
+                    >
+                      <Growth className="h-3 w-3 mr-1.5" />
+                      CMO
+                    </ToggleGroupItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[200px]">
+                    <p className="text-xs">Focus on growth, CAC, viral loops, and narrative. Ignores technical debt.</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <ToggleGroupItem 
+                      value="investor" 
+                      aria-label="Investor perspective"
+                      className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
+                    >
+                      <DollarSign className="h-3 w-3 mr-1.5" />
+                      Investor
+                    </ToggleGroupItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[200px]">
+                    <p className="text-xs">Focus on ROI, scalability, and defensibility. Skeptical and risk-averse.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </ToggleGroup>
+            </TooltipProvider>
             
             <Button onClick={handleManageSubscription} variant="ghost" size="sm">
               <Settings className="h-4 w-4 mr-2" />
