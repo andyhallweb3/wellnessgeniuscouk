@@ -6,8 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// System prompt placeholder - will be replaced with full prompt later
-const SYSTEM_PROMPT = `You are an AI advisor for a wellness technology founder. Analyze the provided business context and return strategic insights.
+// Base system prompt template - will be customized per user
+const getSystemPrompt = (businessProfile: any) => {
+  const businessName = businessProfile?.business_name || 'your company';
+  const industry = businessProfile?.industry || 'technology';
+  const targetAudience = businessProfile?.target_audience || 'business customers';
+  const currentGoal = businessProfile?.current_goal || 'growth and success';
+
+  return `You are a Strategic Founder Agent for ${businessName}, a company in the ${industry} space. Their target audience is ${targetAudience}. Their current goal is ${currentGoal}.
+
+You are their personal AI strategic advisor. Analyze the provided business context and return strategic insights tailored to their specific situation.
 
 You MUST respond with ONLY valid JSON matching this exact schema - no markdown, no explanation, just the JSON object:
 
@@ -55,86 +63,48 @@ You MUST respond with ONLY valid JSON matching this exact schema - no markdown, 
   }
 }
 
-Focus on actionable, founder-relevant insights. Be direct and specific.`;
+Focus on actionable, founder-relevant insights specific to ${businessName}. Be direct and specific to their ${industry} context and their goal of ${currentGoal}.`;
+};
 
-// Function to fetch real data from the database
-async function fetchLiveData(): Promise<{ stats: string; journalEntries: string }> {
+// Function to fetch user-specific data from the database
+async function fetchUserData(userId: string): Promise<{ 
+  businessProfile: any;
+  stats: string; 
+  journalEntries: string 
+}> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error("Missing Supabase credentials");
-    return { stats: "Unable to fetch live data - missing credentials.", journalEntries: "" };
+    return { 
+      businessProfile: null,
+      stats: "Unable to fetch live data - missing credentials.", 
+      journalEntries: "" 
+    };
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    // 1. Fetch total count of profiles (users)
-    const { count: profileCount, error: profileError } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true });
+    // 1. Fetch user's business profile
+    const { data: businessProfile, error: profileError } = await supabase
+      .from('business_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
 
     if (profileError) {
-      console.error("Error fetching profiles count:", profileError);
+      console.error("Error fetching business profile:", profileError);
     }
 
-    // 2. Fetch total newsletter subscribers
-    const { count: subscriberCount, error: subError } = await supabase
-      .from('newsletter_subscribers')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true);
+    console.log("Fetched business profile:", businessProfile?.business_name);
 
-    if (subError) {
-      console.error("Error fetching subscriber count:", subError);
-    }
-
-    // 3. Fetch last 5 newsletter subscribers as recent activity
-    const { data: recentSubscribers, error: recentSubError } = await supabase
-      .from('newsletter_subscribers')
-      .select('email, subscribed_at, source')
-      .order('subscribed_at', { ascending: false })
-      .limit(5);
-
-    if (recentSubError) {
-      console.error("Error fetching recent subscribers:", recentSubError);
-    }
-
-    // 4. Fetch recent articles count
-    const { count: articleCount, error: articleError } = await supabase
-      .from('articles')
-      .select('*', { count: 'exact', head: true })
-      .eq('processed', true);
-
-    if (articleError) {
-      console.error("Error fetching article count:", articleError);
-    }
-
-    // 5. Fetch pending decisions count
-    const { count: pendingDecisions, error: decisionError } = await supabase
-      .from('genie_decisions')
-      .select('*', { count: 'exact', head: true })
-      .is('outcome', null);
-
-    if (decisionError) {
-      console.error("Error fetching decisions count:", decisionError);
-    }
-
-    // 6. Fetch recent product downloads
-    const { data: recentDownloads, error: downloadError } = await supabase
-      .from('product_downloads')
-      .select('product_name, email, created_at')
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    if (downloadError) {
-      console.error("Error fetching downloads:", downloadError);
-    }
-
-    // 7. Fetch last 3 founder journal entries
+    // 2. Fetch user's recent journal entries
     const { data: journalEntries, error: journalError } = await supabase
       .from('founder_journal')
       .select('content, created_at')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(3);
 
@@ -142,42 +112,33 @@ async function fetchLiveData(): Promise<{ stats: string; journalEntries: string 
       console.error("Error fetching journal entries:", journalError);
     }
 
-    // Build the current_stats string
-    const recentActivityList = recentSubscribers?.map(sub => 
-      `${sub.email.split('@')[0]}@... subscribed via ${sub.source || 'website'}`
-    ).join('; ') || 'No recent subscribers';
-
-    const recentDownloadList = recentDownloads?.map(dl => 
-      `${dl.product_name} downloaded`
-    ).join('; ') || 'No recent downloads';
-
-    const stats = `
-LIVE DATABASE SNAPSHOT (${new Date().toISOString()}):
-- Total Registered Users: ${profileCount || 0}
-- Active Newsletter Subscribers: ${subscriberCount || 0}
-- Published Articles: ${articleCount || 0}
-- Pending Decisions (no outcome): ${pendingDecisions || 0}
-
-RECENT ACTIVITY (Last 5 Subscribers):
-${recentActivityList}
-
-RECENT DOWNLOADS (Last 5):
-${recentDownloadList}
-`.trim();
-
     // Build journal context
     const journalContext = journalEntries?.length 
-      ? journalEntries.map((entry, idx) => 
+      ? journalEntries.map((entry) => 
           `[${new Date(entry.created_at).toLocaleDateString()}]: ${entry.content}`
         ).join('\n\n')
       : '';
 
-    console.log("Fetched live stats and journal entries");
-    return { stats, journalEntries: journalContext };
+    // 3. Build generic stats (can be customized per user later)
+    const stats = `
+BUSINESS CONTEXT:
+- Business Name: ${businessProfile?.business_name || 'Not set'}
+- Industry: ${businessProfile?.industry || 'Not set'}
+- Target Audience: ${businessProfile?.target_audience || 'Not set'}
+- Current Goal: ${businessProfile?.current_goal || 'Not set'}
+- Profile Last Updated: ${businessProfile?.updated_at || 'Never'}
+`.trim();
+
+    console.log("Fetched user data successfully");
+    return { businessProfile, stats, journalEntries: journalContext };
 
   } catch (error) {
-    console.error("Error fetching live data:", error);
-    return { stats: "Error fetching live data from database.", journalEntries: "" };
+    console.error("Error fetching user data:", error);
+    return { 
+      businessProfile: null,
+      stats: "Error fetching data from database.", 
+      journalEntries: "" 
+    };
   }
 }
 
@@ -190,17 +151,43 @@ serve(async (req) => {
   try {
     const { businessContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Fetch live data from the database
-    console.log("Fetching live data from database...");
-    const { stats, journalEntries } = await fetchLiveData();
+    // Get the authenticated user
+    const authHeader = req.headers.get("Authorization");
+    let userId: string | null = null;
+
+    if (authHeader) {
+      const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData } = await supabase.auth.getUser(token);
+      userId = userData.user?.id || null;
+    }
+
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
+    console.log("Authenticated user:", userId);
+
+    // Fetch user-specific data from the database
+    console.log("Fetching user data from database...");
+    const { businessProfile, stats, journalEntries } = await fetchUserData(userId);
+
+    if (!businessProfile) {
+      throw new Error("Business profile not found. Please complete onboarding.");
+    }
+
+    // Build the dynamic system prompt based on user's business profile
+    const systemPrompt = getSystemPrompt(businessProfile);
 
     // Build the user message with real data and founder context
-    let userMessage = `Here is the live data from the database:
+    let userMessage = `Here is my current business situation:
 
 ${stats}`;
 
@@ -208,10 +195,10 @@ ${stats}`;
     if (journalEntries) {
       userMessage += `
 
-FOUNDER'S RECENT THOUGHTS/CONTEXT:
+MY RECENT THOUGHTS/CONTEXT:
 ${journalEntries}
 
-Use this context to refine the priorities and advice. The founder's notes reveal what's on their mind right now.`;
+Use this context to refine the priorities and advice. These notes reveal what's on my mind right now.`;
     }
 
     // Add any additional business context
@@ -224,9 +211,9 @@ ${JSON.stringify(businessContext, null, 2)}`;
 
     userMessage += `
 
-Based on this real data and founder context, generate the founder brief with actionable insights for a wellness technology B2B company.`;
+Based on my specific business context and goals, generate my personalized founder brief with actionable insights.`;
 
-    console.log("Calling Lovable AI Gateway for founder insights...");
+    console.log("Calling Lovable AI Gateway for personalized founder insights...");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -237,7 +224,7 @@ Based on this real data and founder context, generate the founder brief with act
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ],
         temperature: 0.7,
@@ -300,8 +287,9 @@ Based on this real data and founder context, generate the founder brief with act
       parsedData.meta = {};
     }
     parsedData.meta.generated_at = new Date().toISOString();
+    parsedData.meta.business_name = businessProfile.business_name;
 
-    console.log("Successfully generated founder insights with live data");
+    console.log("Successfully generated personalized founder insights for", businessProfile.business_name);
 
     return new Response(JSON.stringify(parsedData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

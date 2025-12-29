@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
+import { useSearchParams } from "react-router-dom";
 import FounderLayout from "@/components/founder/FounderLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,11 +30,14 @@ import {
   CheckCircle2,
   XCircle,
   Brain,
-  Save
+  Save,
+  Settings
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import BusinessOnboardingModal from "@/components/founder/BusinessOnboardingModal";
+import SubscriptionPaywall from "@/components/founder/SubscriptionPaywall";
 
 interface FocusItem {
   priority: string;
@@ -76,21 +80,102 @@ interface AgentData {
   meta: {
     generated_at: string;
     confidence_note: string;
+    business_name?: string;
   };
+}
+
+interface BusinessProfile {
+  id: string;
+  user_id: string;
+  business_name: string;
+  industry: string | null;
+  target_audience: string | null;
+  current_goal: string | null;
 }
 
 export default function CommandCentre() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [data, setData] = useState<AgentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
   
+  // Business profile state
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Subscription state
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'loading' | 'active' | 'inactive'>('loading');
+  
   // Brain dump state
   const [brainDump, setBrainDump] = useState("");
   const [savingNote, setSavingNote] = useState(false);
 
+  // Check for checkout success
+  useEffect(() => {
+    const checkoutStatus = searchParams.get('checkout');
+    if (checkoutStatus === 'success') {
+      toast.success("Subscription activated! Welcome to Founder Agent Pro.");
+      // Refresh subscription status
+      checkSubscription();
+    } else if (checkoutStatus === 'cancelled') {
+      toast.info("Checkout cancelled.");
+    }
+  }, [searchParams]);
+
+  // Check subscription status
+  const checkSubscription = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: subData, error: subError } = await supabase.functions.invoke('check-agent-subscription');
+      
+      if (subError) {
+        console.error("Error checking subscription:", subError);
+        setSubscriptionStatus('inactive');
+        return;
+      }
+
+      setSubscriptionStatus(subData?.subscribed ? 'active' : 'inactive');
+    } catch (err) {
+      console.error("Error checking subscription:", err);
+      setSubscriptionStatus('inactive');
+    }
+  };
+
+  // Fetch business profile
+  const fetchBusinessProfile = async () => {
+    if (!user) return;
+    
+    setLoadingProfile(true);
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      if (profile) {
+        setBusinessProfile(profile);
+        setShowOnboarding(false);
+      } else {
+        setShowOnboarding(true);
+      }
+    } catch (err) {
+      console.error("Error fetching business profile:", err);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  // Fetch agent data
   const fetchAgentData = async () => {
+    if (!businessProfile) return;
+    
     setLoading(true);
     setError(null);
     
@@ -132,14 +217,12 @@ export default function CommandCentre() {
           content: brainDump.trim()
         });
 
-      if (insertError) {
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
       toast.success("Note saved! Refreshing insights...");
       setBrainDump("");
       
-      // Auto-refresh the dashboard to show agent's reaction
+      // Auto-refresh the dashboard
       await fetchAgentData();
     } catch (err) {
       console.error("Error saving note:", err);
@@ -149,9 +232,40 @@ export default function CommandCentre() {
     }
   };
 
+  const handleManageSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('agent-customer-portal');
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (err) {
+      console.error("Error opening portal:", err);
+      toast.error("Failed to open subscription management");
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    fetchBusinessProfile();
+  };
+
+  // Initial data fetching
   useEffect(() => {
-    fetchAgentData();
-  }, []);
+    if (user) {
+      fetchBusinessProfile();
+      checkSubscription();
+    }
+  }, [user]);
+
+  // Fetch agent data when profile is loaded and subscription is active
+  useEffect(() => {
+    if (businessProfile && subscriptionStatus === 'active') {
+      fetchAgentData();
+    } else if (businessProfile && subscriptionStatus === 'inactive') {
+      setLoading(false);
+    }
+  }, [businessProfile, subscriptionStatus]);
 
   const getDirectionIcon = (direction: string) => {
     switch (direction) {
@@ -177,11 +291,12 @@ export default function CommandCentre() {
     );
   };
 
-  if (loading) {
+  // Show skeleton while loading profile or subscription
+  if (loadingProfile || subscriptionStatus === 'loading') {
     return (
       <FounderLayout>
         <Helmet>
-          <title>Command Centre | Wellness Genius</title>
+          <title>Command Centre | Founder Agent</title>
         </Helmet>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -196,6 +311,77 @@ export default function CommandCentre() {
             <div className="space-y-6">
               <Skeleton className="h-40 w-full" />
               <Skeleton className="h-40 w-full" />
+            </div>
+          </div>
+        </div>
+      </FounderLayout>
+    );
+  }
+
+  // Show onboarding modal if no business profile
+  if (showOnboarding && user) {
+    return (
+      <FounderLayout>
+        <Helmet>
+          <title>Welcome | Founder Agent</title>
+        </Helmet>
+        <BusinessOnboardingModal 
+          open={showOnboarding}
+          onComplete={handleOnboardingComplete}
+          userId={user.id}
+        />
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl font-bold">Setting up your Founder Agent...</h2>
+            <p className="text-muted-foreground">Complete the onboarding to get started</p>
+          </div>
+        </div>
+      </FounderLayout>
+    );
+  }
+
+  // Show paywall if not subscribed
+  if (subscriptionStatus === 'inactive') {
+    return (
+      <FounderLayout>
+        <Helmet>
+          <title>Subscribe | Founder Agent</title>
+        </Helmet>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Welcome, {businessProfile?.business_name}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Subscribe to unlock your personal AI strategic advisor
+              </p>
+            </div>
+          </div>
+          <SubscriptionPaywall />
+        </div>
+      </FounderLayout>
+    );
+  }
+
+  if (loading) {
+    return (
+      <FounderLayout>
+        <Helmet>
+          <title>Command Centre | Founder Agent</title>
+        </Helmet>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-48 w-full" />
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-40 w-full" />
               <Skeleton className="h-40 w-full" />
             </div>
           </div>
@@ -208,7 +394,7 @@ export default function CommandCentre() {
     return (
       <FounderLayout>
         <Helmet>
-          <title>Command Centre | Wellness Genius</title>
+          <title>Command Centre | Founder Agent</title>
         </Helmet>
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
           <AlertTriangle className="h-12 w-12 text-destructive" />
@@ -225,15 +411,17 @@ export default function CommandCentre() {
   return (
     <FounderLayout>
       <Helmet>
-        <title>Command Centre | Wellness Genius</title>
-        <meta name="description" content="Founder command centre with AI-powered strategic insights" />
+        <title>Command Centre | {businessProfile?.business_name || 'Founder Agent'}</title>
+        <meta name="description" content="Your personal AI strategic advisor" />
       </Helmet>
 
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Command Centre</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {businessProfile?.business_name || 'Command Centre'}
+            </h1>
             {data?.meta?.generated_at && (
               <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                 <Clock className="h-3 w-3" />
@@ -241,10 +429,16 @@ export default function CommandCentre() {
               </p>
             )}
           </div>
-          <Button onClick={fetchAgentData} variant="outline" size="sm" disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleManageSubscription} variant="ghost" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              Subscription
+            </Button>
+            <Button onClick={fetchAgentData} variant="outline" size="sm" disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
