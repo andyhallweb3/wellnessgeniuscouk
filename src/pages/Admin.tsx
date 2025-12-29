@@ -13,7 +13,8 @@ import {
   Mail,
   Coins,
   ArrowRight,
-  Shield
+  Shield,
+  MessageSquareWarning
 } from "lucide-react";
 
 const ADMIN_SECTIONS = [
@@ -48,6 +49,14 @@ const ADMIN_SECTIONS = [
     icon: Coins,
     path: "/coach/admin",
     color: "bg-amber-500/10 text-amber-600"
+  },
+  { 
+    id: "feedback", 
+    label: "Feedback Reports", 
+    description: "View and manage user-reported problems and feature requests",
+    icon: MessageSquareWarning,
+    path: "/feedback/admin",
+    color: "bg-rose-500/10 text-rose-600"
   },
 ];
 

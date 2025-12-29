@@ -173,3 +173,6 @@ verify_jwt = false
 
 [functions.generate-journal-embedding]
 verify_jwt = false
+
+[functions.submit-feedback]
+verify_jwt = false

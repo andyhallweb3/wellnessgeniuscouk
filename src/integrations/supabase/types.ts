@@ -572,6 +572,45 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          description: string
+          feature_area: string
+          id: string
+          severity: string
+          status: string
+          updated_at: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          description: string
+          feature_area: string
+          id?: string
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string
+          feature_area?: string
+          id?: string
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       founder_guardrails: {
         Row: {
           created_at: string
