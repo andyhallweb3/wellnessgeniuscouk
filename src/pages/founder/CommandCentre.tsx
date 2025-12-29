@@ -35,7 +35,9 @@ import {
   Crosshair,
   Users,
   TrendingUp as Growth,
-  DollarSign
+  DollarSign,
+  Wallet,
+  Code
 } from "lucide-react";
 import {
   ToggleGroup,
@@ -102,7 +104,7 @@ interface AgentData {
   };
 }
 
-type PerspectiveMode = 'ceo' | 'cmo' | 'investor';
+type PerspectiveMode = 'ceo' | 'cmo' | 'cfo' | 'cto' | 'investor';
 
 interface BusinessProfile {
   id: string;
@@ -186,7 +188,7 @@ export default function CommandCentre() {
       if (profile) {
         setBusinessProfile(profile);
         // Set perspective from saved preference
-        if (profile.preferred_perspective && ['ceo', 'cmo', 'investor'].includes(profile.preferred_perspective)) {
+        if (profile.preferred_perspective && ['ceo', 'cmo', 'cfo', 'cto', 'investor'].includes(profile.preferred_perspective)) {
           setPerspective(profile.preferred_perspective as PerspectiveMode);
         }
         setShowOnboarding(false);
@@ -519,6 +521,36 @@ export default function CommandCentre() {
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[200px]">
                     <p className="text-xs">Focus on growth, CAC, viral loops, and narrative. Ignores technical debt.</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <ToggleGroupItem 
+                      value="cfo" 
+                      aria-label="CFO perspective"
+                      className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
+                    >
+                      <Wallet className="h-3 w-3 mr-1.5" />
+                      CFO
+                    </ToggleGroupItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[200px]">
+                    <p className="text-xs">Focus on cash flow, burn rate, runway, and capital allocation.</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <ToggleGroupItem 
+                      value="cto" 
+                      aria-label="CTO perspective"
+                      className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
+                    >
+                      <Code className="h-3 w-3 mr-1.5" />
+                      CTO
+                    </ToggleGroupItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[200px]">
+                    <p className="text-xs">Focus on technical debt, architecture, and engineering capacity.</p>
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
