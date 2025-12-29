@@ -167,6 +167,11 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/roadmap" className="hover:text-primary-foreground transition-colors">
+                    Roadmap & Feedback
+                  </Link>
+                </li>
+                <li>
                   <Link to="/speaker-kit" className="hover:text-primary-foreground transition-colors">
                     Speaker Kit
                   </Link>

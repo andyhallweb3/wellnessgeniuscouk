@@ -35,6 +35,7 @@ import DownloadsAdmin from "./pages/DownloadsAdmin";
 import EmailTemplatesAdmin from "./pages/EmailTemplatesAdmin";
 import CoachCreditsAdmin from "./pages/CoachCreditsAdmin";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
+import Roadmap from "./pages/Roadmap";
 import Admin from "./pages/Admin";
 import Unsubscribe from "./pages/Unsubscribe";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -102,6 +103,7 @@ const App = () => (
             <Route path="/emails/admin" element={<EmailTemplatesAdmin />} />
             <Route path="/coach/admin" element={<CoachCreditsAdmin />} />
             <Route path="/feedback/admin" element={<FeedbackAdmin />} />
+            <Route path="/roadmap" element={<Roadmap />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
