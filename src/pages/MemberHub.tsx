@@ -52,6 +52,7 @@ import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import DownloadHistory from "@/components/hub/DownloadHistory";
 import ReadinessScoreHistory from "@/components/hub/ReadinessScoreHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
+import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useDownloadTracking } from "@/hooks/useDownloadTracking";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
@@ -327,6 +328,7 @@ const MemberHub = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <ReportProblemButton featureArea="Navigation" />
               <Button variant="outline" size="sm" asChild>
                 <Link to="/products">
                   <Package size={16} />
