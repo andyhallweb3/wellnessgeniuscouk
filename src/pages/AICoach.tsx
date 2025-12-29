@@ -224,6 +224,12 @@ const AICoach = () => {
   const streamChat = useCallback(async (userMessages: Message[], mode: string) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach-chat`;
     
+    // Get the user's session for proper JWT authentication
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session?.access_token) {
+      throw new Error("Not authenticated. Please log in to use AI Coach.");
+    }
+    
     // Get document context for AI
     const documentContext = getDocumentContext();
 
@@ -231,7 +237,7 @@ const AICoach = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${sessionData.session.access_token}`,
       },
       body: JSON.stringify({ 
         messages: userMessages,

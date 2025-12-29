@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
@@ -48,6 +49,12 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
   const streamChat = useCallback(async (userMessages: Message[]) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach-chat`;
     
+    // Get the user's session for proper JWT authentication
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session?.access_token) {
+      throw new Error("Not authenticated. Please log in to use AI Coach.");
+    }
+    
     // Build enhanced context with documents
     const documentContext = getDocumentContext();
 
@@ -55,7 +62,7 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${sessionData.session.access_token}`,
       },
       body: JSON.stringify({ 
         messages: userMessages,
