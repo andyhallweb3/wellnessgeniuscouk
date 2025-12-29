@@ -11,7 +11,8 @@ import {
   Lightbulb,
   Bug,
   Sparkles,
-  ChevronUp
+  ChevronUp,
+  Wrench
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -26,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReportProblemButton } from '@/components/feedback/ReportProblemButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -37,6 +39,7 @@ interface FeedbackReport {
   description: string;
   severity: string;
   status: string;
+  feedback_type: string;
   created_at: string;
   upvote_count: number;
 }
@@ -46,6 +49,12 @@ const STATUS_CONFIG = {
   in_progress: { label: 'In Progress', icon: Clock, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
   resolved: { label: 'Resolved', icon: CheckCircle, color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
   wont_fix: { label: 'Closed', icon: MessageSquare, color: 'bg-muted text-muted-foreground' },
+};
+
+const TYPE_CONFIG = {
+  bug: { label: 'Bug', icon: Bug, color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  feature: { label: 'Feature', icon: Lightbulb, color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' },
+  improvement: { label: 'Improvement', icon: Wrench, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
 };
 
 const FEATURE_ICONS: Record<string, typeof Bug> = {
@@ -59,8 +68,8 @@ const Roadmap = () => {
   const { user } = useAuth();
   const [reports, setReports] = useState<FeedbackReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [featureFilter, setFeatureFilter] = useState<string>('all');
   const [userUpvotes, setUserUpvotes] = useState<Set<string>>(new Set());
   const [upvotingId, setUpvotingId] = useState<string | null>(null);
 
@@ -68,15 +77,12 @@ const Roadmap = () => {
     try {
       let query = supabase
         .from('feedback_reports')
-        .select('id, feature_area, description, severity, status, created_at, upvote_count')
+        .select('id, feature_area, description, severity, status, feedback_type, created_at, upvote_count')
         .order('upvote_count', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
-      }
-      if (featureFilter !== 'all') {
-        query = query.eq('feature_area', featureFilter);
       }
 
       const { data, error } = await query;
@@ -111,7 +117,7 @@ const Roadmap = () => {
 
   useEffect(() => {
     fetchReports();
-  }, [statusFilter, featureFilter]);
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchUserUpvotes();
@@ -128,7 +134,6 @@ const Roadmap = () => {
 
     try {
       if (hasUpvoted) {
-        // Remove upvote
         const { error } = await supabase
           .from('feedback_upvotes')
           .delete()
@@ -146,7 +151,6 @@ const Roadmap = () => {
           r.id === feedbackId ? { ...r, upvote_count: r.upvote_count - 1 } : r
         ));
       } else {
-        // Add upvote
         const { error } = await supabase
           .from('feedback_upvotes')
           .insert({ feedback_id: feedbackId, user_id: user.id });
@@ -166,12 +170,95 @@ const Roadmap = () => {
     }
   };
 
-  const uniqueFeatures = [...new Set(reports.map(r => r.feature_area))];
+  // Filter reports by type
+  const filteredReports = activeTab === 'all' 
+    ? reports 
+    : reports.filter(r => r.feedback_type === activeTab);
+
+  const typeCounts = {
+    all: reports.length,
+    bug: reports.filter(r => r.feedback_type === 'bug').length,
+    feature: reports.filter(r => r.feedback_type === 'feature').length,
+    improvement: reports.filter(r => r.feedback_type === 'improvement').length,
+  };
 
   const statusCounts = {
-    open: reports.filter(r => r.status === 'open').length,
-    in_progress: reports.filter(r => r.status === 'in_progress').length,
-    resolved: reports.filter(r => r.status === 'resolved').length,
+    open: filteredReports.filter(r => r.status === 'open').length,
+    in_progress: filteredReports.filter(r => r.status === 'in_progress').length,
+    resolved: filteredReports.filter(r => r.status === 'resolved').length,
+  };
+
+  const renderReportCard = (report: FeedbackReport) => {
+    const statusConfig = STATUS_CONFIG[report.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.open;
+    const typeConfig = TYPE_CONFIG[report.feedback_type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.bug;
+    const StatusIcon = statusConfig.icon;
+    const TypeIcon = typeConfig.icon;
+    const FeatureIcon = FEATURE_ICONS[report.feature_area] || Bug;
+    const hasUpvoted = userUpvotes.has(report.id);
+    const isUpvoting = upvotingId === report.id;
+
+    return (
+      <Card key={report.id} className="overflow-hidden">
+        <div className="flex">
+          {/* Upvote Button */}
+          <button
+            onClick={() => handleUpvote(report.id)}
+            disabled={isUpvoting}
+            className={`flex flex-col items-center justify-center px-4 py-4 border-r transition-colors min-w-[70px] ${
+              hasUpvoted 
+                ? 'bg-accent/10 text-accent border-accent/20' 
+                : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
+            } ${!user ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+            title={user ? (hasUpvoted ? 'Remove upvote' : 'Upvote this') : 'Sign in to upvote'}
+          >
+            {isUpvoting ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <ChevronUp size={20} className={hasUpvoted ? 'text-accent' : ''} />
+            )}
+            <span className={`text-sm font-medium ${hasUpvoted ? 'text-accent' : ''}`}>
+              {report.upvote_count}
+            </span>
+          </button>
+
+          {/* Content */}
+          <div className="flex-1">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-muted shrink-0">
+                    <FeatureIcon size={18} className="text-muted-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-medium">
+                      {report.feature_area}
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {format(new Date(report.created_at), 'MMM d, yyyy')}
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className={typeConfig.color}>
+                    <TypeIcon size={12} className="mr-1" />
+                    {typeConfig.label}
+                  </Badge>
+                  <Badge className={statusConfig.color}>
+                    <StatusIcon size={12} className="mr-1" />
+                    {statusConfig.label}
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-foreground/80 line-clamp-3">
+                {report.description}
+              </p>
+            </CardContent>
+          </div>
+        </div>
+      </Card>
+    );
   };
 
   return (
@@ -207,6 +294,31 @@ const Roadmap = () => {
             </div>
           </div>
 
+          {/* Type Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+            <TabsList className="grid w-full max-w-lg mx-auto grid-cols-4">
+              <TabsTrigger value="all" className="gap-1.5">
+                All
+                <span className="text-xs opacity-70">({typeCounts.all})</span>
+              </TabsTrigger>
+              <TabsTrigger value="bug" className="gap-1.5">
+                <Bug size={14} />
+                Bugs
+                <span className="text-xs opacity-70">({typeCounts.bug})</span>
+              </TabsTrigger>
+              <TabsTrigger value="feature" className="gap-1.5">
+                <Lightbulb size={14} />
+                Features
+                <span className="text-xs opacity-70">({typeCounts.feature})</span>
+              </TabsTrigger>
+              <TabsTrigger value="improvement" className="gap-1.5">
+                <Wrench size={14} />
+                Improvements
+                <span className="text-xs opacity-70">({typeCounts.improvement})</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto mb-12">
             <Card className="text-center">
@@ -229,11 +341,11 @@ const Roadmap = () => {
             </Card>
           </div>
 
-          {/* Filters */}
+          {/* Status Filter */}
           <div className="flex flex-wrap items-center gap-4 mb-8">
             <div className="flex items-center gap-2">
               <Filter size={16} className="text-muted-foreground" />
-              <span className="text-sm font-medium">Filter:</span>
+              <span className="text-sm font-medium">Status:</span>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[160px]">
@@ -246,19 +358,6 @@ const Roadmap = () => {
                 <SelectItem value="resolved">Resolved</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={featureFilter} onValueChange={setFeatureFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Feature Area" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Features</SelectItem>
-                {uniqueFeatures.map(feature => (
-                  <SelectItem key={feature} value={feature}>
-                    {feature}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Reports List */}
@@ -266,11 +365,13 @@ const Roadmap = () => {
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : reports.length === 0 ? (
+          ) : filteredReports.length === 0 ? (
             <Card className="max-w-md mx-auto">
               <CardContent className="py-12 text-center">
                 <Sparkles className="h-12 w-12 mx-auto text-accent mb-4" />
-                <h3 className="font-heading text-lg mb-2">No feedback yet</h3>
+                <h3 className="font-heading text-lg mb-2">
+                  {activeTab === 'all' ? 'No feedback yet' : `No ${activeTab === 'bug' ? 'bugs' : activeTab === 'feature' ? 'feature requests' : 'improvements'} yet`}
+                </h3>
                 <p className="text-muted-foreground mb-4">
                   Be the first to share your thoughts and help us improve!
                 </p>
@@ -279,70 +380,7 @@ const Roadmap = () => {
             </Card>
           ) : (
             <div className="space-y-4">
-              {reports.map((report) => {
-                const statusConfig = STATUS_CONFIG[report.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.open;
-                const StatusIcon = statusConfig.icon;
-                const FeatureIcon = FEATURE_ICONS[report.feature_area] || Bug;
-                const hasUpvoted = userUpvotes.has(report.id);
-                const isUpvoting = upvotingId === report.id;
-
-                return (
-                  <Card key={report.id} className="overflow-hidden">
-                    <div className="flex">
-                      {/* Upvote Button */}
-                      <button
-                        onClick={() => handleUpvote(report.id)}
-                        disabled={isUpvoting}
-                        className={`flex flex-col items-center justify-center px-4 py-4 border-r transition-colors min-w-[70px] ${
-                          hasUpvoted 
-                            ? 'bg-accent/10 text-accent border-accent/20' 
-                            : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
-                        } ${!user ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-                        title={user ? (hasUpvoted ? 'Remove upvote' : 'Upvote this') : 'Sign in to upvote'}
-                      >
-                        {isUpvoting ? (
-                          <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                          <ChevronUp size={20} className={hasUpvoted ? 'text-accent' : ''} />
-                        )}
-                        <span className={`text-sm font-medium ${hasUpvoted ? 'text-accent' : ''}`}>
-                          {report.upvote_count}
-                        </span>
-                      </button>
-
-                      {/* Content */}
-                      <div className="flex-1">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex items-start gap-3">
-                              <div className="p-2 rounded-lg bg-muted shrink-0">
-                                <FeatureIcon size={18} className="text-muted-foreground" />
-                              </div>
-                              <div>
-                                <CardTitle className="text-base font-medium">
-                                  {report.feature_area}
-                                </CardTitle>
-                                <CardDescription className="mt-1">
-                                  {format(new Date(report.created_at), 'MMM d, yyyy')}
-                                </CardDescription>
-                              </div>
-                            </div>
-                            <Badge className={statusConfig.color}>
-                              <StatusIcon size={12} className="mr-1" />
-                              {statusConfig.label}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-foreground/80 line-clamp-3">
-                            {report.description}
-                          </p>
-                        </CardContent>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
+              {filteredReports.map(renderReportCard)}
             </div>
           )}
         </div>

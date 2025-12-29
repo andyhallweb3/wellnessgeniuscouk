@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { featureArea, description, severity, userEmail, userName } = await req.json();
+    const { feedbackType, featureArea, description, severity, userEmail, userName } = await req.json();
 
     if (!featureArea || !description) {
       return new Response(
@@ -48,6 +48,7 @@ serve(async (req) => {
         user_id: userId,
         user_email: resolvedEmail,
         feature_area: featureArea,
+        feedback_type: feedbackType || 'bug',
         description,
         severity: severity || 'medium',
       })
@@ -73,9 +74,10 @@ serve(async (req) => {
           body: JSON.stringify({
             from: 'Wellness Genius <noreply@wellnessgenius.ai>',
             to: ['support@wellnessgenius.ai'],
-            subject: `[Feedback] ${severity?.toUpperCase() || 'MEDIUM'}: ${featureArea}`,
+            subject: `[${(feedbackType || 'bug').toUpperCase()}] ${severity?.toUpperCase() || 'MEDIUM'}: ${featureArea}`,
             html: `
-              <h2>New Feedback Report</h2>
+              <h2>New ${feedbackType === 'feature' ? 'Feature Request' : feedbackType === 'improvement' ? 'Improvement Suggestion' : 'Bug Report'}</h2>
+              <p><strong>Type:</strong> ${feedbackType || 'bug'}</p>
               <p><strong>Feature Area:</strong> ${featureArea}</p>
               <p><strong>Severity:</strong> ${severity || 'medium'}</p>
               <p><strong>Submitted by:</strong> ${userName || 'Anonymous'} (${resolvedEmail || 'No email'})</p>
