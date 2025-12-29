@@ -50,6 +50,7 @@ import SavedInsights from "@/components/hub/SavedInsights";
 import OnboardingBanner from "@/components/hub/OnboardingBanner";
 import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import DownloadHistory from "@/components/hub/DownloadHistory";
+import ReadinessScoreHistory from "@/components/hub/ReadinessScoreHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useDownloadTracking } from "@/hooks/useDownloadTracking";
@@ -754,6 +755,7 @@ const MemberHub = () => {
 
                   {/* Sidebar */}
                   <div className="space-y-6">
+                    <ReadinessScoreHistory />
                     <DownloadHistory />
                     
                     <div className="rounded-xl border border-border bg-card p-6">
