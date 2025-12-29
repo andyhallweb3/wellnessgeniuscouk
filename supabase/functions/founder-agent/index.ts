@@ -67,11 +67,54 @@ You MUST respond with ONLY valid JSON matching this exact schema:
 Focus on actionable, founder-relevant insights specific to ${businessName}. Be direct and specific to their ${industry} context and their goal of ${currentGoal}.`;
 };
 
+// Generate embedding for text using Gemini
+async function generateEmbedding(text: string, genAI: any): Promise<number[] | null> {
+  try {
+    const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    const result = await embeddingModel.embedContent(text);
+    return result.embedding.values;
+  } catch (error) {
+    console.error("Error generating embedding:", error);
+    return null;
+  }
+}
+
+// Semantic search for relevant journal entries
+async function searchRelevantJournalEntries(
+  supabase: any,
+  userId: string,
+  queryEmbedding: number[],
+  limit: number = 5
+): Promise<{ content: string; created_at: string; similarity: number }[]> {
+  try {
+    const { data, error } = await supabase.rpc('search_journal_entries', {
+      query_embedding: queryEmbedding,
+      match_user_id: userId,
+      match_count: limit
+    });
+
+    if (error) {
+      console.error("Error searching journal entries:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error in semantic search:", error);
+    return [];
+  }
+}
+
 // Function to fetch user-specific data from the database
-async function fetchUserData(userId: string): Promise<{ 
+async function fetchUserData(
+  userId: string,
+  currentContext: string | null,
+  genAI: any
+): Promise<{ 
   businessProfile: any;
   stats: string; 
-  journalEntries: string 
+  journalEntries: string;
+  ragUsed: boolean;
 }> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -81,7 +124,8 @@ async function fetchUserData(userId: string): Promise<{
     return { 
       businessProfile: null,
       stats: "Unable to fetch live data - missing credentials.", 
-      journalEntries: "" 
+      journalEntries: "",
+      ragUsed: false
     };
   }
 
@@ -101,26 +145,55 @@ async function fetchUserData(userId: string): Promise<{
 
     console.log("Fetched business profile:", businessProfile?.business_name);
 
-    // 2. Fetch user's recent journal entries
-    const { data: journalEntries, error: journalError } = await supabase
-      .from('founder_journal')
-      .select('content, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(3);
+    // 2. Try semantic search if we have context to search with
+    let journalContext = '';
+    let ragUsed = false;
 
-    if (journalError) {
-      console.error("Error fetching journal entries:", journalError);
+    if (currentContext && currentContext.length > 20) {
+      console.log("Generating embedding for semantic search...");
+      const queryEmbedding = await generateEmbedding(currentContext, genAI);
+      
+      if (queryEmbedding) {
+        console.log("Searching for semantically similar journal entries...");
+        const relevantEntries = await searchRelevantJournalEntries(
+          supabase,
+          userId,
+          queryEmbedding,
+          5
+        );
+
+        if (relevantEntries.length > 0) {
+          ragUsed = true;
+          journalContext = relevantEntries.map((entry) => 
+            `[${new Date(entry.created_at).toLocaleDateString()}] (relevance: ${(entry.similarity * 100).toFixed(0)}%): ${entry.content}`
+          ).join('\n\n');
+          console.log(`Found ${relevantEntries.length} semantically relevant journal entries`);
+        }
+      }
     }
 
-    // Build journal context
-    const journalContext = journalEntries?.length 
-      ? journalEntries.map((entry) => 
-          `[${new Date(entry.created_at).toLocaleDateString()}]: ${entry.content}`
-        ).join('\n\n')
-      : '';
+    // Fallback to recent entries if RAG didn't work
+    if (!ragUsed) {
+      console.log("Using fallback: fetching recent journal entries...");
+      const { data: journalEntries, error: journalError } = await supabase
+        .from('founder_journal')
+        .select('content, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(3);
 
-    // 3. Build generic stats (can be customized per user later)
+      if (journalError) {
+        console.error("Error fetching journal entries:", journalError);
+      }
+
+      journalContext = journalEntries?.length 
+        ? journalEntries.map((entry: any) => 
+            `[${new Date(entry.created_at).toLocaleDateString()}]: ${entry.content}`
+          ).join('\n\n')
+        : '';
+    }
+
+    // 3. Build generic stats
     const stats = `
 BUSINESS CONTEXT:
 - Business Name: ${businessProfile?.business_name || 'Not set'}
@@ -130,15 +203,16 @@ BUSINESS CONTEXT:
 - Profile Last Updated: ${businessProfile?.updated_at || 'Never'}
 `.trim();
 
-    console.log("Fetched user data successfully");
-    return { businessProfile, stats, journalEntries: journalContext };
+    console.log("Fetched user data successfully (RAG used:", ragUsed, ")");
+    return { businessProfile, stats, journalEntries: journalContext, ragUsed };
 
   } catch (error) {
     console.error("Error fetching user data:", error);
     return { 
       businessProfile: null,
       stats: "Error fetching data from database.", 
-      journalEntries: "" 
+      journalEntries: "",
+      ragUsed: false
     };
   }
 }
@@ -173,7 +247,7 @@ serve(async (req) => {
   }
 
   try {
-    const { businessContext, imageUrl } = await req.json();
+    const { businessContext, imageUrl, weeklyCheckinText } = await req.json();
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -181,6 +255,9 @@ serve(async (req) => {
     if (!GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is not configured");
     }
+
+    // Initialize the Google Generative AI client early for embeddings
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
     // Get the authenticated user
     const authHeader = req.headers.get("Authorization");
@@ -199,13 +276,23 @@ serve(async (req) => {
 
     console.log("Authenticated user:", userId);
 
-    // Fetch user-specific data from the database
-    console.log("Fetching user data from database...");
-    const { businessProfile, stats, journalEntries } = await fetchUserData(userId);
+    // Use weekly check-in text for semantic search, or fall back to businessContext
+    const searchContext = weeklyCheckinText || 
+      (businessContext ? JSON.stringify(businessContext) : null);
+
+    // Fetch user-specific data from the database with RAG
+    console.log("Fetching user data from database with semantic search...");
+    const { businessProfile, stats, journalEntries, ragUsed } = await fetchUserData(
+      userId,
+      searchContext,
+      genAI
+    );
 
     if (!businessProfile) {
       throw new Error("Business profile not found. Please complete onboarding.");
     }
+
+    console.log("RAG semantic search used:", ragUsed);
 
     // Build the dynamic system prompt based on user's business profile
     let systemPrompt = getSystemPrompt(businessProfile);
@@ -260,8 +347,7 @@ Based on my specific business context and goals, generate my personalized founde
     console.log("Calling Google Gemini for personalized founder insights...");
     console.log("Image analysis requested:", !!imageUrl);
 
-    // Initialize the Google Generative AI client
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    // Get the chat model for generation
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
       generationConfig: {
@@ -317,6 +403,7 @@ Based on my specific business context and goals, generate my personalized founde
     parsedData.meta.generated_at = new Date().toISOString();
     parsedData.meta.business_name = businessProfile.business_name;
     parsedData.meta.image_analyzed = !!imageUrl;
+    parsedData.meta.rag_used = ragUsed;
 
     console.log("Successfully generated personalized founder insights for", businessProfile.business_name);
 
