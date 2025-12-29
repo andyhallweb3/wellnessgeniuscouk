@@ -26,7 +26,11 @@ import {
   History as HistoryIcon,
   Trophy,
   Home,
-  Flame
+  Flame,
+  Shield,
+  Newspaper,
+  Mail,
+  Coins
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -89,6 +93,41 @@ const PRODUCT_ICONS: Record<string, React.ReactNode> = {
   "myths-deck": <FileText size={20} />,
 };
 
+const ADMIN_SECTIONS = [
+  { 
+    id: "newsletter", 
+    label: "Newsletter", 
+    description: "Manage articles, subscribers, and send newsletters",
+    icon: Newspaper,
+    path: "/news/admin",
+    color: "bg-blue-500/10 text-blue-600"
+  },
+  { 
+    id: "downloads", 
+    label: "Downloads & Upsells", 
+    description: "Track downloads, manage upsell campaigns, view A/B tests",
+    icon: Download,
+    path: "/downloads/admin",
+    color: "bg-green-500/10 text-green-600"
+  },
+  { 
+    id: "emails", 
+    label: "Email Templates", 
+    description: "Create and manage email templates for automation",
+    icon: Mail,
+    path: "/emails/admin",
+    color: "bg-purple-500/10 text-purple-600"
+  },
+  { 
+    id: "credits", 
+    label: "Coach Credits", 
+    description: "Manage user credits, view transactions, trigger resets",
+    icon: Coins,
+    path: "/coach/admin",
+    color: "bg-amber-500/10 text-amber-600"
+  },
+];
+
 const MemberHub = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -99,6 +138,7 @@ const MemberHub = () => {
   const { trackDownload } = useDownloadTracking();
   const { userEntry } = useLeaderboard();
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -109,8 +149,18 @@ const MemberHub = () => {
   useEffect(() => {
     if (user) {
       fetchUserData();
+      checkAdminRole();
     }
   }, [user]);
+
+  const checkAdminRole = async () => {
+    if (!user) return;
+    const { data } = await supabase.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin'
+    });
+    setIsAdmin(data === true);
+  };
 
   const fetchUserData = async () => {
     setIsLoading(true);
@@ -295,6 +345,12 @@ const MemberHub = () => {
                   <BookOpen size={16} />
                   Resources
                 </TabsTrigger>
+                {isAdmin && (
+                  <TabsTrigger value="admin" className="flex items-center gap-2 text-accent">
+                    <Shield size={16} />
+                    Admin
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               {/* OVERVIEW TAB */}
@@ -731,6 +787,49 @@ const MemberHub = () => {
                   </div>
                 </div>
               </TabsContent>
+
+              {/* ADMIN TAB - Only shown to admins */}
+              {isAdmin && (
+                <TabsContent value="admin">
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 rounded-lg bg-accent/10">
+                        <Shield size={20} className="text-accent" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-heading">Admin Dashboard</h2>
+                        <p className="text-sm text-muted-foreground">Manage your platform</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {ADMIN_SECTIONS.map((section) => {
+                        const Icon = section.icon;
+                        
+                        return (
+                          <Link
+                            key={section.id}
+                            to={section.path}
+                            className="group text-left p-6 rounded-2xl border border-border bg-card hover:border-accent/50 hover:shadow-lg transition-all duration-200"
+                          >
+                            <div className="flex items-start justify-between mb-4">
+                              <div className={`p-3 rounded-xl ${section.color}`}>
+                                <Icon size={24} />
+                              </div>
+                              <ArrowRight 
+                                size={20} 
+                                className="text-muted-foreground group-hover:text-accent group-hover:translate-x-1 transition-all" 
+                              />
+                            </div>
+                            <h3 className="text-lg font-heading mb-2">{section.label}</h3>
+                            <p className="text-sm text-muted-foreground">{section.description}</p>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </TabsContent>
+              )}
             </Tabs>
           )}
         </div>
