@@ -582,6 +582,7 @@ export type Database = {
           severity: string
           status: string
           updated_at: string
+          upvote_count: number
           user_email: string | null
           user_id: string | null
         }
@@ -594,6 +595,7 @@ export type Database = {
           severity?: string
           status?: string
           updated_at?: string
+          upvote_count?: number
           user_email?: string | null
           user_id?: string | null
         }
@@ -606,10 +608,40 @@ export type Database = {
           severity?: string
           status?: string
           updated_at?: string
+          upvote_count?: number
           user_email?: string | null
           user_id?: string | null
         }
         Relationships: []
+      }
+      feedback_upvotes: {
+        Row: {
+          created_at: string
+          feedback_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_upvotes_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_reports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       founder_guardrails: {
         Row: {
