@@ -32,8 +32,15 @@ import {
   Brain,
   Save,
   Settings,
-  Crosshair
+  Crosshair,
+  Users,
+  TrendingUp as Growth,
+  DollarSign
 } from "lucide-react";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -83,6 +90,9 @@ interface AgentData {
     generated_at: string;
     confidence_note: string;
     business_name?: string;
+    perspective?: string;
+    rag_used?: boolean;
+    image_analyzed?: boolean;
   };
 }
 
@@ -114,6 +124,9 @@ export default function CommandCentre() {
   // Brain dump state
   const [brainDump, setBrainDump] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+
+  // Perspective mode state
+  const [perspective, setPerspective] = useState<'ceo' | 'cmo' | 'investor'>('ceo');
 
   // Check for checkout success
   useEffect(() => {
@@ -183,7 +196,10 @@ export default function CommandCentre() {
     
     try {
       const { data: responseData, error: fetchError } = await supabase.functions.invoke('founder-agent', {
-        body: { businessContext: null }
+        body: { 
+          businessContext: null,
+          perspective: perspective
+        }
       });
 
       if (fetchError) {
@@ -267,7 +283,7 @@ export default function CommandCentre() {
     } else if (businessProfile && subscriptionStatus === 'inactive') {
       setLoading(false);
     }
-  }, [businessProfile, subscriptionStatus]);
+  }, [businessProfile, subscriptionStatus, perspective]);
 
   const getDirectionIcon = (direction: string) => {
     switch (direction) {
@@ -419,7 +435,7 @@ export default function CommandCentre() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
               {businessProfile?.business_name || 'Command Centre'}
@@ -428,10 +444,46 @@ export default function CommandCentre() {
               <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                 <Clock className="h-3 w-3" />
                 Updated {new Date(data.meta.generated_at).toLocaleTimeString()}
+                {data?.meta?.perspective && (
+                  <span className="ml-2">• {data.meta.perspective.toUpperCase()} view</span>
+                )}
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Perspective Selector */}
+            <ToggleGroup 
+              type="single" 
+              value={perspective} 
+              onValueChange={(value) => value && setPerspective(value as 'ceo' | 'cmo' | 'investor')}
+              className="bg-muted rounded-lg p-1"
+            >
+              <ToggleGroupItem 
+                value="ceo" 
+                aria-label="CEO perspective"
+                className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
+              >
+                <Users className="h-3 w-3 mr-1.5" />
+                CEO
+              </ToggleGroupItem>
+              <ToggleGroupItem 
+                value="cmo" 
+                aria-label="CMO perspective"
+                className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
+              >
+                <Growth className="h-3 w-3 mr-1.5" />
+                CMO
+              </ToggleGroupItem>
+              <ToggleGroupItem 
+                value="investor" 
+                aria-label="Investor perspective"
+                className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-xs font-medium"
+              >
+                <DollarSign className="h-3 w-3 mr-1.5" />
+                Investor
+              </ToggleGroupItem>
+            </ToggleGroup>
+            
             <Button onClick={handleManageSubscription} variant="ghost" size="sm">
               <Settings className="h-4 w-4 mr-2" />
               Subscription
