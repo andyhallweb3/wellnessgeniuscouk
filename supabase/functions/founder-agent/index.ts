@@ -31,22 +31,48 @@ const PERSPECTIVE_MODES = {
   }
 };
 
-// Base system prompt template - will be customized per user and perspective
-const getSystemPrompt = (businessProfile: any, perspective: string = 'ceo') => {
+// Build blended system prompt for multiple perspectives
+const getSystemPrompt = (businessProfile: any, perspectives: string[] = ['ceo']) => {
   const businessName = businessProfile?.business_name || 'your company';
   const industry = businessProfile?.industry || 'technology';
   const targetAudience = businessProfile?.target_audience || 'business customers';
   const currentGoal = businessProfile?.current_goal || 'growth and success';
   
-  const mode = PERSPECTIVE_MODES[perspective as keyof typeof PERSPECTIVE_MODES] || PERSPECTIVE_MODES.ceo;
+  // Get all selected perspective modes
+  const selectedModes = perspectives
+    .filter(p => PERSPECTIVE_MODES[p as keyof typeof PERSPECTIVE_MODES])
+    .map(p => PERSPECTIVE_MODES[p as keyof typeof PERSPECTIVE_MODES]);
+  
+  // If no valid perspectives, default to CEO
+  if (selectedModes.length === 0) {
+    selectedModes.push(PERSPECTIVE_MODES.ceo);
+  }
+  
+  // Build blended instructions
+  let perspectiveInstructions: string;
+  let perspectiveLabel: string;
+  
+  if (selectedModes.length === 1) {
+    perspectiveInstructions = selectedModes[0].instructions;
+    perspectiveLabel = selectedModes[0].name;
+  } else {
+    // Blend multiple perspectives
+    const names = selectedModes.map(m => m.name).join(' + ');
+    const blendedInstructions = selectedModes
+      .map(m => `**${m.name} Lens**: ${m.instructions}`)
+      .join('\n\n');
+    
+    perspectiveInstructions = `You are a Multi-Perspective Strategic Advisor blending ${names} viewpoints. You must consider insights from ALL of these perspectives and synthesize them into cohesive recommendations:\n\n${blendedInstructions}\n\nWhen perspectives conflict, acknowledge the tension and provide balanced guidance that weighs each viewpoint appropriately.`;
+    perspectiveLabel = `Blended (${names})`;
+  }
 
-  return `${mode.instructions}
+  return `${perspectiveInstructions}
 
 You are advising ${businessName}, a company in the ${industry} space. Their target audience is ${targetAudience}. Their current goal is ${currentGoal}.
 
-CURRENT PERSPECTIVE: ${mode.name}
+CURRENT PERSPECTIVE: ${perspectiveLabel}
 
-Analyze the provided business context and return strategic insights tailored to their specific situation FROM YOUR ${mode.name} PERSPECTIVE.
+Analyze the provided business context and return strategic insights tailored to their specific situation FROM YOUR ${perspectiveLabel} PERSPECTIVE.
 
 You MUST respond with ONLY valid JSON matching this exact schema:
 
@@ -91,11 +117,11 @@ You MUST respond with ONLY valid JSON matching this exact schema:
   "meta": {
     "generated_at": "ISO timestamp",
     "confidence_note": "string - overall confidence assessment",
-    "perspective": "${perspective}"
+    "perspective": "${perspectiveLabel}"
   }
 }
 
-Focus on actionable insights specific to ${businessName} FROM YOUR ${mode.name} LENS. Be direct and specific to their ${industry} context and their goal of ${currentGoal}.`;
+Focus on actionable insights specific to ${businessName} FROM YOUR ${perspectiveLabel} LENS. Be direct and specific to their ${industry} context and their goal of ${currentGoal}.`;
 };
 
 // Generate embedding for text using Gemini
@@ -278,7 +304,7 @@ serve(async (req) => {
   }
 
   try {
-    const { businessContext, imageUrl, weeklyCheckinText, perspective = 'ceo' } = await req.json();
+    const { businessContext, imageUrl, weeklyCheckinText, perspectives = ['ceo'] } = await req.json();
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -324,10 +350,12 @@ serve(async (req) => {
     }
 
     console.log("RAG semantic search used:", ragUsed);
-    console.log("Perspective mode:", perspective);
+    // Normalize perspectives to array
+    const perspectiveArray = Array.isArray(perspectives) ? perspectives : [perspectives];
+    console.log("Perspective modes:", perspectiveArray);
 
-    // Build the dynamic system prompt based on user's business profile and perspective
-    let systemPrompt = getSystemPrompt(businessProfile, perspective);
+    // Build the dynamic system prompt based on user's business profile and perspective(s)
+    let systemPrompt = getSystemPrompt(businessProfile, perspectiveArray);
 
     // If image is provided, add image analysis instructions
     if (imageUrl) {
