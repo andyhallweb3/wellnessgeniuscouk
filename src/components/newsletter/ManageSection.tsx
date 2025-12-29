@@ -77,21 +77,20 @@ export const ManageSection = ({ getAuthHeaders, onLogout }: ManageSectionProps) 
                   Open AI Generator
                 </Button>
               </div>
-              {showAIGenerator && (
-                <AIArticleGenerator
-                  sourceArticle={{
-                    title: "",
-                    summary: "",
-                    source_name: "",
-                    source_url: "",
-                    category: "",
-                    published_date: new Date().toISOString(),
-                  }}
-                  onClose={() => setShowAIGenerator(false)}
-                  onArticleCreated={() => setShowAIGenerator(false)}
-                  getAuthHeaders={getAuthHeaders}
-                />
-              )}
+              <AIArticleGenerator
+                open={showAIGenerator}
+                onOpenChange={setShowAIGenerator}
+                sourceArticle={showAIGenerator ? {
+                  title: "",
+                  summary: "",
+                  source_name: "",
+                  source_url: "",
+                  category: "",
+                  published_date: new Date().toISOString(),
+                } : null}
+                getAuthHeaders={getAuthHeaders}
+                onArticleCreated={() => setShowAIGenerator(false)}
+              />
             </TabsContent>
 
             <TabsContent value="admins">
