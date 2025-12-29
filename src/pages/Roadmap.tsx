@@ -10,7 +10,8 @@ import {
   Filter,
   Lightbulb,
   Bug,
-  Sparkles
+  Sparkles,
+  ChevronUp
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -26,6 +27,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ReportProblemButton } from '@/components/feedback/ReportProblemButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 
 interface FeedbackReport {
   id: string;
@@ -34,6 +38,7 @@ interface FeedbackReport {
   severity: string;
   status: string;
   created_at: string;
+  upvote_count: number;
 }
 
 const STATUS_CONFIG = {
@@ -51,16 +56,20 @@ const FEATURE_ICONS: Record<string, typeof Bug> = {
 };
 
 const Roadmap = () => {
+  const { user } = useAuth();
   const [reports, setReports] = useState<FeedbackReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [featureFilter, setFeatureFilter] = useState<string>('all');
+  const [userUpvotes, setUserUpvotes] = useState<Set<string>>(new Set());
+  const [upvotingId, setUpvotingId] = useState<string | null>(null);
 
   const fetchReports = async () => {
     try {
       let query = supabase
         .from('feedback_reports')
-        .select('id, feature_area, description, severity, status, created_at')
+        .select('id, feature_area, description, severity, status, created_at, upvote_count')
+        .order('upvote_count', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
@@ -81,9 +90,81 @@ const Roadmap = () => {
     }
   };
 
+  const fetchUserUpvotes = async () => {
+    if (!user) {
+      setUserUpvotes(new Set());
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('feedback_upvotes')
+        .select('feedback_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setUserUpvotes(new Set(data?.map(u => u.feedback_id) || []));
+    } catch (error) {
+      console.error('Error fetching user upvotes:', error);
+    }
+  };
+
   useEffect(() => {
     fetchReports();
   }, [statusFilter, featureFilter]);
+
+  useEffect(() => {
+    fetchUserUpvotes();
+  }, [user]);
+
+  const handleUpvote = async (feedbackId: string) => {
+    if (!user) {
+      toast.error('Please sign in to upvote');
+      return;
+    }
+
+    setUpvotingId(feedbackId);
+    const hasUpvoted = userUpvotes.has(feedbackId);
+
+    try {
+      if (hasUpvoted) {
+        // Remove upvote
+        const { error } = await supabase
+          .from('feedback_upvotes')
+          .delete()
+          .eq('feedback_id', feedbackId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        setUserUpvotes(prev => {
+          const next = new Set(prev);
+          next.delete(feedbackId);
+          return next;
+        });
+        setReports(prev => prev.map(r => 
+          r.id === feedbackId ? { ...r, upvote_count: r.upvote_count - 1 } : r
+        ));
+      } else {
+        // Add upvote
+        const { error } = await supabase
+          .from('feedback_upvotes')
+          .insert({ feedback_id: feedbackId, user_id: user.id });
+
+        if (error) throw error;
+
+        setUserUpvotes(prev => new Set(prev).add(feedbackId));
+        setReports(prev => prev.map(r => 
+          r.id === feedbackId ? { ...r, upvote_count: r.upvote_count + 1 } : r
+        ));
+      }
+    } catch (error) {
+      console.error('Error toggling upvote:', error);
+      toast.error('Failed to update vote');
+    } finally {
+      setUpvotingId(null);
+    }
+  };
 
   const uniqueFeatures = [...new Set(reports.map(r => r.feature_area))];
 
@@ -113,11 +194,17 @@ const Roadmap = () => {
               Transparency in action. See what users are reporting, what we're working on, 
               and help shape the future of Wellness Genius.
             </p>
-            <ReportProblemButton 
-              variant="default" 
-              size="default" 
-              className="mx-auto"
-            />
+            <div className="flex items-center justify-center gap-4">
+              <ReportProblemButton 
+                variant="default" 
+                size="default"
+              />
+              {!user && (
+                <Button variant="outline" asChild>
+                  <Link to="/auth">Sign in to upvote</Link>
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Stats */}
@@ -196,35 +283,63 @@ const Roadmap = () => {
                 const statusConfig = STATUS_CONFIG[report.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.open;
                 const StatusIcon = statusConfig.icon;
                 const FeatureIcon = FEATURE_ICONS[report.feature_area] || Bug;
+                const hasUpvoted = userUpvotes.has(report.id);
+                const isUpvoting = upvotingId === report.id;
 
                 return (
                   <Card key={report.id} className="overflow-hidden">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 rounded-lg bg-muted shrink-0">
-                            <FeatureIcon size={18} className="text-muted-foreground" />
+                    <div className="flex">
+                      {/* Upvote Button */}
+                      <button
+                        onClick={() => handleUpvote(report.id)}
+                        disabled={isUpvoting}
+                        className={`flex flex-col items-center justify-center px-4 py-4 border-r transition-colors min-w-[70px] ${
+                          hasUpvoted 
+                            ? 'bg-accent/10 text-accent border-accent/20' 
+                            : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
+                        } ${!user ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                        title={user ? (hasUpvoted ? 'Remove upvote' : 'Upvote this') : 'Sign in to upvote'}
+                      >
+                        {isUpvoting ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                          <ChevronUp size={20} className={hasUpvoted ? 'text-accent' : ''} />
+                        )}
+                        <span className={`text-sm font-medium ${hasUpvoted ? 'text-accent' : ''}`}>
+                          {report.upvote_count}
+                        </span>
+                      </button>
+
+                      {/* Content */}
+                      <div className="flex-1">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 rounded-lg bg-muted shrink-0">
+                                <FeatureIcon size={18} className="text-muted-foreground" />
+                              </div>
+                              <div>
+                                <CardTitle className="text-base font-medium">
+                                  {report.feature_area}
+                                </CardTitle>
+                                <CardDescription className="mt-1">
+                                  {format(new Date(report.created_at), 'MMM d, yyyy')}
+                                </CardDescription>
+                              </div>
+                            </div>
+                            <Badge className={statusConfig.color}>
+                              <StatusIcon size={12} className="mr-1" />
+                              {statusConfig.label}
+                            </Badge>
                           </div>
-                          <div>
-                            <CardTitle className="text-base font-medium">
-                              {report.feature_area}
-                            </CardTitle>
-                            <CardDescription className="mt-1">
-                              {format(new Date(report.created_at), 'MMM d, yyyy')}
-                            </CardDescription>
-                          </div>
-                        </div>
-                        <Badge className={statusConfig.color}>
-                          <StatusIcon size={12} className="mr-1" />
-                          {statusConfig.label}
-                        </Badge>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-foreground/80 line-clamp-3">
+                            {report.description}
+                          </p>
+                        </CardContent>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-foreground/80 line-clamp-3">
-                        {report.description}
-                      </p>
-                    </CardContent>
+                    </div>
                   </Card>
                 );
               })}
