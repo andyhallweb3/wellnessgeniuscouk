@@ -38,15 +38,35 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // Get ephemeral token from edge function
-      const { data, error } = await supabase.functions.invoke("genie-voice-token", {
-        body: { memoryContext },
-      });
-
-      if (error || !data?.client_secret?.value) {
-        throw new Error(error?.message || "Failed to get voice token");
+      // Get the user's session for proper JWT authentication
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.access_token) {
+        throw new Error("Not authenticated. Please log in to use voice.");
       }
 
+      // Get ephemeral token from edge function with JWT auth
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genie-voice-token`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionData.session.access_token}`,
+          },
+          body: JSON.stringify({ memoryContext }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to get voice token");
+      }
+
+      const data = await response.json();
+
+      if (!data?.client_secret?.value) {
+        throw new Error("Failed to get voice token from server");
+      }
       const EPHEMERAL_KEY = data.client_secret.value;
 
       // Create peer connection
