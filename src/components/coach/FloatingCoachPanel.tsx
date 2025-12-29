@@ -37,29 +37,62 @@ interface FloatingCoachPanelProps {
 }
 
 const FAQS = [
+  // Getting Started
   {
     question: "What is Wellness Genius?",
     answer: "Wellness Genius is an AI-powered platform designed to help wellness businesses navigate the AI landscape. We offer tools, assessments, playbooks, and expert consulting to help you implement AI effectively."
   },
   {
-    question: "How does the AI Readiness Assessment work?",
-    answer: "Our free AI Readiness Assessment takes about 10 minutes and evaluates your business across 5 key pillars: Data, Process, People, Risk, and Leadership. You'll receive a personalized score and actionable insights."
+    question: "How do I get started?",
+    answer: "Start with our free AI Readiness Assessment to understand where your business stands. From there, explore our free resources or book a strategy call to discuss your specific needs."
   },
+  {
+    question: "Do I need technical knowledge to use your tools?",
+    answer: "No! Our tools are designed for wellness business operators, not developers. Everything is explained in plain English with actionable next steps."
+  },
+  // Products & Services
   {
     question: "What products do you offer?",
     answer: "We offer free playbooks and guides, paid diagnostic tools, and consulting services ranging from AI Readiness Sprints to custom AI agent builds. Visit our Products page to explore all options."
+  },
+  {
+    question: "What's the difference between consulting and software services?",
+    answer: "Consulting includes strategy, training, and roadmaps (AI Readiness Sprint, AI Literacy for Leaders). Software services are custom builds—AI agents, websites, apps, and platforms built specifically for your business."
+  },
+  {
+    question: "How much do your services cost?",
+    answer: "Free AI Readiness Assessment. Consulting starts at £1,500. AI Agent builds from £8,000. Custom software from £10,000. Book a call for a custom quote."
+  },
+  // AI Features
+  {
+    question: "How does the AI Readiness Assessment work?",
+    answer: "Our free AI Readiness Assessment takes about 10 minutes and evaluates your business across 5 key pillars: Data, Process, People, Risk, and Leadership. You'll receive a personalized score and actionable insights."
   },
   {
     question: "How does the AI Advisor work?",
     answer: "The AI Advisor is your strategic business partner. It uses AI to provide guidance on wellness business decisions, help you stress-test ideas, and build action plans. You need to be logged in to use it."
   },
   {
+    question: "What are credits and how do they work?",
+    answer: "Credits are used for AI Advisor conversations. You receive credits when you sign up, and can purchase more as needed. Each message uses 1 credit."
+  },
+  // Account & Billing
+  {
+    question: "How do I create an account?",
+    answer: "Click 'Sign In' in the top right, then choose 'Create Account'. You can sign up with email. Your account gives you access to the AI Advisor, saved insights, and your purchase history."
+  },
+  {
+    question: "Can I cancel or get a refund?",
+    answer: "Digital products are non-refundable once accessed. For consulting services, we offer full refunds if cancelled before work begins. Contact us at hello@wellnessgenius.io for any issues."
+  },
+  // Security & Privacy
+  {
     question: "Is my data secure?",
     answer: "Yes. We take data security seriously. Your data is encrypted, never shared with third parties, and you can request deletion at any time. See our Privacy Policy for full details."
   },
   {
-    question: "How do I get started?",
-    answer: "Start with our free AI Readiness Assessment to understand where your business stands. From there, explore our free resources or book a strategy call to discuss your specific needs."
+    question: "How do I delete my data?",
+    answer: "Email hello@wellnessgenius.io with the subject 'Data Deletion Request'. We'll process your request within 30 days and confirm when complete."
   },
 ];
 

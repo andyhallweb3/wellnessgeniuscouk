@@ -28,8 +28,11 @@ const Header = () => {
   const productLinks = [
     { href: "/products", label: "All Products" },
     { href: "/bundles", label: "Bundles & Deals" },
-    { href: "/services", label: "Consulting" },
-    { href: "/services#software", label: "Software Development" },
+  ];
+
+  const serviceLinks = [
+    { href: "/services", label: "Consulting & Training" },
+    { href: "/software", label: "Software Development" },
   ];
 
   const aboutLinks = [
@@ -56,11 +59,31 @@ const Header = () => {
             {/* Products Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent/5">
-                Products & Services
+                Products
                 <ChevronDown size={14} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="bg-popover border border-border shadow-lg z-50">
                 {productLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <Link 
+                      to={link.href} 
+                      className={`w-full ${isActive(link.href) ? "text-accent font-medium" : ""}`}
+                    >
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Services Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent/5">
+                Services
+                <ChevronDown size={14} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-popover border border-border shadow-lg z-50">
+                {serviceLinks.map((link) => (
                   <DropdownMenuItem key={link.href} asChild>
                     <Link 
                       to={link.href} 
@@ -173,9 +196,24 @@ const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden py-6 border-t border-border/30 animate-fade-in">
             <nav className="flex flex-col gap-1">
-              {/* Products & Services Section */}
-              <p className="text-xs font-medium text-muted-foreground px-2 pt-2 pb-1">Products & Services</p>
+              {/* Products Section */}
+              <p className="text-xs font-medium text-muted-foreground px-2 pt-2 pb-1">Products</p>
               {productLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`px-3 py-2 text-base font-medium transition-colors rounded-md ${
+                    isActive(link.href) ? "text-accent bg-accent/5" : "text-foreground hover:bg-accent/5"
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              {/* Services Section */}
+              <p className="text-xs font-medium text-muted-foreground px-2 pt-4 pb-1">Services</p>
+              {serviceLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
