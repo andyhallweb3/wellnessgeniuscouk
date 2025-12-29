@@ -38,6 +38,7 @@ import {
   generateGamificationPlaybook,
 } from "@/lib/pdf-generators";
 import { useDownloadTracking } from "@/hooks/useDownloadTracking";
+import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
 
 interface DownloadRecord {
   id: string;
@@ -231,14 +232,17 @@ const DownloadsLibrary = () => {
             <div>
               <h1 className="text-3xl md:text-4xl font-heading mb-2">Downloads Library</h1>
               <p className="text-muted-foreground">
-                All your downloads in one place. Search, filter, and re-download anytime.
-              </p>
-            </div>
+              All your downloads in one place. Search, filter, and re-download anytime.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <ReportProblemButton featureArea="Document Upload" />
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <FileText size={16} />
               <span>{downloads.length} products</span>
             </div>
           </div>
+        </div>
 
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
