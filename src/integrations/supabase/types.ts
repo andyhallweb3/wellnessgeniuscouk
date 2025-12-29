@@ -597,18 +597,21 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          embedding: string | null
           id: string
           user_id: string
         }
         Insert: {
           content: string
           created_at?: string
+          embedding?: string | null
           id?: string
           user_id: string
         }
         Update: {
           content?: string
           created_at?: string
+          embedding?: string | null
           id?: string
           user_id?: string
         }
@@ -1439,6 +1442,19 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      search_journal_entries: {
+        Args: {
+          match_count?: number
+          match_user_id: string
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
