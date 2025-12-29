@@ -39,6 +39,7 @@ import CreditDisplay from "@/components/coach/CreditDisplay";
 import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
 import SessionHistory from "@/components/genie/SessionHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
+import FloatingChatDrawer from "@/components/genie/FloatingChatDrawer";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
@@ -82,6 +83,7 @@ const Genie = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("brief");
   const [showHistory, setShowHistory] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [floatingChatOpen, setFloatingChatOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Brief state - use the hook
@@ -739,6 +741,19 @@ const Genie = () => {
           )}
         </div>
       </main>
+
+      {/* Floating Chat Drawer */}
+      {!showChat && (
+        <FloatingChatDrawer
+          open={floatingChatOpen}
+          onOpenChange={setFloatingChatOpen}
+          credits={credits.balance}
+          onDeductCredits={deductCredits}
+          memoryContext={getMemoryContext()}
+          trustDisplayMode={trustDisplayMode}
+          onSaveSession={saveSession}
+        />
+      )}
 
       {/* Decision Drawer */}
       <DecisionDrawer
