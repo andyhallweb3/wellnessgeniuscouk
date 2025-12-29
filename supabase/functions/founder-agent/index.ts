@@ -7,16 +7,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Base system prompt template - will be customized per user
-const getSystemPrompt = (businessProfile: any) => {
+// Perspective mode configurations
+const PERSPECTIVE_MODES = {
+  ceo: {
+    name: "CEO",
+    instructions: "You are the Strategic CEO Advisor. Balance all aspects of the business - growth, operations, team, finance, and long-term vision. Provide holistic leadership guidance."
+  },
+  cmo: {
+    name: "CMO",
+    instructions: "You are a Growth-Obsessed CMO Advisor. Focus ENTIRELY on growth, customer acquisition cost (CAC), viral loops, brand narrative, and marketing leverage. Ignore technical debt and operational concerns - that's not your domain. Push aggressive growth strategies and creative marketing angles. Every recommendation should drive awareness, conversion, or retention."
+  },
+  investor: {
+    name: "Investor",
+    instructions: "You are a Skeptical Investor Advisor. Focus on ROI, unit economics, scalability, and defensibility. Be skeptical and risk-averse. Question assumptions, probe for weaknesses, and demand evidence. Prioritize capital efficiency, market size validation, and competitive moats. Flag anything that could scare away serious investors."
+  }
+};
+
+// Base system prompt template - will be customized per user and perspective
+const getSystemPrompt = (businessProfile: any, perspective: string = 'ceo') => {
   const businessName = businessProfile?.business_name || 'your company';
   const industry = businessProfile?.industry || 'technology';
   const targetAudience = businessProfile?.target_audience || 'business customers';
   const currentGoal = businessProfile?.current_goal || 'growth and success';
+  
+  const mode = PERSPECTIVE_MODES[perspective as keyof typeof PERSPECTIVE_MODES] || PERSPECTIVE_MODES.ceo;
 
-  return `You are a Strategic Founder Agent for ${businessName}, a company in the ${industry} space. Their target audience is ${targetAudience}. Their current goal is ${currentGoal}.
+  return `${mode.instructions}
 
-You are their personal AI strategic advisor. Analyze the provided business context and return strategic insights tailored to their specific situation.
+You are advising ${businessName}, a company in the ${industry} space. Their target audience is ${targetAudience}. Their current goal is ${currentGoal}.
+
+CURRENT PERSPECTIVE: ${mode.name}
+
+Analyze the provided business context and return strategic insights tailored to their specific situation FROM YOUR ${mode.name} PERSPECTIVE.
 
 You MUST respond with ONLY valid JSON matching this exact schema:
 
@@ -60,11 +82,12 @@ You MUST respond with ONLY valid JSON matching this exact schema:
   ],
   "meta": {
     "generated_at": "ISO timestamp",
-    "confidence_note": "string - overall confidence assessment"
+    "confidence_note": "string - overall confidence assessment",
+    "perspective": "${perspective}"
   }
 }
 
-Focus on actionable, founder-relevant insights specific to ${businessName}. Be direct and specific to their ${industry} context and their goal of ${currentGoal}.`;
+Focus on actionable insights specific to ${businessName} FROM YOUR ${mode.name} LENS. Be direct and specific to their ${industry} context and their goal of ${currentGoal}.`;
 };
 
 // Generate embedding for text using Gemini
@@ -247,7 +270,7 @@ serve(async (req) => {
   }
 
   try {
-    const { businessContext, imageUrl, weeklyCheckinText } = await req.json();
+    const { businessContext, imageUrl, weeklyCheckinText, perspective = 'ceo' } = await req.json();
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -293,9 +316,10 @@ serve(async (req) => {
     }
 
     console.log("RAG semantic search used:", ragUsed);
+    console.log("Perspective mode:", perspective);
 
-    // Build the dynamic system prompt based on user's business profile
-    let systemPrompt = getSystemPrompt(businessProfile);
+    // Build the dynamic system prompt based on user's business profile and perspective
+    let systemPrompt = getSystemPrompt(businessProfile, perspective);
 
     // If image is provided, add image analysis instructions
     if (imageUrl) {
