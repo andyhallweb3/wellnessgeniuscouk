@@ -13,7 +13,9 @@ import {
   Monitor,
   Tablet,
   Smartphone,
-  RefreshCw
+  RefreshCw,
+  Copy,
+  Check
 } from "lucide-react";
 
 interface NewsletterPreviewProps {
@@ -39,6 +41,7 @@ export const NewsletterPreview = ({
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [previewWidth, setPreviewWidth] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [copied, setCopied] = useState(false);
 
   const generatePreview = async () => {
     setLoading(true);
@@ -91,6 +94,26 @@ export const NewsletterPreview = ({
     mobile: "max-w-[375px]",
   };
 
+  const copyHtmlToClipboard = async () => {
+    if (!previewHtml) return;
+    
+    try {
+      await navigator.clipboard.writeText(previewHtml);
+      setCopied(true);
+      toast({
+        title: "HTML Copied!",
+        description: "Newsletter HTML copied to clipboard. Paste it into Resend.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy HTML to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -141,8 +164,8 @@ export const NewsletterPreview = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Generate button */}
-          <div className="flex items-center gap-4">
+          {/* Generate button and Copy HTML */}
+          <div className="flex items-center gap-4 flex-wrap">
             <Button onClick={generatePreview} disabled={loading || selectedArticleIds.length === 0}>
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -151,6 +174,27 @@ export const NewsletterPreview = ({
               )}
               {previewHtml ? "Regenerate Preview" : "Generate Preview"}
             </Button>
+            
+            {previewHtml && (
+              <Button 
+                variant="outline" 
+                onClick={copyHtmlToClipboard}
+                className="gap-2"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 text-green-600" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copy HTML for Resend
+                  </>
+                )}
+              </Button>
+            )}
+            
             <span className="text-sm text-muted-foreground">
               {selectedArticleIds.length} article{selectedArticleIds.length !== 1 ? "s" : ""} selected
             </span>
