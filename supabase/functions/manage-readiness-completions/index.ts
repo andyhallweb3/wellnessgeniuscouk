@@ -163,6 +163,17 @@ serve(async (req) => {
 
       if (error) throw error;
 
+      // Log admin access to audit table
+      await supabase.from('admin_audit_logs').insert({
+        admin_user_id: authResult.userId,
+        action: 'list',
+        resource_type: 'ai_readiness_completions',
+        resource_count: completions?.length || 0,
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip'),
+        user_agent: req.headers.get('user-agent'),
+      });
+      console.log('Audit log: Admin', authResult.userId, 'accessed', completions?.length || 0, 'completions');
+
       // Get stats
       const { count: totalCount } = await supabase
         .from('ai_readiness_completions')
