@@ -1,4 +1,4 @@
-import { Check, Sparkles, BookOpen, BarChart3, Package, CircleDot } from "lucide-react";
+import { Check, Sparkles, BookOpen, BarChart3, Package, CircleDot, ArrowRight } from "lucide-react";
 import { useOnboarding, ONBOARDING_STEP_IDS, OnboardingStepId } from "@/hooks/useOnboarding";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,12 @@ const STEP_ICONS: Record<OnboardingStepId, React.ReactNode> = {
   products: <Package size={16} />,
 };
 
-const STEP_ACTIONS: Record<OnboardingStepId, { label: string; href?: string; action?: string }> = {
-  welcome: { label: "Complete tour", action: "tour" },
-  genie: { label: "Try it", action: "genie" },
-  hub: { label: "You're here!", href: "/hub" },
-  assessment: { label: "Start", href: "/ai-readiness" },
-  products: { label: "Browse", href: "/products" },
+const STEP_ACTIONS: Record<OnboardingStepId, { label: string; href?: string; action?: string; description?: string }> = {
+  welcome: { label: "Start Tour", action: "tour", description: "Take a quick tour of the platform" },
+  genie: { label: "Try AI Advisor", href: "/genie", description: "Get AI-powered business guidance" },
+  hub: { label: "You're here!", href: "/hub", description: "Your central intelligence dashboard" },
+  assessment: { label: "Take Assessment", href: "/ai-readiness", description: "Check your AI readiness score" },
+  products: { label: "View Products", href: "/products", description: "Download playbooks and guides" },
 };
 
 const OnboardingProgress = () => {
@@ -40,39 +40,43 @@ const OnboardingProgress = () => {
   if (percentage === 100) {
     return (
       <div className="rounded-xl border border-accent/30 bg-gradient-to-br from-accent/10 to-accent/5 p-6">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 rounded-full bg-accent/20">
-            <Check size={20} className="text-accent" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-full bg-accent/20">
+              <Check size={20} className="text-accent" />
+            </div>
+            <div>
+              <h3 className="font-heading text-lg">All Set!</h3>
+              <p className="text-sm text-muted-foreground">You've explored all features</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-heading text-sm">All Set!</h3>
-            <p className="text-xs text-muted-foreground">You've explored all features</p>
-          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={restartOnboarding}
+          >
+            Retake Tour
+          </Button>
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="w-full text-xs"
-          onClick={restartOnboarding}
-        >
-          Retake Tour
-        </Button>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-xl border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-background p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-heading text-sm">Getting Started</h3>
-        <span className="text-xs text-muted-foreground">
-          {completedSteps.length}/{totalSteps} complete
+        <div>
+          <h3 className="font-heading text-lg">Getting Started</h3>
+          <p className="text-sm text-muted-foreground">Complete these steps to get the most from your hub</p>
+        </div>
+        <span className="text-sm font-medium text-accent">
+          {completedSteps.length}/{totalSteps}
         </span>
       </div>
 
-      <Progress value={percentage} className="h-2 mb-4" />
+      <Progress value={percentage} className="h-2 mb-6" />
 
-      <div className="space-y-2">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {ONBOARDING_STEP_IDS.map((step) => {
           const completed = isStepCompleted(step.id as OnboardingStepId);
           const action = STEP_ACTIONS[step.id as OnboardingStepId];
@@ -80,36 +84,46 @@ const OnboardingProgress = () => {
           return (
             <div
               key={step.id}
-              className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
+              className={`relative rounded-xl p-4 transition-all ${
                 completed 
-                  ? "bg-accent/10 text-accent" 
-                  : "text-muted-foreground hover:bg-muted/50"
+                  ? "bg-accent/10 border border-accent/30" 
+                  : "bg-card border border-border hover:border-accent/30"
               }`}
             >
-              <div className={`p-1.5 rounded-full ${completed ? "bg-accent/20" : "bg-muted"}`}>
+              <div className={`p-2 rounded-full w-fit mb-3 ${completed ? "bg-accent/20" : "bg-muted"}`}>
                 {completed ? (
-                  <Check size={14} className="text-accent" />
+                  <Check size={16} className="text-accent" />
                 ) : (
-                  STEP_ICONS[step.id as OnboardingStepId]
+                  <span className="text-muted-foreground">{STEP_ICONS[step.id as OnboardingStepId]}</span>
                 )}
               </div>
-              <span className={`flex-1 text-sm ${completed ? "line-through opacity-70" : ""}`}>
+              <p className={`font-medium text-sm mb-1 ${completed ? "text-accent" : ""}`}>
                 {step.title}
-              </span>
+              </p>
+              <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                {action.description}
+              </p>
               {!completed && action.href && (
-                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" asChild>
-                  <Link to={action.href}>{action.label}</Link>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs w-full" asChild>
+                  <Link to={action.href}>
+                    {action.label}
+                    <ArrowRight size={12} />
+                  </Link>
                 </Button>
               )}
               {!completed && action.action === "tour" && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-6 px-2 text-xs"
+                  className="h-7 px-2 text-xs w-full"
                   onClick={restartOnboarding}
                 >
-                  Start
+                  {action.label}
+                  <ArrowRight size={12} />
                 </Button>
+              )}
+              {completed && (
+                <span className="text-xs text-accent font-medium">Completed</span>
               )}
             </div>
           );

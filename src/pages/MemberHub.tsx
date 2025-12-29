@@ -377,6 +377,9 @@ const MemberHub = () => {
               {/* OVERVIEW TAB */}
               <TabsContent value="overview">
                 <div className="space-y-8">
+                  {/* Getting Started - Top Priority */}
+                  <OnboardingProgress />
+
                   {/* AI Advisor Hero */}
                   <div className="rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/10 via-accent/5 to-background overflow-hidden">
                     <div className="grid md:grid-cols-2 gap-6 p-6 md:p-8">
@@ -508,9 +511,8 @@ const MemberHub = () => {
 
                   {/* Two Column Layout */}
                   <div className="grid lg:grid-cols-3 gap-6">
-                    {/* Left: Onboarding Progress + Quick Actions */}
+                    {/* Left: Quick Actions */}
                     <div className="lg:col-span-2 space-y-6">
-                      <OnboardingProgress />
                       
                       {/* Quick Actions */}
                       <div className="rounded-xl border border-border bg-card p-6">

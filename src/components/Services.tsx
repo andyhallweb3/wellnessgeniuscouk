@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ClipboardCheck, Compass, GraduationCap, Bot, Code } from "lucide-react";
+import { ArrowRight, ClipboardCheck, Compass, GraduationCap } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const services = [
@@ -73,54 +73,6 @@ const services = [
     popular: true,
     isFree: false,
   },
-  {
-    icon: Bot,
-    step: "03",
-    title: "AI Agent Build",
-    tagline: "One agent. One job. Real ROI.",
-    description: "We design and deploy a working AI agent inside your business. No theory. No decks. Something that runs.",
-    price: "From £8,000",
-    timeline: "4-8 weeks",
-    whoItsFor: [
-      "Companies past the AI-curious phase",
-      "Teams drowning in admin, sales ops, support",
-      "Organisations ready to prove ROI",
-    ],
-    deliverables: [
-      "Use case definition + success metric",
-      "Working AI agent (web / internal tool)",
-      "Integrations (CRM, calendar, email, forms)",
-      "Documentation + handover",
-      "Optional ongoing support (£750–£1,500/month)",
-    ],
-    format: "MVP deployment with optional maintenance retainer",
-    popular: false,
-    isFree: false,
-  },
-  {
-    icon: Code,
-    step: "04",
-    title: "Bespoke Tech Build",
-    tagline: "Websites, apps, platforms — built for your business.",
-    description: "Custom digital products designed and developed from scratch. From marketing sites to full platforms.",
-    price: "From £10,000",
-    timeline: "4-12 weeks",
-    whoItsFor: [
-      "Brands needing a new website",
-      "Startups building MVPs",
-      "Operators wanting custom platforms",
-    ],
-    deliverables: [
-      "Discovery & scoping workshop",
-      "UI/UX design",
-      "Full development & deployment",
-      "Integrations (payments, CRM, APIs)",
-      "Training & handover documentation",
-    ],
-    format: "End-to-end product build with ongoing support options",
-    popular: false,
-    isFree: false,
-  },
 ];
 
 const Services = () => {
@@ -130,19 +82,19 @@ const Services = () => {
         {/* Header */}
         <div className="max-w-2xl mb-16">
           <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
-            Services
+            Consulting Services
           </p>
           <h2 className="text-3xl lg:text-4xl xl:text-5xl mb-4 tracking-tight">
-            A ladder, not a lucky dip
+            Hands-on AI guidance
           </h2>
           <p className="text-muted-foreground text-lg">
-            Start free → Diagnose → Align → Build. Each step de-risks the next.
+            Strategy, training, and roadmaps. For teams who want expert support before they build.
           </p>
         </div>
 
         {/* Progression indicator */}
         <div className="hidden lg:flex items-center justify-center gap-4 mb-16">
-          {["Free Assessment", "Diagnose", "Align", "Build", "Scale"].map((label, i) => (
+          {["Free Assessment", "Diagnose", "Align"].map((label, i) => (
             <div key={label} className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
@@ -152,7 +104,7 @@ const Services = () => {
                 </div>
                 <span className={`text-sm font-medium ${i === 0 ? "text-accent" : "text-foreground"}`}>{label}</span>
               </div>
-              {i < 4 && <div className="h-px w-8 bg-border" />}
+              {i < 2 && <div className="h-px w-8 bg-border" />}
             </div>
           ))}
         </div>
