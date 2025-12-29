@@ -1440,6 +1440,17 @@ export type Database = {
           user_count: number
         }[]
       }
+      get_share_by_token: {
+        Args: { p_share_token: string }
+        Returns: {
+          completion_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          share_token: string
+          view_count: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
