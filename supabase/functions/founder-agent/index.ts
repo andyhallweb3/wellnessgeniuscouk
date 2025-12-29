@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.21.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,7 +18,7 @@ const getSystemPrompt = (businessProfile: any) => {
 
 You are their personal AI strategic advisor. Analyze the provided business context and return strategic insights tailored to their specific situation.
 
-You MUST respond with ONLY valid JSON matching this exact schema - no markdown, no explanation, just the JSON object:
+You MUST respond with ONLY valid JSON matching this exact schema:
 
 {
   "founder_focus": [
@@ -150,12 +151,12 @@ serve(async (req) => {
 
   try {
     const { businessContext } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     // Get the authenticated user
@@ -213,73 +214,42 @@ ${JSON.stringify(businessContext, null, 2)}`;
 
 Based on my specific business context and goals, generate my personalized founder brief with actionable insights.`;
 
-    console.log("Calling Lovable AI Gateway for personalized founder insights...");
+    console.log("Calling Google Gemini for personalized founder insights...");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
+    // Initialize the Google Generative AI client
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
       },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
-        ],
-        temperature: 0.7,
-      }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
+    // Combine system prompt and user message for Gemini
+    const fullPrompt = `${systemPrompt}
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+---
+
+${userMessage}`;
+
+    const result = await model.generateContent(fullPrompt);
+    const response = result.response;
+    const content = response.text();
 
     if (!content) {
-      throw new Error("No content in AI response");
+      throw new Error("No content in Gemini response");
     }
 
-    console.log("Raw AI response:", content.substring(0, 200));
+    console.log("Raw Gemini response:", content.substring(0, 200));
 
-    // Parse the JSON response - handle potential markdown wrapping
+    // Parse the JSON response
     let parsedData;
     try {
-      // Remove markdown code blocks if present
-      let cleanContent = content.trim();
-      if (cleanContent.startsWith("```json")) {
-        cleanContent = cleanContent.slice(7);
-      } else if (cleanContent.startsWith("```")) {
-        cleanContent = cleanContent.slice(3);
-      }
-      if (cleanContent.endsWith("```")) {
-        cleanContent = cleanContent.slice(0, -3);
-      }
-      cleanContent = cleanContent.trim();
-      
-      parsedData = JSON.parse(cleanContent);
+      parsedData = JSON.parse(content);
     } catch (parseError) {
-      console.error("Failed to parse AI response as JSON:", parseError);
+      console.error("Failed to parse Gemini response as JSON:", parseError);
       console.error("Content was:", content);
-      throw new Error("AI response was not valid JSON");
+      throw new Error("Gemini response was not valid JSON");
     }
 
     // Ensure meta.generated_at is set
