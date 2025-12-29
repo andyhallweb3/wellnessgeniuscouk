@@ -105,6 +105,7 @@ interface AgentData {
 }
 
 type PerspectiveMode = 'ceo' | 'cmo' | 'cfo' | 'cto' | 'investor';
+const ALL_PERSPECTIVES: PerspectiveMode[] = ['ceo', 'cmo', 'cfo', 'cto', 'investor'];
 
 interface BusinessProfile {
   id: string;
@@ -113,7 +114,7 @@ interface BusinessProfile {
   industry: string | null;
   target_audience: string | null;
   current_goal: string | null;
-  preferred_perspective: string | null;
+  preferred_perspectives: string[] | null;
 }
 
 export default function CommandCentre() {
@@ -136,8 +137,8 @@ export default function CommandCentre() {
   const [brainDump, setBrainDump] = useState("");
   const [savingNote, setSavingNote] = useState(false);
 
-  // Perspective mode state
-  const [perspective, setPerspective] = useState<PerspectiveMode>('ceo');
+  // Perspective mode state - now supports multiple selections
+  const [perspectives, setPerspectives] = useState<PerspectiveMode[]>(['ceo']);
 
   // Check for checkout success
   useEffect(() => {
@@ -187,9 +188,14 @@ export default function CommandCentre() {
 
       if (profile) {
         setBusinessProfile(profile);
-        // Set perspective from saved preference
-        if (profile.preferred_perspective && ['ceo', 'cmo', 'cfo', 'cto', 'investor'].includes(profile.preferred_perspective)) {
-          setPerspective(profile.preferred_perspective as PerspectiveMode);
+        // Set perspectives from saved preference
+        if (profile.preferred_perspectives && profile.preferred_perspectives.length > 0) {
+          const validPerspectives = profile.preferred_perspectives.filter(
+            (p: string) => ALL_PERSPECTIVES.includes(p as PerspectiveMode)
+          ) as PerspectiveMode[];
+          if (validPerspectives.length > 0) {
+            setPerspectives(validPerspectives);
+          }
         }
         setShowOnboarding(false);
       } else {
@@ -213,7 +219,7 @@ export default function CommandCentre() {
       const { data: responseData, error: fetchError } = await supabase.functions.invoke('founder-agent', {
         body: { 
           businessContext: null,
-          perspective: perspective
+          perspectives: perspectives
         }
       });
 
@@ -278,25 +284,6 @@ export default function CommandCentre() {
     }
   };
 
-  // Save perspective preference to database
-  const handlePerspectiveChange = async (newPerspective: PerspectiveMode) => {
-    setPerspective(newPerspective);
-    
-    if (!businessProfile) return;
-    
-    try {
-      const { error } = await supabase
-        .from('business_profiles')
-        .update({ preferred_perspective: newPerspective })
-        .eq('id', businessProfile.id);
-      
-      if (error) throw error;
-    } catch (err) {
-      console.error("Error saving perspective preference:", err);
-      // Don't show error toast - preference change still works locally
-    }
-  };
-
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
     fetchBusinessProfile();
@@ -317,7 +304,7 @@ export default function CommandCentre() {
     } else if (businessProfile && subscriptionStatus === 'inactive') {
       setLoading(false);
     }
-  }, [businessProfile, subscriptionStatus, perspective]);
+  }, [businessProfile, subscriptionStatus, perspectives]);
 
   const getDirectionIcon = (direction: string) => {
     switch (direction) {
@@ -488,9 +475,22 @@ export default function CommandCentre() {
             {/* Perspective Selector */}
             <TooltipProvider delayDuration={300}>
               <ToggleGroup 
-                type="single" 
-                value={perspective} 
-                onValueChange={(value) => value && handlePerspectiveChange(value as PerspectiveMode)}
+                type="multiple" 
+                value={perspectives} 
+                onValueChange={(value) => {
+                  if (value.length === 0) return; // Prevent empty selection
+                  setPerspectives(value as PerspectiveMode[]);
+                  // Save to database
+                  if (businessProfile) {
+                    supabase
+                      .from('business_profiles')
+                      .update({ preferred_perspectives: value })
+                      .eq('id', businessProfile.id)
+                      .then(({ error }) => {
+                        if (error) console.error("Error saving perspectives:", error);
+                      });
+                  }
+                }}
                 className="bg-muted rounded-lg p-1"
               >
                 <Tooltip>
