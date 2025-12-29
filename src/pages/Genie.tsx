@@ -157,13 +157,20 @@ const Genie = () => {
 
   const streamChat = useCallback(async (userMessages: Message[], mode: string) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genie-chat`;
+    
+    // Get the user's session for proper JWT authentication
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session?.access_token) {
+      throw new Error("Not authenticated. Please log in to use Genie.");
+    }
+    
     const memoryContext = getMemoryContext();
 
     const resp = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${sessionData.session.access_token}`,
       },
       body: JSON.stringify({ 
         messages: userMessages.map(m => ({ role: m.role, content: m.content })),
