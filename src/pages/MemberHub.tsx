@@ -128,12 +128,20 @@ const ADMIN_SECTIONS = [
   },
 ];
 
+interface ReadinessScore {
+  id: string;
+  overall_score: number;
+  score_band: string | null;
+  completed_at: string;
+}
+
 const MemberHub = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [savedOutputs, setSavedOutputs] = useState<SavedOutput[]>([]);
   const [recentDownloads, setRecentDownloads] = useState<RecentDownload[]>([]);
+  const [latestReadiness, setLatestReadiness] = useState<ReadinessScore | null>(null);
   const { restartOnboarding, hasCompletedOnboarding } = useOnboarding();
   const { trackDownload } = useDownloadTracking();
   const { userEntry } = useLeaderboard();
@@ -197,6 +205,18 @@ const MemberHub = () => {
           return true;
         });
         setRecentDownloads(uniqueDownloads);
+      }
+
+      // Fetch latest AI readiness score
+      const { data: readinessData } = await supabase
+        .from("ai_readiness_completions")
+        .select("id, overall_score, score_band, completed_at")
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (readinessData) {
+        setLatestReadiness(readinessData);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -464,15 +484,25 @@ const MemberHub = () => {
                       </div>
                       <p className="text-2xl font-heading">{recentDownloads.length}</p>
                     </div>
-                    <div className="rounded-xl border border-border bg-card p-5">
+                    <Link 
+                      to={latestReadiness ? `/ai-readiness/report/${latestReadiness.id}` : "/ai-readiness"}
+                      className="rounded-xl border border-border bg-card p-5 hover:border-accent/50 transition-colors"
+                    >
                       <div className="flex items-center gap-3 mb-3">
                         <div className="p-2 rounded-lg bg-amber-500/10">
-                          <Flame size={18} className="text-amber-500" />
+                          <Sparkles size={18} className="text-amber-500" />
                         </div>
-                        <span className="text-sm text-muted-foreground">Streak</span>
+                        <span className="text-sm text-muted-foreground">AI Readiness</span>
                       </div>
-                      <p className="text-2xl font-heading">{userEntry?.streak_weeks || 0}w</p>
-                    </div>
+                      {latestReadiness ? (
+                        <div>
+                          <p className="text-2xl font-heading">{latestReadiness.overall_score}%</p>
+                          <p className="text-xs text-muted-foreground">{latestReadiness.score_band}</p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Take assessment →</p>
+                      )}
+                    </Link>
                   </div>
 
                   {/* Two Column Layout */}
