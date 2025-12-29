@@ -14,7 +14,8 @@ import {
   Settings,
   History,
   MessageSquare,
-  FileText
+  FileText,
+  MessageSquareWarning
 } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,6 +45,7 @@ import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
 import FloatingChatDrawer from "@/components/genie/FloatingChatDrawer";
 import InlineChatBox from "@/components/genie/InlineChatBox";
 import DocumentManager from "@/components/genie/DocumentManager";
+import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
@@ -514,8 +516,10 @@ const Genie = () => {
                       currentStreak={currentTrustMetadata?.sessionSignals?.streak?.currentStreak || 0}
                     />
                     
+                    <ReportProblemButton featureArea="AI Genie Chat" variant="outline" />
+                    
                     <Button 
-                      variant="outline" 
+                      variant="outline"
                       className="w-full"
                       onClick={() => setShowOnboarding(true)}
                     >
