@@ -634,6 +634,47 @@ serve(async (req) => {
   }
 
   try {
+    // ========== AUTHENTICATION (REQUIRED) ==========
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      console.error("[GENIE] Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error("[GENIE] Missing Supabase configuration");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error("[GENIE] Authentication failed:", authError?.message || "No user found");
+      logSecurityEvent("auth_failure", {
+        error: authError?.message || "No user",
+        tokenPrefix: token.substring(0, 20) + "...",
+      });
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired authentication token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("[GENIE] Authenticated user:", user.id);
+    let userId: string = user.id;
+
     const { messages, mode = "daily_operator", memoryContext, documentContext, _hp_field } = await req.json();
     
     // Honeypot validation - detect bots that fill hidden fields
@@ -642,6 +683,7 @@ serve(async (req) => {
       logSecurityEvent("honeypot", {
         reason: honeypotResult.reason,
         mode,
+        userId,
       });
       // Return error to block the bot
       return new Response(
@@ -658,6 +700,7 @@ serve(async (req) => {
           riskScore: promptGuardResult.riskScore,
           patterns: promptGuardResult.detectedPatterns,
           mode,
+          userId,
         });
         return new Response(
           JSON.stringify({ error: "Your message could not be processed. Please rephrase and try again." }),
@@ -671,20 +714,18 @@ serve(async (req) => {
           riskScore: promptGuardResult.riskScore,
           patterns: promptGuardResult.detectedPatterns,
           mode,
+          userId,
         });
       }
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Get user ID from authorization header
-    let userId: string | null = null;
+    // Initialize session signals with defaults
     let sessionSignals: SessionSignals = {
       totalSessions: 0,
       activeWeeks: 0,
@@ -701,52 +742,42 @@ serve(async (req) => {
       },
     };
 
-    // Try to get session data if we have auth
-    const authHeader = req.headers.get("authorization");
+    // Fetch session data and guardrails using service role key for elevated access
     let guardrailsContext = "";
     
-    if (authHeader && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    if (SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const token = authHeader.replace("Bearer ", "");
+        sessionSignals = await fetchSessionSignals(supabase, userId);
         
-        // For anon key requests, try to get user from a passed user_id or skip
-        // This is a simplified approach - in production you'd verify the JWT
-        const { data: { user } } = await supabase.auth.getUser(token);
-        
-        if (user?.id) {
-          userId = user.id;
-          sessionSignals = await fetchSessionSignals(supabase, userId);
+        // Fetch founder guardrails
+        try {
+          const { data: guardrails } = await supabase
+            .from("founder_guardrails")
+            .select("section_id, items")
+            .eq("user_id", userId);
           
-          // Fetch founder guardrails if user is admin
-          try {
-            const { data: guardrails } = await supabase
-              .from("founder_guardrails")
-              .select("section_id, items")
-              .eq("user_id", userId);
+          if (guardrails && guardrails.length > 0) {
+            const sectionLabels: Record<string, string> = {
+              principles: "Non-negotiable Principles",
+              markets: "Markets to Ignore (do not recommend)",
+              language: "Language to Avoid",
+              ethics: "Ethical Red Lines (never violate)",
+              optimisation: "Do Not Optimise For"
+            };
             
-            if (guardrails && guardrails.length > 0) {
-              const sectionLabels: Record<string, string> = {
-                principles: "Non-negotiable Principles",
-                markets: "Markets to Ignore (do not recommend)",
-                language: "Language to Avoid",
-                ethics: "Ethical Red Lines (never violate)",
-                optimisation: "Do Not Optimise For"
-              };
-              
-              guardrailsContext = "\n\n## STRATEGIC GUARDRAILS (You must respect these boundaries)\n";
-              guardrails.forEach((g: any) => {
-                const label = sectionLabels[g.section_id] || g.section_id;
-                guardrailsContext += `\n### ${label}\n`;
-                guardrailsContext += g.items.map((item: string) => `- ${item}`).join("\n");
-              });
-            }
-          } catch (guardrailErr) {
-            console.log("[GENIE] Guardrails fetch skipped:", guardrailErr);
+            guardrailsContext = "\n\n## STRATEGIC GUARDRAILS (You must respect these boundaries)\n";
+            guardrails.forEach((g: any) => {
+              const label = sectionLabels[g.section_id] || g.section_id;
+              guardrailsContext += `\n### ${label}\n`;
+              guardrailsContext += g.items.map((item: string) => `- ${item}`).join("\n");
+            });
           }
+        } catch (guardrailErr) {
+          console.log("[GENIE] Guardrails fetch skipped:", guardrailErr);
         }
-      } catch (authErr) {
-        console.log("[GENIE] Auth check skipped:", authErr);
+      } catch (dataErr) {
+        console.log("[GENIE] Session data fetch skipped:", dataErr);
       }
     }
 
