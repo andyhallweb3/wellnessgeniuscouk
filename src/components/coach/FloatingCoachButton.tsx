@@ -16,25 +16,27 @@ const FloatingCoachButton = () => {
   const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    
     const dismissed = localStorage.getItem(TOOLTIP_DISMISSED_KEY);
     if (!dismissed) {
-      // Show tooltip after a short delay for new users
+      // Show tooltip after a short delay for all users
       const timer = setTimeout(() => {
         setShowTooltip(true);
-      }, 2000);
+      }, 3000);
       return () => clearTimeout(timer);
+    } else {
+      setHasInteracted(true);
     }
-  }, [user]);
+  }, []);
 
   const handleClick = () => {
     setIsOpen(true);
     setShowTooltip(false);
     setHasInteracted(true);
     localStorage.setItem(TOOLTIP_DISMISSED_KEY, "true");
-    // Mark genie step as completed
-    markStepCompleted("genie");
+    // Mark genie step as completed if logged in
+    if (user) {
+      markStepCompleted("genie");
+    }
   };
 
   const dismissTooltip = (e: React.MouseEvent) => {
@@ -42,9 +44,6 @@ const FloatingCoachButton = () => {
     setShowTooltip(false);
     localStorage.setItem(TOOLTIP_DISMISSED_KEY, "true");
   };
-
-  // Don't show if not logged in
-  if (!user) return null;
 
   return (
     <>
@@ -68,10 +67,10 @@ const FloatingCoachButton = () => {
               </div>
               <div>
                 <p className="font-semibold text-sm text-foreground mb-1">
-                  Meet Your Wellness Genie! ✨
+                  Need Help? ✨
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Click here for AI-powered business advice tailored to your wellness business.
+                  Click here for FAQs, support, or to chat with our AI advisor.
                 </p>
               </div>
             </div>
