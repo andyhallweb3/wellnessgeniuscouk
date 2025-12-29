@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { analyzeMessages, logSecurityEvent, validateHoneypot } from "../_shared/prompt-guard.ts";
 
@@ -195,6 +196,45 @@ serve(async (req) => {
   }
 
   try {
+    // ========== AUTHENTICATION (REQUIRED) ==========
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("[AI-COACH] Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error("[AI-COACH] Missing Supabase configuration");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error("[AI-COACH] Authentication failed:", authError?.message || "No user found");
+      logSecurityEvent("auth_failure", {
+        error: authError?.message || "No user",
+        tokenPrefix: token.substring(0, 20) + "...",
+      });
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired authentication token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("[AI-COACH] Authenticated user:", user.id);
+
     // Parse and validate input
     const rawBody = await req.json();
     const validationResult = RequestSchema.safeParse(rawBody);

@@ -195,7 +195,7 @@ export function sanitizePrompt(content: string): string | undefined {
  * Log security event for monitoring
  */
 export function logSecurityEvent(
-  eventType: "blocked" | "warning" | "suspicious" | "honeypot",
+  eventType: "blocked" | "warning" | "suspicious" | "honeypot" | "auth_failure",
   details: {
     riskScore?: number;
     patterns?: string[];
@@ -203,6 +203,8 @@ export function logSecurityEvent(
     mode?: string;
     honeypotValue?: string;
     reason?: string;
+    error?: string;
+    tokenPrefix?: string;
   }
 ): void {
   console.log(`[PROMPT-GUARD] ${eventType.toUpperCase()}:`, JSON.stringify({
