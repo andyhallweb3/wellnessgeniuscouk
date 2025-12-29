@@ -167,3 +167,6 @@ verify_jwt = false
 
 [functions.agent-customer-portal]
 verify_jwt = false
+
+[functions.analyze-url]
+verify_jwt = false

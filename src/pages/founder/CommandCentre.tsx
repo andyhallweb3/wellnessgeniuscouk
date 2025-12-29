@@ -31,13 +31,15 @@ import {
   XCircle,
   Brain,
   Save,
-  Settings
+  Settings,
+  Crosshair
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import BusinessOnboardingModal from "@/components/founder/BusinessOnboardingModal";
 import SubscriptionPaywall from "@/components/founder/SubscriptionPaywall";
+import CompetitorWarRoom from "@/components/founder/CompetitorWarRoom";
 
 interface FocusItem {
   priority: string;
@@ -605,6 +607,9 @@ export default function CommandCentre() {
 
           {/* Side Column */}
           <div className="space-y-6">
+            {/* Competitor War Room */}
+            <CompetitorWarRoom />
+
             {/* Signals Ticker */}
             <Card>
               <CardHeader className="pb-3">
