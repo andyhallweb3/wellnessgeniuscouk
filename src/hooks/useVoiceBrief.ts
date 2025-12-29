@@ -43,13 +43,31 @@ export const useVoiceBrief = () => {
       // Stop any existing playback
       stopPlayback();
 
-      const { data, error: fnError } = await supabase.functions.invoke("genie-voice-brief", {
-        body: options,
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message);
+      // Get the user's session for proper JWT authentication
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.access_token) {
+        throw new Error("Not authenticated");
       }
+
+      // Use fetch with JWT token for proper authentication
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genie-voice-brief`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionData.session.access_token}`,
+          },
+          body: JSON.stringify(options),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Voice brief failed: ${response.status}`);
+      }
+
+      const data = await response.json();
 
       if (!data?.audioContent) {
         throw new Error("No audio content received");
