@@ -162,6 +162,9 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Email Delivery Metrics from Resend */}
+      <EmailDeliveryMetrics getAuthHeaders={getAuthHeaders} />
+      
       {/* Summary stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
