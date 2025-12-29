@@ -11,7 +11,11 @@ import {
   ChevronDown,
   Sparkles,
   History,
-  ArrowRight
+  ArrowRight,
+  Paperclip,
+  FileText,
+  X,
+  Upload
 } from "lucide-react";
 import { ADVISOR_MODES, getModeById } from "@/components/advisor/AdvisorModes";
 import GenieMessage, { TrustMetadata } from "@/components/genie/GenieMessage";
@@ -30,10 +34,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface SuggestedQuestion {
   text: string;
   reason: string;
+}
+
+interface UploadedDoc {
+  id: string;
+  name: string;
+  extractedText: string | null;
 }
 
 interface Message {
@@ -50,6 +65,9 @@ interface InlineChatBoxProps {
   onSaveSession?: (mode: string, messages: Message[], sessionId?: string | null) => Promise<string | null>;
   defaultMode?: string;
   briefData?: BriefData | null;
+  documents?: Array<{ id: string; file_name: string; extracted_text: string | null; }>;
+  onUploadDocument?: (file: File) => Promise<boolean>;
+  uploadingDocument?: boolean;
 }
 
 // Generate dynamic follow-up questions based on brief content
@@ -153,6 +171,9 @@ const InlineChatBox = ({
   onSaveSession,
   defaultMode = "quick_question",
   briefData,
+  documents = [],
+  onUploadDocument,
+  uploadingDocument = false,
 }: InlineChatBoxProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -160,7 +181,24 @@ const InlineChatBox = ({
   const [selectedMode, setSelectedMode] = useState(defaultMode);
   const [isExpanded, setIsExpanded] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showDocuments, setShowDocuments] = useState(false);
+
+  // Get document context for AI
+  const documentContext = useMemo(() => {
+    if (documents.length === 0) return "";
+    
+    const contextParts = documents
+      .filter(doc => doc.extracted_text)
+      .map(doc => {
+        return `[Document: ${doc.file_name}]\n${doc.extracted_text?.slice(0, 2000)}`;
+      });
+
+    return contextParts.length > 0 
+      ? contextParts.join("\n\n")
+      : "";
+  }, [documents]);
 
   // Extract previously asked questions from message history
   const previousQuestions = useMemo(() => {
@@ -195,6 +233,7 @@ const InlineChatBox = ({
         messages: userMessages.map(m => ({ role: m.role, content: m.content })),
         mode,
         memoryContext: memoryContext || undefined,
+        documentContext: documentContext || undefined,
         _hp_field: "",
       }),
     });
@@ -266,7 +305,20 @@ const InlineChatBox = ({
     }
 
     return assistantContent;
-  }, [memoryContext]);
+  }, [documentContext, memoryContext]);
+
+  // Handle file upload
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadDocument) return;
+    
+    await onUploadDocument(file);
+    
+    // Reset the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isStreaming) return;
@@ -491,9 +543,77 @@ const InlineChatBox = ({
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Uploaded Documents Indicator */}
+          {documents.length > 0 && (
+            <div className="px-3 py-2 border-t border-border bg-accent/5">
+              <Popover open={showDocuments} onOpenChange={setShowDocuments}>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-2 text-xs text-accent hover:text-accent/80 transition-colors">
+                    <FileText size={12} />
+                    <span>{documents.length} document{documents.length > 1 ? 's' : ''} providing context</span>
+                    <ChevronDown size={10} className={cn("transition-transform", showDocuments && "rotate-180")} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72 p-2">
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">
+                      These documents personalise AI responses:
+                    </p>
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center gap-2 text-xs p-2 rounded bg-secondary/50">
+                        <FileText size={12} className="text-muted-foreground shrink-0" />
+                        <span className="truncate flex-1">{doc.file_name}</span>
+                        {doc.extracted_text ? (
+                          <span className="text-[10px] text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded">Ready</span>
+                        ) : (
+                          <span className="text-[10px] text-yellow-600 bg-yellow-500/10 px-1.5 py-0.5 rounded">Processing</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
+
           {/* Input */}
           <div className="p-3 border-t border-border">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            
             <div className="flex gap-2">
+              {/* Upload button */}
+              {onUploadDocument && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-11 w-11 shrink-0"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isStreaming || uploadingDocument}
+                      >
+                        {uploadingDocument ? (
+                          <Loader2 className="animate-spin" size={16} />
+                        ) : (
+                          <Paperclip size={16} />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-xs">Upload document for context (PDF, Excel, Word, CSV)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -516,6 +636,14 @@ const InlineChatBox = ({
                 )}
               </Button>
             </div>
+            
+            {/* Upload hint when no documents */}
+            {documents.length === 0 && onUploadDocument && (
+              <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
+                <Upload size={10} />
+                Upload business docs to personalise AI responses
+              </p>
+            )}
           </div>
         </CollapsibleContent>
       </div>
