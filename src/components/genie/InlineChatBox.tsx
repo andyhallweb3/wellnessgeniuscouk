@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -8,10 +8,12 @@ import {
   User,
   RotateCcw,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Sparkles
 } from "lucide-react";
 import { ADVISOR_MODES, getModeById } from "@/components/advisor/AdvisorModes";
 import GenieMessage, { TrustMetadata } from "@/components/genie/GenieMessage";
+import { BriefData } from "@/components/genie/DailyBriefCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -34,7 +36,63 @@ interface InlineChatBoxProps {
   trustDisplayMode: "full" | "compact";
   onSaveSession?: (mode: string, messages: Message[], sessionId?: string | null) => Promise<string | null>;
   defaultMode?: string;
+  briefData?: BriefData | null;
 }
+
+// Generate dynamic follow-up questions based on brief content
+const generateBriefQuestions = (brief: BriefData | null | undefined): string[] => {
+  if (!brief) {
+    return [
+      "What are the biggest risks to my business right now?",
+      "What metrics should I be tracking weekly?",
+      "What's one thing I should improve this month?",
+    ];
+  }
+
+  const questions: string[] = [];
+
+  // Add questions based on changes
+  if (brief.changes.length > 0) {
+    const warningChanges = brief.changes.filter(c => c.severity === "warning");
+    const positiveChanges = brief.changes.filter(c => c.severity === "good");
+    
+    if (warningChanges.length > 0) {
+      questions.push(`Why is "${warningChanges[0].text.slice(0, 40)}..." happening?`);
+      questions.push("What should I do to address these warning signs?");
+    }
+    
+    if (positiveChanges.length > 0) {
+      questions.push("How can I capitalize on the positive trends?");
+    }
+    
+    if (brief.changes.length > 1) {
+      questions.push("Which of these changes should I prioritize?");
+    }
+  }
+
+  // Add questions based on actions
+  if (brief.actions.length > 0) {
+    questions.push(`Tell me more about: "${brief.actions[0].slice(0, 50)}..."`);
+    if (brief.actions.length > 1) {
+      questions.push("Which action will have the biggest impact?");
+    }
+  }
+
+  // Add questions based on confidence
+  if (brief.confidence === "low") {
+    questions.push("What data would help improve these insights?");
+    questions.push("What should I start tracking to get better clarity?");
+  } else if (brief.confidence === "medium") {
+    questions.push("How can I improve the accuracy of these insights?");
+  }
+
+  // Add general business context questions
+  questions.push("What questions should I be asking myself right now?");
+  questions.push("What blind spots might I have in my business?");
+
+  // Return unique questions, max 5
+  return [...new Set(questions)].slice(0, 5);
+};
 
 const InlineChatBox = ({
   credits,
@@ -43,6 +101,7 @@ const InlineChatBox = ({
   trustDisplayMode,
   onSaveSession,
   defaultMode = "quick_question",
+  briefData,
 }: InlineChatBoxProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -50,6 +109,9 @@ const InlineChatBox = ({
   const [selectedMode, setSelectedMode] = useState(defaultMode);
   const [isExpanded, setIsExpanded] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Generate dynamic questions based on brief content
+  const suggestedQuestions = useMemo(() => generateBriefQuestions(briefData), [briefData]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -263,24 +325,30 @@ const InlineChatBox = ({
           {/* Messages Area */}
           <div className={cn(
             "overflow-y-auto p-3 space-y-3",
-            messages.length === 0 ? "max-h-[120px]" : "max-h-[300px]"
+            messages.length === 0 ? "max-h-[180px]" : "max-h-[300px]"
           )}>
             {messages.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Ask about your brief, get clarification, or dive deeper into any topic
-                </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {["What should I prioritize today?", "Explain this more", "What are the risks?"].map((prompt, idx) => (
+              <div className="py-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles size={12} className="text-accent" />
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {briefData ? "Questions based on your brief" : "Suggested questions"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedQuestions.map((prompt, idx) => (
                     <button
                       key={idx}
                       onClick={() => setInput(prompt)}
-                      className="text-xs px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 border border-border/50 transition-colors"
+                      className="text-xs px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 border border-border/50 transition-colors text-left leading-relaxed"
                     >
                       {prompt}
                     </button>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground/70 mt-3 text-center">
+                  Click a question or type your own below
+                </p>
               </div>
             ) : (
               messages.map((message, index) => (

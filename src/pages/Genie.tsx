@@ -565,6 +565,7 @@ const Genie = () => {
                   memoryContext={getMemoryContext()}
                   trustDisplayMode={trustDisplayMode}
                   onSaveSession={saveSession}
+                  briefData={briefData}
                 />
 
                 {/* Mode Buttons */}
