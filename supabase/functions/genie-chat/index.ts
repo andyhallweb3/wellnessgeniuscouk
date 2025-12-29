@@ -1,6 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { analyzeMessages, logSecurityEvent, validateHoneypot } from "../_shared/prompt-guard.ts";
+import { 
+  analyzeMessages, 
+  logSecurityEvent, 
+  validateHoneypot, 
+  validateInput,
+  GenieRequestSchema 
+} from "../_shared/prompt-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -675,7 +681,25 @@ serve(async (req) => {
     console.log("[GENIE] Authenticated user:", user.id);
     let userId: string = user.id;
 
-    const { messages, mode = "daily_operator", memoryContext, documentContext, _hp_field } = await req.json();
+    const rawBody = await req.json();
+    
+    // ========== INPUT VALIDATION WITH ZOD ==========
+    const validationResult = validateInput(GenieRequestSchema, rawBody);
+    if (!validationResult.isValid) {
+      logSecurityEvent("validation_failure", {
+        validationErrors: validationResult.errors,
+        userId,
+      });
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid request format. Please check your input and try again.",
+          details: validationResult.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { messages, mode = "daily_operator", memoryContext, documentContext, _hp_field } = rawBody;
     
     // Honeypot validation - detect bots that fill hidden fields
     const honeypotResult = validateHoneypot(_hp_field);
