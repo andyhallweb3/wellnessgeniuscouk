@@ -303,6 +303,7 @@ export type Database = {
           current_goal: string | null
           id: string
           industry: string | null
+          preferred_perspective: string | null
           target_audience: string | null
           updated_at: string
           user_id: string
@@ -313,6 +314,7 @@ export type Database = {
           current_goal?: string | null
           id?: string
           industry?: string | null
+          preferred_perspective?: string | null
           target_audience?: string | null
           updated_at?: string
           user_id: string
@@ -323,6 +325,7 @@ export type Database = {
           current_goal?: string | null
           id?: string
           industry?: string | null
+          preferred_perspective?: string | null
           target_audience?: string | null
           updated_at?: string
           user_id?: string

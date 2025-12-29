@@ -96,6 +96,8 @@ interface AgentData {
   };
 }
 
+type PerspectiveMode = 'ceo' | 'cmo' | 'investor';
+
 interface BusinessProfile {
   id: string;
   user_id: string;
@@ -103,6 +105,7 @@ interface BusinessProfile {
   industry: string | null;
   target_audience: string | null;
   current_goal: string | null;
+  preferred_perspective: string | null;
 }
 
 export default function CommandCentre() {
@@ -126,7 +129,7 @@ export default function CommandCentre() {
   const [savingNote, setSavingNote] = useState(false);
 
   // Perspective mode state
-  const [perspective, setPerspective] = useState<'ceo' | 'cmo' | 'investor'>('ceo');
+  const [perspective, setPerspective] = useState<PerspectiveMode>('ceo');
 
   // Check for checkout success
   useEffect(() => {
@@ -176,6 +179,10 @@ export default function CommandCentre() {
 
       if (profile) {
         setBusinessProfile(profile);
+        // Set perspective from saved preference
+        if (profile.preferred_perspective && ['ceo', 'cmo', 'investor'].includes(profile.preferred_perspective)) {
+          setPerspective(profile.preferred_perspective as PerspectiveMode);
+        }
         setShowOnboarding(false);
       } else {
         setShowOnboarding(true);
@@ -260,6 +267,25 @@ export default function CommandCentre() {
     } catch (err) {
       console.error("Error opening portal:", err);
       toast.error("Failed to open subscription management");
+    }
+  };
+
+  // Save perspective preference to database
+  const handlePerspectiveChange = async (newPerspective: PerspectiveMode) => {
+    setPerspective(newPerspective);
+    
+    if (!businessProfile) return;
+    
+    try {
+      const { error } = await supabase
+        .from('business_profiles')
+        .update({ preferred_perspective: newPerspective })
+        .eq('id', businessProfile.id);
+      
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error saving perspective preference:", err);
+      // Don't show error toast - preference change still works locally
     }
   };
 
@@ -455,7 +481,7 @@ export default function CommandCentre() {
             <ToggleGroup 
               type="single" 
               value={perspective} 
-              onValueChange={(value) => value && setPerspective(value as 'ceo' | 'cmo' | 'investor')}
+              onValueChange={(value) => value && handlePerspectiveChange(value as PerspectiveMode)}
               className="bg-muted rounded-lg p-1"
             >
               <ToggleGroupItem 
