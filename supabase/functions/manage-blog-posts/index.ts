@@ -45,6 +45,19 @@ Deno.serve(async (req) => {
 
     console.log('manage-blog-posts action:', action);
 
+    // Helper to log admin actions
+    const logAudit = async (actionType: string, resourceCount?: number, details?: string) => {
+      await supabase.from('admin_audit_logs').insert({
+        admin_user_id: authResult.userId,
+        action: actionType,
+        resource_type: 'blog_posts',
+        resource_count: resourceCount,
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip'),
+        user_agent: req.headers.get('user-agent'),
+      });
+      console.log('Audit log:', actionType, 'blog_posts', details || '');
+    };
+
     switch (action) {
       case 'list': {
         const { data, error } = await supabase
@@ -54,6 +67,8 @@ Deno.serve(async (req) => {
           .limit(limit);
 
         if (error) throw error;
+
+        await logAudit('list', data?.length || 0);
 
         return new Response(
           JSON.stringify({ posts: data }),
@@ -116,6 +131,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
 
         console.log('Created blog post:', data.id);
+        await logAudit('create', 1, `id: ${data.id}, title: ${post.title}`);
 
         return new Response(
           JSON.stringify({ post: data, message: 'Blog post created successfully' }),
@@ -155,6 +171,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
 
         console.log('Updated blog post:', data.id);
+        await logAudit('update', 1, `id: ${data.id}`);
 
         return new Response(
           JSON.stringify({ post: data, message: 'Blog post updated successfully' }),
@@ -178,6 +195,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
 
         console.log('Deleted blog post:', postId);
+        await logAudit('delete', 1, `id: ${postId}`);
 
         return new Response(
           JSON.stringify({ message: 'Blog post deleted successfully' }),
@@ -218,6 +236,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
 
         console.log('Created blog post from news:', data.id);
+        await logAudit('create-from-news', 1, `id: ${data.id}, title: ${post.title}`);
 
         return new Response(
           JSON.stringify({ post: data, message: 'Blog post created from news item' }),
