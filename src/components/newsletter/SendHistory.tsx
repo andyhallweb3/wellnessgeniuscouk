@@ -291,7 +291,7 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
                   </div>
                   {selectedSendId === send.id && (
                     <div className="mt-4 pt-4 border-t">
-                      <EmailDeliveryMetrics sendId={send.id} getAuthHeaders={getAuthHeaders} />
+                      <EmailDeliveryMetrics getAuthHeaders={getAuthHeaders} />
                     </div>
                   )}
                 </div>
