@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AssessmentIntro from "@/components/assessment/AssessmentIntro";
@@ -475,14 +476,17 @@ const AIReadinessAssessment = () => {
 
               {/* Navigation */}
               <div className="flex justify-between mt-8">
-                <Button
-                  variant="outline"
-                  onClick={handlePrevious}
-                  disabled={currentQuestion === 0}
-                >
-                  <ArrowLeft size={16} />
-                  Previous
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevious}
+                    disabled={currentQuestion === 0}
+                  >
+                    <ArrowLeft size={16} />
+                    Previous
+                  </Button>
+                  <ReportProblemButton featureArea="AI Readiness Assessment" />
+                </div>
                 <Button
                   variant="accent"
                   onClick={handleNext}

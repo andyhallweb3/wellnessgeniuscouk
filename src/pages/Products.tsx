@@ -19,6 +19,7 @@ import {
   Bot,
   Crown
 } from "lucide-react";
+import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import EmailGateModal from "@/components/EmailGateModal";
@@ -764,6 +765,7 @@ const Products = () => {
                 <BookOpen size={18} />
                 How to use the stack
               </Link>
+              <ReportProblemButton featureArea="Products" variant="outline" />
             </div>
           </div>
 
