@@ -2005,6 +2005,13 @@ This week's highlights:
     );
   }
 
+  // Step tracking for workflow
+  const [currentStep, setCurrentStep] = useState<'articles' | 'preview' | 'send' | 'history' | 'manage'>('articles');
+
+  // Determine if user can advance to next step
+  const canPreview = selectedArticleIds.length > 0;
+  const canSend = !!previewHtml;
+
   return (
     <div className="min-h-screen bg-background dark">
       <Header />
@@ -2013,14 +2020,14 @@ This week's highlights:
         <section className="section-padding">
           <div className="container-wide">
             {/* Header */}
-            <div className="flex items-center justify-between gap-4 mb-8">
+            <div className="flex items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-4">
                 <Link to="/admin" className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
                   <ArrowLeft size={20} />
                 </Link>
                 <div>
                   <h1 className="text-3xl font-bold">Newsletter Admin</h1>
-                  <p className="text-muted-foreground">Manage and send AI-powered wellness newsletters</p>
+                  <p className="text-muted-foreground">Create and send newsletters step by step</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -2034,174 +2041,141 @@ This week's highlights:
               </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="card-tech p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-accent/10 text-accent">
-                    <FileText size={20} />
-                  </div>
-                  <span className="text-muted-foreground text-sm">Unprocessed Articles</span>
-                </div>
-                <p className="text-3xl font-bold">{unprocessedCount}</p>
-              </div>
-
-              <div className="card-tech p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-                    <Users size={20} />
-                  </div>
-                  <span className="text-muted-foreground text-sm">Active Subscribers</span>
-                </div>
-                <p className="text-3xl font-bold">{subscribers.filter(s => s.is_active).length}</p>
-                <p className="text-xs text-muted-foreground">{subscribers.length} total</p>
-              </div>
-
-              <div className="card-tech p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-green-500/10 text-green-400">
-                    <Send size={20} />
-                  </div>
-                  <span className="text-muted-foreground text-sm">Newsletter Sends</span>
-                </div>
-                <p className="text-3xl font-bold">{totalSends}</p>
-                <p className="text-xs text-muted-foreground">{totalEmailsSent.toLocaleString()} emails delivered</p>
+            {/* Step Progress Indicator */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                {[
+                  { id: 'articles', label: 'Select Articles', icon: Newspaper, number: 1 },
+                  { id: 'preview', label: 'Preview Email', icon: Eye, number: 2 },
+                  { id: 'send', label: 'Send Newsletter', icon: Send, number: 3 },
+                  { id: 'history', label: 'History & Analytics', icon: Activity, number: 4 },
+                  { id: 'manage', label: 'Management', icon: Users, number: 5 },
+                ].map((step, index) => {
+                  const isActive = currentStep === step.id;
+                  const isCompleted = 
+                    (step.id === 'articles' && selectedArticleIds.length > 0) ||
+                    (step.id === 'preview' && !!previewHtml);
+                  const isDisabled = 
+                    (step.id === 'preview' && !canPreview) ||
+                    (step.id === 'send' && !canSend);
+                  
+                  return (
+                    <button
+                      key={step.id}
+                      onClick={() => !isDisabled && setCurrentStep(step.id as typeof currentStep)}
+                      disabled={isDisabled}
+                      className={`
+                        flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all
+                        ${isActive 
+                          ? 'bg-accent text-accent-foreground' 
+                          : isCompleted 
+                            ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' 
+                            : isDisabled
+                              ? 'bg-secondary/50 text-muted-foreground/50 cursor-not-allowed'
+                              : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                        }
+                      `}
+                    >
+                      <span className={`
+                        flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold
+                        ${isActive 
+                          ? 'bg-accent-foreground/20' 
+                          : isCompleted 
+                            ? 'bg-green-500/20' 
+                            : 'bg-background/20'
+                        }
+                      `}>
+                        {isCompleted && !isActive ? <CheckCircle size={14} /> : step.number}
+                      </span>
+                      <step.icon size={16} />
+                      <span className="hidden sm:inline">{step.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="card-glass p-6 mb-8">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Newspaper size={20} />
-                Newsletter Actions
-              </h2>
-              <div className="flex flex-wrap gap-4">
-                <Button 
-                  onClick={syncFromRss} 
-                  disabled={syncing}
-                  variant="secondary"
-                  className="gap-2"
-                >
-                  {syncing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                  Sync from RSS
-                </Button>
-
-                <Button 
-                  onClick={() => scoreArticles(false)} 
-                  disabled={scoring}
-                  variant="secondary"
-                  className="gap-2"
-                >
-                  {scoring ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-                  Score New
-                </Button>
-
-                <Button 
-                  onClick={() => scoreArticles(true)} 
-                  disabled={scoring}
-                  variant="outline"
-                  className="gap-2"
-                >
-                  {scoring ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                  Re-Score All
-                </Button>
-
-                <Button 
-                  onClick={generatePreview} 
-                  disabled={loading}
-                  variant="secondary"
-                  className="gap-2"
-                >
-                  {loading ? <Loader2 size={16} className="animate-spin" /> : <Eye size={16} />}
-                  Generate Preview
-                </Button>
-
-                <Button 
-                  onClick={sendNewsletter} 
-                  disabled={sending || !previewHtml || !!activeSend}
-                  variant="accent"
-                  className="gap-2"
-                >
-                  {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                  Send Newsletter
-                </Button>
+            {/* Quick Stats Bar */}
+            <div className="flex flex-wrap items-center gap-4 p-4 bg-secondary/30 rounded-lg mb-6 text-sm">
+              <div className="flex items-center gap-2">
+                <FileText size={16} className="text-accent" />
+                <span className="text-muted-foreground">Articles:</span>
+                <span className="font-medium">{selectedArticleIds.length} selected</span>
               </div>
+              <div className="w-px h-4 bg-border hidden sm:block" />
+              <div className="flex items-center gap-2">
+                <Users size={16} className="text-blue-400" />
+                <span className="text-muted-foreground">Subscribers:</span>
+                <span className="font-medium">{subscribers.filter(s => s.is_active).length} active</span>
+              </div>
+              <div className="w-px h-4 bg-border hidden sm:block" />
+              <div className="flex items-center gap-2">
+                <Mail size={16} className="text-green-400" />
+                <span className="text-muted-foreground">Preview:</span>
+                <span className={`font-medium ${previewHtml ? 'text-green-400' : 'text-muted-foreground'}`}>
+                  {previewHtml ? 'Ready' : 'Not generated'}
+                </span>
+              </div>
+            </div>
 
-              {/* Scoring Results */}
-              {scoringResults && (
-                <div className="mt-4 p-4 bg-accent/10 border border-accent/20 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Zap className="h-5 w-5 text-accent" />
-                    <div>
-                      <p className="font-medium text-accent">Scoring Complete</p>
-                      <p className="text-sm text-muted-foreground">
-                        Scored {scoringResults.scored} articles. <strong>{scoringResults.qualified} qualified</strong> (score ≥65) for newsletter.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Active Send Warning */}
-              {activeSend && !sendProgress && (
-                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="h-5 w-5 text-yellow-500" />
-                    <div>
-                      <p className="font-medium text-yellow-500">Send in Progress</p>
-                      <p className="text-sm text-muted-foreground">
-                        A newsletter is currently being sent to {activeSend.recipient_count} recipients. 
-                        Started {new Date(activeSend.sent_at).toLocaleTimeString()}.
-                      </p>
-                    </div>
+            {/* STEP 1: Select Articles */}
+            {currentStep === 'articles' && (
+              <div className="space-y-6">
+                {/* RSS Sync Actions */}
+                <div className="card-glass p-6">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <RefreshCw size={18} />
+                    Sync & Score Articles
+                  </h2>
+                  <div className="flex flex-wrap gap-3">
                     <Button 
-                      onClick={fetchRecentSends} 
-                      variant="ghost" 
-                      size="sm"
-                      className="ml-auto"
+                      onClick={syncFromRss} 
+                      disabled={syncing}
+                      variant="secondary"
+                      className="gap-2"
                     >
-                      <RefreshCw size={14} className="mr-1" />
-                      Refresh
+                      {syncing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                      Sync from RSS
+                    </Button>
+
+                    <Button 
+                      onClick={() => scoreArticles(false)} 
+                      disabled={scoring}
+                      variant="secondary"
+                      className="gap-2"
+                    >
+                      {scoring ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+                      Score New
+                    </Button>
+
+                    <Button 
+                      onClick={() => scoreArticles(true)} 
+                      disabled={scoring}
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      {scoring ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                      Re-Score All
                     </Button>
                   </div>
-                </div>
-              )}
 
-              {/* Send Progress Indicator */}
-              {sendProgress && (
-                <div className="mt-4 p-4 bg-accent/10 border border-accent/20 rounded-lg">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Loader2 className="h-5 w-5 animate-spin text-accent" />
-                    <span className="font-medium text-accent">Sending Newsletter...</span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Batch {sendProgress.currentBatch} of {sendProgress.totalBatches}
-                      </span>
-                      <span className="text-foreground font-medium">
-                        {sendProgress.sentCount} / {sendProgress.totalSubscribers} sent
-                      </span>
+                  {/* Scoring Results */}
+                  {scoringResults && (
+                    <div className="mt-4 p-4 bg-accent/10 border border-accent/20 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Zap className="h-5 w-5 text-accent" />
+                        <div>
+                          <p className="font-medium text-accent">Scoring Complete</p>
+                          <p className="text-sm text-muted-foreground">
+                            Scored {scoringResults.scored} articles. <strong>{scoringResults.qualified} qualified</strong> (score ≥65) for newsletter.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="bg-accent h-full transition-all duration-500 ease-out"
-                        style={{ 
-                          width: `${sendProgress.totalSubscribers > 0 
-                            ? (sendProgress.sentCount / sendProgress.totalSubscribers * 100) 
-                            : 0}%` 
-                        }}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Sending 10 emails per batch with 20 second delays between batches
-                    </p>
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Article Picker Section */}
+                {/* Article Picker Section */}
             <div className="card-glass p-6 mb-8">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Newspaper size={20} />
@@ -2431,199 +2405,1014 @@ This week's highlights:
                         ))}
                       </div>
                     </div>
+                )}
+                </div>
+              )}
+            </div>
+
+                {/* Next Step Button for Articles */}
+                {selectedArticleIds.length > 0 && (
+                  <div className="flex justify-end mt-6">
+                    <Button 
+                      onClick={() => {
+                        generatePreview();
+                        setCurrentStep('preview');
+                      }} 
+                      disabled={loading}
+                      variant="accent"
+                      className="gap-2"
+                    >
+                      {loading ? <Loader2 size={16} className="animate-spin" /> : <Eye size={16} />}
+                      Generate Preview & Continue
+                      <ChevronRight size={16} />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 2: Preview */}
+            {currentStep === 'preview' && (
+              <div className="space-y-6">
+                {!previewHtml ? (
+                  <div className="card-glass p-8 text-center">
+                    <Eye size={48} className="mx-auto mb-4 text-muted-foreground/50" />
+                    <h3 className="text-lg font-semibold mb-2">No Preview Generated</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {selectedArticleIds.length === 0 
+                        ? 'Select articles first, then generate a preview.'
+                        : 'Generate a preview to see how your newsletter will look.'}
+                    </p>
+                    <Button 
+                      onClick={() => {
+                        if (selectedArticleIds.length === 0) {
+                          setCurrentStep('articles');
+                        } else {
+                          generatePreview();
+                        }
+                      }} 
+                      disabled={loading}
+                      variant="accent"
+                      className="gap-2"
+                    >
+                      {loading ? <Loader2 size={16} className="animate-spin" /> : selectedArticleIds.length === 0 ? <Newspaper size={16} /> : <Eye size={16} />}
+                      {selectedArticleIds.length === 0 ? 'Select Articles First' : 'Generate Preview'}
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Subject Line & Preview Text */}
+                    {articles.length > 0 && (() => {
+                      const topArticle = articles[0];
+                      const subjectLine = `Wellness Genius Weekly: ${topArticle.title.length > 50 ? topArticle.title.substring(0, 50) + '...' : topArticle.title}`;
+                      const previewText = topArticle.ai_summary || `This week's top stories from AI, wellness, and fitness—with insights for your business.`;
+                      
+                      return (
+                        <div className="card-tech p-4 mb-4 space-y-4">
+                          <h3 className="font-medium text-accent">📧 Email Copy (click to copy)</h3>
+                          
+                          {/* Subject Line */}
+                          <div>
+                            <label className="text-xs text-muted-foreground uppercase tracking-wide">Subject Line</label>
+                            <div 
+                              className="mt-1 p-3 bg-secondary rounded-lg cursor-pointer hover:bg-secondary/80 transition-colors flex items-center justify-between group"
+                              onClick={() => {
+                                navigator.clipboard.writeText(subjectLine);
+                                toast({
+                                  title: "Subject copied",
+                                  description: "Subject line copied to clipboard.",
+                                });
+                              }}
+                            >
+                              <span className="font-medium">{subjectLine}</span>
+                              <Copy size={14} className="text-muted-foreground group-hover:text-accent" />
+                            </div>
+                          </div>
+                          
+                          {/* Preview Text */}
+                          <div>
+                            <label className="text-xs text-muted-foreground uppercase tracking-wide">Preview Text</label>
+                            <div 
+                              className="mt-1 p-3 bg-secondary rounded-lg cursor-pointer hover:bg-secondary/80 transition-colors flex items-start justify-between gap-3 group"
+                              onClick={() => {
+                                navigator.clipboard.writeText(previewText);
+                                toast({
+                                  title: "Preview text copied",
+                                  description: "Preview text copied to clipboard.",
+                                });
+                              }}
+                            >
+                              <span className="text-sm text-muted-foreground">{previewText}</span>
+                              <Copy size={14} className="text-muted-foreground group-hover:text-accent flex-shrink-0 mt-0.5" />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Article Summary */}
+                    {articles.length > 0 && (
+                      <div className="card-tech p-4 mb-4">
+                        <h3 className="font-medium mb-3">Articles in this newsletter:</h3>
+                        <div className="space-y-2">
+                          {articles.map((article, i) => (
+                            <div key={article.id} className="flex items-start gap-3 text-sm">
+                              <span className="px-2 py-0.5 rounded bg-accent/10 text-accent text-xs">
+                                {article.category}
+                              </span>
+                              <span className="flex-1">{article.title}</span>
+                              <span className="text-muted-foreground">{article.source}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Next Step Button */}
+                    <div className="flex justify-between items-center mt-6">
+                      <Button 
+                        onClick={() => setCurrentStep('articles')}
+                        variant="outline"
+                        className="gap-2"
+                      >
+                        <ArrowLeft size={16} />
+                        Back to Articles
+                      </Button>
+                      <Button 
+                        onClick={() => setCurrentStep('send')}
+                        variant="accent"
+                        className="gap-2"
+                      >
+                        Continue to Send
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* STEP 3: Send */}
+            {currentStep === 'send' && (
+              <div className="space-y-6">
+                {!previewHtml ? (
+                  <div className="card-glass p-8 text-center">
+                    <Send size={48} className="mx-auto mb-4 text-muted-foreground/50" />
+                    <h3 className="text-lg font-semibold mb-2">Preview Required</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Generate a preview before sending.
+                    </p>
+                    <Button 
+                      onClick={() => setCurrentStep('preview')}
+                      variant="accent"
+                      className="gap-2"
+                    >
+                      <Eye size={16} />
+                      Go to Preview
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Active Send Warning */}
+                    {activeSend && !sendProgress && (
+                      <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <AlertCircle className="h-5 w-5 text-yellow-500" />
+                          <div>
+                            <p className="font-medium text-yellow-500">Send in Progress</p>
+                            <p className="text-sm text-muted-foreground">
+                              A newsletter is currently being sent to {activeSend.recipient_count} recipients. 
+                              Started {new Date(activeSend.sent_at).toLocaleTimeString()}.
+                            </p>
+                          </div>
+                          <Button 
+                            onClick={fetchRecentSends} 
+                            variant="ghost" 
+                            size="sm"
+                            className="ml-auto"
+                          >
+                            <RefreshCw size={14} className="mr-1" />
+                            Refresh
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Send Progress Indicator */}
+                    {sendProgress && (
+                      <div className="p-4 bg-accent/10 border border-accent/20 rounded-lg">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                          <span className="font-medium text-accent">Sending Newsletter...</span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              Batch {sendProgress.currentBatch} of {sendProgress.totalBatches}
+                            </span>
+                            <span className="text-foreground font-medium">
+                              {sendProgress.sentCount} / {sendProgress.totalSubscribers} sent
+                            </span>
+                          </div>
+                          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                            <div 
+                              className="bg-accent h-full transition-all duration-500 ease-out"
+                              style={{ 
+                                width: `${sendProgress.totalSubscribers > 0 
+                                  ? (sendProgress.sentCount / sendProgress.totalSubscribers * 100) 
+                                  : 0}%` 
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Sending 10 emails per batch with 20 second delays between batches
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Send to All Subscribers */}
+                    <div className="card-glass p-6">
+                      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Send size={18} />
+                        Send to All Subscribers
+                      </h2>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Send the newsletter to all {subscribers.filter(s => s.is_active).length} active subscribers.
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <Button 
+                          onClick={sendNewsletter} 
+                          disabled={sending || !previewHtml || !!activeSend}
+                          variant="accent"
+                          className="gap-2"
+                        >
+                          {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                          Send to All ({subscribers.filter(s => s.is_active).length})
+                        </Button>
+                        
+                        <Button 
+                          onClick={() => setShowTwitterModal(true)}
+                          variant="outline"
+                          className="gap-2"
+                        >
+                          <Twitter size={16} />
+                          Share on Twitter
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Send to New Subscribers */}
+                    <div className="card-glass p-6">
+                      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <UserPlus size={18} />
+                        Send to New Subscribers
+                      </h2>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Select recent subscribers to send a welcome or catch-up newsletter.
+                      </p>
+                      
+                      <div className="flex flex-wrap items-center gap-4 mb-4">
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-muted-foreground">Subscribers from last</label>
+                          <select
+                            value={newSubscribersDays}
+                            onChange={(e) => setNewSubscribersDays(Number(e.target.value))}
+                            className="bg-secondary border border-border rounded-lg px-3 py-2 text-sm"
+                          >
+                            <option value={7}>7 days</option>
+                            <option value={14}>14 days</option>
+                            <option value={30}>30 days</option>
+                            <option value={60}>60 days</option>
+                            <option value={90}>90 days</option>
+                          </select>
+                        </div>
+                        
+                        <Button 
+                          onClick={fetchNewSubscribers} 
+                          disabled={loadingNewSubscribers}
+                          variant="secondary"
+                          className="gap-2"
+                        >
+                          {loadingNewSubscribers ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                          Find New Subscribers
+                        </Button>
+                      </div>
+
+                      {newSubscribers.length > 0 && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-muted-foreground">
+                              Found <strong className="text-foreground">{newSubscribers.length}</strong> new subscriber(s) • 
+                              <strong className="text-foreground"> {selectedNewSubscribers.size}</strong> selected
+                            </p>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedNewSubscribers(new Set(newSubscribers.map(s => s.email)))}
+                              >
+                                Select All
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedNewSubscribers(new Set())}
+                              >
+                                Deselect All
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="max-h-48 overflow-y-auto border border-border rounded-lg">
+                            <table className="w-full text-sm">
+                              <thead className="bg-secondary/50 sticky top-0">
+                                <tr>
+                                  <th className="text-left p-3 font-medium">Select</th>
+                                  <th className="text-left p-3 font-medium">Email</th>
+                                  <th className="text-left p-3 font-medium">Source</th>
+                                  <th className="text-left p-3 font-medium">Joined</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {newSubscribers.map((sub) => (
+                                  <tr key={sub.id} className="border-t border-border hover:bg-secondary/30">
+                                    <td className="p-3">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedNewSubscribers.has(sub.email)}
+                                        onChange={(e) => {
+                                          const newSet = new Set(selectedNewSubscribers);
+                                          if (e.target.checked) {
+                                            newSet.add(sub.email);
+                                          } else {
+                                            newSet.delete(sub.email);
+                                          }
+                                          setSelectedNewSubscribers(newSet);
+                                        }}
+                                        className="rounded"
+                                      />
+                                    </td>
+                                    <td className="p-3 font-mono text-xs">{sub.email}</td>
+                                    <td className="p-3 text-muted-foreground">{sub.source || '-'}</td>
+                                    <td className="p-3 text-muted-foreground">
+                                      {new Date(sub.subscribed_at).toLocaleDateString()}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          
+                          <Button 
+                            onClick={sendToNewSubscribers} 
+                            disabled={sending || !previewHtml || selectedNewSubscribers.size === 0 || !!activeSend}
+                            variant="accent"
+                            className="gap-2"
+                          >
+                            {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                            Send to {selectedNewSubscribers.size} New Subscriber(s)
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Back button */}
+                    <div className="flex justify-start">
+                      <Button 
+                        onClick={() => setCurrentStep('preview')}
+                        variant="outline"
+                        className="gap-2"
+                      >
+                        <ArrowLeft size={16} />
+                        Back to Preview
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* STEP 4: History & Analytics */}
+            {currentStep === 'history' && (
+              <div className="space-y-6">
+                {/* Email Delivery Metrics */}
+                <EmailDeliveryMetrics getAuthHeaders={getAuthHeaders} />
+
+                {/* Incomplete Sends */}
+                {recentSends.filter(s => s.status === 'partial' || s.status === 'sending' || s.status === 'pending').length > 0 && (
+                  <div className="card-glass p-6">
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <AlertCircle size={18} className="text-yellow-500" />
+                      Incomplete Sends
+                    </h2>
+                    <div className="card-tech overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-secondary">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Recipients</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Opens</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {recentSends
+                            .filter(s => s.status === 'partial' || s.status === 'sending' || s.status === 'pending')
+                            .map((send) => (
+                              <tr key={send.id} className="border-t border-border">
+                                <td className="px-4 py-3 text-sm">
+                                  {new Date(send.sent_at).toLocaleDateString('en-GB', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </td>
+                                <td className="px-4 py-3 text-sm">{send.recipient_count}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className="text-green-400">{send.unique_opens || 0}</span>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                                    send.status === 'partial'
+                                      ? 'bg-yellow-500/10 text-yellow-400'
+                                      : send.status === 'sending'
+                                      ? 'bg-blue-500/10 text-blue-400'
+                                      : 'bg-orange-500/10 text-orange-400'
+                                  }`}>
+                                    <AlertCircle size={12} />
+                                    {send.status}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <div className="flex flex-wrap gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => resumeSend(send.id)}
+                                      className="border-border hover:bg-secondary"
+                                    >
+                                      <RefreshCw size={14} className="mr-1" />
+                                      Resend Unsent
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => updateSendStatus(send.id, 'sent')}
+                                      className="text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                    >
+                                      <CheckCircle size={14} className="mr-1" />
+                                      Mark Complete
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recent Sends */}
+                {recentSends.length > 0 && (
+                  <div className="card-glass p-6">
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Clock size={18} />
+                      Recent Sends
+                    </h2>
+                    <div className="card-tech overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-secondary">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Recipients</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Opens</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Open Rate</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Clicks</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Click Rate</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {recentSends.map((send) => {
+                            const openRate = send.recipient_count > 0 
+                              ? ((send.unique_opens || 0) / send.recipient_count * 100).toFixed(1)
+                              : '0.0';
+                            const clickRate = send.recipient_count > 0 
+                              ? ((send.unique_clicks || 0) / send.recipient_count * 100).toFixed(1)
+                              : '0.0';
+                            return (
+                              <tr key={send.id} className="border-t border-border">
+                                <td className="px-4 py-3 text-sm">
+                                  {new Date(send.sent_at).toLocaleDateString('en-GB', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </td>
+                                <td className="px-4 py-3 text-sm">{send.recipient_count}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className="text-green-400">{send.unique_opens || 0}</span>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className="text-green-400 font-medium">{openRate}%</span>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className="text-blue-400">{send.unique_clicks || 0}</span>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className="text-blue-400 font-medium">{clickRate}%</span>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                                    send.status === 'sent' 
+                                      ? 'bg-green-500/10 text-green-400' 
+                                      : send.status === 'partial'
+                                      ? 'bg-yellow-500/10 text-yellow-400'
+                                      : send.status === 'pending'
+                                      ? 'bg-blue-500/10 text-blue-400'
+                                      : 'bg-red-500/10 text-red-400'
+                                  }`}>
+                                    {send.status === 'sent' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                    {send.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 5: Management */}
+            {currentStep === 'manage' && (
+              <div className="space-y-6">
+                {/* Subscribers Management */}
+                <div className="card-glass p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      <Users size={18} />
+                      Subscribers ({subscribers.length})
+                    </h2>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        onClick={() => fetchSubscribers()} 
+                        variant="ghost" 
+                        size="sm" 
+                        className="gap-2"
+                        disabled={loadingSubscribers}
+                      >
+                        <RefreshCw size={16} className={loadingSubscribers ? 'animate-spin' : ''} />
+                        Refresh
+                      </Button>
+                      <Button 
+                        onClick={() => setShowBulkImportModal(true)} 
+                        variant="secondary" 
+                        size="sm" 
+                        className="gap-2"
+                      >
+                        <Download size={16} />
+                        Bulk Import
+                      </Button>
+                      <Button onClick={openAddSubscriber} variant="accent" size="sm" className="gap-2">
+                        <UserPlus size={16} />
+                        Add Subscriber
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-4 mb-4">
+                    <div className="relative flex-1 min-w-[200px]">
+                      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by email..."
+                        value={subscriberSearch}
+                        onChange={(e) => {
+                          setSubscriberSearch(e.target.value);
+                          setSubscriberPage(1);
+                        }}
+                        className="pl-9 bg-secondary border-border"
+                      />
+                    </div>
+                    <select
+                      value={subscriberStatusFilter}
+                      onChange={(e) => {
+                        setSubscriberStatusFilter(e.target.value as 'all' | 'active' | 'inactive');
+                        setSubscriberPage(1);
+                      }}
+                      className="px-3 py-2 rounded-md bg-secondary border border-border text-sm"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="active">Active Only</option>
+                      <option value="inactive">Inactive Only</option>
+                    </select>
+                  </div>
+
+                  {loadingSubscribers ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                    </div>
+                  ) : subscribers.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No subscribers yet.</p>
+                  ) : (() => {
+                    const filteredSubscribers = subscribers.filter(sub => {
+                      const matchesSearch = subscriberSearch === '' || 
+                        sub.email.toLowerCase().includes(subscriberSearch.toLowerCase()) ||
+                        (sub.name && sub.name.toLowerCase().includes(subscriberSearch.toLowerCase()));
+                      const matchesStatus = subscriberStatusFilter === 'all' ||
+                        (subscriberStatusFilter === 'active' && sub.is_active) ||
+                        (subscriberStatusFilter === 'inactive' && !sub.is_active);
+                      return matchesSearch && matchesStatus;
+                    });
+                    const totalPages = Math.ceil(filteredSubscribers.length / subscribersPerPage);
+                    const paginatedSubscribers = filteredSubscribers.slice(
+                      (subscriberPage - 1) * subscribersPerPage,
+                      subscriberPage * subscribersPerPage
+                    );
+
+                    return (
+                      <>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          Showing {paginatedSubscribers.length} of {filteredSubscribers.length} subscribers
+                        </div>
+                        <div className="card-tech overflow-hidden max-h-96 overflow-y-auto">
+                          <table className="w-full">
+                            <thead className="bg-secondary sticky top-0">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Subscribed</th>
+                                <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {paginatedSubscribers.map((subscriber) => (
+                                <tr key={subscriber.id} className="border-t border-border">
+                                  <td className="px-4 py-3 text-sm font-medium">{subscriber.email}</td>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">{subscriber.name || '—'}</td>
+                                  <td className="px-4 py-3 text-sm">
+                                    <button
+                                      onClick={() => toggleSubscriberActive(subscriber)}
+                                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 ${
+                                        subscriber.is_active 
+                                          ? 'bg-green-500/10 text-green-400' 
+                                          : 'bg-red-500/10 text-red-400'
+                                      }`}
+                                    >
+                                      {subscriber.is_active ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                      {subscriber.is_active ? 'Active' : 'Inactive'}
+                                    </button>
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                                    {new Date(subscriber.subscribed_at).toLocaleDateString('en-GB', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => openEditSubscriber(subscriber)}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Pencil size={14} />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteSubscriber(subscriber)}
+                                        className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                                      >
+                                        <Trash2 size={14} />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-between mt-4">
+                            <div className="text-sm text-muted-foreground">
+                              Page {subscriberPage} of {totalPages}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSubscriberPage(p => Math.max(1, p - 1))}
+                                disabled={subscriberPage === 1}
+                              >
+                                Previous
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSubscriberPage(p => Math.min(totalPages, p + 1))}
+                                disabled={subscriberPage === totalPages}
+                              >
+                                Next
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Admin Users */}
+                <div className="card-glass p-6">
+                  <button
+                    onClick={() => setAdminUsersExpanded(!adminUsersExpanded)}
+                    className="w-full flex items-center justify-between text-left"
+                  >
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      <Shield size={18} />
+                      Admin Users ({adminUsers.filter(u => u.is_admin).length})
+                    </h2>
+                    {adminUsersExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                  </button>
+                  
+                  {adminUsersExpanded && (
+                    <div className="mt-4">
+                      <div className="flex gap-2 mb-4">
+                        <Input
+                          placeholder="Email of user to grant admin access..."
+                          value={newAdminEmail}
+                          onChange={(e) => setNewAdminEmail(e.target.value)}
+                          className="bg-secondary border-border flex-1"
+                        />
+                        <Button
+                          variant="accent"
+                          onClick={() => grantAdminAccess(undefined, newAdminEmail)}
+                          disabled={!newAdminEmail.trim()}
+                        >
+                          <ShieldCheck size={16} className="mr-2" />
+                          Grant Admin
+                        </Button>
+                      </div>
+
+                      {loadingAdminUsers ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                        </div>
+                      ) : (
+                        <div className="card-tech overflow-hidden">
+                          <table className="w-full">
+                            <thead className="bg-secondary">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                                <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {adminUsers.map((adminUser) => (
+                                <tr key={adminUser.id} className="border-t border-border">
+                                  <td className="px-4 py-3 text-sm font-medium">{adminUser.email}</td>
+                                  <td className="px-4 py-3 text-sm">
+                                    {adminUser.is_admin ? (
+                                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent">
+                                        <ShieldCheck size={12} />
+                                        Admin
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-secondary text-muted-foreground">
+                                        User
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-right">
+                                    {adminUser.is_admin ? (
+                                      adminUser.id === user?.id ? (
+                                        <span className="text-xs text-muted-foreground">You</span>
+                                      ) : (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => revokeAdminAccess(adminUser.id, adminUser.email)}
+                                          className="h-8 text-red-400 hover:text-red-300 gap-1"
+                                        >
+                                          <ShieldX size={14} />
+                                          Revoke
+                                        </Button>
+                                      )
+                                    ) : (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => grantAdminAccess(adminUser.id, adminUser.email)}
+                                        className="h-8 text-accent gap-1"
+                                      >
+                                        <ShieldCheck size={14} />
+                                        Grant
+                                      </Button>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            {/* Send to New Subscribers Section */}
-            <div className="card-glass p-6 mb-8">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <UserPlus size={20} />
-                Send to New Subscribers
-              </h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Select recent subscribers to send a welcome or catch-up newsletter.
-              </p>
-              
-              <div className="flex flex-wrap items-center gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-muted-foreground">Subscribers from last</label>
-                  <select
-                    value={newSubscribersDays}
-                    onChange={(e) => setNewSubscribersDays(Number(e.target.value))}
-                    className="bg-secondary border border-border rounded-lg px-3 py-2 text-sm"
+                {/* AI Readiness Index */}
+                <div className="card-glass p-6">
+                  <button
+                    onClick={() => setReadinessExpanded(!readinessExpanded)}
+                    className="w-full flex items-center justify-between text-left"
                   >
-                    <option value={7}>7 days</option>
-                    <option value={14}>14 days</option>
-                    <option value={30}>30 days</option>
-                    <option value={60}>60 days</option>
-                    <option value={90}>90 days</option>
-                  </select>
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      <TrendingUp size={18} />
+                      AI Readiness Index Data
+                    </h2>
+                    {readinessExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                  </button>
+                  
+                  {readinessExpanded && (
+                    <div className="mt-4">
+                      {readinessStats && (
+                        <div className="grid grid-cols-3 gap-4 mb-4">
+                          <div className="p-3 bg-secondary rounded-lg">
+                            <p className="text-xs text-muted-foreground">Total Completions</p>
+                            <p className="text-xl font-bold">{readinessStats.totalCompletions}</p>
+                          </div>
+                          <div className="p-3 bg-secondary rounded-lg">
+                            <p className="text-xs text-muted-foreground">This Week</p>
+                            <p className="text-xl font-bold">{readinessStats.completionsThisWeek}</p>
+                          </div>
+                          <div className="p-3 bg-secondary rounded-lg">
+                            <p className="text-xs text-muted-foreground">Avg Score (Week)</p>
+                            <p className="text-xl font-bold">{readinessStats.avgScoreThisWeek.toFixed(0)}%</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {loadingReadiness ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                        </div>
+                      ) : readinessCompletions.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">No completions yet.</p>
+                      ) : (
+                        <div className="card-tech overflow-hidden max-h-64 overflow-y-auto">
+                          <table className="w-full">
+                            <thead className="bg-secondary sticky top-0">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Company</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Score</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {readinessCompletions.slice(0, 20).map((completion) => (
+                                <tr key={completion.id} className="border-t border-border">
+                                  <td className="px-4 py-3 text-sm font-medium">{completion.email}</td>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">{completion.company || '—'}</td>
+                                  <td className="px-4 py-3 text-sm">
+                                    <span className={`font-medium ${
+                                      completion.overall_score >= 70 ? 'text-green-400' :
+                                      completion.overall_score >= 50 ? 'text-yellow-400' : 'text-red-400'
+                                    }`}>
+                                      {completion.overall_score}%
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                                    {new Date(completion.completed_at).toLocaleDateString('en-GB')}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                
-                <Button 
-                  onClick={fetchNewSubscribers} 
-                  disabled={loadingNewSubscribers}
-                  variant="secondary"
-                  className="gap-2"
-                >
-                  {loadingNewSubscribers ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-                  Find New Subscribers
-                </Button>
+
+                {/* Blog Posts */}
+                <div className="card-glass p-6">
+                  <button
+                    onClick={() => setBlogPostsExpanded(!blogPostsExpanded)}
+                    className="w-full flex items-center justify-between text-left"
+                  >
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      <FileText size={18} />
+                      Blog Posts ({blogPosts.length})
+                    </h2>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        onClick={() => setShowAIGenerator(true)} 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2"
+                      >
+                        <Sparkles size={16} />
+                        AI Generate
+                      </Button>
+                      <Button onClick={openAddBlogPost} variant="accent" size="sm" className="gap-2">
+                        <Plus size={16} />
+                        New Post
+                      </Button>
+                      {blogPostsExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                    </div>
+                  </button>
+                  
+                  {blogPostsExpanded && (
+                    <div className="mt-4">
+                      {loadingBlogPosts ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                        </div>
+                      ) : blogPosts.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">No blog posts yet.</p>
+                      ) : (
+                        <div className="card-tech overflow-hidden max-h-64 overflow-y-auto">
+                          <table className="w-full">
+                            <thead className="bg-secondary sticky top-0">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Title</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Category</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                                <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {blogPosts.map((post) => (
+                                <tr key={post.id} className="border-t border-border">
+                                  <td className="px-4 py-3 text-sm font-medium">{post.title}</td>
+                                  <td className="px-4 py-3 text-sm">
+                                    <span className="px-2 py-1 rounded-full text-xs bg-secondary">{post.category}</span>
+                                  </td>
+                                  <td className="px-4 py-3 text-sm">
+                                    {post.published ? (
+                                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
+                                        <CheckCircle size={12} />
+                                        Published
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-400">
+                                        Draft
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => openEditBlogPost(post)}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Pencil size={14} />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteBlogPost(post)}
+                                        className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                                      >
+                                        <Trash2 size={14} />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
 
-              {newSubscribers.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      Found <strong className="text-foreground">{newSubscribers.length}</strong> new subscriber(s) • 
-                      <strong className="text-foreground"> {selectedNewSubscribers.size}</strong> selected
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedNewSubscribers(new Set(newSubscribers.map(s => s.email)))}
-                      >
-                        Select All
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedNewSubscribers(new Set())}
-                      >
-                        Deselect All
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="max-h-48 overflow-y-auto border border-border rounded-lg">
-                    <table className="w-full text-sm">
-                      <thead className="bg-secondary/50 sticky top-0">
-                        <tr>
-                          <th className="text-left p-3 font-medium">Select</th>
-                          <th className="text-left p-3 font-medium">Email</th>
-                          <th className="text-left p-3 font-medium">Source</th>
-                          <th className="text-left p-3 font-medium">Joined</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {newSubscribers.map((sub) => (
-                          <tr key={sub.id} className="border-t border-border hover:bg-secondary/30">
-                            <td className="p-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedNewSubscribers.has(sub.email)}
-                                onChange={(e) => {
-                                  const newSet = new Set(selectedNewSubscribers);
-                                  if (e.target.checked) {
-                                    newSet.add(sub.email);
-                                  } else {
-                                    newSet.delete(sub.email);
-                                  }
-                                  setSelectedNewSubscribers(newSet);
-                                }}
-                                className="rounded"
-                              />
-                            </td>
-                            <td className="p-3 font-mono text-xs">{sub.email}</td>
-                            <td className="p-3 text-muted-foreground">{sub.source || '-'}</td>
-                            <td className="p-3 text-muted-foreground">
-                              {new Date(sub.subscribed_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  <Button 
-                    onClick={sendToNewSubscribers} 
-                    disabled={sending || !previewHtml || selectedNewSubscribers.size === 0 || !!activeSend}
-                    variant="accent"
-                    className="gap-2"
-                  >
-                    {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                    Send to {selectedNewSubscribers.size} New Subscriber(s)
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Preview */}
-            {previewHtml && (
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Mail size={20} />
-                  Email Preview
-                </h2>
-                
-                {/* Subject Line & Preview Text */}
-                {articles.length > 0 && (() => {
-                  const topArticle = articles[0];
-                  const subjectLine = `Wellness Genius Weekly: ${topArticle.title.length > 50 ? topArticle.title.substring(0, 50) + '...' : topArticle.title}`;
-                  const previewText = topArticle.ai_summary || `This week's top stories from AI, wellness, and fitness—with insights for your business.`;
-                  
-                  return (
-                    <div className="card-tech p-4 mb-4 space-y-4">
-                      <h3 className="font-medium text-accent">📧 Email Copy (click to copy)</h3>
-                      
-                      {/* Subject Line */}
-                      <div>
-                        <label className="text-xs text-muted-foreground uppercase tracking-wide">Subject Line</label>
-                        <div 
-                          className="mt-1 p-3 bg-secondary rounded-lg cursor-pointer hover:bg-secondary/80 transition-colors flex items-center justify-between group"
-                          onClick={() => {
-                            navigator.clipboard.writeText(subjectLine);
-                            toast({
-                              title: "Subject copied",
-                              description: "Subject line copied to clipboard.",
-                            });
-                          }}
-                        >
-                          <span className="font-medium">{subjectLine}</span>
-                          <Copy size={14} className="text-muted-foreground group-hover:text-accent" />
-                        </div>
-                      </div>
-                      
-                      {/* Preview Text */}
-                      <div>
-                        <label className="text-xs text-muted-foreground uppercase tracking-wide">Preview Text</label>
-                        <div 
-                          className="mt-1 p-3 bg-secondary rounded-lg cursor-pointer hover:bg-secondary/80 transition-colors flex items-start justify-between gap-3 group"
-                          onClick={() => {
-                            navigator.clipboard.writeText(previewText);
-                            toast({
-                              title: "Preview text copied",
-                              description: "Preview text copied to clipboard.",
-                            });
-                          }}
-                        >
-                          <span className="text-sm text-muted-foreground">{previewText}</span>
-                          <Copy size={14} className="text-muted-foreground group-hover:text-accent flex-shrink-0 mt-0.5" />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Article Summary */}
-                {articles.length > 0 && (
-                  <div className="card-tech p-4 mb-4">
-                    <h3 className="font-medium mb-3">Articles in this newsletter:</h3>
-                    <div className="space-y-2">
-                      {articles.map((article, i) => (
-                        <div key={article.id} className="flex items-start gap-3 text-sm">
-                          <span className="px-2 py-0.5 rounded bg-accent/10 text-accent text-xs">
-                            {article.category}
-                          </span>
-                          <span className="flex-1">{article.title}</span>
-                          <span className="text-muted-foreground">{article.source}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+            {/* Preview Section moved outside step conditionals for rendering */}
+            {currentStep === 'preview' && previewHtml && (
                 )}
 
                 {/* HTML Preview */}
