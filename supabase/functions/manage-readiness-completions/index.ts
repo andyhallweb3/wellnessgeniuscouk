@@ -65,6 +65,15 @@ serve(async (req) => {
 
       console.log('Saving AI Readiness completion for:', email);
 
+      // Check for previous completion by this email to detect score changes
+      const { data: previousCompletion } = await supabase
+        .from('ai_readiness_completions')
+        .select('id, overall_score, score_band')
+        .eq('email', email)
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
       const { data, error } = await supabase.from('ai_readiness_completions').insert({
         email,
         name,
@@ -89,6 +98,33 @@ serve(async (req) => {
           JSON.stringify({ error: 'Failed to save completion. Please try again.' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
+      }
+
+      // Send score change notification if there was a previous completion
+      if (previousCompletion && data?.id) {
+        const scoreDiff = Math.abs(overallScore - previousCompletion.overall_score);
+        if (scoreDiff >= 5) {
+          try {
+            const notificationUrl = `${supabaseUrl}/functions/v1/send-readiness-score-change`;
+            await fetch(notificationUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                completionId: data.id,
+                email,
+                name: name || 'there',
+                currentScore: overallScore,
+                previousScore: previousCompletion.overall_score,
+                currentBand: scoreBand || 'Unknown',
+                previousBand: previousCompletion.score_band || 'Unknown',
+              }),
+            });
+            console.log('Score change notification sent');
+          } catch (notifyError) {
+            console.error('Failed to send score change notification:', notifyError);
+            // Don't fail the main request if notification fails
+          }
+        }
       }
 
       return new Response(
