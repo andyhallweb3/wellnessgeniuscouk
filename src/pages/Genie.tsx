@@ -40,6 +40,7 @@ import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
 import SessionHistory from "@/components/genie/SessionHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
 import FloatingChatDrawer from "@/components/genie/FloatingChatDrawer";
+import InlineChatBox from "@/components/genie/InlineChatBox";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
@@ -83,7 +84,6 @@ const Genie = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("brief");
   const [showHistory, setShowHistory] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [floatingChatOpen, setFloatingChatOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Brief state - use the hook
@@ -558,6 +558,15 @@ const Genie = () => {
                   businessName={memory?.business_name}
                 />
 
+                {/* Inline Chat Box */}
+                <InlineChatBox
+                  credits={credits.balance}
+                  onDeductCredits={deductCredits}
+                  memoryContext={getMemoryContext()}
+                  trustDisplayMode={trustDisplayMode}
+                  onSaveSession={saveSession}
+                />
+
                 {/* Mode Buttons */}
                 <div className="mt-6">
                   <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-4">
@@ -601,18 +610,6 @@ const Genie = () => {
                   </div>
                 )}
 
-                {/* Quick Chat Access */}
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-2"
-                  onClick={() => {
-                    setSelectedMode("quick_question");
-                    setShowChat(true);
-                  }}
-                >
-                  <MessageSquare size={16} />
-                  Ask a quick question
-                </Button>
               </div>
             </div>
           ) : (
@@ -742,18 +739,6 @@ const Genie = () => {
         </div>
       </main>
 
-      {/* Floating Chat Drawer */}
-      {!showChat && (
-        <FloatingChatDrawer
-          open={floatingChatOpen}
-          onOpenChange={setFloatingChatOpen}
-          credits={credits.balance}
-          onDeductCredits={deductCredits}
-          memoryContext={getMemoryContext()}
-          trustDisplayMode={trustDisplayMode}
-          onSaveSession={saveSession}
-        />
-      )}
 
       {/* Decision Drawer */}
       <DecisionDrawer
