@@ -6,7 +6,11 @@ import {
   RotateCcw, 
   FolderOpen,
   Minimize2,
-  MessageSquare
+  MessageSquare,
+  HelpCircle,
+  Mail,
+  ChevronRight,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +24,7 @@ import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 import MarkdownRenderer from "./MarkdownRenderer";
 import DocumentLibrary from "./DocumentLibrary";
 import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.png";
+import { Link } from "react-router-dom";
 
 interface Message {
   role: "user" | "assistant";
@@ -31,6 +36,33 @@ interface FloatingCoachPanelProps {
   onClose: () => void;
 }
 
+const FAQS = [
+  {
+    question: "What is Wellness Genius?",
+    answer: "Wellness Genius is an AI-powered platform designed to help wellness businesses navigate the AI landscape. We offer tools, assessments, playbooks, and expert consulting to help you implement AI effectively."
+  },
+  {
+    question: "How does the AI Readiness Assessment work?",
+    answer: "Our free AI Readiness Assessment takes about 10 minutes and evaluates your business across 5 key pillars: Data, Process, People, Risk, and Leadership. You'll receive a personalized score and actionable insights."
+  },
+  {
+    question: "What products do you offer?",
+    answer: "We offer free playbooks and guides, paid diagnostic tools, and consulting services ranging from AI Readiness Sprints to custom AI agent builds. Visit our Products page to explore all options."
+  },
+  {
+    question: "How does the AI Advisor work?",
+    answer: "The AI Advisor is your strategic business partner. It uses AI to provide guidance on wellness business decisions, help you stress-test ideas, and build action plans. You need to be logged in to use it."
+  },
+  {
+    question: "Is my data secure?",
+    answer: "Yes. We take data security seriously. Your data is encrypted, never shared with third parties, and you can request deletion at any time. See our Privacy Policy for full details."
+  },
+  {
+    question: "How do I get started?",
+    answer: "Start with our free AI Readiness Assessment to understand where your business stands. From there, explore our free resources or book a strategy call to discuss your specific needs."
+  },
+];
+
 const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
   const { user } = useAuth();
   const { credits, profile, deductCredits, saveSession } = useCoachCredits();
@@ -39,23 +71,29 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [activeTab, setActiveTab] = useState("chat");
+  const [activeTab, setActiveTab] = useState(user ? "chat" : "help");
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Update default tab when user logs in/out
+  useEffect(() => {
+    if (!user && activeTab === "chat") {
+      setActiveTab("help");
+    }
+  }, [user, activeTab]);
+
   const streamChat = useCallback(async (userMessages: Message[]) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach-chat`;
     
-    // Get the user's session for proper JWT authentication
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData?.session?.access_token) {
       throw new Error("Not authenticated. Please log in to use AI Coach.");
     }
     
-    // Build enhanced context with documents
     const documentContext = getDocumentContext();
 
     const resp = await fetch(CHAT_URL, {
@@ -81,7 +119,7 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
           decision_style: profile.decision_style,
         } : undefined,
         documentContext,
-        _hp_field: "", // Honeypot field - must be empty for legitimate requests
+        _hp_field: "",
       }),
     });
 
@@ -144,7 +182,7 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
     if (!input.trim() || isStreaming) return;
 
     if (!user) {
-      toast.error("Please sign in to use the coach");
+      toast.error("Please sign in to use the AI advisor");
       return;
     }
 
@@ -196,14 +234,9 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
             <SheetTitle className="flex items-center gap-2">
               <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-6 w-6 object-contain" />
               Wellness Genie
-              {documents.length > 0 && (
-                <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">
-                  {documents.length} docs
-                </span>
-              )}
             </SheetTitle>
             <div className="flex items-center gap-2">
-              {messages.length > 0 && (
+              {messages.length > 0 && activeTab === "chat" && (
                 <Button variant="ghost" size="icon" onClick={handleNewConversation}>
                   <RotateCcw size={16} />
                 </Button>
@@ -217,108 +250,225 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-4 mt-2 shrink-0">
-            <TabsTrigger value="chat" className="flex-1">
-              <MessageSquare size={14} className="mr-1" />
-              Chat
+            <TabsTrigger value="help" className="flex-1">
+              <HelpCircle size={14} className="mr-1" />
+              Help & FAQs
             </TabsTrigger>
-            <TabsTrigger value="library" className="flex-1">
-              <FolderOpen size={14} className="mr-1" />
-              Library ({documents.length})
-            </TabsTrigger>
+            {user && (
+              <>
+                <TabsTrigger value="chat" className="flex-1">
+                  <MessageSquare size={14} className="mr-1" />
+                  AI Chat
+                </TabsTrigger>
+                <TabsTrigger value="library" className="flex-1">
+                  <FolderOpen size={14} className="mr-1" />
+                  Library
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
-          <TabsContent value="chat" className="flex-1 flex flex-col overflow-hidden m-0 p-4">
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto space-y-3 mb-4">
-              {messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                  <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-12 w-12 object-contain mb-3" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Your personal wellness business assistant
-                  </p>
-                  {documents.length > 0 && (
-                    <p className="text-xs text-accent">
-                      Using context from {documents.length} uploaded documents
-                    </p>
-                  )}
+          {/* HELP & FAQ TAB - Available to everyone */}
+          <TabsContent value="help" className="flex-1 flex flex-col overflow-hidden m-0 p-4">
+            <div className="flex-1 overflow-y-auto space-y-4">
+              {/* Quick Links */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Quick Links</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" size="sm" className="justify-start h-auto py-2" asChild>
+                    <Link to="/ai-readiness" onClick={onClose}>
+                      <ChevronRight size={14} className="mr-1" />
+                      AI Readiness
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" className="justify-start h-auto py-2" asChild>
+                    <Link to="/products" onClick={onClose}>
+                      <ChevronRight size={14} className="mr-1" />
+                      Products
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" className="justify-start h-auto py-2" asChild>
+                    <Link to="/services" onClick={onClose}>
+                      <ChevronRight size={14} className="mr-1" />
+                      Consulting
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" className="justify-start h-auto py-2" asChild>
+                    <Link to="/insights" onClick={onClose}>
+                      <ChevronRight size={14} className="mr-1" />
+                      Latest News
+                    </Link>
+                  </Button>
                 </div>
-              ) : (
-                messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex gap-2 ${message.role === "user" ? "justify-end" : ""}`}
-                  >
-                    {message.role === "assistant" && (
-                      <div className="p-1 rounded-full bg-accent/10 h-fit shrink-0">
-                        <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
-                      </div>
-                    )}
-                    <div
-                      className={`rounded-xl px-3 py-2 max-w-[85%] ${
-                        message.role === "user"
-                          ? "bg-accent text-accent-foreground"
-                          : "bg-secondary"
-                      }`}
+              </div>
+
+              {/* FAQs */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">FAQs</h3>
+                <div className="space-y-2">
+                  {FAQS.map((faq, index) => (
+                    <div 
+                      key={index}
+                      className="rounded-lg border border-border bg-card overflow-hidden"
                     >
-                      {message.role === "assistant" ? (
-                        <MarkdownRenderer content={message.content} />
-                      ) : (
-                        <div className="text-sm">{message.content}</div>
+                      <button
+                        onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                        className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/50 transition-colors"
+                      >
+                        <span className="text-sm font-medium pr-2">{faq.question}</span>
+                        <ChevronRight 
+                          size={16} 
+                          className={`shrink-0 text-muted-foreground transition-transform ${
+                            expandedFaq === index ? "rotate-90" : ""
+                          }`} 
+                        />
+                      </button>
+                      {expandedFaq === index && (
+                        <div className="px-3 pb-3 pt-0">
+                          <p className="text-sm text-muted-foreground">{faq.answer}</p>
+                        </div>
                       )}
                     </div>
-                    {message.role === "user" && (
-                      <div className="p-1.5 rounded-full bg-secondary h-fit shrink-0">
-                        <User size={14} />
-                      </div>
-                    )}
+                  ))}
+                </div>
+              </div>
+
+              {/* Contact / Email CTA */}
+              <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-accent/10">
+                    <Mail size={18} className="text-accent" />
                   </div>
-                ))
-              )}
-                {isStreaming && messages[messages.length - 1]?.role === "user" && (
-                <div className="flex gap-2">
-                  <div className="p-1 rounded-full bg-accent/10 h-fit">
-                    <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
-                  </div>
-                  <div className="rounded-xl px-3 py-2 bg-secondary">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm mb-1">Need more help?</h4>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Can't find what you're looking for? Get in touch and we'll help you out.
+                    </p>
+                    <Button variant="accent" size="sm" className="w-full" asChild>
+                      <a href="mailto:hello@wellnessgenius.io">
+                        <Mail size={14} />
+                        Email Us
+                        <ExternalLink size={12} />
+                      </a>
+                    </Button>
                   </div>
                 </div>
+              </div>
+
+              {/* Sign in prompt for non-users */}
+              {!user && (
+                <div className="rounded-xl border border-border bg-card p-4 text-center">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Sign in to access our AI Advisor for personalized business guidance
+                  </p>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/auth" onClick={onClose}>
+                      Sign In / Create Account
+                    </Link>
+                  </Button>
+                </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
+          </TabsContent>
 
-            {/* Input */}
-            <div className="shrink-0 flex gap-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask anything about your business..."
-                className="min-h-[48px] max-h-[100px] resize-none text-sm"
-                disabled={isStreaming}
-              />
-              <Button
-                variant="accent"
-                size="icon"
-                className="h-12 w-12 shrink-0"
-                onClick={handleSend}
-                disabled={!input.trim() || isStreaming || credits.balance < 1}
-              >
-                {isStreaming ? (
-                  <Loader2 className="animate-spin" size={18} />
+          {/* CHAT TAB - Only for logged-in users */}
+          {user && (
+            <TabsContent value="chat" className="flex-1 flex flex-col overflow-hidden m-0 p-4">
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+                {messages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-4">
+                    <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-12 w-12 object-contain mb-3" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Your personal wellness business assistant
+                    </p>
+                    {documents.length > 0 && (
+                      <p className="text-xs text-accent">
+                        Using context from {documents.length} uploaded documents
+                      </p>
+                    )}
+                  </div>
                 ) : (
-                  <Send size={18} />
+                  messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex gap-2 ${message.role === "user" ? "justify-end" : ""}`}
+                    >
+                      {message.role === "assistant" && (
+                        <div className="p-1 rounded-full bg-accent/10 h-fit shrink-0">
+                          <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
+                        </div>
+                      )}
+                      <div
+                        className={`rounded-xl px-3 py-2 max-w-[85%] ${
+                          message.role === "user"
+                            ? "bg-accent text-accent-foreground"
+                            : "bg-secondary"
+                        }`}
+                      >
+                        {message.role === "assistant" ? (
+                          <MarkdownRenderer content={message.content} />
+                        ) : (
+                          <div className="text-sm">{message.content}</div>
+                        )}
+                      </div>
+                      {message.role === "user" && (
+                        <div className="p-1.5 rounded-full bg-secondary h-fit shrink-0">
+                          <User size={14} />
+                        </div>
+                      )}
+                    </div>
+                  ))
                 )}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              {credits.balance} credits remaining
-            </p>
-          </TabsContent>
+                {isStreaming && messages[messages.length - 1]?.role === "user" && (
+                  <div className="flex gap-2">
+                    <div className="p-1 rounded-full bg-accent/10 h-fit">
+                      <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
+                    </div>
+                    <div className="rounded-xl px-3 py-2 bg-secondary">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
 
-          <TabsContent value="library" className="flex-1 overflow-hidden m-0">
-            <DocumentLibrary />
-          </TabsContent>
+              {/* Input */}
+              <div className="shrink-0 flex gap-2">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask anything about your business..."
+                  className="min-h-[48px] max-h-[100px] resize-none text-sm"
+                  disabled={isStreaming}
+                />
+                <Button
+                  variant="accent"
+                  size="icon"
+                  className="h-12 w-12 shrink-0"
+                  onClick={handleSend}
+                  disabled={!input.trim() || isStreaming || credits.balance < 1}
+                >
+                  {isStreaming ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : (
+                    <Send size={18} />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                {credits.balance} credits remaining
+              </p>
+            </TabsContent>
+          )}
+
+          {/* LIBRARY TAB - Only for logged-in users */}
+          {user && (
+            <TabsContent value="library" className="flex-1 overflow-hidden m-0">
+              <DocumentLibrary />
+            </TabsContent>
+          )}
         </Tabs>
       </SheetContent>
     </Sheet>
