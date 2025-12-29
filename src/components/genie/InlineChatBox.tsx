@@ -24,6 +24,17 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+interface SuggestedQuestion {
+  text: string;
+  reason: string;
+}
 
 interface Message {
   role: "user" | "assistant";
@@ -42,16 +53,16 @@ interface InlineChatBoxProps {
 }
 
 // Generate dynamic follow-up questions based on brief content
-const generateBriefQuestions = (brief: BriefData | null | undefined): string[] => {
+const generateBriefQuestions = (brief: BriefData | null | undefined): SuggestedQuestion[] => {
   if (!brief) {
     return [
-      "What are the biggest risks to my business right now?",
-      "What metrics should I be tracking weekly?",
-      "What's one thing I should improve this month?",
+      { text: "What are the biggest risks to my business right now?", reason: "Understanding risks helps you prepare and prioritize" },
+      { text: "What metrics should I be tracking weekly?", reason: "Regular tracking reveals trends before they become problems" },
+      { text: "What's one thing I should improve this month?", reason: "Focused improvement leads to consistent growth" },
     ];
   }
 
-  const questions: string[] = [];
+  const questions: SuggestedQuestion[] = [];
 
   // Add questions based on changes
   if (brief.changes.length > 0) {
@@ -59,41 +70,79 @@ const generateBriefQuestions = (brief: BriefData | null | undefined): string[] =
     const positiveChanges = brief.changes.filter(c => c.severity === "good");
     
     if (warningChanges.length > 0) {
-      questions.push(`Why is "${warningChanges[0].text.slice(0, 40)}..." happening?`);
-      questions.push("What should I do to address these warning signs?");
+      questions.push({
+        text: `Why is "${warningChanges[0].text.slice(0, 40)}..." happening?`,
+        reason: `Your brief flagged this as a warning that needs attention`
+      });
+      questions.push({
+        text: "What should I do to address these warning signs?",
+        reason: `You have ${warningChanges.length} warning${warningChanges.length > 1 ? 's' : ''} in today's brief`
+      });
     }
     
     if (positiveChanges.length > 0) {
-      questions.push("How can I capitalize on the positive trends?");
+      questions.push({
+        text: "How can I capitalize on the positive trends?",
+        reason: `Your brief shows ${positiveChanges.length} positive change${positiveChanges.length > 1 ? 's' : ''} to build on`
+      });
     }
     
     if (brief.changes.length > 1) {
-      questions.push("Which of these changes should I prioritize?");
+      questions.push({
+        text: "Which of these changes should I prioritize?",
+        reason: `Multiple changes detected—focus matters for effective action`
+      });
     }
   }
 
   // Add questions based on actions
   if (brief.actions.length > 0) {
-    questions.push(`Tell me more about: "${brief.actions[0].slice(0, 50)}..."`);
+    questions.push({
+      text: `Tell me more about: "${brief.actions[0].slice(0, 50)}..."`,
+      reason: "This is your top recommended action from the brief"
+    });
     if (brief.actions.length > 1) {
-      questions.push("Which action will have the biggest impact?");
+      questions.push({
+        text: "Which action will have the biggest impact?",
+        reason: `You have ${brief.actions.length} suggested actions to choose from`
+      });
     }
   }
 
   // Add questions based on confidence
   if (brief.confidence === "low") {
-    questions.push("What data would help improve these insights?");
-    questions.push("What should I start tracking to get better clarity?");
+    questions.push({
+      text: "What data would help improve these insights?",
+      reason: "Brief confidence is low—more data could sharpen recommendations"
+    });
+    questions.push({
+      text: "What should I start tracking to get better clarity?",
+      reason: "Building data over time improves insight quality"
+    });
   } else if (brief.confidence === "medium") {
-    questions.push("How can I improve the accuracy of these insights?");
+    questions.push({
+      text: "How can I improve the accuracy of these insights?",
+      reason: "Brief confidence is medium—there's room for improvement"
+    });
   }
 
   // Add general business context questions
-  questions.push("What questions should I be asking myself right now?");
-  questions.push("What blind spots might I have in my business?");
+  questions.push({
+    text: "What questions should I be asking myself right now?",
+    reason: "Sometimes the right question reveals hidden opportunities"
+  });
+  questions.push({
+    text: "What blind spots might I have in my business?",
+    reason: "Proactively finding blind spots prevents surprises"
+  });
 
   // Return unique questions, max 5
-  return [...new Set(questions)].slice(0, 5);
+  const seen = new Set<string>();
+  return questions.filter(q => {
+    if (seen.has(q.text)) return false;
+    seen.add(q.text);
+    return true;
+  }).slice(0, 5);
 };
 
 const InlineChatBox = ({
@@ -377,17 +426,25 @@ const InlineChatBox = ({
                     {briefData ? "Questions based on your brief" : "Suggested questions"}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {suggestedQuestions.map((prompt, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setInput(prompt)}
-                      className="text-xs px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 border border-border/50 transition-colors text-left leading-relaxed"
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
+                <TooltipProvider delayDuration={200}>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedQuestions.map((question, idx) => (
+                      <Tooltip key={idx}>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => setInput(question.text)}
+                            className="text-xs px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 border border-border/50 transition-colors text-left leading-relaxed"
+                          >
+                            {question.text}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[250px] text-center">
+                          <p className="text-xs">{question.reason}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </div>
+                </TooltipProvider>
                 <p className="text-xs text-muted-foreground/70 mt-3 text-center">
                   Click a question or type your own below
                 </p>
