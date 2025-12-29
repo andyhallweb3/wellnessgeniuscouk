@@ -184,6 +184,35 @@ const InlineChatBox = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showDocuments, setShowDocuments] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onUploadDocument) {
+      setIsDragging(true);
+    }
+  }, [onUploadDocument]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (!onUploadDocument) return;
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      await onUploadDocument(files[0]);
+    }
+  }, [onUploadDocument]);
 
   // Get document context for AI
   const documentContext = useMemo(() => {
@@ -412,27 +441,45 @@ const InlineChatBox = ({
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          {/* Mode Selector */}
-          <div className="px-3 py-2 border-b border-border bg-secondary/20">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Mode:</span>
-              <select
-                value={selectedMode}
-                onChange={(e) => setSelectedMode(e.target.value)}
-                className="text-xs bg-background border border-border rounded px-2 py-1"
-                disabled={isStreaming}
-              >
-                {ADVISOR_MODES.map((mode) => (
-                  <option key={mode.id} value={mode.id} disabled={credits < mode.creditCost}>
-                    {mode.icon} {mode.name} ({mode.creditCost}cr)
-                  </option>
-                ))}
-              </select>
-              <span className="text-xs text-muted-foreground ml-auto">
-                {credits} credits available
-              </span>
+          {/* Drag & Drop Container */}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className="relative"
+          >
+            {/* Drag Overlay */}
+            {isDragging && onUploadDocument && (
+              <div className="absolute inset-0 bg-accent/20 border-2 border-dashed border-accent z-10 flex items-center justify-center rounded-b-xl">
+                <div className="text-center">
+                  <Upload size={24} className="mx-auto text-accent mb-2" />
+                  <p className="text-sm font-medium text-accent">Drop document here</p>
+                  <p className="text-xs text-muted-foreground">PDF, Word, Excel, CSV</p>
+                </div>
+              </div>
+            )}
+
+            {/* Mode Selector */}
+            <div className="px-3 py-2 border-b border-border bg-secondary/20">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Mode:</span>
+                <select
+                  value={selectedMode}
+                  onChange={(e) => setSelectedMode(e.target.value)}
+                  className="text-xs bg-background border border-border rounded px-2 py-1"
+                  disabled={isStreaming}
+                >
+                  {ADVISOR_MODES.map((mode) => (
+                    <option key={mode.id} value={mode.id} disabled={credits < mode.creditCost}>
+                      {mode.icon} {mode.name} ({mode.creditCost}cr)
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {credits} credits available
+                </span>
+              </div>
             </div>
-          </div>
 
           {/* Messages Area */}
           <div className={cn(
@@ -644,6 +691,7 @@ const InlineChatBox = ({
                 Upload business docs to personalise AI responses
               </p>
             )}
+          </div>
           </div>
         </CollapsibleContent>
       </div>

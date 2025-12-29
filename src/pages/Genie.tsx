@@ -13,7 +13,8 @@ import {
   Sparkles,
   Settings,
   History,
-  MessageSquare
+  MessageSquare,
+  FileText
 } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +43,7 @@ import SessionHistory from "@/components/genie/SessionHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
 import FloatingChatDrawer from "@/components/genie/FloatingChatDrawer";
 import InlineChatBox from "@/components/genie/InlineChatBox";
+import DocumentManager from "@/components/genie/DocumentManager";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
@@ -50,6 +52,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 interface Message {
   role: "user" | "assistant";
@@ -99,7 +107,7 @@ const Genie = () => {
 
   const { getMemoryContext, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
-  const { documents, uploading: uploadingDocument, uploadDocument } = useCoachDocuments();
+  const { documents, uploading: uploadingDocument, uploadDocument, deleteDocument, updateDocumentCategory, updateDocumentDescription } = useCoachDocuments();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession, summarizeSession, updateSessionTags, allTags } = useGenieSessions();
   const { isLoading: voiceLoading, isPlaying: isVoicePlaying, playDailyBrief, stopPlayback: stopVoice } = useVoiceBrief();
   const { displayMode: trustDisplayMode } = useTrustSettings();
@@ -598,23 +606,64 @@ const Genie = () => {
                   }}
                 />
 
-                {/* Business Context */}
-                {memory && (
-                  <div className="p-4 rounded-xl bg-accent/5 border border-accent/20">
-                    <div className="flex items-center gap-2 text-sm mb-2">
-                      <Sparkles size={14} className="text-accent" />
-                      <span className="text-accent font-medium">Memory Active</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {memory.business_name || "Your business"} • {memory.business_type || "Business"}
-                    </p>
-                    {memory.primary_goal && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Goal: {memory.primary_goal}
-                      </p>
+                {/* Business Context & Documents */}
+                <Tabs defaultValue="context" className="w-full">
+                  <TabsList className="w-full grid grid-cols-2">
+                    <TabsTrigger value="context" className="text-xs">
+                      <Sparkles size={12} className="mr-1" />
+                      Business Context
+                    </TabsTrigger>
+                    <TabsTrigger value="documents" className="text-xs">
+                      <FileText size={12} className="mr-1" />
+                      Documents ({documents.length})
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="context" className="mt-3">
+                    {memory ? (
+                      <div className="p-4 rounded-xl bg-accent/5 border border-accent/20">
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                          <Sparkles size={14} className="text-accent" />
+                          <span className="text-accent font-medium">Memory Active</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {memory.business_name || "Your business"} • {memory.business_type || "Business"}
+                        </p>
+                        {memory.primary_goal && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Goal: {memory.primary_goal}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-xl bg-secondary/50 border border-border text-center">
+                        <p className="text-sm text-muted-foreground">
+                          No business profile configured yet
+                        </p>
+                        <Button 
+                          variant="link" 
+                          size="sm" 
+                          onClick={() => setShowOnboarding(true)}
+                          className="mt-1"
+                        >
+                          Set up profile
+                        </Button>
+                      </div>
                     )}
-                  </div>
-                )}
+                  </TabsContent>
+                  
+                  <TabsContent value="documents" className="mt-3">
+                    <DocumentManager
+                      documents={documents}
+                      loading={false}
+                      uploading={uploadingDocument}
+                      onUpload={uploadDocument}
+                      onDelete={deleteDocument}
+                      onUpdateCategory={updateDocumentCategory}
+                      onUpdateDescription={updateDocumentDescription}
+                    />
+                  </TabsContent>
+                </Tabs>
 
               </div>
             </div>

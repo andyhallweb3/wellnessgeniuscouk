@@ -182,6 +182,44 @@ export const useCoachDocuments = () => {
     }
   };
 
+  const updateDocumentCategory = async (id: string, category: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from("coach_documents")
+        .update({ category })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Category updated");
+      await fetchDocuments();
+      return true;
+    } catch (error) {
+      console.error("Update error:", error);
+      toast.error("Failed to update category");
+      return false;
+    }
+  };
+
+  const updateDocumentDescription = async (id: string, description: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from("coach_documents")
+        .update({ description })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Description updated");
+      await fetchDocuments();
+      return true;
+    } catch (error) {
+      console.error("Update error:", error);
+      toast.error("Failed to update description");
+      return false;
+    }
+  };
+
   const getDocumentContext = (): string => {
     if (documents.length === 0) return "";
 
@@ -205,6 +243,8 @@ export const useCoachDocuments = () => {
     uploading,
     uploadDocument,
     deleteDocument,
+    updateDocumentCategory,
+    updateDocumentDescription,
     getDocumentContext,
     refresh: fetchDocuments
   };
