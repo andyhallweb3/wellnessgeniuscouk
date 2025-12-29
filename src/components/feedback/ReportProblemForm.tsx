@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Bug, Lightbulb, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const feedbackSchema = z.object({
+  feedbackType: z.string().min(1, 'Please select a type'),
   featureArea: z.string().min(1, 'Please select a feature area'),
   description: z.string().min(10, 'Please provide more detail (at least 10 characters)').max(2000),
   severity: z.string(),
@@ -26,6 +27,12 @@ const feedbackSchema = z.object({
 });
 
 type FeedbackFormData = z.infer<typeof feedbackSchema>;
+
+const FEEDBACK_TYPES = [
+  { value: 'bug', label: 'Bug Report', icon: Bug, description: 'Something isn\'t working correctly' },
+  { value: 'feature', label: 'Feature Request', icon: Lightbulb, description: 'Suggest a new feature or capability' },
+  { value: 'improvement', label: 'Improvement', icon: Wrench, description: 'Enhance an existing feature' },
+];
 
 const FEATURE_AREAS = [
   'AI Genie Chat',
@@ -38,6 +45,8 @@ const FEATURE_AREAS = [
   'Authentication',
   'Performance',
   'Mobile Experience',
+  'Products',
+  'AI Readiness Assessment',
   'Other',
 ];
 
@@ -50,10 +59,11 @@ const SEVERITY_OPTIONS = [
 
 interface ReportProblemFormProps {
   defaultFeatureArea?: string;
+  defaultType?: 'bug' | 'feature' | 'improvement';
   onSuccess?: () => void;
 }
 
-export function ReportProblemForm({ defaultFeatureArea, onSuccess }: ReportProblemFormProps) {
+export function ReportProblemForm({ defaultFeatureArea, defaultType = 'bug', onSuccess }: ReportProblemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -68,6 +78,7 @@ export function ReportProblemForm({ defaultFeatureArea, onSuccess }: ReportProbl
   } = useForm<FeedbackFormData>({
     resolver: zodResolver(feedbackSchema),
     defaultValues: {
+      feedbackType: defaultType,
       featureArea: defaultFeatureArea || '',
       description: '',
       severity: 'medium',
@@ -75,6 +86,7 @@ export function ReportProblemForm({ defaultFeatureArea, onSuccess }: ReportProbl
     },
   });
 
+  const selectedFeedbackType = watch('feedbackType');
   const selectedSeverity = watch('severity');
   const selectedFeatureArea = watch('featureArea');
 
@@ -83,6 +95,7 @@ export function ReportProblemForm({ defaultFeatureArea, onSuccess }: ReportProbl
     try {
       const { data: response, error } = await supabase.functions.invoke('submit-feedback', {
         body: {
+          feedbackType: data.feedbackType,
           featureArea: data.featureArea,
           description: data.description,
           severity: data.severity,
@@ -95,7 +108,7 @@ export function ReportProblemForm({ defaultFeatureArea, onSuccess }: ReportProbl
 
       toast({
         title: 'Feedback submitted',
-        description: 'Thank you! We\'ll review your report and work on improvements.',
+        description: 'Thank you! We\'ll review your submission and work on it.',
       });
 
       reset();
@@ -114,6 +127,35 @@ export function ReportProblemForm({ defaultFeatureArea, onSuccess }: ReportProbl
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Feedback Type Selection */}
+      <div className="space-y-2">
+        <Label>What would you like to submit?</Label>
+        <div className="grid grid-cols-3 gap-2">
+          {FEEDBACK_TYPES.map((type) => {
+            const Icon = type.icon;
+            const isSelected = selectedFeedbackType === type.value;
+            return (
+              <button
+                key={type.value}
+                type="button"
+                onClick={() => setValue('feedbackType', type.value)}
+                className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                  isSelected
+                    ? 'border-accent bg-accent/10 text-accent'
+                    : 'border-border hover:border-muted-foreground/50'
+                }`}
+              >
+                <Icon size={20} className={isSelected ? 'text-accent' : 'text-muted-foreground'} />
+                <span className="text-xs font-medium mt-1">{type.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        {errors.feedbackType && (
+          <p className="text-sm text-destructive">{errors.feedbackType.message}</p>
+        )}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="featureArea">Feature Area</Label>
         <Select
@@ -136,30 +178,44 @@ export function ReportProblemForm({ defaultFeatureArea, onSuccess }: ReportProbl
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="severity">Severity</Label>
-        <Select
-          value={selectedSeverity}
-          onValueChange={(value) => setValue('severity', value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select severity" />
-          </SelectTrigger>
-          <SelectContent>
-            {SEVERITY_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {selectedFeedbackType === 'bug' && (
+        <div className="space-y-2">
+          <Label htmlFor="severity">Severity</Label>
+          <Select
+            value={selectedSeverity}
+            onValueChange={(value) => setValue('severity', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select severity" />
+            </SelectTrigger>
+            <SelectContent>
+              {SEVERITY_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">
+          {selectedFeedbackType === 'bug' 
+            ? 'Description' 
+            : selectedFeedbackType === 'feature'
+            ? 'What feature would you like to see?'
+            : 'What improvement would you suggest?'}
+        </Label>
         <Textarea
           id="description"
-          placeholder="Describe the problem you encountered. Include steps to reproduce if possible..."
+          placeholder={
+            selectedFeedbackType === 'bug'
+              ? 'Describe the problem you encountered. Include steps to reproduce if possible...'
+              : selectedFeedbackType === 'feature'
+              ? 'Describe the feature you\'d like and how it would help you...'
+              : 'Describe how this could be improved...'
+          }
           className="min-h-[120px]"
           {...register('description')}
         />
@@ -193,7 +249,7 @@ export function ReportProblemForm({ defaultFeatureArea, onSuccess }: ReportProbl
             Submitting...
           </>
         ) : (
-          'Submit Report'
+          'Submit'
         )}
       </Button>
     </form>

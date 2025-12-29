@@ -578,6 +578,7 @@ export type Database = {
           created_at: string
           description: string
           feature_area: string
+          feedback_type: string
           id: string
           severity: string
           status: string
@@ -591,6 +592,7 @@ export type Database = {
           created_at?: string
           description: string
           feature_area: string
+          feedback_type?: string
           id?: string
           severity?: string
           status?: string
@@ -604,6 +606,7 @@ export type Database = {
           created_at?: string
           description?: string
           feature_area?: string
+          feedback_type?: string
           id?: string
           severity?: string
           status?: string
