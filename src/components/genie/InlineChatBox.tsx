@@ -9,7 +9,9 @@ import {
   RotateCcw,
   ChevronUp,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  History,
+  ArrowRight
 } from "lucide-react";
 import { ADVISOR_MODES, getModeById } from "@/components/advisor/AdvisorModes";
 import GenieMessage, { TrustMetadata } from "@/components/genie/GenieMessage";
@@ -109,6 +111,15 @@ const InlineChatBox = ({
   const [selectedMode, setSelectedMode] = useState(defaultMode);
   const [isExpanded, setIsExpanded] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Extract previously asked questions from message history
+  const previousQuestions = useMemo(() => {
+    return messages
+      .filter(m => m.role === "user")
+      .map(m => m.content)
+      .slice(-10); // Keep last 10 questions
+  }, [messages]);
 
   // Generate dynamic questions based on brief content
   const suggestedQuestions = useMemo(() => generateBriefQuestions(briefData), [briefData]);
@@ -329,6 +340,37 @@ const InlineChatBox = ({
           )}>
             {messages.length === 0 ? (
               <div className="py-2">
+                {/* Question History Toggle */}
+                {previousQuestions.length > 0 && (
+                  <div className="mb-3">
+                    <button
+                      onClick={() => setShowHistory(!showHistory)}
+                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <History size={12} />
+                      <span>Previously asked ({previousQuestions.length})</span>
+                      <ChevronDown size={12} className={cn("transition-transform", showHistory && "rotate-180")} />
+                    </button>
+                    
+                    {showHistory && (
+                      <div className="mt-2 p-2 rounded-lg bg-secondary/50 border border-border/50 max-h-[120px] overflow-y-auto">
+                        <div className="space-y-1">
+                          {previousQuestions.map((q, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setInput(q)}
+                              className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-secondary flex items-center gap-2 group"
+                            >
+                              <ArrowRight size={10} className="text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0" />
+                              <span className="truncate">{q}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles size={12} className="text-accent" />
                   <p className="text-xs font-medium text-muted-foreground">
