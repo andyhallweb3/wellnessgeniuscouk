@@ -28,6 +28,7 @@ import DecisionDrawer, { DecisionContext } from "@/components/genie/DecisionDraw
 import { ADVISOR_MODES, getModeById } from "@/components/advisor/AdvisorModes";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
+import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 import { useGenieSessions } from "@/hooks/useGenieSessions";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { useVoiceBrief } from "@/hooks/useVoiceBrief";
@@ -98,6 +99,7 @@ const Genie = () => {
 
   const { getMemoryContext, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
+  const { documents, uploading: uploadingDocument, uploadDocument } = useCoachDocuments();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession, summarizeSession, updateSessionTags, allTags } = useGenieSessions();
   const { isLoading: voiceLoading, isPlaying: isVoicePlaying, playDailyBrief, stopPlayback: stopVoice } = useVoiceBrief();
   const { displayMode: trustDisplayMode } = useTrustSettings();
@@ -566,6 +568,9 @@ const Genie = () => {
                   trustDisplayMode={trustDisplayMode}
                   onSaveSession={saveSession}
                   briefData={briefData}
+                  documents={documents}
+                  onUploadDocument={uploadDocument}
+                  uploadingDocument={uploadingDocument}
                 />
 
                 {/* Mode Buttons */}
