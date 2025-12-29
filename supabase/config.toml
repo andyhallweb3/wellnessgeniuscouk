@@ -158,3 +158,12 @@ verify_jwt = false
 
 [functions.founder-agent]
 verify_jwt = false
+
+[functions.create-agent-checkout]
+verify_jwt = false
+
+[functions.check-agent-subscription]
+verify_jwt = false
+
+[functions.agent-customer-portal]
+verify_jwt = false
