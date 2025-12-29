@@ -143,6 +143,29 @@ BUSINESS CONTEXT:
   }
 }
 
+// Helper to fetch image as base64 for Gemini
+async function fetchImageAsBase64(imageUrl: string): Promise<{ data: string; mimeType: string } | null> {
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      console.error("Failed to fetch image:", response.status);
+      return null;
+    }
+    
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    
+    return {
+      data: base64,
+      mimeType: contentType,
+    };
+  } catch (error) {
+    console.error("Error fetching image:", error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -150,7 +173,7 @@ serve(async (req) => {
   }
 
   try {
-    const { businessContext } = await req.json();
+    const { businessContext, imageUrl } = await req.json();
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -185,7 +208,21 @@ serve(async (req) => {
     }
 
     // Build the dynamic system prompt based on user's business profile
-    const systemPrompt = getSystemPrompt(businessProfile);
+    let systemPrompt = getSystemPrompt(businessProfile);
+
+    // If image is provided, add image analysis instructions
+    if (imageUrl) {
+      systemPrompt += `
+
+IMPORTANT: You have been provided an image of the founder's work (website screenshot, ad creative, or marketing material). 
+
+Critique it RUTHLESSLY for:
+1. CLARITY - Is the value proposition immediately clear? Can a stranger understand what this does in 3 seconds?
+2. CONVERSION - Are there clear CTAs? Is the user journey obvious? What's blocking someone from taking action?
+3. TRUST - Does it look professional? Are there trust signals (testimonials, logos, guarantees)?
+
+Add these specific critiques to the 'signals' section of the JSON output with direction "neutral" and detailed meaning explaining the specific issues found.`;
+    }
 
     // Build the user message with real data and founder context
     let userMessage = `Here is my current business situation:
@@ -210,11 +247,18 @@ ADDITIONAL CONTEXT:
 ${JSON.stringify(businessContext, null, 2)}`;
     }
 
+    if (imageUrl) {
+      userMessage += `
+
+I've attached an image of my website/ad/marketing material. Please analyze it and add critiques to the signals section.`;
+    }
+
     userMessage += `
 
 Based on my specific business context and goals, generate my personalized founder brief with actionable insights.`;
 
     console.log("Calling Google Gemini for personalized founder insights...");
+    console.log("Image analysis requested:", !!imageUrl);
 
     // Initialize the Google Generative AI client
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -225,14 +269,28 @@ Based on my specific business context and goals, generate my personalized founde
       },
     });
 
-    // Combine system prompt and user message for Gemini
-    const fullPrompt = `${systemPrompt}
+    // Build the content parts
+    const parts: any[] = [{ text: `${systemPrompt}\n\n---\n\n${userMessage}` }];
 
----
+    // If image URL is provided, fetch and add to prompt
+    if (imageUrl) {
+      console.log("Fetching image for analysis:", imageUrl);
+      const imageData = await fetchImageAsBase64(imageUrl);
+      
+      if (imageData) {
+        parts.push({
+          inlineData: {
+            mimeType: imageData.mimeType,
+            data: imageData.data,
+          },
+        });
+        console.log("Image successfully added to prompt");
+      } else {
+        console.warn("Could not fetch image, proceeding without image analysis");
+      }
+    }
 
-${userMessage}`;
-
-    const result = await model.generateContent(fullPrompt);
+    const result = await model.generateContent(parts);
     const response = result.response;
     const content = response.text();
 
@@ -258,6 +316,7 @@ ${userMessage}`;
     }
     parsedData.meta.generated_at = new Date().toISOString();
     parsedData.meta.business_name = businessProfile.business_name;
+    parsedData.meta.image_analyzed = !!imageUrl;
 
     console.log("Successfully generated personalized founder insights for", businessProfile.business_name);
 
