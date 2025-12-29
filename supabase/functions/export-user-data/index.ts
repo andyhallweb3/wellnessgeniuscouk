@@ -5,10 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface ExportRequest {
-  email: string;
-}
-
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -17,26 +13,55 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const { email }: ExportRequest = await req.json();
-
-    if (!email) {
+    // SECURITY: Verify authentication first
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("Export request rejected: No authorization header");
       return new Response(
-        JSON.stringify({ error: "Email is required" }),
+        JSON.stringify({ error: "Authentication required. Please log in to export your data." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create client with user's token to verify their identity
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    
+    if (authError || !user) {
+      console.error("Export request rejected: Invalid or expired token", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired session. Please log in again." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // The authenticated user's email - this is the ONLY email they can export
+    const authenticatedEmail = user.email?.trim().toLowerCase();
+    
+    if (!authenticatedEmail) {
+      console.error("Export request rejected: User has no email");
+      return new Response(
+        JSON.stringify({ error: "Unable to determine your email address." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    console.log(`Processing data export request for: ${normalizedEmail}`);
+    console.log(`Processing authenticated data export for user: ${user.id}, email: ${authenticatedEmail}`);
+
+    // Use service role for data access (bypasses RLS for comprehensive export)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Initialize export data object
     const exportData: Record<string, unknown> = {
       exportDate: new Date().toISOString(),
-      email: normalizedEmail,
+      email: authenticatedEmail,
+      userId: user.id,
       data: {},
     };
 
@@ -44,7 +69,7 @@ Deno.serve(async (req) => {
     const { data: profileData } = await supabase
       .from("profiles")
       .select("*")
-      .eq("email", normalizedEmail)
+      .eq("email", authenticatedEmail)
       .single();
 
     if (profileData) {
@@ -173,22 +198,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 9. Get product downloads (by email, not user_id)
+    // 9. Get product downloads (by authenticated email only)
     const { data: downloads } = await supabase
       .from("product_downloads")
       .select("product_id, product_name, product_type, download_type, created_at")
-      .eq("email", normalizedEmail)
+      .eq("email", authenticatedEmail)
       .order("created_at", { ascending: false });
 
     if (downloads && downloads.length > 0) {
       (exportData.data as Record<string, unknown>).productDownloads = downloads;
     }
 
-    // 10. Get newsletter subscription
+    // 10. Get newsletter subscription (by authenticated email only)
     const { data: newsletter } = await supabase
       .from("newsletter_subscribers")
       .select("email, name, source, subscribed_at, is_active")
-      .eq("email", normalizedEmail)
+      .eq("email", authenticatedEmail)
       .single();
 
     if (newsletter) {
@@ -201,18 +226,18 @@ Deno.serve(async (req) => {
       };
     }
 
-    // 11. Get AI Readiness completions
+    // 11. Get AI Readiness completions (by authenticated email only)
     const { data: readinessCompletions } = await supabase
       .from("ai_readiness_completions")
       .select("name, company, role, industry, company_size, overall_score, leadership_score, data_score, people_score, process_score, risk_score, score_band, completed_at")
-      .eq("email", normalizedEmail)
+      .eq("email", authenticatedEmail)
       .order("completed_at", { ascending: false });
 
     if (readinessCompletions && readinessCompletions.length > 0) {
       (exportData.data as Record<string, unknown>).aiReadinessAssessments = readinessCompletions;
     }
 
-    console.log(`Data export compiled successfully for: ${normalizedEmail}`);
+    console.log(`Data export compiled successfully for authenticated user: ${user.id}`);
 
     // Return the data as a downloadable JSON
     const jsonData = JSON.stringify(exportData, null, 2);
