@@ -175,6 +175,18 @@ export const NewsletterPreview = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Subject and Preview Text Display */}
+          <div className="p-4 bg-muted/50 rounded-lg border space-y-2">
+            <div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Subject Line</span>
+              <p className="text-sm font-medium">🧠 Wellness Genius News – AI Insights for Wellness Leaders</p>
+            </div>
+            <div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preview Text</span>
+              <p className="text-sm text-muted-foreground">The latest AI trends and insights curated for wellness industry professionals</p>
+            </div>
+          </div>
+
           {/* Custom intro text */}
           <div className="space-y-2 p-4 bg-accent/5 rounded-lg border border-accent/20">
             <Label htmlFor="customIntro" className="flex items-center gap-2 text-sm font-medium">
