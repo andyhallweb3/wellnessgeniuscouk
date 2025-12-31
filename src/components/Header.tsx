@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ChevronDown, LayoutDashboard, Bookmark, Sparkles, Shield } from "lucide-react";
@@ -9,13 +9,35 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import logo from "@/assets/wellness-genius-logo-teal.png";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { user, isLoading } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    async function checkAdminStatus() {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const { data } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin'
+        });
+        setIsAdmin(data === true);
+      } catch {
+        setIsAdmin(false);
+      }
+    }
+    checkAdminStatus();
+  }, [user]);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -151,6 +173,11 @@ const Header = () => {
                   >
                     <img src={logo} alt="" className="h-5 w-5 object-contain" />
                     My Hub
+                    {isAdmin && (
+                      <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[10px] font-bold border-amber-500 text-amber-600 bg-amber-500/10">
+                        ADMIN
+                      </Badge>
+                    )}
                     <ChevronDown size={14} />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-popover border border-border shadow-lg z-50 min-w-[180px]">
@@ -165,6 +192,17 @@ const Header = () => {
                         </Link>
                       </DropdownMenuItem>
                     ))}
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin" className="w-full flex items-center gap-2 text-amber-600">
+                            <Shield size={16} />
+                            Admin Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link to="/hub" className="w-full flex items-center gap-2">
@@ -281,6 +319,11 @@ const Header = () => {
                     >
                       <img src={logo} alt="" className="h-6 w-6 object-contain" />
                       My Hub
+                      {isAdmin && (
+                        <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[10px] font-bold border-amber-500 text-amber-600 bg-amber-500/10">
+                          ADMIN
+                        </Badge>
+                      )}
                     </Link>
                   ) : (
                     <Link

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -15,13 +17,16 @@ import {
   Smartphone,
   RefreshCw,
   Copy,
-  Check
+  Check,
+  Sparkles
 } from "lucide-react";
 
 interface NewsletterPreviewProps {
   selectedArticleIds: string[];
   previewHtml: string | null;
   articles: any[];
+  customIntro: string;
+  onCustomIntroChange: (value: string) => void;
   getAuthHeaders: () => Record<string, string>;
   onPreviewGenerated: (html: string, articles: any[]) => void;
   onBack: () => void;
@@ -32,6 +37,8 @@ export const NewsletterPreview = ({
   selectedArticleIds,
   previewHtml,
   articles,
+  customIntro,
+  onCustomIntroChange,
   getAuthHeaders,
   onPreviewGenerated,
   onBack,
@@ -46,10 +53,14 @@ export const NewsletterPreview = ({
   const generatePreview = async () => {
     setLoading(true);
     try {
-      const requestBody: { preview: boolean; selectedArticleIds?: string[] } = { preview: true };
+      const requestBody: { preview: boolean; selectedArticleIds?: string[]; customIntro?: string } = { preview: true };
 
       if (selectedArticleIds.length > 0) {
         requestBody.selectedArticleIds = selectedArticleIds;
+      }
+      
+      if (customIntro.trim()) {
+        requestBody.customIntro = customIntro.trim();
       }
 
       const { data, error } = await supabase.functions.invoke("newsletter-run", {
@@ -164,6 +175,24 @@ export const NewsletterPreview = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Custom intro text */}
+          <div className="space-y-2 p-4 bg-accent/5 rounded-lg border border-accent/20">
+            <Label htmlFor="customIntro" className="flex items-center gap-2 text-sm font-medium">
+              <Sparkles className="h-4 w-4 text-accent" />
+              Custom Edition Text (optional)
+            </Label>
+            <Input
+              id="customIntro"
+              value={customIntro}
+              onChange={(e) => onCustomIntroChange(e.target.value)}
+              placeholder="e.g., 🎉 Happy New Year edition! or 🎄 Holiday Special..."
+              className="bg-background"
+            />
+            <p className="text-xs text-muted-foreground">
+              This text will appear at the top of the newsletter intro. Leave empty for default intro.
+            </p>
+          </div>
+
           {/* Generate button and Copy HTML */}
           <div className="flex items-center gap-4 flex-wrap">
             <Button onClick={generatePreview} disabled={loading || selectedArticleIds.length === 0}>

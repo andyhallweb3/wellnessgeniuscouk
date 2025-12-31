@@ -24,6 +24,7 @@ export const NewsletterWorkflow = ({ getAuthHeaders, onLogout }: NewsletterWorkf
   const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [articles, setArticles] = useState<any[]>([]);
+  const [customIntro, setCustomIntro] = useState("");
 
   const handlePreviewGenerated = (html: string, articleData: any[]) => {
     setPreviewHtml(html);
@@ -35,6 +36,7 @@ export const NewsletterWorkflow = ({ getAuthHeaders, onLogout }: NewsletterWorkf
     setPreviewHtml(null);
     setArticles([]);
     setSelectedArticleIds([]);
+    setCustomIntro("");
     setActiveTab("history");
   };
 
@@ -107,6 +109,8 @@ export const NewsletterWorkflow = ({ getAuthHeaders, onLogout }: NewsletterWorkf
             selectedArticleIds={selectedArticleIds}
             previewHtml={previewHtml}
             articles={articles}
+            customIntro={customIntro}
+            onCustomIntroChange={setCustomIntro}
             getAuthHeaders={getAuthHeaders}
             onPreviewGenerated={handlePreviewGenerated}
             onBack={() => setActiveTab("articles")}
