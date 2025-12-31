@@ -57,10 +57,25 @@ interface Message {
   trustMetadata?: TrustMetadata;
 }
 
+// Memory context object type (matches what useBusinessMemory returns)
+interface MemoryContextObject {
+  business_name?: string | null;
+  business_type?: string | null;
+  team_size?: string | null;
+  primary_goal?: string | null;
+  biggest_challenge?: string | null;
+  revenue_model?: string | null;
+  annual_revenue_band?: string | null;
+  key_metrics?: string[] | null;
+  known_weak_spots?: string[] | null;
+  communication_style?: string | null;
+  decision_style?: string | null;
+}
+
 interface InlineChatBoxProps {
   credits: number;
   onDeductCredits: (amount: number, mode: string) => Promise<boolean>;
-  memoryContext: string | null;
+  memoryContext: MemoryContextObject | null;
   trustDisplayMode: "full" | "compact";
   onSaveSession?: (mode: string, messages: Message[], sessionId?: string | null) => Promise<string | null>;
   defaultMode?: string;

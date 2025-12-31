@@ -54,8 +54,8 @@ export const StrictUserContextSchema = z.object({
   biggest_win: z.string().max(500).optional().nullable(),
 }).optional().nullable();
 
-// Memory context schema for Genie (object format)
-export const StrictMemoryContextObjectSchema = z.object({
+// Memory context schema for Genie (object format only)
+export const StrictMemoryContextSchema = z.object({
   business_name: z.string().max(255).optional().nullable(),
   business_type: z.string().max(100).optional().nullable(),
   team_size: z.string().max(50).optional().nullable(),
@@ -67,13 +67,7 @@ export const StrictMemoryContextObjectSchema = z.object({
   known_weak_spots: z.array(z.string().max(200)).max(10).optional().nullable(),
   communication_style: z.string().max(100).optional().nullable(),
   decision_style: z.string().max(100).optional().nullable(),
-});
-
-// Memory context can be either an object or a string (for backward compatibility)
-export const StrictMemoryContextSchema = z.union([
-  StrictMemoryContextObjectSchema,
-  z.string().max(10000, "Memory context must be less than 10,000 characters"),
-]).optional().nullable();
+}).optional().nullable();
 
 // Coach request schema
 export const CoachRequestSchema = z.object({
