@@ -161,7 +161,8 @@ function generateEmailHTML(
   subscriberEmail = '',
   sendId = '',
   trackingBaseUrl = '',
-  unsubscribeToken = ''
+  unsubscribeToken = '',
+  customIntro = ''
 ): string {
   // Helper to create tracking URL for links
   const trackLink = (url: string) => {
@@ -394,6 +395,11 @@ function generateEmailHTML(
           <!-- Intro -->
           <tr>
             <td class="content-bg" style="padding: 32px 32px 0; background-color: #ffffff;">
+              ${customIntro ? `
+              <p class="dark-text" style="margin: 0 0 16px 0; color: #0f172a; font-size: 18px; font-weight: 600; line-height: 1.4;">
+                ${customIntro}
+              </p>
+              ` : ''}
               <p class="light-text" style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
                 Here are the top stories from the intersection of AI, wellness, and fitness this week—with insights on why they matter for your business.
               </p>
@@ -509,8 +515,9 @@ Deno.serve(async (req) => {
       articles: Article[];
       trackingBaseUrl: string;
       targetEmails?: string[];
+      customIntro?: string;
     }) => {
-      const { sendId, articles, trackingBaseUrl, targetEmails } = opts;
+      const { sendId, articles, trackingBaseUrl, targetEmails, customIntro = '' } = opts;
 
       let sentTotal = 0;
       let failedTotal = 0;
@@ -544,7 +551,7 @@ Deno.serve(async (req) => {
         }
 
         // 2) Store the preview HTML for history/auditing
-        const emailHtml = generateEmailHTML(processedArticles, true);
+        const emailHtml = generateEmailHTML(processedArticles, true, '', '', '', '', customIntro);
         await supabase
           .from('newsletter_sends')
           .update({ email_html: emailHtml })
@@ -671,7 +678,8 @@ Deno.serve(async (req) => {
                 row.email,
                 sendId,
                 trackingBaseUrl,
-                unsubscribeToken
+                unsubscribeToken,
+                customIntro
               );
 
               try {
@@ -751,6 +759,7 @@ Deno.serve(async (req) => {
     const previewOnly = body.preview === true;
     const targetEmails: string[] | undefined = Array.isArray(body.targetEmails) ? body.targetEmails : undefined;
     const selectedArticleIds: string[] | undefined = Array.isArray(body.selectedArticleIds) ? body.selectedArticleIds : undefined;
+    const customIntro: string = typeof body.customIntro === 'string' ? body.customIntro.trim() : '';
 
     // ========================================
     // ACTION: List available news articles for manual selection
@@ -1165,7 +1174,7 @@ Deno.serve(async (req) => {
           .eq('id', article.id);
       }
 
-      const previewEmailHtml = generateEmailHTML(processedArticles, true);
+      const previewEmailHtml = generateEmailHTML(processedArticles, true, '', '', '', '', customIntro);
 
       return new Response(
         JSON.stringify({
@@ -1231,6 +1240,7 @@ Deno.serve(async (req) => {
         articles,
         trackingBaseUrl,
         targetEmails,
+        customIntro,
       })
     );
 
