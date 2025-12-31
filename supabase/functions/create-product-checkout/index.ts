@@ -151,7 +151,7 @@ serve(async (req) => {
       }
     }
 
-    const origin = req.headers.get("origin") || "https://wellnessgenius.io";
+    const origin = req.headers.get("origin") || "https://www.wellnessgenius.co.uk";
 
     // Create checkout session for one-time payment
     const session = await stripe.checkout.sessions.create({

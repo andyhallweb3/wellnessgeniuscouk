@@ -83,7 +83,7 @@ const FAQS = [
   },
   {
     question: "Can I cancel or get a refund?",
-    answer: "Digital products are non-refundable once accessed. For consulting services, we offer full refunds if cancelled before work begins. Contact us at hello@wellnessgenius.io for any issues."
+    answer: "Digital products are non-refundable once accessed. For consulting services, we offer full refunds if cancelled before work begins. Contact us at hello@wellnessgenius.co.uk for any issues."
   },
   // Security & Privacy
   {
@@ -92,7 +92,7 @@ const FAQS = [
   },
   {
     question: "How do I delete my data?",
-    answer: "Email hello@wellnessgenius.io with the subject 'Data Deletion Request'. We'll process your request within 30 days and confirm when complete."
+    answer: "Email hello@wellnessgenius.co.uk with the subject 'Data Deletion Request'. We'll process your request within 30 days and confirm when complete."
   },
 ];
 
@@ -378,7 +378,7 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
                       Can't find what you're looking for? Get in touch and we'll help you out.
                     </p>
                     <Button variant="accent" size="sm" className="w-full" asChild>
-                      <a href="mailto:hello@wellnessgenius.io">
+                      <a href="mailto:hello@wellnessgenius.co.uk">
                         <Mail size={14} />
                         Email Us
                         <ExternalLink size={12} />

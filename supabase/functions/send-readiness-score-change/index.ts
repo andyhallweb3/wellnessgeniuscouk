@@ -74,10 +74,10 @@ const handler = async (req: Request): Promise<Response> => {
     const changeMessage = getScoreChangeMessage(scoreDiff, currentBand, previousBand);
     const bandColor = getBandColor(currentBand);
 
-    const reportUrl = `https://wellnessgenius.io/ai-readiness/report/${completionId}`;
+    const reportUrl = `https://www.wellnessgenius.co.uk/ai-readiness/report/${completionId}`;
 
     const emailResponse = await resend.emails.send({
-      from: "Wellness Genius <hello@wellnessgenius.io>",
+      from: "Wellness Genius <hello@wellnessgenius.co.uk>",
       to: [email],
       subject: isImprovement 
         ? `🎉 Your AI Readiness Score Improved! (${currentScore}%)` 

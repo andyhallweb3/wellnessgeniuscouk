@@ -21,7 +21,7 @@ const addHeader = (doc: jsPDF, pageNum: number, totalPages: number) => {
   // Footer
   doc.setFontSize(8);
   doc.setTextColor(...BRAND.muted);
-  doc.text("wellnessgenius.io", 20, 290);
+  doc.text("wellnessgenius.co.uk", 20, 290);
   doc.text(`${pageNum} / ${totalPages}`, 190, 290, { align: "right" });
 };
 
@@ -78,7 +78,7 @@ const addCTAPage = (doc: jsPDF, pageNum: number, totalPages: number) => {
   
   doc.setFontSize(16);
   doc.setTextColor(...BRAND.teal);
-  doc.text("wellnessgenius.io/ai-readiness", 105, 180, { align: "center" });
+  doc.text("wellnessgenius.co.uk/ai-readiness", 105, 180, { align: "center" });
   
   doc.setFontSize(10);
   doc.setTextColor(...BRAND.muted);
@@ -352,7 +352,7 @@ export const generateAIMythsDeck = (): jsPDF => {
       doc.text("use the AI Readiness Score.", 105, 130, { align: "center" });
       doc.setFontSize(14);
       doc.setTextColor(...BRAND.teal);
-      doc.text("wellnessgenius.io/ai-readiness", 105, 170, { align: "center" });
+      doc.text("wellnessgenius.co.uk/ai-readiness", 105, 170, { align: "center" });
     } else if (slide.isQuestion || slide.isGap) {
       doc.setFontSize(20);
       doc.setTextColor(...BRAND.teal);
@@ -527,7 +527,7 @@ export const generate90DayChecklist = (): jsPDF => {
   
   doc.setFontSize(11);
   doc.setTextColor(...BRAND.teal);
-  doc.text("Take the AI Readiness Score at wellnessgenius.io/ai-readiness", 105, 275, { align: "center" });
+  doc.text("Take the AI Readiness Score at wellnessgenius.co.uk/ai-readiness", 105, 275, { align: "center" });
 
   return doc;
 };
@@ -550,7 +550,7 @@ export const generateReadinessScore = (): jsPDF => {
   doc.setFontSize(12);
   doc.setTextColor(...BRAND.muted);
   doc.text("Decision-grade diagnostic for wellness leaders", 105, 130, { align: "center" });
-  doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
+  doc.text("Wellness Genius • wellnessgenius.co.uk", 105, 200, { align: "center" });
   
   // Page 2 - Purpose & Context
   doc.addPage();
@@ -1203,7 +1203,7 @@ export const generatePromptPack = (): jsPDF => {
   doc.text("Stop wellness teams building AI that sounds impressive", 105, 130, { align: "center" });
   doc.text("but delivers no operational or commercial value.", 105, 142, { align: "center" });
   doc.setFontSize(10);
-  doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
+  doc.text("Wellness Genius • wellnessgenius.co.uk", 105, 200, { align: "center" });
   
   // Page 2 - Why AI Fails
   doc.addPage();
@@ -1676,7 +1676,7 @@ export const generateEngagementPlaybook = (): jsPDF => {
   doc.setTextColor(...BRAND.muted);
   doc.text("Convert engagement into outcomes without eroding margin or trust.", 105, 145, { align: "center" });
   doc.setFontSize(10);
-  doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
+  doc.text("Wellness Genius • wellnessgenius.co.uk", 105, 200, { align: "center" });
   
   // Page 2 - Engagement Is Not The Outcome
   doc.addPage();
@@ -1925,7 +1925,7 @@ export const generateActivationPlaybook = (): jsPDF => {
   doc.text("Controlled, credible AI adoption without", 105, 150, { align: "center" });
   doc.text("reputational or regulatory risk.", 105, 162, { align: "center" });
   doc.setFontSize(10);
-  doc.text("Wellness Genius • wellnessgenius.io", 105, 200, { align: "center" });
+  doc.text("Wellness Genius • wellnessgenius.co.uk", 105, 200, { align: "center" });
   
   // Page 2 - Why 90 Days
   doc.addPage();
@@ -2179,7 +2179,7 @@ export const generateGamificationPlaybook = (): jsPDF => {
   doc.setTextColor(...BRAND.muted);
   doc.text("With Data and AI Operating System", 105, 150, { align: "center" });
   doc.setFontSize(10);
-  doc.text("wellnessgenius.io", 105, 200, { align: "center" });
+  doc.text("wellnessgenius.co.uk", 105, 200, { align: "center" });
 
   // Page 2 - Who This Is For
   doc.addPage();

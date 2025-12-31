@@ -595,7 +595,7 @@ const MemberHub = () => {
                           Questions about your products or downloads?
                         </p>
                         <Button variant="outline" size="sm" className="w-full" asChild>
-                          <a href="mailto:hello@wellnessgenius.io">Contact Support</a>
+                          <a href="mailto:hello@wellnessgenius.co.uk">Contact Support</a>
                         </Button>
                       </div>
                     </div>
