@@ -180,8 +180,27 @@ export const useBusinessMemory = () => {
     }
   };
 
-  // Build context string for the AI
-  const getMemoryContext = useCallback((): string => {
+  // Build context object for the AI (matches StrictMemoryContextSchema)
+  const getMemoryContext = useCallback(() => {
+    if (!memory) return null;
+    
+    return {
+      business_name: memory.business_name,
+      business_type: memory.business_type,
+      team_size: memory.team_size,
+      primary_goal: memory.primary_goal,
+      biggest_challenge: memory.biggest_challenge,
+      revenue_model: memory.revenue_model,
+      annual_revenue_band: memory.annual_revenue_band,
+      key_metrics: memory.key_metrics,
+      known_weak_spots: memory.known_weak_spots,
+      communication_style: memory.communication_style,
+      decision_style: memory.decision_style,
+    };
+  }, [memory]);
+
+  // Build formatted context string for display purposes
+  const getMemoryContextString = useCallback((): string => {
     const parts: string[] = [];
 
     if (memory) {
@@ -234,6 +253,7 @@ export const useBusinessMemory = () => {
     addInsight,
     logDecision,
     getMemoryContext,
+    getMemoryContextString,
     refetch: fetchMemory,
   };
 };

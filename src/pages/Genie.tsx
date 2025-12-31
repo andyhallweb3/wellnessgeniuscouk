@@ -107,7 +107,7 @@ const Genie = () => {
   // Mock change data - in production, this would come from the backend
   const [changes] = useState<ChangeEntry[]>([]);
 
-  const { getMemoryContext, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
+  const { getMemoryContext, getMemoryContextString, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { documents, uploading: uploadingDocument, uploadDocument, deleteDocument, updateDocumentCategory, updateDocumentDescription } = useCoachDocuments();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession, summarizeSession, updateSessionTags, allTags } = useGenieSessions();
@@ -463,7 +463,7 @@ const Genie = () => {
             </div>
             <div className="flex items-center gap-2">
               <GenieVoiceInterface 
-                memoryContext={getMemoryContext()}
+                memoryContext={getMemoryContextString()}
                 onTranscript={(text, role) => {
                   setMessages(prev => [...prev, { role, content: text }]);
                   setViewMode("chat");
@@ -576,7 +576,7 @@ const Genie = () => {
                 <InlineChatBox
                   credits={credits.balance}
                   onDeductCredits={deductCredits}
-                  memoryContext={getMemoryContext()}
+                  memoryContext={getMemoryContextString()}
                   trustDisplayMode={trustDisplayMode}
                   onSaveSession={saveSession}
                   briefData={briefData}
