@@ -58,6 +58,14 @@ const ADMIN_SECTIONS = [
     path: "/feedback/admin",
     color: "bg-rose-500/10 text-rose-600"
   },
+  { 
+    id: "validation", 
+    label: "Validation Errors", 
+    description: "Track API validation errors and request issues over time",
+    icon: Shield,
+    path: "/validation/admin",
+    color: "bg-orange-500/10 text-orange-600"
+  },
 ];
 
 const Admin = () => {

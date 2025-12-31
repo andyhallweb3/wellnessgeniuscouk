@@ -83,6 +83,7 @@ interface InlineChatBoxProps {
   documents?: Array<{ id: string; file_name: string; extracted_text: string | null; }>;
   onUploadDocument?: (file: File) => Promise<boolean>;
   uploadingDocument?: boolean;
+  isLoading?: boolean;
 }
 
 // Generate dynamic follow-up questions based on brief content
@@ -189,6 +190,7 @@ const InlineChatBox = ({
   documents = [],
   onUploadDocument,
   uploadingDocument = false,
+  isLoading = false,
 }: InlineChatBoxProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -657,71 +659,98 @@ const InlineChatBox = ({
 
           {/* Input */}
           <div className="p-3 border-t border-border">
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            
-            <div className="flex gap-2">
-              {/* Upload button */}
-              {onUploadDocument && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-11 w-11 shrink-0"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isStreaming || uploadingDocument}
-                      >
-                        {uploadingDocument ? (
-                          <Loader2 className="animate-spin" size={16} />
-                        ) : (
-                          <Paperclip size={16} />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p className="text-xs">Upload document for context (PDF, Excel, Word, CSV)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={`Ask in ${currentMode.name} mode...`}
-                className="min-h-[44px] max-h-[80px] resize-none text-sm"
-                disabled={isStreaming}
-              />
-              <Button
-                variant="accent"
-                size="icon"
-                className="h-11 w-11 shrink-0"
-                onClick={handleSend}
-                disabled={!input.trim() || isStreaming || credits < currentMode.creditCost}
-              >
-                {isStreaming ? (
-                  <Loader2 className="animate-spin" size={16} />
-                ) : (
-                  <Send size={16} />
-                )}
-              </Button>
-            </div>
-            
-            {/* Upload hint when no documents */}
-            {documents.length === 0 && onUploadDocument && (
-              <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
-                <Upload size={10} />
-                Upload business docs to personalise AI responses
-              </p>
+            {/* Loading skeleton */}
+            {isLoading ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="flex gap-2">
+                  <div className="h-11 w-11 bg-muted rounded-lg shrink-0" />
+                  <div className="h-11 flex-1 bg-muted rounded-lg" />
+                  <div className="h-11 w-11 bg-muted rounded-lg shrink-0" />
+                </div>
+                <div className="h-3 w-48 bg-muted rounded" />
+              </div>
+            ) : (
+              <>
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                
+                <div className="flex gap-2">
+                  {/* Upload button */}
+                  {onUploadDocument && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-11 w-11 shrink-0"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isStreaming || uploadingDocument}
+                          >
+                            {uploadingDocument ? (
+                              <Loader2 className="animate-spin" size={16} />
+                            ) : (
+                              <Paperclip size={16} />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-xs">Upload document for context (PDF, Excel, Word, CSV)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  
+                  <Textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={`Ask in ${currentMode.name} mode...`}
+                    className="min-h-[44px] max-h-[80px] resize-none text-sm"
+                    disabled={isStreaming}
+                    maxLength={4000}
+                  />
+                  <Button
+                    variant="accent"
+                    size="icon"
+                    className="h-11 w-11 shrink-0"
+                    onClick={handleSend}
+                    disabled={!input.trim() || isStreaming || credits < currentMode.creditCost}
+                  >
+                    {isStreaming ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <Send size={16} />
+                    )}
+                  </Button>
+                </div>
+                
+                {/* Character counter and upload hint */}
+                <div className="flex items-center justify-between mt-2">
+                  <div>
+                    {documents.length === 0 && onUploadDocument && (
+                      <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Upload size={10} />
+                        Upload business docs to personalise AI responses
+                      </p>
+                    )}
+                  </div>
+                  <span className={cn(
+                    "text-[10px] tabular-nums transition-colors",
+                    input.length > 3800 ? "text-destructive" : 
+                    input.length > 3500 ? "text-amber-500" : 
+                    "text-muted-foreground"
+                  )}>
+                    {input.length}/4000
+                  </span>
+                </div>
+              </>
             )}
           </div>
           </div>
