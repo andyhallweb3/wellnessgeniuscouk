@@ -576,7 +576,7 @@ const Genie = () => {
                 <InlineChatBox
                   credits={credits.balance}
                   onDeductCredits={deductCredits}
-                  memoryContext={getMemoryContextString()}
+                  memoryContext={getMemoryContext()}
                   trustDisplayMode={trustDisplayMode}
                   onSaveSession={saveSession}
                   briefData={briefData}
