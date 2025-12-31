@@ -274,11 +274,11 @@ const bundles: Product[] = [
   },
 ];
 
-// AI Coach Subscription Tiers
+// AI Advisor Subscription Tiers
 const subscriptions: Product[] = [
   {
-    id: "ai-coach-pro",
-    name: "AI Coach Pro",
+    id: "ai-advisor-pro",
+    name: "AI Advisor Pro",
     description: "40 credits/month. Diagnostic, Decision & Commercial modes. Access to all paid templates (read-only).",
     price: "£19.99",
     priceSubtext: "/month",
@@ -292,15 +292,15 @@ const subscriptions: Product[] = [
       "Access to all templates",
     ],
     cta: "Subscribe",
-    link: "#ai-coach-pro",
+    link: "#ai-advisor-pro",
     isSubscription: true,
     badge: "Most Popular",
     upsellText: "Need more credits? Upgrade to Expert →",
-    upsellProduct: "ai-coach-expert",
+    upsellProduct: "ai-advisor-expert",
   },
   {
-    id: "ai-coach-expert",
-    name: "AI Coach Expert",
+    id: "ai-advisor-expert",
+    name: "AI Advisor Expert",
     description: "120 credits/month. All modes unlocked, saved insights, re-runs & comparisons, full downloads library included.",
     price: "£39.99",
     priceSubtext: "/month",
@@ -314,7 +314,7 @@ const subscriptions: Product[] = [
       "Full downloads library included",
     ],
     cta: "Subscribe",
-    link: "#ai-coach-expert",
+    link: "#ai-advisor-expert",
     isSubscription: true,
     badge: "Premium",
   },

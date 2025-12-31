@@ -95,7 +95,7 @@ const AICoach = () => {
 
   useEffect(() => {
     if (searchParams.get("subscribed") === "true") {
-      toast.success("Welcome to Wellness Genius AI Coach!");
+      toast.success("Welcome to Wellness Genius AI Advisor!");
       checkSubscription();
     }
   }, [searchParams]);
@@ -147,7 +147,7 @@ const AICoach = () => {
       
       // Handle free access users who don't have a Stripe customer
       if (data.free_access) {
-        toast.info("You have free access to the AI Coach. No subscription to manage.");
+        toast.info("You have free access to the AI Advisor. No subscription to manage.");
         return;
       }
       
@@ -227,7 +227,7 @@ const AICoach = () => {
     // Get the user's session for proper JWT authentication
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData?.session?.access_token) {
-      throw new Error("Not authenticated. Please log in to use AI Coach.");
+      throw new Error("Not authenticated. Please log in to use AI Advisor.");
     }
     
     // Get document context for AI
@@ -403,8 +403,8 @@ const AICoach = () => {
     return (
       <div className="min-h-screen bg-background">
         <Helmet>
-          <title>AI Coach | Wellness Genius</title>
-          <meta name="description" content="Your personal AI coach for wellness business strategy and building with Lovable." />
+          <title>AI Advisor | Wellness Genius</title>
+          <meta name="description" content="Your personal AI advisor for wellness business strategy and decision support." />
         </Helmet>
         
         <Header />
@@ -420,7 +420,7 @@ const AICoach = () => {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-6">
                 <Sparkles size={32} className="text-accent" />
               </div>
-              <h1 className="text-3xl md:text-4xl font-heading mb-4">Wellness Genius AI Coach</h1>
+              <h1 className="text-3xl md:text-4xl font-heading mb-4">Wellness Genius AI Advisor</h1>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Decision intelligence for wellness leaders. Not a chatbot.
               </p>

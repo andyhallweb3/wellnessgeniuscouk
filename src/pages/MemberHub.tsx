@@ -551,7 +551,7 @@ const MemberHub = () => {
                             <Link to="/hub/coach">
                               <MessageCircle size={16} className="text-accent mr-2" />
                               <div className="text-left">
-                                <p className="font-medium">AI Coach</p>
+                                <p className="font-medium">AI Advisor</p>
                                 <p className="text-xs text-muted-foreground">Get expert AI guidance</p>
                               </div>
                             </Link>

@@ -38,14 +38,14 @@ const steps: OnboardingStep[] = [
   },
   {
     id: "genie",
-    title: "Meet Your Wellness Genie",
-    description: "Your personal AI assistant that understands the wellness industry. Ask questions, get strategies, and upload your business documents for personalized advice. Look for the floating button in the bottom-right corner!",
+    title: "Meet Your AI Advisor",
+    description: "Your personal AI advisor that understands the wellness industry. Ask questions, get strategies, and upload your business documents for personalised advice. Look for the floating button in the bottom-right corner!",
     icon: <Sparkles className="h-12 w-12 text-accent" />,
   },
   {
     id: "hub",
     title: "Your Personal Hub",
-    description: "Access your dashboard, saved insights, and AI coach from My Hub in the top navigation. Everything you need in one place.",
+    description: "Access your dashboard, saved insights, and AI Advisor from My Hub in the top navigation. Everything you need in one place.",
     icon: <BookOpen className="h-12 w-12 text-accent" />,
   },
   {

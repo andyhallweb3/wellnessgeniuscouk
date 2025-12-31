@@ -166,7 +166,7 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
           </div>
           <h2 className="text-2xl font-heading">This is not a chatbot.</h2>
           <p className="text-muted-foreground">
-            The Wellness Genius AI Coach is a decision-grade intelligence agent
+            The Wellness Genius AI Advisor is a decision-grade intelligence agent
             for people building real wellness businesses.
           </p>
           <div className="text-left bg-secondary rounded-lg p-6 space-y-3">
@@ -275,7 +275,7 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
           <div className="bg-secondary/50 rounded-lg p-3 mb-2">
             <p className="text-xs text-muted-foreground text-center">
               <Users size={12} className="inline mr-1" />
-              Your profile is used to personalise all AI coach responses
+              Your profile is used to personalise all AI Advisor responses
             </p>
           </div>
 
@@ -738,7 +738,7 @@ const CoachOnboarding = ({ onComplete }: CoachOnboardingProps) => {
           <div />
         )}
         <Button onClick={handleNext} disabled={!canProceed()} variant="accent">
-          {step === totalSteps ? "Enter AI Coach" : "Continue"}
+          {step === totalSteps ? "Enter AI Advisor" : "Continue"}
           <ArrowRight size={16} />
         </Button>
       </div>
