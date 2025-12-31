@@ -254,9 +254,9 @@ serve(async (req) => {
           
           <div style="border-top: 1px solid #27272a; margin-top: 32px; padding-top: 24px;">
             <p style="color: #52525b; font-size: 12px; margin: 0;">
-              Wellness Genius • <a href="https://wellnessgenius.io" style="color: #52525b;">wellnessgenius.io</a>
+              Wellness Genius • <a href="https://www.wellnessgenius.co.uk" style="color: #52525b;">wellnessgenius.co.uk</a>
               <br><br>
-              <a href="https://wellnessgenius.io/unsubscribe?email=${encodeURIComponent(email)}" style="color: #52525b;">Unsubscribe</a>
+              <a href="https://www.wellnessgenius.co.uk/unsubscribe?email=${encodeURIComponent(email)}" style="color: #52525b;">Unsubscribe</a>
             </p>
           </div>
         </div>

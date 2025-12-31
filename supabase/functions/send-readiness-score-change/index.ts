@@ -154,7 +154,7 @@ const handler = async (req: Request): Promise<Response> => {
                   Wellness Genius | AI Strategy for Wellness Operators
                 </p>
                 <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
-                  <a href="https://wellnessgenius.io/unsubscribe?email=${encodeURIComponent(email)}" style="color: #9ca3af;">Unsubscribe</a>
+                  <a href="https://www.wellnessgenius.co.uk/unsubscribe?email=${encodeURIComponent(email)}" style="color: #9ca3af;">Unsubscribe</a>
                 </p>
               </div>
             </div>
