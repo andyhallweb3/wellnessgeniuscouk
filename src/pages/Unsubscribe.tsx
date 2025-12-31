@@ -15,20 +15,21 @@ const Unsubscribe = () => {
   const [error, setError] = useState<string | null>(null);
   
   const token = searchParams.get("token");
+  const email = searchParams.get("email");
 
   useEffect(() => {
     document.title = "Unsubscribe | Wellness Genius";
   }, []);
 
-  // Auto-unsubscribe if token is present
+  // Auto-unsubscribe if token (preferred) or email (legacy) is present
   useEffect(() => {
-    if (token && !unsubscribed && !loading) {
+    if ((token || email) && !unsubscribed && !loading) {
       handleUnsubscribe();
     }
-  }, [token]);
+  }, [token, email]);
 
   const handleUnsubscribe = async () => {
-    if (!token) {
+    if (!token && !email) {
       setError("Invalid unsubscribe link. Please use the link from your newsletter email.");
       return;
     }
@@ -38,7 +39,7 @@ const Unsubscribe = () => {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('unsubscribe', {
-        body: { token },
+        body: token ? { token } : { email: email as string },
       });
 
       if (fnError) throw fnError;
