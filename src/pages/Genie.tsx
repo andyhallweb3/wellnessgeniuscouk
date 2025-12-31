@@ -583,6 +583,7 @@ const Genie = () => {
                   documents={documents}
                   onUploadDocument={uploadDocument}
                   uploadingDocument={uploadingDocument}
+                  isLoading={memoryLoading || creditsLoading}
                 />
 
                 {/* Mode Buttons */}
