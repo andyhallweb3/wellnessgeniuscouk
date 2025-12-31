@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Check, Sparkles, BookOpen, BarChart3, Package, CircleDot, ArrowRight } from "lucide-react";
 import { useOnboarding, ONBOARDING_STEP_IDS, OnboardingStepId } from "@/hooks/useOnboarding";
 import { Progress } from "@/components/ui/progress";
@@ -32,10 +33,12 @@ const OnboardingProgress = () => {
 
   const percentage = getCompletionPercentage();
 
-  // Auto-mark hub as visited when this component mounts
-  if (!isStepCompleted("hub")) {
-    markStepCompleted("hub");
-  }
+  // Auto-mark hub as visited when this component mounts (in useEffect to avoid render-cycle issues)
+  useEffect(() => {
+    if (!isStepCompleted("hub")) {
+      markStepCompleted("hub");
+    }
+  }, [isStepCompleted, markStepCompleted]);
 
   if (percentage === 100) {
     return (
