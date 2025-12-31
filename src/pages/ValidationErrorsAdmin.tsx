@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -12,9 +15,15 @@ import {
   RefreshCw,
   TrendingUp,
   Clock,
-  Filter
+  Filter,
+  Download,
+  Mail,
+  Bell,
+  Settings,
+  Check
 } from "lucide-react";
-import { format, subDays, startOfDay } from "date-fns";
+import { format, subDays } from "date-fns";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -22,6 +31,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface ValidationError {
   id: string;
@@ -45,12 +61,49 @@ interface DailyStats {
   count: number;
 }
 
+interface AlertSettings {
+  enabled: boolean;
+  email: string;
+  threshold: number;
+  windowHours: number;
+}
+
+const ALERT_SETTINGS_KEY = "validation_alert_settings";
+
 const ValidationErrorsAdmin = () => {
   const { isAdmin, isLoading: authLoading } = useAdminAuth();
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("7");
+  const [isExporting, setIsExporting] = useState(false);
+  const [isSendingAlert, setIsSendingAlert] = useState(false);
+  const [alertSettings, setAlertSettings] = useState<AlertSettings>({
+    enabled: false,
+    email: "",
+    threshold: 10,
+    windowHours: 1,
+  });
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+
+  // Load alert settings from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(ALERT_SETTINGS_KEY);
+    if (saved) {
+      try {
+        setAlertSettings(JSON.parse(saved));
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const saveAlertSettings = (settings: AlertSettings) => {
+    setAlertSettings(settings);
+    localStorage.setItem(ALERT_SETTINGS_KEY, JSON.stringify(settings));
+    toast.success("Alert settings saved");
+    setAlertDialogOpen(false);
+  };
 
   const fetchErrors = async () => {
     setIsLoading(true);
@@ -83,6 +136,17 @@ const ValidationErrorsAdmin = () => {
       setDailyStats(
         Array.from(statsMap.entries()).map(([date, count]) => ({ date, count }))
       );
+
+      // Check if alert should be triggered
+      if (alertSettings.enabled && alertSettings.email) {
+        const windowStart = subDays(new Date(), alertSettings.windowHours / 24);
+        const recentErrors = (data || []).filter(
+          (e) => new Date(e.created_at) >= windowStart
+        );
+        if (recentErrors.length >= alertSettings.threshold) {
+          // Could auto-trigger alert here, but we'll use manual trigger
+        }
+      }
     } catch (err) {
       console.error("Failed to fetch validation errors:", err);
     } finally {
@@ -130,6 +194,93 @@ const ValidationErrorsAdmin = () => {
     };
   };
 
+  // Export to CSV
+  const exportToCSV = () => {
+    setIsExporting(true);
+    try {
+      const headers = ["Date", "Time", "Mode", "Errors", "User ID", "IP Address"];
+      const rows = errors.map((err) => {
+        const parsed = parseUserAgent(err.user_agent);
+        const date = new Date(err.created_at);
+        return [
+          format(date, "yyyy-MM-dd"),
+          format(date, "HH:mm:ss"),
+          parsed.mode || "unknown",
+          (parsed.errors || []).join("; "),
+          err.admin_user_id,
+          err.ip_address || "",
+        ];
+      });
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((row) =>
+          row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+        ),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `validation-errors-${format(new Date(), "yyyy-MM-dd")}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("CSV exported successfully");
+    } catch (err) {
+      console.error("Export failed:", err);
+      toast.error("Failed to export CSV");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Send alert email
+  const sendAlertEmail = async () => {
+    if (!alertSettings.email) {
+      toast.error("Please configure an email address first");
+      setAlertDialogOpen(true);
+      return;
+    }
+
+    setIsSendingAlert(true);
+    try {
+      const summary = getErrorSummary();
+      const { error } = await supabase.functions.invoke("send-validation-alert", {
+        body: {
+          email: alertSettings.email,
+          totalErrors: errors.length,
+          timeRange: `${timeRange} days`,
+          topMode: summary.byMode[0]?.[0] || "N/A",
+          topModeCount: summary.byMode[0]?.[1] || 0,
+          topErrorField: summary.byErrorType[0]?.[0] || "N/A",
+          topErrorCount: summary.byErrorType[0]?.[1] || 0,
+          recentErrors: errors.slice(0, 10).map((err) => {
+            const parsed = parseUserAgent(err.user_agent);
+            return {
+              time: format(new Date(err.created_at), "MMM d, HH:mm"),
+              mode: parsed.mode || "unknown",
+              errors: (parsed.errors || []).slice(0, 3),
+            };
+          }),
+        },
+      });
+
+      if (error) throw error;
+      toast.success(`Alert sent to ${alertSettings.email}`);
+    } catch (err) {
+      console.error("Failed to send alert:", err);
+      toast.error("Failed to send alert email");
+    } finally {
+      setIsSendingAlert(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -170,9 +321,9 @@ const ValidationErrorsAdmin = () => {
               <h1 className="font-heading text-xl">Validation Errors</h1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[130px]">
                 <Filter size={14} className="mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -182,8 +333,126 @@ const ValidationErrorsAdmin = () => {
                 <SelectItem value="30">Last 30 days</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Alert Settings */}
+            <Dialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon" className="relative">
+                  <Settings size={16} />
+                  {alertSettings.enabled && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" />
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Bell size={18} />
+                    Alert Settings
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="alert-enabled">Enable email alerts</Label>
+                    <Switch
+                      id="alert-enabled"
+                      checked={alertSettings.enabled}
+                      onCheckedChange={(checked) =>
+                        setAlertSettings((s) => ({ ...s, enabled: checked }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="alert-email">Alert email</Label>
+                    <Input
+                      id="alert-email"
+                      type="email"
+                      placeholder="admin@example.com"
+                      value={alertSettings.email}
+                      onChange={(e) =>
+                        setAlertSettings((s) => ({ ...s, email: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="alert-threshold">Error threshold</Label>
+                      <Input
+                        id="alert-threshold"
+                        type="number"
+                        min={1}
+                        value={alertSettings.threshold}
+                        onChange={(e) =>
+                          setAlertSettings((s) => ({
+                            ...s,
+                            threshold: parseInt(e.target.value) || 10,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="alert-window">Time window (hrs)</Label>
+                      <Input
+                        id="alert-window"
+                        type="number"
+                        min={1}
+                        value={alertSettings.windowHours}
+                        onChange={(e) =>
+                          setAlertSettings((s) => ({
+                            ...s,
+                            windowHours: parseInt(e.target.value) || 1,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Alert triggers when {alertSettings.threshold}+ errors occur
+                    within {alertSettings.windowHours} hour(s).
+                  </p>
+                  <Button
+                    className="w-full"
+                    onClick={() => saveAlertSettings(alertSettings)}
+                  >
+                    <Check size={16} className="mr-2" />
+                    Save Settings
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Send Alert */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={sendAlertEmail}
+              disabled={isSendingAlert || errors.length === 0}
+            >
+              {isSendingAlert ? (
+                <Loader2 size={14} className="animate-spin mr-1" />
+              ) : (
+                <Mail size={14} className="mr-1" />
+              )}
+              Send Alert
+            </Button>
+
+            {/* Export CSV */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToCSV}
+              disabled={isExporting || errors.length === 0}
+            >
+              {isExporting ? (
+                <Loader2 size={14} className="animate-spin mr-1" />
+              ) : (
+                <Download size={14} className="mr-1" />
+              )}
+              Export CSV
+            </Button>
+
             <Button variant="outline" size="sm" onClick={fetchErrors} disabled={isLoading}>
-              <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+              <RefreshCw size={14} className={isLoading ? "animate-spin mr-1" : "mr-1"} />
               Refresh
             </Button>
           </div>
@@ -304,8 +573,11 @@ const ValidationErrorsAdmin = () => {
 
             {/* Recent Errors Table */}
             <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="p-4 border-b border-border">
+              <div className="p-4 border-b border-border flex items-center justify-between">
                 <h3 className="font-medium">Recent Validation Errors</h3>
+                <span className="text-xs text-muted-foreground">
+                  Showing {Math.min(errors.length, 50)} of {errors.length}
+                </span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
