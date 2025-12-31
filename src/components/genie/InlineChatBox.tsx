@@ -365,7 +365,24 @@ const InlineChatBox = ({
   };
 
   const handleSend = async () => {
-    if (!input.trim() || isStreaming) return;
+    const trimmedInput = input.trim();
+    
+    // Input validation
+    if (!trimmedInput) {
+      return;
+    }
+    
+    if (trimmedInput.length < 3) {
+      toast.error("Please enter a longer message (at least 3 characters).");
+      return;
+    }
+    
+    if (trimmedInput.length > 4000) {
+      toast.error("Message is too long. Please keep it under 4000 characters.");
+      return;
+    }
+    
+    if (isStreaming) return;
 
     const modeConfig = getModeById(selectedMode);
     
@@ -374,7 +391,7 @@ const InlineChatBox = ({
       return;
     }
 
-    const userMessage: Message = { role: "user", content: input.trim() };
+    const userMessage: Message = { role: "user", content: trimmedInput };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");

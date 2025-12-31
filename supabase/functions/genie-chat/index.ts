@@ -690,6 +690,26 @@ serve(async (req) => {
         validationErrors: validationResult.errors,
         userId,
       });
+      
+      // Log validation errors to admin_audit_logs for tracking
+      if (SUPABASE_SERVICE_ROLE_KEY) {
+        const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        await supabaseAdmin.from("admin_audit_logs").insert({
+          admin_user_id: userId,
+          action: "genie_validation_error",
+          resource_type: "genie_chat",
+          resource_count: validationResult.errors?.length || 0,
+          ip_address: req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || null,
+          user_agent: JSON.stringify({
+            mode: rawBody?.mode || "unknown",
+            errors: validationResult.errors,
+            timestamp: new Date().toISOString(),
+          }),
+        }).then(({ error }) => {
+          if (error) console.error("[GENIE] Failed to log validation error:", error.message);
+        });
+      }
+      
       return new Response(
         JSON.stringify({ 
           error: "Invalid request format. Please check your input and try again.",
