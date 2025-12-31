@@ -3,6 +3,8 @@ import { useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
@@ -13,41 +15,28 @@ const Unsubscribe = () => {
   const [loading, setLoading] = useState(false);
   const [unsubscribed, setUnsubscribed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const token = searchParams.get("token");
   const email = searchParams.get("email");
+  const [manualEmail, setManualEmail] = useState("");
 
   useEffect(() => {
     document.title = "Unsubscribe | Wellness Genius";
   }, []);
 
-  // Auto-unsubscribe if token (preferred) or email (legacy) is present
-  useEffect(() => {
-    if ((token || email) && !unsubscribed && !loading) {
-      handleUnsubscribe();
-    }
-  }, [token, email]);
-
-  const handleUnsubscribe = async () => {
-    if (!token && !email) {
-      setError("Invalid unsubscribe link. Please use the link from your newsletter email.");
-      return;
-    }
-
+  const performUnsubscribe = async (payload: { token?: string; email?: string }) => {
     setLoading(true);
     setError(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('unsubscribe', {
-        body: token ? { token } : { email: email as string },
+      const { data, error: fnError } = await supabase.functions.invoke("unsubscribe", {
+        body: payload,
       });
 
       if (fnError) throw fnError;
-      
-      // Check if response indicates an error
+
       if (data?.error) {
         setError(data.error);
-        setLoading(false);
         return;
       }
 
@@ -62,6 +51,24 @@ const Unsubscribe = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Auto-unsubscribe if token (preferred) or email (legacy) is present
+  useEffect(() => {
+    if (unsubscribed || loading) return;
+    if (token) performUnsubscribe({ token });
+    else if (email) performUnsubscribe({ email });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, email]);
+
+  const handleManualUnsubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleaned = manualEmail.trim().toLowerCase();
+    if (!cleaned || !cleaned.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    await performUnsubscribe({ email: cleaned });
   };
 
   return (
@@ -127,11 +134,30 @@ const Unsubscribe = () => {
                   </div>
                   <h1 className="text-2xl font-bold mb-2">Unsubscribe</h1>
                   <p className="text-muted-foreground mb-6">
-                    To unsubscribe, please click the unsubscribe link in your most recent newsletter email.
+                    Enter your email address to unsubscribe.
                   </p>
-                  <Link 
-                    to="/" 
-                    className="inline-block text-sm text-muted-foreground hover:text-accent transition-colors"
+
+                  <form onSubmit={handleManualUnsubscribe} className="space-y-4 text-left">
+                    <div className="space-y-2">
+                      <Label htmlFor="manualEmail">Email</Label>
+                      <Input
+                        id="manualEmail"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        value={manualEmail}
+                        onChange={(e) => setManualEmail(e.target.value)}
+                      />
+                    </div>
+                    <Button type="submit" variant="accent" className="w-full" disabled={loading}>
+                      Unsubscribe
+                    </Button>
+                  </form>
+
+                  <Link
+                    to="/"
+                    className="mt-6 inline-block text-sm text-muted-foreground hover:text-accent transition-colors"
                   >
                     ← Back to Home
                   </Link>
