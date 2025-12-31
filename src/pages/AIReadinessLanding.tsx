@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,8 @@ import { ArrowRight, Clock, BarChart3, FileText, Lock, CheckCircle } from "lucid
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
+import { useAuth } from "@/contexts/AuthContext";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 const targetAudience = [
   "Gym & fitness operators",
@@ -31,6 +34,16 @@ const paidFeatures = [
 ];
 
 const AIReadinessLanding = () => {
+  const { user } = useAuth();
+  const { markStepCompleted } = useOnboarding();
+
+  // Mark assessment step as completed when user visits this page
+  useEffect(() => {
+    if (user) {
+      markStepCompleted("assessment");
+    }
+  }, [user, markStepCompleted]);
+
   return (
     <div className="min-h-screen bg-background">
       <Helmet>

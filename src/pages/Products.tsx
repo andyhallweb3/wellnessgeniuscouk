@@ -25,6 +25,7 @@ import Footer from "@/components/Footer";
 import EmailGateModal from "@/components/EmailGateModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { toast } from "sonner";
 import { 
   generatePromptPack, 
@@ -530,11 +531,19 @@ const ProductCard = ({
 const Products = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { markStepCompleted } = useOnboarding();
   const [emailGateModal, setEmailGateModal] = useState<{
     isOpen: boolean;
     product: Product | null;
   }>({ isOpen: false, product: null });
   const [processingProductId, setProcessingProductId] = useState<string | null>(null);
+
+  // Mark products step as completed when user visits this page
+  useEffect(() => {
+    if (user) {
+      markStepCompleted("products");
+    }
+  }, [user, markStepCompleted]);
 
   const freeProducts = products.filter(p => p.type === "free");
   const paidProducts = products.filter(p => p.type === "paid");
