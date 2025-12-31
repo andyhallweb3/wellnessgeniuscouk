@@ -180,7 +180,7 @@ const Footer = () => {
                   <li>
                     <Link to="/hub/coach" className="hover:text-primary-foreground transition-colors flex items-center gap-1.5">
                       <Bot size={14} />
-                      AI Coach
+                      AI Advisor
                     </Link>
                   </li>
                 )}

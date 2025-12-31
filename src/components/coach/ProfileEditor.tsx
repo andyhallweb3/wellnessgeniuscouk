@@ -92,7 +92,7 @@ const ProfileEditor = ({ isOpen, onClose, profile, onSave }: ProfileEditorProps)
       const success = await onSave(formData);
       if (success) {
         setSaved(true);
-        toast.success("Profile saved! Your AI coach is now personalised to your business.");
+        toast.success("Profile saved! Your AI Advisor is now personalised to your business.");
         // Don't close immediately so user sees the confirmation
         setTimeout(() => {
           onClose();
@@ -112,9 +112,9 @@ const ProfileEditor = ({ isOpen, onClose, profile, onSave }: ProfileEditorProps)
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Coach Personalisation</DialogTitle>
+          <DialogTitle>Advisor Personalisation</DialogTitle>
           <DialogDescription>
-            The more context you provide, the more relevant your AI coach responses will be.
+            The more context you provide, the more relevant your AI Advisor responses will be.
           </DialogDescription>
         </DialogHeader>
 

@@ -124,7 +124,7 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
     
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData?.session?.access_token) {
-      throw new Error("Not authenticated. Please log in to use AI Coach.");
+      throw new Error("Not authenticated. Please log in to use AI Advisor.");
     }
     
     const documentContext = getDocumentContext();

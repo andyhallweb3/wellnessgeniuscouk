@@ -144,7 +144,7 @@ const Bundles = () => {
       if (error) throw error;
 
       if (data?.free_access) {
-        toast.success("This bundle is included with your AI Coach subscription!");
+        toast.success("This bundle is included with your AI Advisor subscription!");
         return;
       }
 
