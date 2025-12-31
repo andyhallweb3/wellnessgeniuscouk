@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown, LayoutDashboard, Bookmark, Sparkles } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, Bookmark, Sparkles, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -125,6 +125,13 @@ const Header = () => {
                     </Link>
                   </DropdownMenuItem>
                 ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/admin" className={`w-full flex items-center gap-2 ${isActive("/admin") ? "text-accent font-medium" : ""}`}>
+                    <Shield size={16} />
+                    Admin Login
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -253,6 +260,16 @@ const Header = () => {
                   {link.label}
                 </Link>
               ))}
+              <Link
+                to="/admin"
+                className={`px-3 py-2 text-base font-medium transition-colors rounded-md flex items-center gap-2 ${
+                  isActive("/admin") ? "text-accent bg-accent/5" : "text-foreground hover:bg-accent/5"
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Shield size={16} />
+                Admin Login
+              </Link>
 
               <div className="flex flex-col gap-2 pt-6 border-t border-border/30 mt-4">
                 {!isLoading && (
