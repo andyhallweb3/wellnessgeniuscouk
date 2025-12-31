@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
                 Wellness Genius | AI & Automation for Wellness Brands
               </p>
               <p style="margin: 0; color: #71717a; font-size: 12px; text-align: center;">
-                <a href="https://wellnessgenius.co.uk/unsubscribe?email=${encodeURIComponent(email)}" style="color: #71717a; text-decoration: underline;">Unsubscribe</a>
+                <a href="https://www.wellnessgenius.co.uk/unsubscribe?email=${encodeURIComponent(email)}" style="color: #71717a; text-decoration: underline;">Unsubscribe</a>
               </p>
             </td>
           </tr>
