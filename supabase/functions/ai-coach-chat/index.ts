@@ -117,20 +117,20 @@ Q: How do I reset my password?
 A: Click "Sign In" → "Forgot Password" and enter your email to receive a reset link.
 
 Q: How do I cancel my subscription?
-A: Go to My Hub and use the subscription management link, or contact support at hello@wellnessgenius.io
+A: Go to My Hub and use the subscription management link, or contact support at hello@wellnessgenius.co.uk
 
 Q: How do I restart the site tour?
 A: In My Hub, scroll to the Account card in the sidebar and click "Restart Site Tour".
 
 ### Technical Issues
 Q: The site isn't loading properly. What should I do?
-A: Try refreshing the page, clearing your browser cache, or using a different browser. For persistent issues, contact hello@wellnessgenius.io
+A: Try refreshing the page, clearing your browser cache, or using a different browser. For persistent issues, contact hello@wellnessgenius.co.uk
 
 Q: I can't log in to my account.
 A: Use the "Forgot Password" link to reset. If issues persist, ensure you're using the same email you registered with.
 
 Q: How do I contact support?
-A: Email hello@wellnessgenius.io or book a call with Andy via Calendly (links on product pages).`;
+A: Email hello@wellnessgenius.co.uk or book a call with Andy via Calendly (links on product pages).`;
 
 
 // Mode-specific prompt additions

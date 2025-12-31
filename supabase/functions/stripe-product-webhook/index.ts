@@ -24,7 +24,7 @@ const addHeader = (doc: jsPDF, pageNum: number, totalPages: number) => {
   doc.rect(0, 0, 210, 8, "F");
   doc.setFontSize(8);
   doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
-  doc.text("wellnessgenius.io", 20, 290);
+  doc.text("wellnessgenius.co.uk", 20, 290);
   doc.text(`${pageNum} / ${totalPages}`, 190, 290, { align: "right" });
 };
 
@@ -446,7 +446,7 @@ const generateActivationPlaybookPDF = (): string => {
     "",
     "4. Resist the urge to skip ahead",
     "",
-    "5. Questions? Email hello@wellnessgenius.io"
+    "5. Questions? Email hello@wellnessgenius.co.uk"
   ];
   yPos = 55;
   nextSteps.forEach((line) => {
@@ -486,7 +486,7 @@ const generateEngagementPlaybookPDF = (): string => {
     { title: "Engagement KPI Canon", content: ["Approved metrics by outcome:", "", "RETENTION: 7-day return rate, session frequency", "ACTIVATION: Time-to-first-value, onboarding completion", "REVENUE: Upgrade rate, LTV by cohort", "", "If it doesn't link to these, question whether to track it."] },
     { title: "Intervention Register Template", content: ["For each intervention, document:", "", "→ Trigger: What fires this?", "→ Cost: Time and £", "→ Expected outcome: Be specific", "→ Actual outcome: Measure", "→ Decision: Keep / Kill / Adjust"] },
     { title: "MVP Segment Definition", content: ["Your Most Valuable Players share:", "", "→ High visit frequency (3x+/week)", "→ Long tenure (6+ months)", "→ Referral behaviour", "→ Premium feature usage", "", "Identify them. Protect them. Learn from them."] },
-    { title: "What To Do Next", content: ["☐ Foundations unclear → Re-run AI Readiness Score", "☐ Decisions unclear → Use AI Coach", "☐ Execution blocked → 90-Day Activation Playbook", "☐ Strategic confidence low → Book working session", "", "wellnessgenius.io"] },
+    { title: "What To Do Next", content: ["☐ Foundations unclear → Re-run AI Readiness Score", "☐ Decisions unclear → Use AI Coach", "☐ Execution blocked → 90-Day Activation Playbook", "☐ Strategic confidence low → Book working session", "", "wellnessgenius.co.uk"] },
   ];
 
   pages.forEach((p, i) => {
@@ -656,7 +656,7 @@ serve(async (req) => {
         logStep("Sending bundle email", { to: customerEmail, attachmentCount: attachments.length });
         
         const emailResult = await resend.emails.send({
-          from: "Wellness Genius <hello@wellnessgenius.io>",
+          from: "Wellness Genius <hello@wellnessgenius.co.uk>",
           to: [customerEmail],
           subject: `Your ${bundleInfo.name} is ready!`,
           html: `
@@ -695,7 +695,7 @@ serve(async (req) => {
                 
                 <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
                   Want personalised guidance? Take our free 
-                  <a href="https://wellnessgenius.io/ai-readiness/start" style="color: #2dd4bf; text-decoration: none;">AI Readiness Assessment</a>
+                  <a href="https://www.wellnessgenius.co.uk/ai-readiness/start" style="color: #2dd4bf; text-decoration: none;">AI Readiness Assessment</a>
                   for tailored recommendations.
                 </p>
                 
@@ -706,7 +706,7 @@ serve(async (req) => {
                 
                 <div style="border-top: 1px solid #27272a; margin-top: 32px; padding-top: 24px;">
                   <p style="color: #52525b; font-size: 12px; margin: 0;">
-                    Wellness Genius • <a href="https://wellnessgenius.io" style="color: #52525b;">wellnessgenius.io</a>
+                    Wellness Genius • <a href="https://www.wellnessgenius.co.uk" style="color: #52525b;">wellnessgenius.co.uk</a>
                   </p>
                 </div>
               </div>
@@ -733,7 +733,7 @@ serve(async (req) => {
         logStep("Sending email", { to: customerEmail, product: product.name });
         
         const emailResult = await resend.emails.send({
-          from: "Wellness Genius <hello@wellnessgenius.io>",
+          from: "Wellness Genius <hello@wellnessgenius.co.uk>",
           to: [customerEmail],
           subject: `Your ${product.name} is ready!`,
           html: `
@@ -764,7 +764,7 @@ serve(async (req) => {
                 
                 <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
                   Want more personalised guidance? Take our free 
-                  <a href="https://wellnessgenius.io/ai-readiness/start" style="color: #2dd4bf; text-decoration: none;">AI Readiness Assessment</a>
+                  <a href="https://www.wellnessgenius.co.uk/ai-readiness/start" style="color: #2dd4bf; text-decoration: none;">AI Readiness Assessment</a>
                   for tailored recommendations.
                 </p>
                 
@@ -775,7 +775,7 @@ serve(async (req) => {
                 
                 <div style="border-top: 1px solid #27272a; margin-top: 32px; padding-top: 24px;">
                   <p style="color: #52525b; font-size: 12px; margin: 0;">
-                    Wellness Genius • <a href="https://wellnessgenius.io" style="color: #52525b;">wellnessgenius.io</a>
+                    Wellness Genius • <a href="https://www.wellnessgenius.co.uk" style="color: #52525b;">wellnessgenius.co.uk</a>
                   </p>
                 </div>
               </div>

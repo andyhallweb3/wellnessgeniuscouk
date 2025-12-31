@@ -55,13 +55,13 @@ const AB_CONFIG: Record<string, ProductConfig> = {
       {
         name: "AI Readiness Score",
         price: "£99",
-        link: "https://wellnessgenius.io/ai-readiness/start",
+        link: "https://www.wellnessgenius.co.uk/ai-readiness/start",
         description: "Complete diagnostic with conservative revenue projections, blockers, and your personalised 90-day action plan.",
       },
       {
         name: "Wellness AI Builder – Prompt Pack",
         price: "£49",
-        link: "https://wellnessgenius.io/products",
+        link: "https://www.wellnessgenius.co.uk/products",
         description: "Copy-ready prompt frameworks for founders building AI into wellness.",
       },
     ],
@@ -91,13 +91,13 @@ const AB_CONFIG: Record<string, ProductConfig> = {
       {
         name: "90-Day AI Activation Playbook",
         price: "£149",
-        link: "https://wellnessgenius.io/products",
+        link: "https://www.wellnessgenius.co.uk/products",
         description: "25-page structured playbook for businesses ready to accelerate.",
       },
       {
         name: "AI Readiness Score",
         price: "£99",
-        link: "https://wellnessgenius.io/ai-readiness/start",
+        link: "https://www.wellnessgenius.co.uk/ai-readiness/start",
         description: "Get your personalised score with blockers identified and action plan.",
       },
     ],
@@ -121,13 +121,13 @@ const AB_CONFIG: Record<string, ProductConfig> = {
       {
         name: "AI Readiness Score",
         price: "£99",
-        link: "https://wellnessgenius.io/ai-readiness/start",
+        link: "https://www.wellnessgenius.co.uk/ai-readiness/start",
         description: "Complete diagnostic with your personalised 90-day action plan.",
       },
       {
         name: "Wellness AI Builder – Prompt Pack",
         price: "£49",
-        link: "https://wellnessgenius.io/products",
+        link: "https://www.wellnessgenius.co.uk/products",
         description: "Copy-ready prompt frameworks for founders building AI into wellness.",
       },
     ],
@@ -268,7 +268,7 @@ serve(async (req) => {
     logStep("Sending email", { to: email, subject: variant.subject, variant: variant.id });
 
     const { error: emailError } = await resend.emails.send({
-      from: "Wellness Genius <hello@wellnessgenius.io>",
+      from: "Wellness Genius <hello@wellnessgenius.co.uk>",
       to: [email],
       subject: variant.subject,
       html: emailHtml,
