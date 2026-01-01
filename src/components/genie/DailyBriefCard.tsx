@@ -29,11 +29,14 @@ export interface BriefData {
 interface DailyBriefCardProps {
   brief: BriefData | null;
   isLoading: boolean;
-  isPlaying: boolean;
+
+  /** Voice playback is optional and can be disabled */
+  isPlaying?: boolean;
   isVoiceLoading?: boolean;
+  onPlayVoice?: () => void;
+  onStopVoice?: () => void;
+
   onGenerateBrief: () => void;
-  onPlayVoice: () => void;
-  onStopVoice: () => void;
   onActionClick: (action: string) => void;
   businessName?: string;
 }
@@ -69,7 +72,7 @@ const ChangeItem = ({ change }: { change: BriefData["changes"][0] }) => {
 const DailyBriefCard = ({
   brief,
   isLoading,
-  isPlaying,
+  isPlaying = false,
   isVoiceLoading,
   onGenerateBrief,
   onPlayVoice,
@@ -121,18 +124,26 @@ const DailyBriefCard = ({
             <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Today's Brief</p>
             <p className="text-sm font-medium">{today}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={isPlaying ? onStopVoice : onPlayVoice}
-              disabled={isVoiceLoading}
-              className="gap-2"
-            >
-              {isVoiceLoading ? <Loader2 size={14} className="animate-spin" /> : isPlaying ? <Pause size={14} /> : <Volume2 size={14} />}
-              {isVoiceLoading ? "Loading..." : isPlaying ? "Stop" : "Listen"}
-            </Button>
-          </div>
+          {onPlayVoice && onStopVoice ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={isPlaying ? onStopVoice : onPlayVoice}
+                disabled={isVoiceLoading}
+                className="gap-2"
+              >
+                {isVoiceLoading ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : isPlaying ? (
+                  <Pause size={14} />
+                ) : (
+                  <Volume2 size={14} />
+                )}
+                {isVoiceLoading ? "Loading..." : isPlaying ? "Stop" : "Listen"}
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         {/* Headline */}
