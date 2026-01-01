@@ -469,6 +469,138 @@ function calculateTrustMetadata(
   };
 }
 
+// Extract and save insights from conversation asynchronously
+async function extractAndSaveInsights(
+  userId: string,
+  messages: any[],
+  responseText: string,
+  mode: string,
+  supabaseUrl: string,
+  serviceRoleKey: string
+): Promise<void> {
+  try {
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    
+    if (!LOVABLE_API_KEY) return;
+
+    // Get the last few user messages for context
+    const recentUserMessages = messages
+      .filter((m: any) => m.role === "user")
+      .slice(-3)
+      .map((m: any) => m.content)
+      .join("\n");
+
+    // Use a fast model to extract insights
+    const extractionPrompt = `Analyze this conversation and extract 0-2 key insights worth remembering for future interactions.
+
+USER MESSAGES:
+${recentUserMessages}
+
+ADVISOR RESPONSE:
+${responseText.slice(0, 2000)}
+
+Extract insights in these categories:
+- observation: Facts about their business (e.g., "Has 50 members", "Revenue is £20k/month")
+- preference: Their preferences or style (e.g., "Prefers data-driven decisions", "Values work-life balance")
+- commitment: Decisions or commitments made (e.g., "Will launch new class next month", "Decided to hire a manager")
+- warning: Red flags or concerns mentioned (e.g., "Cash flow issues in Q3", "Team burnout risk")
+
+Return JSON array ONLY. Each item: {"type": "observation|preference|commitment|warning", "content": "brief insight", "relevance": 1-10}
+If nothing worth saving, return empty array [].
+CRITICAL: Only extract NEW, SPECIFIC information. Skip generic or vague statements.`;
+
+    const extractResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [{ role: "user", content: extractionPrompt }],
+        temperature: 0.3,
+      }),
+    });
+
+    if (!extractResponse.ok) {
+      console.log("[GENIE] Insight extraction API error:", extractResponse.status);
+      return;
+    }
+
+    const extractData = await extractResponse.json();
+    const rawContent = extractData.choices?.[0]?.message?.content || "[]";
+    
+    // Parse JSON from response (handle markdown code blocks)
+    let insights: any[] = [];
+    try {
+      const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        insights = JSON.parse(jsonMatch[0]);
+      }
+    } catch (parseErr) {
+      console.log("[GENIE] Failed to parse insights:", parseErr);
+      return;
+    }
+
+    if (!Array.isArray(insights) || insights.length === 0) {
+      console.log("[GENIE] No insights to save");
+      return;
+    }
+
+    // Check for duplicate insights before saving
+    const { data: existingInsights } = await supabase
+      .from("genie_insights")
+      .select("content")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    const existingContents = new Set(
+      (existingInsights || []).map((i: any) => i.content.toLowerCase().trim())
+    );
+
+    // Filter out duplicates and low relevance
+    const newInsights = insights.filter((insight: any) => {
+      if (!insight.content || insight.relevance < 5) return false;
+      const normalised = insight.content.toLowerCase().trim();
+      // Check for similar existing insights
+      for (const existing of existingContents) {
+        if (normalised.includes(existing) || existing.includes(normalised)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    if (newInsights.length === 0) {
+      console.log("[GENIE] No new unique insights");
+      return;
+    }
+
+    // Insert new insights
+    const insightsToInsert = newInsights.slice(0, 2).map((insight: any) => ({
+      user_id: userId,
+      insight_type: insight.type || "observation",
+      content: insight.content.slice(0, 500),
+      relevance_score: Math.min(10, Math.max(1, insight.relevance || 5)),
+      source: `${mode} conversation`,
+    }));
+
+    const { error: insertError } = await supabase
+      .from("genie_insights")
+      .insert(insightsToInsert);
+
+    if (insertError) {
+      console.log("[GENIE] Failed to save insights:", insertError.message);
+    } else {
+      console.log("[GENIE] Saved", insightsToInsert.length, "new insights");
+    }
+  } catch (err) {
+    console.log("[GENIE] Insight extraction error:", err);
+  }
+}
+
 // Genie Core System Prompt - Business Operator, not Coach
 const GENIE_SYSTEM_PROMPT = `You are the Wellness Genius AI Advisor — a senior business strategist specialising in wellness, fitness, and health businesses.
 
@@ -959,10 +1091,11 @@ serve(async (req) => {
       });
     }
 
-    // Create a transform stream to prepend trust metadata
+    // Create a transform stream to prepend trust metadata and capture response for insights
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
     const reader = response.body!.getReader();
+    let fullResponseText = "";
 
     // Send trust metadata as first event
     const trustEvent = `data: ${JSON.stringify({ type: "trust_metadata", ...trustMetadata })}\n\n`;
@@ -974,7 +1107,28 @@ serve(async (req) => {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
+          
+          // Capture text for insight extraction
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.choices?.[0]?.delta?.content) {
+                  fullResponseText += data.choices[0].delta.content;
+                }
+              } catch {}
+            }
+          }
+          
           await writer.write(value);
+        }
+        
+        // After stream ends, extract and save insights asynchronously
+        if (SUPABASE_SERVICE_ROLE_KEY && fullResponseText.length > 100) {
+          extractAndSaveInsights(userId, messages, fullResponseText, mode, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+            .catch((err: Error) => console.log("[GENIE] Insight extraction skipped:", err.message));
         }
       } finally {
         await writer.close();
