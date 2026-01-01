@@ -1,5 +1,8 @@
 import Header from "@/components/Header";
 import HeroNew from "@/components/HeroNew";
+import CredibilityStack from "@/components/CredibilityStack";
+import ChooseYourPath from "@/components/ChooseYourPath";
+import ValueFlowSection from "@/components/ValueFlowSection";
 import AIAdvisorSection from "@/components/AIAdvisorSection";
 import PricingComparison from "@/components/PricingComparison";
 import FAQSection from "@/components/FAQSection";
@@ -18,6 +21,9 @@ const Index = () => {
       <Header />
       <main>
         <HeroNew />
+        <CredibilityStack />
+        <ChooseYourPath />
+        <ValueFlowSection />
         <AIAdvisorSection />
         <PricingComparison />
         <FAQSection />

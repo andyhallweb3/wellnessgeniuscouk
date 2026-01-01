@@ -27,28 +27,28 @@ const HeroNew = () => {
             <div className="text-center lg:text-left">
               {/* Main Headline - More specific */}
               <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl leading-[1.1] mb-6 animate-fade-up tracking-tight">
-                AI that answers questions, predicts churn, and{" "}
-                <span className="text-accent">saves you 10+ hours/week</span>
+                Stop guessing.{" "}
+                <span className="text-accent">Start knowing.</span>
               </h1>
 
-              {/* Subheadline - More concrete */}
+              {/* Subheadline - Outcome focused */}
               <p className="text-lg lg:text-xl text-muted-foreground mb-8 animate-fade-up animation-delay-100">
-                Strategic AI advisor for wellness operators. Get retention insights, 
-                stress-test decisions, and build action plans — in minutes, not weeks.
+                AI that tells you who's about to churn, what to fix first, 
+                and exactly how to grow — before your competitors figure it out.
               </p>
 
-              {/* Primary CTA */}
+              {/* Primary CTA - Sharper, more urgent */}
               <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 mb-6 animate-fade-up animation-delay-200">
                 <Button variant="accent" size="xl" asChild className="shadow-glow">
                   <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
                     <Brain size={20} />
-                    Try AI Advisor Free
+                    Get Your First Insight Free
                     <ArrowRight size={18} />
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild>
                   <Link to="/ai-readiness">
-                    Take Free Assessment
+                    Test If You're AI-Ready
                   </Link>
                 </Button>
               </div>
