@@ -891,7 +891,12 @@ serve(async (req) => {
       );
     }
 
-    const { messages, mode = "daily_operator", memoryContext, documentContext, _hp_field, isTrialMode } = rawBody;
+    const { messages, mode = "daily_operator", memoryContext: rawMemoryContext, documentContext, _hp_field, isTrialMode } = rawBody;
+    
+    // Normalize memoryContext to string (it may come as an object from the client)
+    const memoryContext = typeof rawMemoryContext === 'string' 
+      ? rawMemoryContext 
+      : (rawMemoryContext ? JSON.stringify(rawMemoryContext) : '');
     
     // Honeypot validation - detect bots that fill hidden fields
     const honeypotResult = validateHoneypot(_hp_field);
