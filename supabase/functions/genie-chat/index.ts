@@ -958,8 +958,9 @@ serve(async (req) => {
       },
     };
 
-    // Fetch session data and guardrails using service role key for elevated access
+    // Fetch session data, guardrails, and knowledge base using service role key
     let guardrailsContext = "";
+    let knowledgeBaseContext = "";
     
     if (SUPABASE_SERVICE_ROLE_KEY) {
       try {
@@ -991,6 +992,27 @@ serve(async (req) => {
           }
         } catch (guardrailErr) {
           console.log("[GENIE] Guardrails fetch skipped:", guardrailErr);
+        }
+
+        // Fetch knowledge base entries (active only, sorted by priority)
+        try {
+          const { data: knowledgeEntries } = await supabase
+            .from("knowledge_base")
+            .select("title, content, category, tags")
+            .eq("is_active", true)
+            .order("priority", { ascending: false })
+            .limit(20);
+          
+          if (knowledgeEntries && knowledgeEntries.length > 0) {
+            knowledgeBaseContext = "\n\n## KNOWLEDGE BASE (Use these insights to inform your advice)\n";
+            knowledgeEntries.forEach((entry: any) => {
+              knowledgeBaseContext += `\n### ${entry.title} [${entry.category}]\n`;
+              knowledgeBaseContext += entry.content + "\n";
+            });
+            console.log("[GENIE] Loaded", knowledgeEntries.length, "knowledge base entries");
+          }
+        } catch (kbErr) {
+          console.log("[GENIE] Knowledge base fetch skipped:", kbErr);
         }
       } catch (dataErr) {
         console.log("[GENIE] Session data fetch skipped:", dataErr);
@@ -1039,6 +1061,11 @@ serve(async (req) => {
     
     if (documentContext && documentContext.trim()) {
       fullSystemPrompt += `\n\n## UPLOADED DOCUMENTS:\n${documentContext}`;
+    }
+
+    // Add knowledge base context
+    if (knowledgeBaseContext) {
+      fullSystemPrompt += knowledgeBaseContext;
     }
     
     fullSystemPrompt += `\n\n${modeConfig.prompt}`;
