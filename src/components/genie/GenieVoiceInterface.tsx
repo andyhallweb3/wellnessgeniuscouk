@@ -181,6 +181,7 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
         sdp: await sdpResponse.text(),
       };
 
+      await pc.setRemoteDescription(answer);
       console.log("[Voice] WebRTC connection established");
       setIsConnected(true);
     } catch (error) {
