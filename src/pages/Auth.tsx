@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Mail, Lock, User, ArrowRight, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Lock, User, ArrowRight, ArrowLeft, Gift } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,7 +39,12 @@ const resetSchema = z.object({
 type ResetFormData = z.infer<typeof resetSchema>;
 
 const Auth = () => {
-  const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
+  const [searchParams] = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || "/hub";
+  const initialMode = searchParams.get("mode") === "login" ? "login" : "signup";
+  const isFromAssessment = redirectUrl.includes("/ai-readiness/results/");
+  
+  const [mode, setMode] = useState<"login" | "signup" | "reset">(initialMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const { user, signIn, signUp } = useAuth();
@@ -48,9 +53,9 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate("/hub");
+      navigate(redirectUrl);
     }
-  }, [user, navigate]);
+  }, [user, navigate, redirectUrl]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -79,7 +84,7 @@ const Auth = () => {
       }
     } else {
       toast.success("Welcome back!");
-      navigate("/hub");
+      navigate(redirectUrl);
     }
     setIsSubmitting(false);
   };
@@ -95,8 +100,8 @@ const Auth = () => {
         toast.error(error.message);
       }
     } else {
-      toast.success("Account created successfully!");
-      navigate("/hub");
+      toast.success("Account created! You now have 10 free AI Advisor sessions.");
+      navigate(redirectUrl);
     }
     setIsSubmitting(false);
   };
@@ -130,14 +135,22 @@ const Auth = () => {
           <div className="max-w-md mx-auto">
             {/* Header */}
             <div className="text-center mb-8">
+              {isFromAssessment && mode === "signup" && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
+                  <Gift size={16} />
+                  Get 10 free AI Advisor sessions
+                </div>
+              )}
               <h1 className="text-3xl font-heading mb-2">
-                {mode === "login" ? "Welcome Back" : mode === "signup" ? "Create Your Account" : "Reset Password"}
+                {mode === "login" ? "Welcome Back" : mode === "signup" ? "Create Your Free Account" : "Reset Password"}
               </h1>
               <p className="text-muted-foreground">
                 {mode === "login" 
                   ? "Sign in to access your downloads and saved outputs."
                   : mode === "signup"
-                  ? "Join to access your purchased products and save your progress."
+                  ? isFromAssessment 
+                    ? "Save your assessment and unlock 10 free AI Advisor sessions."
+                    : "Join to access your purchased products and save your progress."
                   : "Enter your email and we'll send you a reset link."
                 }
               </p>
