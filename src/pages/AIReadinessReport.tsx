@@ -249,11 +249,11 @@ const AIReadinessReport = () => {
         }
 
         const pillarScores: PillarScore[] = [
-          { pillar: "Leadership & Strategy", score: data.leadership_score || 0 },
-          { pillar: "Data & Infrastructure", score: data.data_score || 0 },
-          { pillar: "People & Skills", score: data.people_score || 0 },
-          { pillar: "Process & Operations", score: data.process_score || 0 },
-          { pillar: "Risk, Ethics & Governance", score: data.risk_score || 0 },
+          { pillar: "AI Transformation Readiness", score: data.leadership_score || 0 },
+          { pillar: "AI Architecture Confidence", score: data.data_score || 0 },
+          { pillar: "AI Governance Reality Check", score: data.people_score || 0 },
+          { pillar: "AI Value Engine", score: data.process_score || 0 },
+          { pillar: "AI Operating Style", score: data.risk_score || 0 },
         ].map(p => ({
           ...p,
           status: p.score < 40 ? "Critical" : p.score < 60 ? "Needs Work" : p.score < 80 ? "Healthy" : "Strong"
