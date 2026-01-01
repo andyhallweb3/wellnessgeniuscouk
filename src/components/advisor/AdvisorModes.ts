@@ -17,7 +17,7 @@ export const ADVISOR_MODES: AdvisorMode[] = [
   {
     id: "daily_briefing",
     name: "Daily Briefing",
-    icon: "📊",
+    icon: "BarChart3",
     tagline: "What do I need to know today?",
     description: "Quick business check-in. Flags risks, opportunities, and what needs attention now.",
     creditCost: 2,
@@ -31,7 +31,7 @@ export const ADVISOR_MODES: AdvisorMode[] = [
   {
     id: "quick_question",
     name: "Quick Question",
-    icon: "💬",
+    icon: "MessageCircle",
     tagline: "Simple answers, fast",
     description: "Simple questions and clarifications without deep analysis.",
     creditCost: 1,
@@ -47,7 +47,7 @@ export const ADVISOR_MODES: AdvisorMode[] = [
   {
     id: "decision_support",
     name: "Decision Support",
-    icon: "🧠",
+    icon: "Brain",
     tagline: "Stress-test my thinking",
     description: "Challenges assumptions, surfaces trade-offs, and stress-tests decisions before you commit.",
     creditCost: 4,
@@ -61,7 +61,7 @@ export const ADVISOR_MODES: AdvisorMode[] = [
   {
     id: "diagnostic",
     name: "Diagnostic Mode",
-    icon: "🔍",
+    icon: "Search",
     tagline: "What am I missing?",
     description: "Surface weak assumptions, missing inputs, and hidden risks in your thinking.",
     creditCost: 3,
@@ -75,7 +75,7 @@ export const ADVISOR_MODES: AdvisorMode[] = [
   {
     id: "commercial_lens",
     name: "Commercial Lens",
-    icon: "📈",
+    icon: "TrendingUp",
     tagline: "Show me the money",
     description: "Translate ideas into financial implications, ROI, and risk analysis.",
     creditCost: 4,
@@ -89,7 +89,7 @@ export const ADVISOR_MODES: AdvisorMode[] = [
   {
     id: "board_mode",
     name: "Board / Investor Mode",
-    icon: "👔",
+    icon: "Briefcase",
     tagline: "Explain without excuses",
     description: "CFO-ready language. Conservative numbers. What you'll be challenged on.",
     creditCost: 4,
@@ -105,7 +105,7 @@ export const ADVISOR_MODES: AdvisorMode[] = [
   {
     id: "weekly_review",
     name: "Weekly Review",
-    icon: "📅",
+    icon: "Calendar",
     tagline: "What changed? What matters?",
     description: "Compares this week to last. Identifies trends, anomalies, and drift from plan.",
     creditCost: 3,
@@ -119,7 +119,7 @@ export const ADVISOR_MODES: AdvisorMode[] = [
   {
     id: "build_mode",
     name: "90-Day Builder",
-    icon: "🔧",
+    icon: "Wrench",
     tagline: "What should we build next?",
     description: "Prioritised action plan. What to do, what NOT to do, and in what order.",
     creditCost: 5,
