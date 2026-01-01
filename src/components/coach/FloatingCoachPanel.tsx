@@ -23,7 +23,7 @@ import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 import MarkdownRenderer from "./MarkdownRenderer";
 import DocumentLibrary from "./DocumentLibrary";
-import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.png";
+import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.webp";
 import { Link } from "react-router-dom";
 
 interface Message {

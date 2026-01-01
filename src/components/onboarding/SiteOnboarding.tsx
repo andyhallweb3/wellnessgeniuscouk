@@ -14,7 +14,7 @@ import {
   Check,
   X
 } from "lucide-react";
-import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.png";
+import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.webp";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 

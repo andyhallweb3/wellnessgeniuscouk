@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Linkedin, Twitter, Bot } from "lucide-react";
-import logo from "@/assets/wellness-genius-logo-teal.png";
+import logo from "@/assets/wellness-genius-logo-teal.webp";
 import gwiLogo from "@/assets/logos/gwi-logo.svg";
 import { useNewsletter } from "@/hooks/useNewsletter";
 import { useAuth } from "@/contexts/AuthContext";
