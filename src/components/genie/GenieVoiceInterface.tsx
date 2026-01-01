@@ -104,16 +104,36 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
 
       // Add local audio track
       const audioTrack = stream.getTracks()[0];
-      console.log("[Voice] Adding local audio track:", audioTrack.label);
-      pc.addTrack(audioTrack);
+      audioTrack.enabled = true;
+      console.log("[Voice] Adding local audio track:", audioTrack.label, "enabled=", audioTrack.enabled);
+      pc.addTrack(audioTrack, stream);
 
       // Set up data channel
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
 
+      const sendEvent = (payload: unknown) => {
+        if (dc.readyState !== "open") return;
+        const msg = JSON.stringify(payload);
+        console.log("[Voice] Sending event:", (payload as any)?.type);
+        dc.send(msg);
+      };
+
       dc.addEventListener("open", () => {
         console.log("[Voice] Data channel open - ready for conversation");
         toast.success("Voice connected! Start speaking.");
+
+        // Force a first turn so users immediately hear/see something.
+        // This also validates that the Realtime session is actually responding.
+        sendEvent({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text: "Confirm you can hear me. Say: connected." }],
+          },
+        });
+        sendEvent({ type: "response.create" });
       });
 
       dc.addEventListener("error", (e) => {
@@ -127,10 +147,27 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
 
           if (event.type === "session.created") {
             console.log("[Voice] Session created:", event.session?.id);
+
+            // Ensure the session is configured for audio + transcription + server VAD.
+            // (In some environments the server-side session payload isn't fully applied
+            // until we explicitly update after session.created.)
+            sendEvent({
+              type: "session.update",
+              session: {
+                modalities: ["text", "audio"],
+                input_audio_transcription: { model: "whisper-1" },
+                turn_detection: {
+                  type: "server_vad",
+                  threshold: 0.5,
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 800,
+                  create_response: true,
+                },
+              },
+            });
           } else if (event.type === "session.updated") {
             console.log("[Voice] Session updated");
           } else if (event.type === "response.audio.delta") {
-            // Audio is being received
             setIsSpeaking(true);
           } else if (event.type === "response.audio_transcript.delta") {
             console.log("[Voice] Assistant speaking (partial):", event.delta);
