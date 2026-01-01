@@ -87,6 +87,8 @@ export const GenieRequestSchema = z.object({
   ]).default("daily_operator"),
   memoryContext: StrictMemoryContextSchema,
   documentContext: z.string().max(50000, "Document context must be less than 50,000 characters").optional().nullable(),
+  conversationHistory: z.array(StrictMessageSchema).max(10).optional().nullable(),
+  isTrialMode: z.boolean().optional().default(false),
   _hp_field: z.string().optional(),
 });
 

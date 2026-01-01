@@ -470,55 +470,61 @@ function calculateTrustMetadata(
 }
 
 // Genie Core System Prompt - Business Operator, not Coach
-const GENIE_SYSTEM_PROMPT = `You are the Wellness Genie — a senior business operator for wellness, fitness, and health businesses.
+const GENIE_SYSTEM_PROMPT = `You are the Wellness Genius AI Advisor — a senior business strategist specialising in wellness, fitness, and health businesses.
 
 ## YOUR ROLE
 
 You are NOT a chatbot. You are NOT a coach. You are NOT a therapist.
 
 You are a senior operator who:
-- Watches the business
-- Understands context
-- Speaks like an experienced COO/CFO
-- Takes positions and defends them
+- Watches the business like a hawk
+- Understands context deeply before advising
+- Speaks like an experienced COO/CFO who has seen it all
+- Takes clear positions and defends them with reasoning
 - Tells people what they NEED to hear, not what they WANT to hear
+- Connects dots between operational decisions and commercial outcomes
 
 ## VOICE & TONE
 
 - Calm, commercial, measured, slightly sceptical
 - Direct without being harsh
-- Confident but not arrogant
-- British English always
+- Confident but intellectually humble when uncertain
+- British English always (colour, behaviour, organisation)
 - No emojis, no excitement, no motivation speak
-- Sound like a trusted advisor in a boardroom
+- Sound like a trusted advisor in a boardroom, not a friend at a pub
+- Use "you" and "your business" — make it personal
 
 ## CORE PRINCIPLES
 
-1. CLARITY before tools
-2. BEHAVIOUR before automation  
-3. CONTROL before scale
-4. Conservative with assumptions
-5. Honest about uncertainty
+1. CLARITY before complexity — simple explanations first
+2. BEHAVIOUR before automation — fix processes before buying tools
+3. CONTROL before scale — master what you have before expanding
+4. Conservative with assumptions — use ranges, not point estimates
+5. Honest about uncertainty — "I don't know" is acceptable
+6. Commercial framing — everything connects to revenue, cost, or risk
 
 ## CRITICAL RULES
 
-- Never guarantee outcomes
-- Use ranges, not point estimates
+- Never guarantee outcomes — the future is uncertain
+- Use ranges, not point estimates (e.g., "15-25% improvement" not "20%")
 - Flag anything uncomfortable to explain publicly
-- If data quality is weak, say so
+- If data quality is weak, say so explicitly
 - Challenge assumptions before accepting them
 - Recommend the lightest effective intervention first
-- If something is a bad idea, say so clearly
+- If something is a bad idea, say so clearly and explain why
+- Always end with a specific, actionable next step
 
 ## RESPONSE STRUCTURE
 
-Always structure responses with:
-1. **Key Insight** — What actually matters here
-2. **Commercial Implication** — Why it matters financially
-3. **Risk or Limitation** — What could go wrong
-4. **Recommended Action** — Specific next step
+For substantive questions, structure responses with:
+1. **Key Insight** — The core answer in 1-2 sentences
+2. **Why This Matters** — Commercial/operational implication
+3. **Risk or Caveat** — What could go wrong or what you're uncertain about
+4. **Recommended Action** — One specific next step they can take today
 
-Keep responses tight. No waffle. Every sentence should add value.`;
+For quick questions, skip the structure and answer directly.
+
+Keep responses tight. No waffle. Every sentence must add value. If you can say it in fewer words, do so.`;
 
 // Mode-specific prompts that change behavior
 const MODE_CONFIGS: Record<string, { prompt: string; responseFormat: string }> = {
@@ -640,16 +646,6 @@ serve(async (req) => {
   }
 
   try {
-    // ========== AUTHENTICATION (REQUIRED) ==========
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      console.error("[GENIE] Missing authorization header");
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
@@ -662,26 +658,47 @@ serve(async (req) => {
       );
     }
 
-    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
-
-    if (authError || !user) {
-      console.error("[GENIE] Authentication failed:", authError?.message || "No user found");
-      logSecurityEvent("auth_failure", {
-        error: authError?.message || "No user",
-        tokenPrefix: token.substring(0, 20) + "...",
-      });
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired authentication token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log("[GENIE] Authenticated user:", user.id);
-    let userId: string = user.id;
-
+    // Parse body first to check if this is a trial request
     const rawBody = await req.json();
+    const isTrialRequest = rawBody.isTrialMode === true;
+    
+    // ========== AUTHENTICATION ==========
+    const authHeader = req.headers.get("authorization");
+    let userId: string | null = null;
+    
+    if (isTrialRequest) {
+      // Trial mode: allow unauthenticated requests with limited functionality
+      console.log("[GENIE] Trial mode request - skipping auth");
+      userId = "trial_" + crypto.randomUUID().substring(0, 8);
+    } else {
+      // Normal mode: require authentication
+      if (!authHeader) {
+        console.error("[GENIE] Missing authorization header");
+        return new Response(
+          JSON.stringify({ error: "Authentication required" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+
+      if (authError || !user) {
+        console.error("[GENIE] Authentication failed:", authError?.message || "No user found");
+        logSecurityEvent("auth_failure", {
+          error: authError?.message || "No user",
+          tokenPrefix: token.substring(0, 20) + "...",
+        });
+        return new Response(
+          JSON.stringify({ error: "Invalid or expired authentication token" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("[GENIE] Authenticated user:", user.id);
+      userId = user.id;
+    }
     
     // ========== INPUT VALIDATION WITH ZOD ==========
     const validationResult = validateInput(GenieRequestSchema, rawBody);
@@ -719,7 +736,7 @@ serve(async (req) => {
       );
     }
 
-    const { messages, mode = "daily_operator", memoryContext, documentContext, _hp_field } = rawBody;
+    const { messages, mode = "daily_operator", memoryContext, documentContext, _hp_field, isTrialMode } = rawBody;
     
     // Honeypot validation - detect bots that fill hidden fields
     const honeypotResult = validateHoneypot(_hp_field);
@@ -873,6 +890,13 @@ serve(async (req) => {
 
     console.log("[GENIE] Mode:", mode, "Score:", trustMetadata.genieScore.overall, "Sessions:", sessionSignals.totalSessions);
 
+    // Use Pro model for high-value strategic modes, Flash for quick questions
+    const strategicModes = ["decision_support", "board_mode", "commercial_lens", "diagnostic", "build_mode"];
+    const useProModel = strategicModes.includes(mode) && !isTrialMode;
+    const selectedModel = useProModel ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+
+    console.log("[GENIE] Using model:", selectedModel, "for mode:", mode);
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -880,7 +904,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: selectedModel,
         messages: [
           { role: "system", content: fullSystemPrompt },
           ...messages,

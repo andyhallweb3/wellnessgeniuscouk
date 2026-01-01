@@ -53,19 +53,77 @@ const TryItNowSection = () => {
     setIsLoading(true);
 
     try {
-      const response = await supabase.functions.invoke("genie-chat", {
-        body: {
-          message: userMessage,
-          mode: "quick_question",
-          conversationHistory: messages,
-          isTrialMode: true,
+      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genie-chat`;
+      
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
+        body: JSON.stringify({
+          messages: [...messages, { role: "user", content: userMessage }],
+          mode: "quick_question",
+          isTrialMode: true,
+          _hp_field: "",
+        }),
       });
 
-      if (response.error) throw response.error;
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to get response");
+      }
 
-      const assistantMessage = response.data?.response || "I apologize, but I couldn't process that request. Please try again.";
-      setMessages((prev) => [...prev, { role: "assistant", content: assistantMessage }]);
+      if (!resp.body) throw new Error("No response body");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let assistantContent = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            
+            // Skip trust metadata events
+            if (parsed.type === "trust_metadata") continue;
+
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantContent += content;
+              setMessages((prev) => {
+                const last = prev[prev.length - 1];
+                if (last?.role === "assistant") {
+                  return prev.map((m, i) =>
+                    i === prev.length - 1 ? { ...m, content: assistantContent } : m
+                  );
+                }
+                return [...prev, { role: "assistant", content: assistantContent }];
+              });
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
 
       const newCount = questionsUsed + 1;
       setQuestionsUsed(newCount);
