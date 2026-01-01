@@ -23,6 +23,7 @@ import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 import MarkdownRenderer from "./MarkdownRenderer";
 import DocumentLibrary from "./DocumentLibrary";
+import CreditsExhaustedPrompt from "./CreditsExhaustedPrompt";
 import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.webp";
 import { Link } from "react-router-dom";
 
@@ -407,92 +408,108 @@ const FloatingCoachPanel = ({ isOpen, onClose }: FloatingCoachPanelProps) => {
           {/* CHAT TAB - Only for logged-in users */}
           {user && (
             <TabsContent value="chat" className="flex-1 flex flex-col overflow-hidden m-0 p-4">
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto space-y-3 mb-4">
-                {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                    <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-12 w-12 object-contain mb-3" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Your personal wellness business assistant
-                    </p>
-                    {documents.length > 0 && (
-                      <p className="text-xs text-accent">
-                        Using context from {documents.length} uploaded documents
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex gap-2 ${message.role === "user" ? "justify-end" : ""}`}
-                    >
-                      {message.role === "assistant" && (
-                        <div className="p-1 rounded-full bg-accent/10 h-fit shrink-0">
-                          <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
-                        </div>
-                      )}
-                      <div
-                        className={`rounded-xl px-3 py-2 max-w-[85%] ${
-                          message.role === "user"
-                            ? "bg-accent text-accent-foreground"
-                            : "bg-secondary"
-                        }`}
-                      >
-                        {message.role === "assistant" ? (
-                          <MarkdownRenderer content={message.content} />
-                        ) : (
-                          <div className="text-sm">{message.content}</div>
+              {/* Show exhausted prompt if no credits */}
+              {credits.balance < 1 ? (
+                <CreditsExhaustedPrompt 
+                  isFreeTrial={credits.isFreeTrial || credits.tier === "free"}
+                  freeTrialExpiresAt={credits.freeTrialExpiresAt}
+                />
+              ) : (
+                <>
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+                    {messages.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-4">
+                        <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-12 w-12 object-contain mb-3" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Your personal wellness business assistant
+                        </p>
+                        {credits.isFreeTrial && (
+                          <p className="text-xs text-accent mb-2">
+                            Free trial: {credits.balance} credits remaining
+                          </p>
+                        )}
+                        {documents.length > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            Using context from {documents.length} uploaded documents
+                          </p>
                         )}
                       </div>
-                      {message.role === "user" && (
-                        <div className="p-1.5 rounded-full bg-secondary h-fit shrink-0">
-                          <User size={14} />
+                    ) : (
+                      messages.map((message, index) => (
+                        <div
+                          key={index}
+                          className={`flex gap-2 ${message.role === "user" ? "justify-end" : ""}`}
+                        >
+                          {message.role === "assistant" && (
+                            <div className="p-1 rounded-full bg-accent/10 h-fit shrink-0">
+                              <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
+                            </div>
+                          )}
+                          <div
+                            className={`rounded-xl px-3 py-2 max-w-[85%] ${
+                              message.role === "user"
+                                ? "bg-accent text-accent-foreground"
+                                : "bg-secondary"
+                            }`}
+                          >
+                            {message.role === "assistant" ? (
+                              <MarkdownRenderer content={message.content} />
+                            ) : (
+                              <div className="text-sm">{message.content}</div>
+                            )}
+                          </div>
+                          {message.role === "user" && (
+                            <div className="p-1.5 rounded-full bg-secondary h-fit shrink-0">
+                              <User size={14} />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ))
-                )}
-                {isStreaming && messages[messages.length - 1]?.role === "user" && (
-                  <div className="flex gap-2">
-                    <div className="p-1 rounded-full bg-accent/10 h-fit">
-                      <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
-                    </div>
-                    <div className="rounded-xl px-3 py-2 bg-secondary">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
+                      ))
+                    )}
+                    {isStreaming && messages[messages.length - 1]?.role === "user" && (
+                      <div className="flex gap-2">
+                        <div className="p-1 rounded-full bg-accent/10 h-fit">
+                          <img src={wellnessGeniusLogo} alt="Wellness Genie" className="h-5 w-5 object-contain" />
+                        </div>
+                        <div className="rounded-xl px-3 py-2 bg-secondary">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
                   </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
 
-              {/* Input */}
-              <div className="shrink-0 flex gap-2">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask anything about your business..."
-                  className="min-h-[48px] max-h-[100px] resize-none text-sm"
-                  disabled={isStreaming}
-                />
-                <Button
-                  variant="accent"
-                  size="icon"
-                  className="h-12 w-12 shrink-0"
-                  onClick={handleSend}
-                  disabled={!input.trim() || isStreaming || credits.balance < 1}
-                >
-                  {isStreaming ? (
-                    <Loader2 className="animate-spin" size={18} />
-                  ) : (
-                    <Send size={18} />
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                {credits.balance} credits remaining
-              </p>
+                  {/* Input */}
+                  <div className="shrink-0 flex gap-2">
+                    <Textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Ask anything about your business..."
+                      className="min-h-[48px] max-h-[100px] resize-none text-sm"
+                      disabled={isStreaming}
+                    />
+                    <Button
+                      variant="accent"
+                      size="icon"
+                      className="h-12 w-12 shrink-0"
+                      onClick={handleSend}
+                      disabled={!input.trim() || isStreaming || credits.balance < 1}
+                    >
+                      {isStreaming ? (
+                        <Loader2 className="animate-spin" size={18} />
+                      ) : (
+                        <Send size={18} />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    {credits.balance} credits remaining
+                    {credits.isFreeTrial && " (free trial)"}
+                  </p>
+                </>
+              )}
             </TabsContent>
           )}
 
