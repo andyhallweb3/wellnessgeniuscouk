@@ -172,12 +172,36 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
+      // IMPORTANT: wait for ICE gathering so our SDP includes candidates
+      await new Promise<void>((resolve, reject) => {
+        if (pc.iceGatheringState === "complete") return resolve();
+
+        const timeout = window.setTimeout(() => {
+          pc.removeEventListener("icegatheringstatechange", onStateChange);
+          reject(new Error("ICE gathering timed out"));
+        }, 8000);
+
+        const onStateChange = () => {
+          console.log("[Voice] ICE gathering state:", pc.iceGatheringState);
+          if (pc.iceGatheringState === "complete") {
+            window.clearTimeout(timeout);
+            pc.removeEventListener("icegatheringstatechange", onStateChange);
+            resolve();
+          }
+        };
+
+        pc.addEventListener("icegatheringstatechange", onStateChange);
+      });
+
+      const offerSdp = pc.localDescription?.sdp;
+      if (!offerSdp) throw new Error("Missing local SDP offer");
+
       // Connect to OpenAI's Realtime API
       const baseUrl = "https://api.openai.com/v1/realtime";
       const model = "gpt-4o-realtime-preview-2024-12-17";
       const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
         method: "POST",
-        body: offer.sdp,
+        body: offerSdp,
         headers: {
           Authorization: `Bearer ${EPHEMERAL_KEY}`,
           "Content-Type": "application/sdp",
