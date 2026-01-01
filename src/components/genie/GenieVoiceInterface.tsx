@@ -123,30 +123,42 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       dc.addEventListener("message", (e) => {
         try {
           const event = JSON.parse(e.data);
-          console.log("[Voice] Event:", event.type);
+          console.log("[Voice] Event:", event.type, event);
 
           if (event.type === "session.created") {
             console.log("[Voice] Session created:", event.session?.id);
+          } else if (event.type === "session.updated") {
+            console.log("[Voice] Session updated");
           } else if (event.type === "response.audio.delta") {
             // Audio is being received
             setIsSpeaking(true);
           } else if (event.type === "response.audio_transcript.delta") {
+            console.log("[Voice] Assistant speaking (partial):", event.delta);
             setIsSpeaking(true);
           } else if (event.type === "response.audio_transcript.done") {
+            console.log("[Voice] Assistant finished speaking:", event.transcript);
             setIsSpeaking(false);
             if (onTranscript && event.transcript) {
+              console.log("[Voice] Posting assistant message to chat:", event.transcript);
               onTranscript(event.transcript, "assistant");
             }
           } else if (event.type === "conversation.item.input_audio_transcription.completed") {
+            console.log("[Voice] User said:", event.transcript);
             if (onTranscript && event.transcript) {
+              console.log("[Voice] Posting user message to chat:", event.transcript);
               onTranscript(event.transcript, "user");
             }
+          } else if (event.type === "response.created") {
+            console.log("[Voice] Response started");
           } else if (event.type === "response.done") {
+            console.log("[Voice] Response complete");
             setIsSpeaking(false);
           } else if (event.type === "input_audio_buffer.speech_started") {
             console.log("[Voice] User started speaking");
           } else if (event.type === "input_audio_buffer.speech_stopped") {
             console.log("[Voice] User stopped speaking");
+          } else if (event.type === "input_audio_buffer.committed") {
+            console.log("[Voice] Audio buffer committed");
           } else if (event.type === "error") {
             console.error("[Voice] API error:", event.error);
             toast.error("Voice error: " + (event.error?.message || "Unknown error"));
