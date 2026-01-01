@@ -34,13 +34,13 @@ import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 import { useGenieSessions } from "@/hooks/useGenieSessions";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
-import { useVoiceBrief } from "@/hooks/useVoiceBrief";
+
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import GenieMessage, { TrustMetadata } from "@/components/genie/GenieMessage";
 import TrustSettingsToggle from "@/components/genie/TrustSettingsToggle";
 import CreditDisplay from "@/components/coach/CreditDisplay";
 import { useTrustSettings } from "@/hooks/useTrustSettings";
-import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
+
 import SessionHistory from "@/components/genie/SessionHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
 import FloatingChatDrawer from "@/components/genie/FloatingChatDrawer";
@@ -108,11 +108,11 @@ const Genie = () => {
   // Mock change data - in production, this would come from the backend
   const [changes] = useState<ChangeEntry[]>([]);
 
-  const { getMemoryContext, getMemoryContextString, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
+  const { getMemoryContext, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { documents, uploading: uploadingDocument, uploadDocument, deleteDocument, updateDocumentCategory, updateDocumentDescription } = useCoachDocuments();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession, summarizeSession, updateSessionTags, allTags } = useGenieSessions();
-  const { isLoading: voiceLoading, isPlaying: isVoicePlaying, playDailyBrief, stopPlayback: stopVoice } = useVoiceBrief();
+  
   const { displayMode: trustDisplayMode } = useTrustSettings();
   const [currentTrustMetadata, setCurrentTrustMetadata] = useState<TrustMetadata | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -360,14 +360,6 @@ const Genie = () => {
     }
   };
 
-  const handlePlayVoice = async () => {
-    if (!briefData) return;
-    await playDailyBrief(briefData, memory?.business_name);
-  };
-
-  const handleStopVoice = () => {
-    stopVoice();
-  };
 
   const handleBriefActionClick = (action: string) => {
     setInput(action);
@@ -463,14 +455,7 @@ const Genie = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <GenieVoiceInterface 
-                memoryContext={getMemoryContextString()}
-                onTranscript={(text, role) => {
-                  setMessages(prev => [...prev, { role, content: text }]);
-                  setViewMode("chat");
-                  setShowChat(true);
-                }}
-              />
+              {/* Voice temporarily disabled */}
               <Sheet open={showHistory} onOpenChange={setShowHistory}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="sm" title="Conversation history">
@@ -564,11 +549,7 @@ const Genie = () => {
                 <DailyBriefCard
                   brief={briefData}
                   isLoading={isBriefLoading}
-                  isPlaying={isVoicePlaying}
-                  isVoiceLoading={voiceLoading}
                   onGenerateBrief={handleGenerateBrief}
-                  onPlayVoice={handlePlayVoice}
-                  onStopVoice={handleStopVoice}
                   onActionClick={handleBriefActionClick}
                   businessName={memory?.business_name}
                 />
