@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import FloatingCoachPanel from "./FloatingCoachPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
-import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.png";
+import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.webp";
 
 const TOOLTIP_DISMISSED_KEY = "wellness-genie-tooltip-dismissed";
 
