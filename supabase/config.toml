@@ -176,3 +176,6 @@ verify_jwt = false
 
 [functions.submit-feedback]
 verify_jwt = false
+
+[functions.genie-voice-relay]
+verify_jwt = false
