@@ -1,15 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Real customer logos - replace with actual logos
-const customerLogos = [
-  { name: "Nuforma", src: "/placeholder.svg" },
-  { name: "Equesoul", src: "/placeholder.svg" },
-  { name: "The Leisure Experts", src: "/placeholder.svg" },
-  { name: "Awake Meditation", src: "/placeholder.svg" },
-];
+// Import real client logos
+import nuformaLogo from "@/assets/logos/nuforma.png";
+import equesoulLogo from "@/assets/logos/equesoul.jpeg";
+import leisureExpertsLogo from "@/assets/logos/the-leisure-experts.jpeg";
 
 const HeroNew = () => {
   const { user } = useAuth();
@@ -82,17 +79,15 @@ const HeroNew = () => {
             </div>
           </div>
 
-          {/* Customer Logos */}
+          {/* Real Customer Logos */}
           <div className="animate-fade-up animation-delay-400">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
               Used by operators at
             </p>
-            <div className="flex items-center justify-center gap-8 opacity-60">
-              {customerLogos.map((logo) => (
-                <div key={logo.name} className="h-8 w-auto flex items-center">
-                  <span className="text-sm font-medium text-muted-foreground">{logo.name}</span>
-                </div>
-              ))}
+            <div className="flex items-center justify-center gap-8">
+              <img src={nuformaLogo} alt="Nuforma" className="h-8 w-auto opacity-70 hover:opacity-100 transition-opacity" />
+              <img src={equesoulLogo} alt="Equesoul" className="h-8 w-auto opacity-70 hover:opacity-100 transition-opacity rounded" />
+              <img src={leisureExpertsLogo} alt="The Leisure Experts" className="h-8 w-auto opacity-70 hover:opacity-100 transition-opacity rounded" />
             </div>
           </div>
         </div>
