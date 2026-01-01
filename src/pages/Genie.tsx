@@ -28,6 +28,7 @@ import ModeButtons from "@/components/genie/ModeButtons";
 import WhatChangedTimeline, { ChangeEntry } from "@/components/genie/WhatChangedTimeline";
 import DecisionDrawer, { DecisionContext } from "@/components/genie/DecisionDrawer";
 import { ADVISOR_MODES, getModeById } from "@/components/advisor/AdvisorModes";
+import { getAdvisorIcon } from "@/components/advisor/AdvisorIcons";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
@@ -37,8 +38,8 @@ import { useVoiceBrief } from "@/hooks/useVoiceBrief";
 import MarkdownRenderer from "@/components/coach/MarkdownRenderer";
 import GenieMessage, { TrustMetadata } from "@/components/genie/GenieMessage";
 import TrustSettingsToggle from "@/components/genie/TrustSettingsToggle";
-import { useTrustSettings } from "@/hooks/useTrustSettings";
 import CreditDisplay from "@/components/coach/CreditDisplay";
+import { useTrustSettings } from "@/hooks/useTrustSettings";
 import GenieVoiceInterface from "@/components/genie/GenieVoiceInterface";
 import SessionHistory from "@/components/genie/SessionHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
@@ -678,10 +679,12 @@ const Genie = () => {
               {/* Mode Badge */}
               <div className="flex items-center gap-2 mb-4 shrink-0">
                 {currentMode && (
-                  <>
-                    <span className="text-lg">{currentMode.icon}</span>
-                    <span className="text-sm font-medium">{currentMode.name}</span>
-                  </>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20">
+                    <div className="text-accent">
+                      {getAdvisorIcon(currentMode.icon, 16)}
+                    </div>
+                    <span className="text-sm font-medium text-accent">{currentMode.name}</span>
+                  </div>
                 )}
                 <select
                   value={selectedMode || ""}
@@ -691,7 +694,7 @@ const Genie = () => {
                 >
                   {ADVISOR_MODES.map((mode) => (
                     <option key={mode.id} value={mode.id} disabled={credits.balance < mode.creditCost}>
-                      {mode.icon} {mode.name} ({mode.creditCost} credits)
+                      {mode.name} ({mode.creditCost} credits)
                     </option>
                   ))}
                 </select>
@@ -710,7 +713,11 @@ const Genie = () => {
                 <div className="space-y-4">
                   {messages.length === 0 && currentMode && (
                     <div className="text-center py-12">
-                      <span className="text-4xl mb-4 block">{currentMode.icon}</span>
+                      <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                        <div className="text-accent">
+                          {getAdvisorIcon(currentMode.icon, 28)}
+                        </div>
+                      </div>
                       <h3 className="font-heading text-lg mb-2">{currentMode.name}</h3>
                       <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
                         {currentMode.description}
@@ -720,9 +727,9 @@ const Genie = () => {
                           <button
                             key={idx}
                             onClick={() => setInput(example)}
-                            className="w-full text-left text-sm px-4 py-3 rounded-lg bg-secondary/50 hover:bg-secondary border border-border/50 transition-colors"
+                            className="w-full text-left text-sm px-4 py-3 rounded-xl bg-secondary/50 hover:bg-secondary border border-border/50 transition-colors group"
                           >
-                            {example}
+                            <span className="group-hover:text-accent transition-colors">{example}</span>
                           </button>
                         ))}
                       </div>
