@@ -1028,10 +1028,13 @@ serve(async (req) => {
     ];
     
     let filledFields = 0;
-    if (memoryContext) {
+    // Ensure memoryContext is a string before calling string methods
+    const memoryStr = typeof memoryContext === 'string' ? memoryContext : 
+                      (memoryContext ? JSON.stringify(memoryContext) : '');
+    if (memoryStr) {
       memoryFields.forEach(field => {
-        if (memoryContext.toLowerCase().includes(field.replace("_", " ")) || 
-            memoryContext.toLowerCase().includes(field)) {
+        if (memoryStr.toLowerCase().includes(field.replace("_", " ")) || 
+            memoryStr.toLowerCase().includes(field)) {
           filledFields++;
         }
       });
