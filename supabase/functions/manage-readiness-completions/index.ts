@@ -100,6 +100,36 @@ serve(async (req) => {
         );
       }
 
+      // Send results email
+      if (data?.id) {
+        try {
+          const emailUrl = `${supabaseUrl}/functions/v1/send-readiness-results-email`;
+          await fetch(emailUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email,
+              name: name || 'there',
+              company: company || '',
+              completionId: data.id,
+              overallScore,
+              scoreBand: scoreBand || 'Unknown',
+              pillarScores: [
+                { name: 'AI Transformation Readiness', shortName: 'Transformation', score: leadershipScore || 0 },
+                { name: 'AI Architecture Confidence', shortName: 'Architecture', score: dataScore || 0 },
+                { name: 'AI Governance Reality Check', shortName: 'Governance', score: peopleScore || 0 },
+                { name: 'AI Value Engine', shortName: 'Value', score: processScore || 0 },
+                { name: 'AI Operating Style', shortName: 'Operating Style', score: riskScore || 0 },
+              ],
+            }),
+          });
+          console.log('Results email sent');
+        } catch (emailError) {
+          console.error('Failed to send results email:', emailError);
+          // Don't fail the main request if email fails
+        }
+      }
+
       // Send score change notification if there was a previous completion
       if (previousCompletion && data?.id) {
         const scoreDiff = Math.abs(overallScore - previousCompletion.overall_score);
