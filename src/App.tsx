@@ -20,6 +20,7 @@ import SoftwarePage from "./pages/SoftwarePage";
 import AIGenius from "./pages/AIGenius";
 import Genie from "./pages/Genie";
 import AIReadinessLanding from "./pages/AIReadinessLanding";
+import AIAdvisorLanding from "./pages/AIAdvisorLanding";
 import AIReadinessAssessmentFree from "./pages/AIReadinessAssessmentFree";
 import AIReadinessAssessmentPaid from "./pages/AIReadinessAssessmentPaid";
 import AIReadinessResults from "./pages/AIReadinessResults";
@@ -80,7 +81,8 @@ const App = () => (
             <Route path="/ai-coach" element={<Navigate to="/genie" replace />} />
             <Route path="/ai-genius" element={<AIGenius />} />
             <Route path="/genie" element={<Genie />} />
-            <Route path="/advisor" element={<Navigate to="/genie" replace />} />
+            <Route path="/advisor" element={<AIAdvisorLanding />} />
+            <Route path="/ai-advisor" element={<AIAdvisorLanding />} />
             <Route path="/ai-readiness" element={<AIReadinessLanding />} />
             <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
             <Route path="/ai-readiness/full/:id" element={<AIReadinessAssessmentPaid />} />
