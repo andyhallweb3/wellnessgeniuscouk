@@ -14,7 +14,8 @@ import {
   Coins,
   ArrowRight,
   Shield,
-  MessageSquareWarning
+  MessageSquareWarning,
+  BookOpen
 } from "lucide-react";
 
 const ADMIN_SECTIONS = [
@@ -65,6 +66,14 @@ const ADMIN_SECTIONS = [
     icon: Shield,
     path: "/validation/admin",
     color: "bg-orange-500/10 text-orange-600"
+  },
+  { 
+    id: "knowledge", 
+    label: "Knowledge Base", 
+    description: "Add resources and insights the AI advisor uses in responses",
+    icon: BookOpen,
+    path: "/knowledge/admin",
+    color: "bg-teal-500/10 text-teal-600"
   },
 ];
 
