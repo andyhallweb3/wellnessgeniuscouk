@@ -14,6 +14,7 @@ import ServicesTeaser from "@/components/ServicesTeaser";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import MobileBookCTA from "@/components/MobileBookCTA";
+import ScrollIndicator from "@/components/ScrollIndicator";
 
 const Index = () => {
   return (
@@ -22,16 +23,21 @@ const Index = () => {
       <main>
         <HeroNew />
         <CredibilityStack />
+        <ScrollIndicator label="Find your starting point" />
         <ChooseYourPath />
+        <ScrollIndicator label="See the journey" />
         <ValueFlowSection />
+        <ScrollIndicator label="Meet your AI advisor" />
         <AIAdvisorSection />
         <PricingComparison />
         <FAQSection />
+        <ScrollIndicator label="Real results" />
         <CaseStudySection />
         <ProductsSection />
         <Proof />
         <FounderSection />
         <ServicesTeaser />
+        <ScrollIndicator label="Let's talk" variant="prominent" />
         <Contact />
       </main>
       <Footer />
