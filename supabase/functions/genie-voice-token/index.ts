@@ -44,7 +44,13 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    const { memoryContext } = await req.json().catch(() => ({}));
+    const body = await req.json().catch(() => ({}));
+    const rawMemoryContext = body.memoryContext;
+    
+    // Normalize memoryContext to string
+    const memoryContext = typeof rawMemoryContext === 'string' 
+      ? rawMemoryContext 
+      : (rawMemoryContext ? JSON.stringify(rawMemoryContext) : '');
 
     // Check if user has a complete profile or needs onboarding
     const hasCompleteMemo = memoryContext && 
