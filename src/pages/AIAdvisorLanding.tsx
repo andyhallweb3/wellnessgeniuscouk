@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { ADVISOR_MODES, CREDIT_PACKS, getModesByCategory } from "@/components/advisor/AdvisorModes";
 import { getAdvisorIcon } from "@/components/advisor/AdvisorIcons";
+import AnimatedConversation from "@/components/advisor/AnimatedConversation";
 import {
   Brain,
   Mic,
@@ -14,7 +15,6 @@ import {
   CreditCard,
   CheckCircle2,
   ArrowRight,
-  Play,
   Sparkles,
   Shield,
   Clock,
@@ -127,8 +127,8 @@ const AIAdvisorLanding = () => {
                   </Button>
                   <Button size="xl" variant="heroOutline" asChild>
                     <a href="#demo">
-                      <Play className="mr-2 h-5 w-5" />
-                      Watch Demo
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      See Demo
                     </a>
                   </Button>
                 </div>
@@ -140,7 +140,7 @@ const AIAdvisorLanding = () => {
             </div>
           </section>
 
-          {/* Demo Video Section */}
+          {/* Demo Section */}
           <section id="demo" className="py-16 bg-muted/30">
             <div className="container mx-auto px-4">
               <div className="max-w-4xl mx-auto">
@@ -151,16 +151,7 @@ const AIAdvisorLanding = () => {
                   </p>
                 </div>
 
-                <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl overflow-hidden border border-border/50 shadow-2xl">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-20 h-20 rounded-full bg-primary/90 flex items-center justify-center mb-4 mx-auto cursor-pointer hover:bg-primary transition-colors shadow-lg">
-                        <Play className="h-8 w-8 text-primary-foreground ml-1" />
-                      </div>
-                      <p className="text-muted-foreground text-sm">Demo video coming soon</p>
-                    </div>
-                  </div>
-                </div>
+                <AnimatedConversation />
               </div>
             </div>
           </section>

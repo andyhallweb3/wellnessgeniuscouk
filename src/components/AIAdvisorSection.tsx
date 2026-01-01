@@ -84,9 +84,9 @@ const AIAdvisorSection = () => {
 
             <div className="flex flex-wrap items-center gap-3">
               <Button variant="accent" size="lg" asChild>
-                <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
+                <Link to="/advisor">
                   <Brain size={18} />
-                  Try Free (10 credits)
+                  Learn More
                   <ArrowRight size={16} />
                 </Link>
               </Button>
@@ -121,7 +121,7 @@ const AIAdvisorSection = () => {
               return (
                 <Link
                   key={mode.id}
-                  to={user ? `/genie?mode=${mode.id}` : `/auth?redirect=/genie?mode=${mode.id}`}
+                  to="/advisor"
                   className="group p-4 rounded-xl bg-background border border-border hover:border-accent/50 transition-all hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between mb-2">
