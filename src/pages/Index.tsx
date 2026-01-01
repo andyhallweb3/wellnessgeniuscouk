@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import HeroNew from "@/components/HeroNew";
 import CredibilityStack from "@/components/CredibilityStack";
 import HowItWorksSimple from "@/components/HowItWorksSimple";
+import DemoVideoSection from "@/components/DemoVideoSection";
 import SocialProofStrip from "@/components/SocialProofStrip";
 import AIAdvisorSection from "@/components/AIAdvisorSection";
 import PricingSimple from "@/components/PricingSimple";
@@ -19,6 +20,7 @@ const Index = () => {
         <HeroNew />
         <CredibilityStack />
         <HowItWorksSimple />
+        <DemoVideoSection />
         <SocialProofStrip />
         <AIAdvisorSection />
         <PricingSimple />
