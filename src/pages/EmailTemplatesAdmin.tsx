@@ -784,7 +784,7 @@ const EmailTemplatesAdmin = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -794,7 +794,7 @@ const EmailTemplatesAdmin = () => {
                         }}
                       >
                         <Eye size={14} />
-                        Preview
+                        Preview & Test
                       </Button>
                       <Button
                         variant="ghost"
