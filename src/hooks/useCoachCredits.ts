@@ -5,8 +5,11 @@ import { useAuth } from "@/contexts/AuthContext";
 interface CoachCredits {
   balance: number;
   monthlyAllowance: number;
-  tier: "pro" | "expert" | null;
+  tier: "free" | "pro" | "expert" | null;
   nextResetDate: string | null;
+  isFreeTrial: boolean;
+  freeTrialCredits: number;
+  freeTrialExpiresAt: string | null;
 }
 
 interface CoachProfile {
@@ -30,10 +33,13 @@ const FREE_TRIAL_CREDITS = 10;
 export const useCoachCredits = () => {
   const { user } = useAuth();
   const [credits, setCredits] = useState<CoachCredits>({ 
-    balance: FREE_TRIAL_CREDITS, 
-    monthlyAllowance: FREE_TRIAL_CREDITS, 
+    balance: 0, 
+    monthlyAllowance: 0, 
     tier: null,
-    nextResetDate: null 
+    nextResetDate: null,
+    isFreeTrial: false,
+    freeTrialCredits: 0,
+    freeTrialExpiresAt: null,
   });
   const [profile, setProfile] = useState<CoachProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,12 +69,24 @@ export const useCoachCredits = () => {
         }
       }
 
+      // Check for free tier access
+      const { data: freeAccess } = await supabase
+        .from("free_tier_access")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("feature", "advisor")
+        .maybeSingle();
+
+      const hasValidFreeTrial = freeAccess && 
+        freeAccess.credits_remaining > 0 && 
+        new Date(freeAccess.trial_expires_at) > new Date();
+
       // Fetch credits from database
       const { data: creditsData } = await supabase
         .from("coach_credits")
         .select("balance, monthly_allowance, last_reset_at")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       // Calculate next reset date (1 month from last_reset_at)
       const calculateNextResetDate = (lastResetAt: string): string => {
@@ -78,64 +96,66 @@ export const useCoachCredits = () => {
         return nextReset.toISOString();
       };
 
-      if (creditsData) {
-        const nextResetDate = calculateNextResetDate(creditsData.last_reset_at);
-        
-        // If subscription tier changed, update monthly allowance in DB
-        if (subscriptionTier && creditsData.monthly_allowance !== subscriptionMonthlyAllowance) {
-          const { error: updateError } = await supabase
-            .from("coach_credits")
-            .update({ monthly_allowance: subscriptionMonthlyAllowance })
-            .eq("user_id", user.id);
+      // Determine the effective tier and credits
+      let effectiveTier: "free" | "pro" | "expert" | null = subscriptionTier;
+      let effectiveBalance = 0;
+      let effectiveAllowance = 0;
+      let nextResetDate: string | null = null;
 
-          if (!updateError) {
-            setCredits({
-              balance: creditsData.balance,
-              monthlyAllowance: subscriptionMonthlyAllowance,
-              tier: subscriptionTier,
-              nextResetDate,
-            });
-          } else {
-            setCredits({
-              balance: creditsData.balance,
-              monthlyAllowance: creditsData.monthly_allowance,
-              tier: subscriptionTier,
-              nextResetDate,
-            });
+      if (subscriptionTier) {
+        // Paid subscriber - use subscription credits
+        if (creditsData) {
+          effectiveBalance = creditsData.balance;
+          effectiveAllowance = subscriptionMonthlyAllowance;
+          nextResetDate = calculateNextResetDate(creditsData.last_reset_at);
+          
+          // Update monthly allowance in DB if it changed
+          if (creditsData.monthly_allowance !== subscriptionMonthlyAllowance) {
+            await supabase
+              .from("coach_credits")
+              .update({ monthly_allowance: subscriptionMonthlyAllowance })
+              .eq("user_id", user.id);
           }
         } else {
-          setCredits({
-            balance: creditsData.balance,
-            monthlyAllowance: subscriptionTier ? subscriptionMonthlyAllowance : creditsData.monthly_allowance,
-            tier: subscriptionTier,
-            nextResetDate,
-          });
+          // Create credits record for subscriber
+          const { data: newCredits } = await supabase
+            .from("coach_credits")
+            .insert({ 
+              user_id: user.id, 
+              balance: subscriptionMonthlyAllowance, 
+              monthly_allowance: subscriptionMonthlyAllowance 
+            })
+            .select()
+            .single();
+          
+          if (newCredits) {
+            effectiveBalance = newCredits.balance;
+            effectiveAllowance = newCredits.monthly_allowance;
+            nextResetDate = calculateNextResetDate(newCredits.last_reset_at);
+          }
         }
-      } else {
-        // Create initial credits record - use subscription allowance if subscribed, otherwise free trial credits
-        const initialBalance = subscriptionTier ? subscriptionMonthlyAllowance : FREE_TRIAL_CREDITS;
-        const initialAllowance = subscriptionTier ? subscriptionMonthlyAllowance : FREE_TRIAL_CREDITS;
-        
-        const { data: newCredits } = await supabase
-          .from("coach_credits")
-          .insert({ 
-            user_id: user.id, 
-            balance: initialBalance, 
-            monthly_allowance: initialAllowance 
-          })
-          .select()
-          .single();
-
-        if (newCredits) {
-          const nextResetDate = calculateNextResetDate(newCredits.last_reset_at);
-          setCredits({
-            balance: newCredits.balance,
-            monthlyAllowance: newCredits.monthly_allowance,
-            tier: subscriptionTier,
-            nextResetDate,
-          });
-        }
+      } else if (hasValidFreeTrial) {
+        // Free trial user - use free tier credits
+        effectiveTier = "free";
+        effectiveBalance = freeAccess.credits_remaining;
+        effectiveAllowance = FREE_TRIAL_CREDITS;
+      } else if (creditsData) {
+        // No subscription, no valid trial, but has credit record
+        effectiveTier = null;
+        effectiveBalance = creditsData.balance;
+        effectiveAllowance = creditsData.monthly_allowance;
+        nextResetDate = calculateNextResetDate(creditsData.last_reset_at);
       }
+
+      setCredits({
+        balance: effectiveBalance,
+        monthlyAllowance: effectiveAllowance,
+        tier: effectiveTier,
+        nextResetDate,
+        isFreeTrial: effectiveTier === "free" && hasValidFreeTrial,
+        freeTrialCredits: freeAccess?.credits_remaining ?? 0,
+        freeTrialExpiresAt: freeAccess?.trial_expires_at ?? null,
+      });
 
       // Fetch profile
       const { data: profileData } = await supabase
@@ -164,24 +184,43 @@ export const useCoachCredits = () => {
     }
 
     try {
-      // Update balance
       const newBalance = credits.balance - amount;
-      const { error: updateError } = await supabase
-        .from("coach_credits")
-        .update({ balance: newBalance })
-        .eq("user_id", user.id);
 
-      if (updateError) throw updateError;
+      // If using free trial credits, update free_tier_access table
+      if (credits.isFreeTrial) {
+        const { error: updateError } = await supabase
+          .from("free_tier_access")
+          .update({ 
+            credits_remaining: newBalance,
+            updated_at: new Date().toISOString()
+          })
+          .eq("user_id", user.id)
+          .eq("feature", "advisor");
+
+        if (updateError) throw updateError;
+      } else {
+        // Update coach_credits table for subscribed users
+        const { error: updateError } = await supabase
+          .from("coach_credits")
+          .update({ balance: newBalance })
+          .eq("user_id", user.id);
+
+        if (updateError) throw updateError;
+      }
 
       // Record transaction
       await supabase.from("credit_transactions").insert({
         user_id: user.id,
         change_amount: -amount,
-        reason: "mode_use",
+        reason: credits.isFreeTrial ? "free_trial_use" : "mode_use",
         mode,
       });
 
-      setCredits((prev) => ({ ...prev, balance: newBalance }));
+      setCredits((prev) => ({ 
+        ...prev, 
+        balance: newBalance,
+        freeTrialCredits: prev.isFreeTrial ? newBalance : prev.freeTrialCredits
+      }));
       return true;
     } catch (error) {
       console.error("Error deducting credits:", error);

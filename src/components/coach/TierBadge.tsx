@@ -1,4 +1,4 @@
-import { Crown, Zap, ArrowUpRight } from "lucide-react";
+import { Crown, Zap, ArrowUpRight, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,13 +9,20 @@ import {
 } from "@/components/ui/tooltip";
 
 interface TierBadgeProps {
-  tier: "pro" | "expert" | null;
+  tier: "free" | "pro" | "expert" | null;
   monthlyAllowance: number;
   onUpgrade?: () => void;
+  freeTrialExpiresAt?: string | null;
 }
 
-const TierBadge = ({ tier, monthlyAllowance, onUpgrade }: TierBadgeProps) => {
+const TierBadge = ({ tier, monthlyAllowance, onUpgrade, freeTrialExpiresAt }: TierBadgeProps) => {
   const tierConfig = {
+    free: {
+      label: "Free Trial",
+      icon: Gift,
+      color: "bg-green-500/10 text-green-600 border-green-500/20",
+      credits: 10,
+    },
     pro: {
       label: "Pro",
       icon: Zap,
@@ -33,11 +40,26 @@ const TierBadge = ({ tier, monthlyAllowance, onUpgrade }: TierBadgeProps) => {
   const config = tier ? tierConfig[tier] : null;
 
   if (!config) {
-    return null;
+    return onUpgrade ? (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onUpgrade}
+        className="h-7 text-xs"
+      >
+        <Zap size={12} className="mr-1" />
+        Upgrade
+      </Button>
+    ) : null;
   }
 
   const Icon = config.icon;
-  const canUpgrade = tier === "pro";
+  const canUpgrade = tier === "free" || tier === "pro";
+
+  // Calculate days remaining for free trial
+  const daysRemaining = freeTrialExpiresAt 
+    ? Math.max(0, Math.ceil((new Date(freeTrialExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
 
   return (
     <TooltipProvider>
@@ -50,11 +72,17 @@ const TierBadge = ({ tier, monthlyAllowance, onUpgrade }: TierBadgeProps) => {
             >
               <Icon size={12} className="mr-1" />
               {config.label}
+              {tier === "free" && daysRemaining !== null && (
+                <span className="ml-1 opacity-70">({daysRemaining}d left)</span>
+              )}
             </Badge>
           </TooltipTrigger>
           <TooltipContent>
             <p className="text-sm">
-              {config.label} tier: {monthlyAllowance} credits/month
+              {tier === "free" 
+                ? `Free trial: ${monthlyAllowance} credits, expires in ${daysRemaining} days`
+                : `${config.label} tier: ${monthlyAllowance} credits/month`
+              }
             </p>
           </TooltipContent>
         </Tooltip>
@@ -74,7 +102,10 @@ const TierBadge = ({ tier, monthlyAllowance, onUpgrade }: TierBadgeProps) => {
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-sm">
-                Upgrade to Expert for 120 credits/month
+                {tier === "free" 
+                  ? "Upgrade to Pro for 40 credits/month"
+                  : "Upgrade to Expert for 120 credits/month"
+                }
               </p>
             </TooltipContent>
           </Tooltip>

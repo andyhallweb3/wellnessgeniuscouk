@@ -556,6 +556,7 @@ const AICoach = () => {
                   tier={credits.tier} 
                   monthlyAllowance={credits.monthlyAllowance}
                   onUpgrade={() => navigate("/products")}
+                  freeTrialExpiresAt={credits.freeTrialExpiresAt}
                 />
               </div>
             </div>
