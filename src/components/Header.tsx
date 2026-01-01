@@ -14,11 +14,28 @@ import logo from "@/assets/wellness-genius-logo-teal.webp";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
+const ADVISOR_VISITED_KEY = "wg_advisor_visited";
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdvisorBadge, setShowAdvisorBadge] = useState(false);
   const { user, isLoading } = useAuth();
   const location = useLocation();
+
+  // Check if user has visited advisor page before
+  useEffect(() => {
+    const hasVisited = localStorage.getItem(ADVISOR_VISITED_KEY);
+    setShowAdvisorBadge(!hasVisited);
+  }, []);
+
+  // Mark as visited when on advisor page
+  useEffect(() => {
+    if (location.pathname === "/advisor" || location.pathname === "/ai-advisor") {
+      localStorage.setItem(ADVISOR_VISITED_KEY, "true");
+      setShowAdvisorBadge(false);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     async function checkAdminStatus() {
@@ -225,11 +242,16 @@ const Header = () => {
               variant="accent" 
               size="sm" 
               asChild 
-              className="gap-1.5 animate-[pulse-glow_2s_ease-in-out_infinite] shadow-[0_0_12px_hsl(var(--accent)/0.4)] hover:shadow-[0_0_20px_hsl(var(--accent)/0.6)]"
+              className="gap-1.5 relative animate-[pulse-glow_2s_ease-in-out_infinite] shadow-[0_0_12px_hsl(var(--accent)/0.4)] hover:shadow-[0_0_20px_hsl(var(--accent)/0.6)]"
             >
               <Link to="/advisor">
                 <Sparkles size={14} className="animate-pulse" />
                 AI Advisor
+                {showAdvisorBadge && (
+                  <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded-full animate-bounce">
+                    Try it!
+                  </span>
+                )}
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
@@ -349,11 +371,16 @@ const Header = () => {
                 <Button 
                   variant="accent" 
                   asChild 
-                  className="gap-2 animate-[pulse-glow_2s_ease-in-out_infinite] shadow-[0_0_12px_hsl(var(--accent)/0.4)]"
+                  className="gap-2 relative animate-[pulse-glow_2s_ease-in-out_infinite] shadow-[0_0_12px_hsl(var(--accent)/0.4)]"
                 >
                   <Link to="/advisor" onClick={() => setIsMenuOpen(false)}>
                     <Sparkles size={16} className="animate-pulse" />
                     AI Advisor
+                    {showAdvisorBadge && (
+                      <Badge variant="default" className="ml-1 px-1.5 py-0 text-[10px] font-bold animate-pulse">
+                        Try it!
+                      </Badge>
+                    )}
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
