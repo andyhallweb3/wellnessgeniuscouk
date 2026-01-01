@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Lock, ArrowRight, CheckCircle, BarChart3, Save, Loader2, Download, Lightbulb } from "lucide-react";
@@ -24,6 +24,19 @@ interface ResultData {
   }[];
   headline: string;
   subheadline: string;
+}
+
+interface LocationState {
+  overallScore?: number;
+  scoreBand?: string;
+  scoreBandDescription?: string;
+  pillarScores?: {
+    leadership_score: number;
+    data_score: number;
+    people_score: number;
+    process_score: number;
+    risk_score: number;
+  };
 }
 
 const getHeadline = (score: number) => {
@@ -59,9 +72,30 @@ const lockedFeatures = [
   "Downloadable PDF report",
 ];
 
+const buildPillarScores = (scores: { leadership_score: number; data_score: number; people_score: number; process_score: number; risk_score: number }) => {
+  return [
+    { pillarInfo: PILLARS[0], score: scores.leadership_score || 0 },
+    { pillarInfo: PILLARS[1], score: scores.data_score || 0 },
+    { pillarInfo: PILLARS[2], score: scores.people_score || 0 },
+    { pillarInfo: PILLARS[3], score: scores.process_score || 0 },
+    { pillarInfo: PILLARS[4], score: scores.risk_score || 0 },
+  ].map(p => {
+    const statusResult = getPillarStatus(p.score);
+    return {
+      pillar: p.pillarInfo.name,
+      shortName: p.pillarInfo.shortName,
+      score: p.score,
+      status: statusResult.label,
+      statusVariant: statusResult.variant,
+      insight: p.pillarInfo.insight,
+    };
+  });
+};
+
 const AIReadinessResults = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [resultData, setResultData] = useState<ResultData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,51 +103,56 @@ const AIReadinessResults = () => {
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    const fetchResults = async () => {
+    const initResults = async () => {
       if (!id) {
         navigate("/ai-readiness");
         return;
       }
 
+      const state = location.state as LocationState | null;
+
+      // If we have state from navigation, use it directly (avoids RLS issues)
+      if (state?.overallScore !== undefined && state?.pillarScores) {
+        const scoreBandResult = getScoreBandFromData(state.overallScore);
+        setResultData({
+          overallScore: state.overallScore,
+          scoreBand: state.scoreBand || scoreBandResult.label,
+          scoreBandDescription: state.scoreBandDescription || scoreBandResult.description,
+          pillarScores: buildPillarScores(state.pillarScores),
+          headline: getHeadline(state.overallScore),
+          subheadline: getSubheadline(state.overallScore),
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Otherwise try to fetch from DB (works for authenticated users with matching email)
       try {
         const { data, error } = await supabase
           .from("ai_readiness_completions")
           .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (error || !data) {
           console.error("Failed to fetch results:", error);
+          toast.error("Could not load results. Please try the assessment again.");
           navigate("/ai-readiness");
           return;
         }
 
-        // Map scores to the new 5 pillars
-        const pillarScoreData = [
-          { pillarInfo: PILLARS[0], score: data.leadership_score || 0 }, // Transformation
-          { pillarInfo: PILLARS[1], score: data.data_score || 0 }, // Architecture
-          { pillarInfo: PILLARS[2], score: data.people_score || 0 }, // Governance
-          { pillarInfo: PILLARS[3], score: data.process_score || 0 }, // Value
-          { pillarInfo: PILLARS[4], score: data.risk_score || 0 }, // Operating
-        ].map(p => {
-          const statusResult = getPillarStatus(p.score);
-          return {
-            pillar: p.pillarInfo.name,
-            shortName: p.pillarInfo.shortName,
-            score: p.score,
-            status: statusResult.label,
-            statusVariant: statusResult.variant,
-            insight: p.pillarInfo.insight,
-          };
-        });
-
         const scoreBandResult = getScoreBandFromData(data.overall_score);
-
         setResultData({
           overallScore: data.overall_score,
           scoreBand: scoreBandResult.label,
           scoreBandDescription: scoreBandResult.description,
-          pillarScores: pillarScoreData,
+          pillarScores: buildPillarScores({
+            leadership_score: data.leadership_score || 0,
+            data_score: data.data_score || 0,
+            people_score: data.people_score || 0,
+            process_score: data.process_score || 0,
+            risk_score: data.risk_score || 0,
+          }),
           headline: getHeadline(data.overall_score),
           subheadline: getSubheadline(data.overall_score),
         });
@@ -125,8 +164,8 @@ const AIReadinessResults = () => {
       }
     };
 
-    fetchResults();
-  }, [id, navigate]);
+    initResults();
+  }, [id, navigate, location.state]);
 
   // Check if already saved
   useEffect(() => {

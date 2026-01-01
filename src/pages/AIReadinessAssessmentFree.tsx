@@ -88,7 +88,21 @@ const AIReadinessAssessmentFree = () => {
       if (error) throw error;
 
       if (data?.id) {
-        navigate(`/ai-readiness/results/${data.id}`);
+        // Pass the scores via navigation state to avoid RLS fetch issues
+        navigate(`/ai-readiness/results/${data.id}`, {
+          state: {
+            overallScore,
+            scoreBand: scoreBandResult.label,
+            scoreBandDescription: scoreBandResult.description,
+            pillarScores: {
+              leadership_score: transformationScore,
+              data_score: architectureScore,
+              people_score: governanceScore,
+              process_score: valueScore,
+              risk_score: operatingScore,
+            }
+          }
+        });
       } else {
         toast({
           title: "Assessment Complete",
