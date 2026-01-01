@@ -69,49 +69,90 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       }
       const EPHEMERAL_KEY = data.client_secret.value;
 
-      // Create peer connection
-      const pc = new RTCPeerConnection();
+      // Create peer connection with STUN servers for better connectivity
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+        ],
+      });
       pcRef.current = pc;
+
+      // Log connection state changes
+      pc.onconnectionstatechange = () => {
+        console.log("[Voice] Connection state:", pc.connectionState);
+        if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+          toast.error("Voice connection lost. Please reconnect.");
+          disconnect();
+        }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log("[Voice] ICE connection state:", pc.iceConnectionState);
+      };
 
       // Set up remote audio
       pc.ontrack = (e) => {
+        console.log("[Voice] Received remote track:", e.track.kind);
         if (audioElRef.current) {
           audioElRef.current.srcObject = e.streams[0];
+          // Ensure audio plays
+          audioElRef.current.play().catch(err => {
+            console.error("[Voice] Audio play failed:", err);
+          });
         }
       };
 
       // Add local audio track
-      pc.addTrack(stream.getTracks()[0]);
+      const audioTrack = stream.getTracks()[0];
+      console.log("[Voice] Adding local audio track:", audioTrack.label);
+      pc.addTrack(audioTrack);
 
       // Set up data channel
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
 
       dc.addEventListener("open", () => {
-        console.log("Data channel open");
+        console.log("[Voice] Data channel open - ready for conversation");
+        toast.success("Voice connected! Start speaking.");
+      });
+
+      dc.addEventListener("error", (e) => {
+        console.error("[Voice] Data channel error:", e);
       });
 
       dc.addEventListener("message", (e) => {
-        const event = JSON.parse(e.data);
-        console.log("Received event:", event.type);
+        try {
+          const event = JSON.parse(e.data);
+          console.log("[Voice] Event:", event.type);
 
-        if (event.type === "response.audio_transcript.delta") {
-          // Assistant is speaking
-          setIsSpeaking(true);
-        } else if (event.type === "response.audio_transcript.done") {
-          setIsSpeaking(false);
-          if (onTranscript && event.transcript) {
-            onTranscript(event.transcript, "assistant");
+          if (event.type === "session.created") {
+            console.log("[Voice] Session created:", event.session?.id);
+          } else if (event.type === "response.audio.delta") {
+            // Audio is being received
+            setIsSpeaking(true);
+          } else if (event.type === "response.audio_transcript.delta") {
+            setIsSpeaking(true);
+          } else if (event.type === "response.audio_transcript.done") {
+            setIsSpeaking(false);
+            if (onTranscript && event.transcript) {
+              onTranscript(event.transcript, "assistant");
+            }
+          } else if (event.type === "conversation.item.input_audio_transcription.completed") {
+            if (onTranscript && event.transcript) {
+              onTranscript(event.transcript, "user");
+            }
+          } else if (event.type === "response.done") {
+            setIsSpeaking(false);
+          } else if (event.type === "input_audio_buffer.speech_started") {
+            console.log("[Voice] User started speaking");
+          } else if (event.type === "input_audio_buffer.speech_stopped") {
+            console.log("[Voice] User stopped speaking");
+          } else if (event.type === "error") {
+            console.error("[Voice] API error:", event.error);
+            toast.error("Voice error: " + (event.error?.message || "Unknown error"));
           }
-        } else if (event.type === "conversation.item.input_audio_transcription.completed") {
-          if (onTranscript && event.transcript) {
-            onTranscript(event.transcript, "user");
-          }
-        } else if (event.type === "response.done") {
-          setIsSpeaking(false);
-        } else if (event.type === "error") {
-          console.error("Voice error:", event.error);
-          toast.error("Voice error: " + (event.error?.message || "Unknown error"));
+        } catch (err) {
+          console.error("[Voice] Failed to parse event:", err);
         }
       });
 
@@ -140,9 +181,8 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
         sdp: await sdpResponse.text(),
       };
 
-      await pc.setRemoteDescription(answer);
+      console.log("[Voice] WebRTC connection established");
       setIsConnected(true);
-      toast.success("Voice connected. Start speaking!");
     } catch (error) {
       console.error("Error connecting voice:", error);
       toast.error(error instanceof Error ? error.message : "Failed to connect voice");
