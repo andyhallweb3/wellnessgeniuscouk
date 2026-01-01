@@ -1,24 +1,34 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Phone, PhoneOff } from "lucide-react";
+import { Loader2, Phone, PhoneOff, Wifi, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import VoiceWaveform from "./VoiceWaveform";
+import { useVoiceWebSocket } from "@/hooks/useVoiceWebSocket";
 
 interface GenieVoiceInterfaceProps {
   memoryContext?: string;
   onTranscript?: (text: string, role: "user" | "assistant") => void;
 }
 
+type ConnectionMode = "idle" | "webrtc" | "websocket";
+
 export default function GenieVoiceInterface({ memoryContext, onTranscript }: GenieVoiceInterfaceProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [connectionMode, setConnectionMode] = useState<ConnectionMode>("idle");
   
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // WebSocket fallback hook
+  const wsVoice = useVoiceWebSocket({
+    memoryContext,
+    onTranscript,
+  });
 
   useEffect(() => {
     // Create audio element for playback
@@ -26,13 +36,32 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
     audioElRef.current.autoplay = true;
 
     return () => {
-      disconnect();
+      disconnectWebRTC();
     };
   }, []);
 
-  const connect = useCallback(async () => {
-    setIsConnecting(true);
+  const disconnectWebRTC = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (dcRef.current) {
+      dcRef.current.close();
+      dcRef.current = null;
+    }
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+    if (audioElRef.current) {
+      audioElRef.current.srcObject = null;
+    }
+    setIsConnected(false);
+    setIsSpeaking(false);
+    setConnectionMode("idle");
+  }, []);
 
+  const connectWebRTC = useCallback(async (): Promise<boolean> => {
     try {
       // Request microphone permission
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -82,7 +111,7 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
         console.log("[Voice] Connection state:", pc.connectionState);
         if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
           toast.error("Voice connection lost. Please reconnect.");
-          disconnect();
+          disconnectWebRTC();
         }
       };
 
@@ -115,43 +144,38 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       const sendEvent = (payload: unknown) => {
         if (dc.readyState !== "open") return;
         const msg = JSON.stringify(payload);
-        console.log("[Voice] Sending event:", (payload as any)?.type);
+        console.log("[Voice] Sending event:", (payload as Record<string, unknown>)?.type);
         dc.send(msg);
       };
 
-      dc.addEventListener("open", () => {
-        console.log("[Voice] Data channel open - ready for conversation");
-        setIsConnected(true);
-        toast.success("Voice connected! Start speaking.");
+      // Promise that resolves when data channel opens, or rejects on timeout
+      const dcOpenPromise = new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("Data channel didn't open in time"));
+        }, 15000);
 
-        // Force a first turn so users immediately hear/see something.
-        // This also validates that the Realtime session is actually responding.
-        sendEvent({
-          type: "conversation.item.create",
-          item: {
-            type: "message",
-            role: "user",
-            content: [{ type: "input_text", text: "Confirm you can hear me. Say: connected." }],
-          },
+        dc.addEventListener("open", () => {
+          clearTimeout(timeout);
+          console.log("[Voice] Data channel open - ready for conversation");
+          resolve();
         });
-        sendEvent({ type: "response.create" });
-      });
 
-      dc.addEventListener("error", (e) => {
-        console.error("[Voice] Data channel error:", e);
+        dc.addEventListener("error", (e) => {
+          clearTimeout(timeout);
+          console.error("[Voice] Data channel error:", e);
+          reject(new Error("Data channel error"));
+        });
       });
 
       dc.addEventListener("message", (e) => {
         try {
           const event = JSON.parse(e.data);
-          console.log("[Voice] Event:", event.type, event);
+          console.log("[Voice] Event:", event.type);
 
           if (event.type === "session.created") {
             console.log("[Voice] Session created:", event.session?.id);
 
             // Ensure the session is configured for audio + transcription + server VAD.
-            // (In some environments the server-side session payload isn't fully applied
-            // until we explicitly update after session.created.)
             sendEvent({
               type: "session.update",
               session: {
@@ -210,16 +234,14 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // IMPORTANT: gather ICE candidates. Some networks never flip to "complete",
-      // so we resolve when we either (a) complete, (b) get at least 1 candidate,
-      // or (c) hit a soft timeout and proceed with best-effort SDP.
+      // Gather ICE candidates
       let candidateCount = 0;
       await new Promise<void>((resolve) => {
         const cleanup = () => {
           pc.removeEventListener("icegatheringstatechange", onStateChange);
           pc.removeEventListener("icecandidate", onIceCandidate);
-          window.clearTimeout(softTimeout);
-          window.clearTimeout(hardTimeout);
+          clearTimeout(softTimeout);
+          clearTimeout(hardTimeout);
         };
 
         const onStateChange = () => {
@@ -235,7 +257,6 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
             candidateCount += 1;
             return;
           }
-          // null candidate = end of candidates in many browsers
           console.log("[Voice] ICE candidate gathering finished (null candidate)");
           cleanup();
           resolve();
@@ -244,8 +265,7 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
         pc.addEventListener("icegatheringstatechange", onStateChange);
         pc.addEventListener("icecandidate", onIceCandidate);
 
-        // Soft timeout: if we got at least one candidate, proceed even if not "complete".
-        const softTimeout = window.setTimeout(() => {
+        const softTimeout = setTimeout(() => {
           if (candidateCount > 0) {
             console.warn("[Voice] ICE not complete but candidates found; proceeding.");
             cleanup();
@@ -253,14 +273,12 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
           }
         }, 2000);
 
-        // Hard timeout: proceed regardless; we'll validate candidateCount after.
-        const hardTimeout = window.setTimeout(() => {
+        const hardTimeout = setTimeout(() => {
           console.warn("[Voice] ICE gathering timed out; proceeding with best-effort SDP.");
           cleanup();
           resolve();
-        }, 15000);
+        }, 8000);
 
-        // Immediate resolve if already complete.
         if (pc.iceGatheringState === "complete") {
           cleanup();
           resolve();
@@ -269,9 +287,7 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
 
       console.log("[Voice] Local ICE candidates gathered:", candidateCount);
       if (candidateCount === 0) {
-        throw new Error(
-          "Voice can't connect on this network (ICE blocked). Try disabling VPN or switching network."
-        );
+        throw new Error("ICE_BLOCKED");
       }
 
       const offerSdp = pc.localDescription?.sdp;
@@ -300,47 +316,99 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
 
       await pc.setRemoteDescription(answer);
       console.log("[Voice] WebRTC remote description set");
-      // Note: we mark UI as connected only when the data channel opens.
+
+      // Wait for data channel to actually open
+      await dcOpenPromise;
+
+      // Send test message and set as connected
+      sendEvent({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "Confirm you can hear me. Say: connected." }],
+        },
+      });
+      sendEvent({ type: "response.create" });
+
+      setConnectionMode("webrtc");
+      setIsConnected(true);
+      toast.success("Voice connected! Start speaking.");
+      return true;
     } catch (error) {
-      console.error("Error connecting voice:", error);
+      console.error("[Voice] WebRTC failed:", error);
+      // Clean up partial connection
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+      if (dcRef.current) {
+        dcRef.current.close();
+        dcRef.current = null;
+      }
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+
+      // Return false to signal fallback needed
+      const errMsg = error instanceof Error ? error.message : "";
+      if (errMsg === "ICE_BLOCKED" || errMsg.includes("Data channel")) {
+        return false;
+      }
+      // Re-throw other errors
+      throw error;
+    }
+  }, [memoryContext, onTranscript, disconnectWebRTC]);
+
+  const connect = useCallback(async () => {
+    setIsConnecting(true);
+
+    try {
+      // Try WebRTC first
+      console.log("[Voice] Attempting WebRTC connection...");
+      const webrtcSuccess = await connectWebRTC();
+
+      if (!webrtcSuccess) {
+        // Fallback to WebSocket relay
+        console.log("[Voice] WebRTC failed, falling back to WebSocket relay...");
+        toast.info("Using relay mode (your network may block direct connections)");
+        await wsVoice.connect();
+        setConnectionMode("websocket");
+      }
+    } catch (error) {
+      console.error("[Voice] Connection error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to connect voice");
-      disconnect();
     } finally {
       setIsConnecting(false);
     }
-  }, [memoryContext, onTranscript]);
+  }, [connectWebRTC, wsVoice]);
 
   const disconnect = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
+    if (connectionMode === "websocket") {
+      wsVoice.disconnect();
+    } else {
+      disconnectWebRTC();
     }
-    if (dcRef.current) {
-      dcRef.current.close();
-      dcRef.current = null;
-    }
-    if (pcRef.current) {
-      pcRef.current.close();
-      pcRef.current = null;
-    }
-    if (audioElRef.current) {
-      audioElRef.current.srcObject = null;
-    }
-    setIsConnected(false);
-    setIsSpeaking(false);
-  }, []);
+    setConnectionMode("idle");
+  }, [connectionMode, wsVoice, disconnectWebRTC]);
+
+  // Compute actual state based on active mode
+  const actualIsConnected = connectionMode === "websocket" ? wsVoice.isConnected : isConnected;
+  const actualIsSpeaking = connectionMode === "websocket" ? wsVoice.isSpeaking : isSpeaking;
+  const actualIsConnecting = isConnecting || wsVoice.isConnecting;
 
   return (
     <div className="flex items-center gap-2">
-      {!isConnected ? (
+      {!actualIsConnected ? (
         <Button
           variant="outline"
           size="sm"
           onClick={connect}
-          disabled={isConnecting}
+          disabled={actualIsConnecting}
           className="gap-2"
         >
-          {isConnecting ? (
+          {actualIsConnecting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Connecting...
@@ -355,9 +423,14 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       ) : (
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/30">
-            <VoiceWaveform isActive={true} isSpeaking={isSpeaking} barCount={5} />
+            {connectionMode === "websocket" && (
+              <span title="Relay mode">
+                <Wifi className="h-3 w-3 text-muted-foreground" />
+              </span>
+            )}
+            <VoiceWaveform isActive={true} isSpeaking={actualIsSpeaking} barCount={5} />
             <span className="text-xs text-muted-foreground">
-              {isSpeaking ? (
+              {actualIsSpeaking ? (
                 <span className="text-accent">Genie speaking...</span>
               ) : (
                 "Listening..."
