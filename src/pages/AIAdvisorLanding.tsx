@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ADVISOR_MODES, CREDIT_PACKS, getModesByCategory } from "@/components/advisor/AdvisorModes";
 import { getAdvisorIcon } from "@/components/advisor/AdvisorIcons";
 import AnimatedConversation from "@/components/advisor/AnimatedConversation";
+import TryItNowSection from "@/components/advisor/TryItNowSection";
 import {
   Brain,
   Mic,
@@ -152,9 +153,21 @@ const AIAdvisorLanding = () => {
                 </div>
 
                 <AnimatedConversation />
+
+                <div className="text-center mt-8">
+                  <Button size="lg" variant="hero" asChild>
+                    <a href="#try-it">
+                      Try It Now
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </a>
+                  </Button>
+                </div>
               </div>
             </div>
           </section>
+
+          {/* Try It Now Section */}
+          <TryItNowSection />
 
           {/* Core Features */}
           <section className="py-20">
