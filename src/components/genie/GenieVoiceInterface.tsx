@@ -121,6 +121,7 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
 
       dc.addEventListener("open", () => {
         console.log("[Voice] Data channel open - ready for conversation");
+        setIsConnected(true);
         toast.success("Voice connected! Start speaking.");
 
         // Force a first turn so users immediately hear/see something.
@@ -251,14 +252,22 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
             cleanup();
             resolve();
           }
-        }, 1500);
+        }, 2000);
 
-        // Hard timeout: proceed regardless (best effort) rather than failing the UX.
+        // Hard timeout: if no candidates, fail fast with a clear message.
         const hardTimeout = window.setTimeout(() => {
+          if (!gotCandidate) {
+            console.error("[Voice] ICE timed out with 0 candidates - likely network blocks WebRTC.");
+            cleanup();
+            // We can't reject from here (we used resolve-only promise), so mark state and resolve;
+            // connect() will detect missing candidates by checking stats later.
+            resolve();
+            return;
+          }
           console.warn("[Voice] ICE gathering timed out; proceeding with best-effort SDP.");
           cleanup();
           resolve();
-        }, 8000);
+        }, 15000);
 
         // Immediate resolve if already complete.
         if (pc.iceGatheringState === "complete") {
@@ -269,6 +278,15 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
 
       const offerSdp = pc.localDescription?.sdp;
       if (!offerSdp) throw new Error("Missing local SDP offer");
+
+      // If we never gathered any ICE candidates, datachannel will never open.
+      // Fail with a clear message rather than silently "connecting" forever.
+      const stats = await pc.getStats();
+      const localCandidates = Array.from(stats.values()).filter((s) => s.type === "local-candidate");
+      console.log("[Voice] Local ICE candidates:", localCandidates.length);
+      if (localCandidates.length === 0) {
+        throw new Error("Voice can't connect on this network (no ICE candidates). Try a different network or disable VPN.");
+      }
 
       // Connect to OpenAI's Realtime API
       const baseUrl = "https://api.openai.com/v1/realtime";
@@ -292,8 +310,8 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       };
 
       await pc.setRemoteDescription(answer);
-      console.log("[Voice] WebRTC connection established");
-      setIsConnected(true);
+      console.log("[Voice] WebRTC remote description set");
+      // Note: we mark UI as connected only when the data channel opens.
     } catch (error) {
       console.error("Error connecting voice:", error);
       toast.error(error instanceof Error ? error.message : "Failed to connect voice");
