@@ -99,6 +99,7 @@ export type Database = {
           role: string | null
           score_band: string | null
           user_agent: string | null
+          user_id: string | null
         }
         Insert: {
           company?: string | null
@@ -118,6 +119,7 @@ export type Database = {
           role?: string | null
           score_band?: string | null
           user_agent?: string | null
+          user_id?: string | null
         }
         Update: {
           company?: string | null
@@ -137,6 +139,7 @@ export type Database = {
           role?: string | null
           score_band?: string | null
           user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -802,6 +805,36 @@ export type Database = {
           next_move?: string | null
           status?: string
           type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      free_tier_access: {
+        Row: {
+          created_at: string
+          credits_remaining: number
+          feature: string
+          id: string
+          trial_expires_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_remaining?: number
+          feature: string
+          id?: string
+          trial_expires_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_remaining?: number
+          feature?: string
+          id?: string
+          trial_expires_at?: string
           updated_at?: string
           user_id?: string
         }

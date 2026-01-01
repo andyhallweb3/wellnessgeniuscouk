@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Lock, ArrowRight, CheckCircle, BarChart3, Save, Loader2, Download, Lightbulb } from "lucide-react";
+import { Lock, ArrowRight, CheckCircle, BarChart3, Save, Loader2, Lightbulb, Sparkles, Gift } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -314,7 +314,7 @@ const AIReadinessResults = () => {
               ))}
             </div>
 
-            {/* Save to Hub Button */}
+            {/* Save to Hub Button - for logged in users */}
             {user && (
               <div className="mt-6 pt-6 border-t border-border">
                 <Button
@@ -336,6 +336,55 @@ const AIReadinessResults = () => {
               </div>
             )}
           </div>
+
+          {/* Free Account Prompt - for non-authenticated users */}
+          {!user && (
+            <div className="bg-gradient-to-br from-accent/10 to-primary/5 rounded-xl p-8 border border-accent/20 mb-8">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+                  <Gift size={24} className="text-accent" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-heading mb-2 flex items-center gap-2">
+                    Create a Free Account
+                    <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">
+                      Free
+                    </span>
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    Save your assessment results and get <strong>10 free AI Advisor sessions</strong> to help you take action on your score.
+                  </p>
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center gap-2 text-sm">
+                      <CheckCircle size={14} className="text-accent" />
+                      Save and track your AI readiness progress
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <CheckCircle size={14} className="text-accent" />
+                      10 free AI Advisor sessions (14-day trial)
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <CheckCircle size={14} className="text-accent" />
+                      Access to downloadable resources
+                    </li>
+                  </ul>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button variant="accent" asChild>
+                      <Link to={`/auth?redirect=/ai-readiness/results/${id}`}>
+                        <Sparkles size={16} />
+                        Create Free Account
+                      </Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link to={`/auth?redirect=/ai-readiness/results/${id}&mode=login`}>
+                        Already have an account? Sign in
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Locked Premium Content */}
           <div className="bg-secondary/30 rounded-xl p-8 border border-border relative overflow-hidden mb-8">
