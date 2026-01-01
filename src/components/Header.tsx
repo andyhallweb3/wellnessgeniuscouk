@@ -42,7 +42,6 @@ const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const mainNavLinks = [
-    { href: "/advisor", label: "AI Advisor", isRoute: true },
     { href: "/ai-readiness", label: "AI Assessment", isRoute: true },
     { href: "/news", label: "Industry News", isRoute: true },
   ];
@@ -222,7 +221,13 @@ const Header = () => {
                 </Link>
               )
             )}
-            <Button variant="accent" size="sm" asChild>
+            <Button variant="accent" size="sm" asChild className="gap-1.5">
+              <Link to="/advisor">
+                <Sparkles size={14} />
+                AI Advisor
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
               <a href="#contact">Book a Call</a>
             </Button>
           </div>
@@ -336,7 +341,13 @@ const Header = () => {
                     </Link>
                   )
                 )}
-                <Button variant="accent" asChild>
+                <Button variant="accent" asChild className="gap-2">
+                  <Link to="/advisor" onClick={() => setIsMenuOpen(false)}>
+                    <Sparkles size={16} />
+                    AI Advisor
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
                   <a href="#contact" onClick={() => setIsMenuOpen(false)}>Book a Call</a>
                 </Button>
               </div>
