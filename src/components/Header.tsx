@@ -42,7 +42,7 @@ const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const mainNavLinks = [
-    { href: "/genie", label: "AI Advisor", isRoute: true },
+    { href: "/advisor", label: "AI Advisor", isRoute: true },
     { href: "/ai-readiness", label: "AI Assessment", isRoute: true },
     { href: "/news", label: "Industry News", isRoute: true },
   ];
