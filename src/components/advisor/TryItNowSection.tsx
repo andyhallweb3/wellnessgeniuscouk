@@ -15,6 +15,13 @@ interface Message {
 const STORAGE_KEY = "advisor_trial_count";
 const MAX_FREE_QUESTIONS = 2;
 
+const EXAMPLE_QUESTIONS = [
+  "How do I improve member retention?",
+  "Should I raise my prices?",
+  "What metrics should I track?",
+  "How can I reduce staff turnover?",
+];
+
 const TryItNowSection = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -108,13 +115,22 @@ const TryItNowSection = () => {
               {/* Chat area */}
               <div className="min-h-[200px] max-h-[400px] overflow-y-auto p-4 space-y-4 bg-muted/20">
                 {messages.length === 0 && !isLocked && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Brain className="h-12 w-12 mx-auto mb-3 text-primary/30" />
-                    <p className="text-sm">
-                      Ask anything about your wellness business.
-                      <br />
-                      <span className="text-xs">e.g., "How do I improve member retention?"</span>
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Brain className="h-10 w-10 mx-auto mb-3 text-primary/30" />
+                    <p className="text-sm mb-4">
+                      Ask anything about your wellness business
                     </p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {EXAMPLE_QUESTIONS.map((question) => (
+                        <button
+                          key={question}
+                          onClick={() => setInput(question)}
+                          className="px-3 py-1.5 text-xs rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          {question}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
