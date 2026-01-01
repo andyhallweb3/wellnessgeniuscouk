@@ -66,13 +66,14 @@ const Contact = () => {
           {/* Left Column - Info */}
           <div>
             <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
-              Get Started
+              Ready to Move?
             </p>
             <h2 className="text-3xl lg:text-4xl xl:text-5xl mb-6 tracking-tight">
-              Let's discuss your automation goals
+              Book a 30-minute AI Reality Check
             </h2>
             <p className="text-muted-foreground text-lg mb-10">
-              Book a 30-minute discovery call to explore how AI agents can transform your operations and accelerate growth.
+              No pitch deck. No fluff. Just a frank conversation about what's working, 
+              what's not, and what AI can actually do for your business.
             </p>
 
             <div className="space-y-4">
@@ -81,9 +82,9 @@ const Contact = () => {
                   <Calendar className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Book a Call</h3>
+                  <h3 className="font-semibold mb-1">Free • No commitment</h3>
                   <p className="text-sm text-muted-foreground">
-                    30-minute video call to discuss your specific needs and opportunities.
+                    Walk away with 3 actionable ideas — even if we never work together.
                   </p>
                 </div>
               </div>
