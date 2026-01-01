@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, ArrowLeft, Brain, Building2, Target, Zap, CheckCircle } from "lucide-react";
-
+import { ArrowRight, ArrowLeft, Brain, Building2, Target, Zap, CheckCircle, FileText, Upload, X, Loader2 } from "lucide-react";
+import { useCoachDocuments } from "@/hooks/useCoachDocuments";
+import { toast } from "sonner";
 interface GenieOnboardingData {
   business_name: string;
   business_type: string;
@@ -69,7 +70,14 @@ const GenieOnboarding = ({ onComplete, onSkip }: GenieOnboardingProps) => {
     decision_style: "deliberate",
   });
 
-  const totalSteps = 4;
+  // Document upload state
+  const { uploadDocument, uploading } = useCoachDocuments();
+  const [uploadedFinancial, setUploadedFinancial] = useState<string | null>(null);
+  const [uploadedCustomer, setUploadedCustomer] = useState<string | null>(null);
+  const financialInputRef = useRef<HTMLInputElement>(null);
+  const customerInputRef = useRef<HTMLInputElement>(null);
+
+  const totalSteps = 5;
 
   const handleNext = () => {
     if (step < totalSteps) {
@@ -92,6 +100,18 @@ const GenieOnboarding = ({ onComplete, onSkip }: GenieOnboardingProps) => {
     }
   };
 
+  const handleFileUpload = async (
+    file: File,
+    category: "financial" | "customer",
+    setUploaded: (name: string | null) => void
+  ) => {
+    const success = await uploadDocument(file, undefined, category);
+    if (success) {
+      setUploaded(file.name);
+      toast.success(`${file.name} uploaded`);
+    }
+  };
+
   const canProceed = () => {
     switch (step) {
       case 1:
@@ -102,6 +122,8 @@ const GenieOnboarding = ({ onComplete, onSkip }: GenieOnboardingProps) => {
         return data.known_weak_spots.length > 0;
       case 4:
         return true;
+      case 5:
+        return true; // Documents are optional but encouraged
       default:
         return false;
     }
@@ -415,6 +437,138 @@ const GenieOnboarding = ({ onComplete, onSkip }: GenieOnboardingProps) => {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 5: Document Uploads */}
+      {step === 5 && (
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-4">
+              <FileText size={32} className="text-accent" />
+            </div>
+            <h2 className="text-2xl font-heading mb-2">Power up with your data</h2>
+            <p className="text-sm text-muted-foreground">
+              Upload documents so I can give you specific, personalised advice instead of generic guidance.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Financial Document */}
+            <div className="p-4 rounded-lg border border-border bg-card">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <FileText size={16} className="text-amber-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-sm">Financial Document</h3>
+                  <p className="text-xs text-muted-foreground">
+                    P&L, cash flow, management accounts, or pricing schedule
+                  </p>
+                </div>
+              </div>
+              
+              <input
+                ref={financialInputRef}
+                type="file"
+                accept=".pdf,.csv,.xlsx,.xls,.doc,.docx"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, "financial", setUploadedFinancial);
+                }}
+              />
+              
+              {uploadedFinancial ? (
+                <div className="flex items-center justify-between p-2 rounded bg-accent/10 border border-accent/20">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={14} className="text-accent" />
+                    <span className="text-sm truncate max-w-[200px]">{uploadedFinancial}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setUploadedFinancial(null)}
+                    className="h-6 w-6 p-0"
+                  >
+                    <X size={12} />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => financialInputRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full gap-2"
+                >
+                  {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  Upload Financial Doc
+                </Button>
+              )}
+            </div>
+
+            {/* Customer Data Document */}
+            <div className="p-4 rounded-lg border border-border bg-card">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <FileText size={16} className="text-blue-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-sm">Customer / Member Data</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Retention report, NPS survey, churn analysis, or member breakdown
+                  </p>
+                </div>
+              </div>
+              
+              <input
+                ref={customerInputRef}
+                type="file"
+                accept=".pdf,.csv,.xlsx,.xls,.doc,.docx"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, "customer", setUploadedCustomer);
+                }}
+              />
+              
+              {uploadedCustomer ? (
+                <div className="flex items-center justify-between p-2 rounded bg-accent/10 border border-accent/20">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={14} className="text-accent" />
+                    <span className="text-sm truncate max-w-[200px]">{uploadedCustomer}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setUploadedCustomer(null)}
+                    className="h-6 w-6 p-0"
+                  >
+                    <X size={12} />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => customerInputRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full gap-2"
+                >
+                  {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  Upload Customer Data
+                </Button>
+              )}
+            </div>
+
+            {/* Hint */}
+            <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
+              <p className="text-xs text-muted-foreground">
+                <strong>Tip:</strong> The more real data you share, the sharper my advice. You can always add more documents later in Settings.
+              </p>
             </div>
           </div>
         </div>
