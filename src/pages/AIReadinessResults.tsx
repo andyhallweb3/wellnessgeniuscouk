@@ -2,31 +2,29 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Lock, ArrowRight, CheckCircle, BarChart3, Save, Loader2 } from "lucide-react";
+import { Lock, ArrowRight, CheckCircle, BarChart3, Save, Loader2, Download, Lightbulb } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { PILLARS, getScoreBand as getScoreBandFromData, getPillarStatus } from "@/data/aiReadinessQuestions";
 
 interface ResultData {
   overallScore: number;
   scoreBand: string;
+  scoreBandDescription: string;
   pillarScores: {
     pillar: string;
+    shortName: string;
     score: number;
     status: string;
+    statusVariant: "critical" | "warning" | "healthy" | "strong";
+    insight: string;
   }[];
   headline: string;
   subheadline: string;
 }
-
-const getScoreBandLabel = (score: number) => {
-  if (score < 40) return "Not AI Ready";
-  if (score < 60) return "Emerging";
-  if (score < 80) return "Operational";
-  return "Scalable";
-};
 
 const getHeadline = (score: number) => {
   if (score < 40) return "Your business isn't ready for AI — and that's okay.";
@@ -42,21 +40,22 @@ const getSubheadline = (score: number) => {
   return "You're ahead of most. Your report shows how to maximise your advantage.";
 };
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Critical": return "text-red-500 bg-red-500/10";
-    case "Needs Work": return "text-yellow-500 bg-yellow-500/10";
-    case "Healthy": return "text-accent bg-accent/10";
-    case "Strong": return "text-green-500 bg-green-500/10";
+const getStatusColor = (variant: "critical" | "warning" | "healthy" | "strong") => {
+  switch (variant) {
+    case "critical": return "text-red-500 bg-red-500/10";
+    case "warning": return "text-yellow-500 bg-yellow-500/10";
+    case "healthy": return "text-accent bg-accent/10";
+    case "strong": return "text-green-500 bg-green-500/10";
     default: return "text-muted-foreground bg-secondary";
   }
 };
 
 const lockedFeatures = [
   "Conservative revenue upside range",
-  "Top 3 blockers identified",
+  "Top 3 blockers identified by pillar",
   "90-day priority action plan",
-  "Monetisation paths",
+  "AI architecture recommendations",
+  "Governance gap analysis",
   "Downloadable PDF report",
 ];
 
@@ -89,21 +88,32 @@ const AIReadinessResults = () => {
           return;
         }
 
-        const pillarScores = [
-          { pillar: "Data Maturity", score: data.data_score || 0 },
-          { pillar: "Engagement", score: data.people_score || 0 },
-          { pillar: "Monetisation", score: data.process_score || 0 },
-          { pillar: "AI & Automation", score: data.leadership_score || 0 },
-          { pillar: "Trust & Compliance", score: data.risk_score || 0 },
-        ].map(p => ({
-          ...p,
-          status: p.score < 40 ? "Critical" : p.score < 60 ? "Needs Work" : p.score < 80 ? "Healthy" : "Strong"
-        }));
+        // Map scores to the new 5 pillars
+        const pillarScoreData = [
+          { pillarInfo: PILLARS[0], score: data.leadership_score || 0 }, // Transformation
+          { pillarInfo: PILLARS[1], score: data.data_score || 0 }, // Architecture
+          { pillarInfo: PILLARS[2], score: data.people_score || 0 }, // Governance
+          { pillarInfo: PILLARS[3], score: data.process_score || 0 }, // Value
+          { pillarInfo: PILLARS[4], score: data.risk_score || 0 }, // Operating
+        ].map(p => {
+          const statusResult = getPillarStatus(p.score);
+          return {
+            pillar: p.pillarInfo.name,
+            shortName: p.pillarInfo.shortName,
+            score: p.score,
+            status: statusResult.label,
+            statusVariant: statusResult.variant,
+            insight: p.pillarInfo.insight,
+          };
+        });
+
+        const scoreBandResult = getScoreBandFromData(data.overall_score);
 
         setResultData({
           overallScore: data.overall_score,
-          scoreBand: getScoreBandLabel(data.overall_score),
-          pillarScores,
+          scoreBand: scoreBandResult.label,
+          scoreBandDescription: scoreBandResult.description,
+          pillarScores: pillarScoreData,
           headline: getHeadline(data.overall_score),
           subheadline: getSubheadline(data.overall_score),
         });
@@ -236,25 +246,31 @@ const AIReadinessResults = () => {
 
           {/* Pillar Scores */}
           <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
-            <h2 className="text-xl font-heading mb-6">Section Breakdown</h2>
-            <div className="space-y-4">
+          <h2 className="text-xl font-heading mb-6">Pillar Breakdown</h2>
+            <div className="space-y-6">
               {resultData.pillarScores.map((pillar) => (
-                <div key={pillar.pillar} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">{pillar.pillar}</span>
-                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(pillar.status)}`}>
+                <div key={pillar.pillar} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{pillar.shortName}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(pillar.statusVariant)}`}>
                         {pillar.status}
                       </span>
                     </div>
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-accent transition-all duration-500"
-                        style={{ width: `${pillar.score}%` }}
-                      />
-                    </div>
+                    <span className="text-sm font-medium">{pillar.score}%</span>
                   </div>
-                  <span className="ml-4 text-sm font-medium w-12 text-right">{pillar.score}%</span>
+                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-accent transition-all duration-500"
+                      style={{ width: `${pillar.score}%` }}
+                    />
+                  </div>
+                  {pillar.statusVariant === "critical" && (
+                    <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+                      <Lightbulb size={12} className="mt-0.5 shrink-0 text-yellow-500" />
+                      {pillar.insight}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
