@@ -221,9 +221,14 @@ const Header = () => {
                 </Link>
               )
             )}
-            <Button variant="accent" size="sm" asChild className="gap-1.5">
+            <Button 
+              variant="accent" 
+              size="sm" 
+              asChild 
+              className="gap-1.5 animate-[pulse-glow_2s_ease-in-out_infinite] shadow-[0_0_12px_hsl(var(--accent)/0.4)] hover:shadow-[0_0_20px_hsl(var(--accent)/0.6)]"
+            >
               <Link to="/advisor">
-                <Sparkles size={14} />
+                <Sparkles size={14} className="animate-pulse" />
                 AI Advisor
               </Link>
             </Button>
@@ -341,9 +346,13 @@ const Header = () => {
                     </Link>
                   )
                 )}
-                <Button variant="accent" asChild className="gap-2">
+                <Button 
+                  variant="accent" 
+                  asChild 
+                  className="gap-2 animate-[pulse-glow_2s_ease-in-out_infinite] shadow-[0_0_12px_hsl(var(--accent)/0.4)]"
+                >
                   <Link to="/advisor" onClick={() => setIsMenuOpen(false)}>
-                    <Sparkles size={16} />
+                    <Sparkles size={16} className="animate-pulse" />
                     AI Advisor
                   </Link>
                 </Button>
