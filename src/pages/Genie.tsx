@@ -43,6 +43,7 @@ import { useTrustSettings } from "@/hooks/useTrustSettings";
 
 import SessionHistory from "@/components/genie/SessionHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
+import DocumentChecklist from "@/components/genie/DocumentChecklist";
 import FloatingChatDrawer from "@/components/genie/FloatingChatDrawer";
 import InlineChatBox from "@/components/genie/InlineChatBox";
 import DocumentManager from "@/components/genie/DocumentManager";
@@ -494,6 +495,8 @@ const Genie = () => {
                     <SheetTitle>Genie Settings</SheetTitle>
                   </SheetHeader>
                   <div className="mt-6 space-y-6">
+                    <DocumentChecklist />
+                    
                     <TrustSettingsToggle />
                     
                     {/* Leaderboard */}
