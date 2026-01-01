@@ -22,9 +22,9 @@ const HeroNew = () => {
 
       <div className="container-wide px-6 lg:px-12 py-12 lg:py-16">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Market credibility chip */}
+          {/* Client credibility chip */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium mb-8 animate-fade-up">
-            <span className="font-semibold">$6.8T</span> wellness economy • <span className="font-semibold">7.6%</span> annual growth
+            Used by Nuforma, Equesoul & The Leisure Experts
           </div>
 
           {/* Main Headline - Clear, specific */}
