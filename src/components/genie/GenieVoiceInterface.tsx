@@ -213,9 +213,8 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       // IMPORTANT: gather ICE candidates. Some networks never flip to "complete",
       // so we resolve when we either (a) complete, (b) get at least 1 candidate,
       // or (c) hit a soft timeout and proceed with best-effort SDP.
+      let candidateCount = 0;
       await new Promise<void>((resolve) => {
-        let gotCandidate = false;
-
         const cleanup = () => {
           pc.removeEventListener("icegatheringstatechange", onStateChange);
           pc.removeEventListener("icecandidate", onIceCandidate);
@@ -233,13 +232,13 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
 
         const onIceCandidate = (ev: RTCPeerConnectionIceEvent) => {
           if (ev.candidate) {
-            gotCandidate = true;
-          } else {
-            // null candidate = end of candidates in many browsers
-            console.log("[Voice] ICE candidate gathering finished (null candidate)");
-            cleanup();
-            resolve();
+            candidateCount += 1;
+            return;
           }
+          // null candidate = end of candidates in many browsers
+          console.log("[Voice] ICE candidate gathering finished (null candidate)");
+          cleanup();
+          resolve();
         };
 
         pc.addEventListener("icegatheringstatechange", onStateChange);
@@ -247,23 +246,15 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
 
         // Soft timeout: if we got at least one candidate, proceed even if not "complete".
         const softTimeout = window.setTimeout(() => {
-          if (gotCandidate) {
+          if (candidateCount > 0) {
             console.warn("[Voice] ICE not complete but candidates found; proceeding.");
             cleanup();
             resolve();
           }
         }, 2000);
 
-        // Hard timeout: if no candidates, fail fast with a clear message.
+        // Hard timeout: proceed regardless; we'll validate candidateCount after.
         const hardTimeout = window.setTimeout(() => {
-          if (!gotCandidate) {
-            console.error("[Voice] ICE timed out with 0 candidates - likely network blocks WebRTC.");
-            cleanup();
-            // We can't reject from here (we used resolve-only promise), so mark state and resolve;
-            // connect() will detect missing candidates by checking stats later.
-            resolve();
-            return;
-          }
           console.warn("[Voice] ICE gathering timed out; proceeding with best-effort SDP.");
           cleanup();
           resolve();
@@ -276,17 +267,15 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
         }
       });
 
+      console.log("[Voice] Local ICE candidates gathered:", candidateCount);
+      if (candidateCount === 0) {
+        throw new Error(
+          "Voice can't connect on this network (ICE blocked). Try disabling VPN or switching network."
+        );
+      }
+
       const offerSdp = pc.localDescription?.sdp;
       if (!offerSdp) throw new Error("Missing local SDP offer");
-
-      // If we never gathered any ICE candidates, datachannel will never open.
-      // Fail with a clear message rather than silently "connecting" forever.
-      const stats = await pc.getStats();
-      const localCandidates = Array.from(stats.values()).filter((s) => s.type === "local-candidate");
-      console.log("[Voice] Local ICE candidates:", localCandidates.length);
-      if (localCandidates.length === 0) {
-        throw new Error("Voice can't connect on this network (no ICE candidates). Try a different network or disable VPN.");
-      }
 
       // Connect to OpenAI's Realtime API
       const baseUrl = "https://api.openai.com/v1/realtime";
