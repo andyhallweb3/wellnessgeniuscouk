@@ -9,6 +9,7 @@ import AssessmentIntro from "@/components/assessment/AssessmentIntro";
 import AssessmentQuestion from "@/components/assessment/AssessmentQuestion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { FREE_QUESTIONS, PILLARS, getScoreBand, calculatePillarScore } from "@/data/aiReadinessQuestions";
 
 export interface AssessmentAnswers {
   [key: string]: number;
@@ -23,125 +24,6 @@ export interface UserInfo {
   companySize: string;
   primaryGoal: string;
 }
-
-// Free assessment: 2 questions per section = 10 questions total
-const freeQuestions = [
-  // Data Maturity (2 questions)
-  {
-    id: "data_1",
-    pillar: "Data Maturity",
-    text: "We know where our critical customer data lives and who owns it.",
-    context: "AI is only as good as the data it learns from.",
-    examples: [
-      "Member data in CRM vs booking vs email systems",
-      "Named data owner responsible for quality",
-      "Clear understanding of what data you collect",
-    ],
-  },
-  {
-    id: "data_2",
-    pillar: "Data Maturity",
-    text: "Our core systems are integrated rather than siloed.",
-    context: "Disconnected systems make AI insights incomplete.",
-    examples: [
-      "Booking system talks to CRM automatically",
-      "Financial data syncs with member records",
-      "Single customer view across touchpoints",
-    ],
-  },
-  // Engagement (2 questions)
-  {
-    id: "engagement_1",
-    pillar: "Engagement",
-    text: "We track and measure customer engagement consistently.",
-    context: "You can't improve what you don't measure.",
-    examples: [
-      "Class attendance tracked weekly",
-      "App usage or session frequency monitored",
-      "Customer interaction logs stored systematically",
-    ],
-  },
-  {
-    id: "engagement_2",
-    pillar: "Engagement",
-    text: "We use engagement data to drive retention decisions.",
-    context: "Data should inform action, not just sit in reports.",
-    examples: [
-      "At-risk members identified and contacted",
-      "Engagement triggers personalised outreach",
-      "Churn prediction informs retention campaigns",
-    ],
-  },
-  // Monetisation (2 questions)
-  {
-    id: "monetisation_1",
-    pillar: "Monetisation",
-    text: "We have identified clear revenue opportunities from better data use.",
-    context: "AI should generate ROI, not just insights.",
-    examples: [
-      "Upsell opportunities identified from behaviour",
-      "Pricing optimisation based on demand patterns",
-      "Partner/sponsor revenue from audience data",
-    ],
-  },
-  {
-    id: "monetisation_2",
-    pillar: "Monetisation",
-    text: "We capture value from engagement (not just create it).",
-    context: "Engagement without monetisation is a cost centre.",
-    examples: [
-      "Premium tier with data-driven features",
-      "Personalised offers driving incremental revenue",
-      "B2B licensing of insights or methodology",
-    ],
-  },
-  // AI & Automation (2 questions)
-  {
-    id: "automation_1",
-    pillar: "AI & Automation",
-    text: "We have run at least one AI or automation pilot in the past 12 months.",
-    context: "Experience beats theory. Pilots build capability.",
-    examples: [
-      "Chatbot for customer enquiries",
-      "Automated email sequences",
-      "AI-powered scheduling or recommendations",
-    ],
-  },
-  {
-    id: "automation_2",
-    pillar: "AI & Automation",
-    text: "Leadership understands AI capabilities and realistic timelines.",
-    context: "Unrealistic expectations kill AI projects.",
-    examples: [
-      "Leaders know AI needs training data and time",
-      "Understanding AI augments rather than replaces",
-      "Awareness of typical 3-6 month value timelines",
-    ],
-  },
-  // Trust & Compliance (2 questions)
-  {
-    id: "trust_1",
-    pillar: "Trust & Compliance",
-    text: "We have documented policies for data privacy and GDPR compliance.",
-    context: "Trust is hard to rebuild. Clear policies protect everyone.",
-    examples: [
-      "Written data protection policy reviewed recently",
-      "Staff trained on GDPR requirements",
-      "Clear consent mechanisms in place",
-    ],
-  },
-  {
-    id: "trust_2",
-    pillar: "Trust & Compliance",
-    text: "We maintain human oversight for AI-assisted decisions.",
-    context: "AI should support decisions, not make them invisibly.",
-    examples: [
-      "Staff review AI recommendations before action",
-      "Escalation paths when AI makes errors",
-      "Regular audits of AI-driven outcomes",
-    ],
-  },
-];
 
 const AIReadinessAssessmentFree = () => {
   const navigate = useNavigate();
@@ -161,17 +43,8 @@ const AIReadinessAssessmentFree = () => {
     setAnswers((prev) => ({ ...prev, [questionId]: score }));
   };
 
-  const calculateSectionScore = (sectionPrefix: string) => {
-    const sectionQuestions = freeQuestions.filter(q => q.id.startsWith(sectionPrefix));
-    const total = sectionQuestions.reduce((sum, q) => sum + (answers[q.id] || 3), 0);
-    return Math.round((total / (sectionQuestions.length * 5)) * 100);
-  };
-
-  const getScoreBand = (score: number) => {
-    if (score < 40) return 'Not AI Ready';
-    if (score < 60) return 'Emerging';
-    if (score < 80) return 'Operational';
-    return 'Scalable';
+  const calculatePillarScoreLocal = (pillarName: string) => {
+    return calculatePillarScore(pillarName, answers, FREE_QUESTIONS);
   };
 
   const handleSubmit = async () => {
@@ -181,14 +54,17 @@ const AIReadinessAssessmentFree = () => {
     
     try {
       const totalScore = Object.values(answers).reduce((sum, val) => sum + val, 0);
-      const maxScore = freeQuestions.length * 5;
+      const maxScore = FREE_QUESTIONS.length * 5;
       const overallScore = Math.round((totalScore / maxScore) * 100);
       
-      const dataScore = calculateSectionScore('data');
-      const engagementScore = calculateSectionScore('engagement');
-      const monetisationScore = calculateSectionScore('monetisation');
-      const automationScore = calculateSectionScore('automation');
-      const trustScore = calculateSectionScore('trust');
+      // Calculate scores for each pillar
+      const transformationScore = calculatePillarScoreLocal("AI Transformation Readiness");
+      const architectureScore = calculatePillarScoreLocal("AI Architecture Confidence");
+      const governanceScore = calculatePillarScoreLocal("AI Governance Reality Check");
+      const valueScore = calculatePillarScoreLocal("AI Value Engine");
+      const operatingScore = calculatePillarScoreLocal("AI Operating Style");
+
+      const scoreBandResult = getScoreBand(overallScore);
 
       const { data, error } = await supabase.functions.invoke('manage-readiness-completions', {
         body: {
@@ -200,12 +76,12 @@ const AIReadinessAssessmentFree = () => {
           industry: userInfo.industry,
           companySize: userInfo.companySize,
           overallScore,
-          leadershipScore: automationScore, // Map to existing columns
-          dataScore,
-          peopleScore: engagementScore,
-          processScore: monetisationScore,
-          riskScore: trustScore,
-          scoreBand: getScoreBand(overallScore),
+          leadershipScore: transformationScore,
+          dataScore: architectureScore,
+          peopleScore: governanceScore,
+          processScore: valueScore,
+          riskScore: operatingScore,
+          scoreBand: scoreBandResult.label,
         },
       });
 
@@ -232,7 +108,7 @@ const AIReadinessAssessmentFree = () => {
   };
 
   const handleNext = () => {
-    if (currentQuestion < freeQuestions.length - 1) {
+    if (currentQuestion < FREE_QUESTIONS.length - 1) {
       setCurrentQuestion((prev) => prev + 1);
     } else {
       handleSubmit();
@@ -245,9 +121,9 @@ const AIReadinessAssessmentFree = () => {
     }
   };
 
-  const currentQuestionData = freeQuestions[currentQuestion];
+  const currentQuestionData = FREE_QUESTIONS[currentQuestion];
   const hasCurrentAnswer = answers[currentQuestionData?.id] !== undefined;
-  const progress = ((currentQuestion + 1) / freeQuestions.length) * 100;
+  const progress = ((currentQuestion + 1) / FREE_QUESTIONS.length) * 100;
 
   return (
     <div className="min-h-screen bg-background">
@@ -279,7 +155,7 @@ const AIReadinessAssessmentFree = () => {
               {/* Progress bar */}
               <div className="mb-8">
                 <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                  <span>Question {currentQuestion + 1} of {freeQuestions.length}</span>
+                  <span>Question {currentQuestion + 1} of {FREE_QUESTIONS.length}</span>
                   <span>{currentQuestionData.pillar}</span>
                 </div>
                 <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -316,7 +192,7 @@ const AIReadinessAssessmentFree = () => {
                       <span className="w-4 h-4 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin" />
                       Saving...
                     </>
-                  ) : currentQuestion === freeQuestions.length - 1 ? (
+                  ) : currentQuestion === FREE_QUESTIONS.length - 1 ? (
                     <>
                       See Results
                       <ArrowRight size={16} />
