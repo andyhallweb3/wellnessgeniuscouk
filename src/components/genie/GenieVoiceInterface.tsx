@@ -172,25 +172,62 @@ export default function GenieVoiceInterface({ memoryContext, onTranscript }: Gen
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // IMPORTANT: wait for ICE gathering so our SDP includes candidates
-      await new Promise<void>((resolve, reject) => {
-        if (pc.iceGatheringState === "complete") return resolve();
+      // IMPORTANT: gather ICE candidates. Some networks never flip to "complete",
+      // so we resolve when we either (a) complete, (b) get at least 1 candidate,
+      // or (c) hit a soft timeout and proceed with best-effort SDP.
+      await new Promise<void>((resolve) => {
+        let gotCandidate = false;
 
-        const timeout = window.setTimeout(() => {
+        const cleanup = () => {
           pc.removeEventListener("icegatheringstatechange", onStateChange);
-          reject(new Error("ICE gathering timed out"));
-        }, 8000);
+          pc.removeEventListener("icecandidate", onIceCandidate);
+          window.clearTimeout(softTimeout);
+          window.clearTimeout(hardTimeout);
+        };
 
         const onStateChange = () => {
           console.log("[Voice] ICE gathering state:", pc.iceGatheringState);
           if (pc.iceGatheringState === "complete") {
-            window.clearTimeout(timeout);
-            pc.removeEventListener("icegatheringstatechange", onStateChange);
+            cleanup();
+            resolve();
+          }
+        };
+
+        const onIceCandidate = (ev: RTCPeerConnectionIceEvent) => {
+          if (ev.candidate) {
+            gotCandidate = true;
+          } else {
+            // null candidate = end of candidates in many browsers
+            console.log("[Voice] ICE candidate gathering finished (null candidate)");
+            cleanup();
             resolve();
           }
         };
 
         pc.addEventListener("icegatheringstatechange", onStateChange);
+        pc.addEventListener("icecandidate", onIceCandidate);
+
+        // Soft timeout: if we got at least one candidate, proceed even if not "complete".
+        const softTimeout = window.setTimeout(() => {
+          if (gotCandidate) {
+            console.warn("[Voice] ICE not complete but candidates found; proceeding.");
+            cleanup();
+            resolve();
+          }
+        }, 1500);
+
+        // Hard timeout: proceed regardless (best effort) rather than failing the UX.
+        const hardTimeout = window.setTimeout(() => {
+          console.warn("[Voice] ICE gathering timed out; proceeding with best-effort SDP.");
+          cleanup();
+          resolve();
+        }, 8000);
+
+        // Immediate resolve if already complete.
+        if (pc.iceGatheringState === "complete") {
+          cleanup();
+          resolve();
+        }
       });
 
       const offerSdp = pc.localDescription?.sdp;
