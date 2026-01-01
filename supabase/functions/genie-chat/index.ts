@@ -801,17 +801,72 @@ Use conservative assumptions. Show your working.`,
     responseFormat: "structured",
   },
   board_mode: {
-    prompt: `MODE: Board / Investor
+    prompt: `MODE: Board-Ready
 
-Speak in CFO language. The user needs to present to sophisticated audiences.
+Switch to Board-Ready Mode. Assume the audience is time-poor and sceptical.
 
+Constraints:
+- No jargon unless essential
+- Every point must link to: Revenue, Cost, Risk, or Strategic position
 - Use conservative, defensible numbers
 - Anticipate challenges and objections
 - Frame negatives honestly but constructively
-- No spin, no excuses, no fluff
-- What will they be asked? Prepare them.
 
-Format for executive consumption.`,
+Structure:
+1. **Situation** — Current state in 2-3 sentences
+2. **Evidence** — Market or competitor proof points
+3. **Options** — With explicit trade-offs
+4. **Recommendation** — Clear position with reasoning
+
+Maximum clarity. Minimal words. Format for executive consumption.`,
+    responseFormat: "structured",
+  },
+  competitor_scan: {
+    prompt: `MODE: Competitor Scan
+
+Run a competitor and comparable analysis for the wellness industry relevant to this request.
+
+Steps:
+1. Identify 3–7 relevant competitors or comparables
+2. For each, summarise:
+   - What they are offering
+   - Who they are targeting
+   - Their apparent strengths
+   - Their blind spots or weaknesses
+
+Then answer:
+- **Who is winning** and why
+- **What most competitors are missing**
+- **Where differentiation is realistically possible**
+
+Focus on signal, not coverage.
+Ignore weak or irrelevant players.
+Reference specific companies by name where possible.`,
+    responseFormat: "structured",
+  },
+  weekly_briefing: {
+    prompt: `MODE: Weekly Market Intelligence Brief
+
+Generate a Weekly Wellness Industry Intelligence Brief.
+
+Scan for:
+- AI in wellness, fitness, health tech
+- Funding & M&A activity
+- New product launches
+- Regulatory or policy changes
+- Shifts in buyer behaviour
+
+For each development:
+- **What happened** — Factual summary
+- **Why it matters** — Commercial implication
+- **Who should care** — Founders, operators, or investors
+
+End with:
+- **3 implications** for operators
+- **3 risks** to watch
+- **3 opportunities** emerging
+
+Keep it concise. No filler. Focus on actionable intelligence.`,
     responseFormat: "structured",
   },
   weekly_review: {
