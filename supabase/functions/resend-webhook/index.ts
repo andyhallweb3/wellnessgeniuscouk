@@ -82,27 +82,76 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const email = event.data.to?.[0];
+    const resendEmailId = event.data.email_id;
+
+    // Find the most recent newsletter_send for this email
+    // Look up from newsletter_send_recipients to get the correct internal send_id
+    let internalSendId: string | null = null;
+    
+    if (email) {
+      const { data: recipientRecord } = await supabase
+        .from("newsletter_send_recipients")
+        .select("send_id")
+        .eq("email", email)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (recipientRecord) {
+        internalSendId = recipientRecord.send_id;
+        console.log(`Matched email ${email} to internal send_id ${internalSendId}`);
+      } else {
+        // Fallback: find most recent send
+        const { data: recentSend } = await supabase
+          .from("newsletter_sends")
+          .select("id")
+          .order("sent_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (recentSend) {
+          internalSendId = recentSend.id;
+          console.log(`No recipient match, using most recent send ${internalSendId}`);
+        }
+      }
+    }
+
+    // Helper to insert event and update metrics
+    const trackEvent = async (eventType: string, linkUrl?: string) => {
+      if (!email || !internalSendId) {
+        console.log(`Cannot track ${eventType}: missing email or send_id`);
+        return;
+      }
+
+      // Insert event
+      await supabase.from("newsletter_events").insert({
+        event_type: eventType,
+        subscriber_email: email,
+        send_id: internalSendId,
+        link_url: linkUrl || null,
+      });
+
+      // Update aggregated counts on newsletter_sends
+      await updateSendMetrics(supabase, internalSendId);
+    };
+
     // Handle different event types
     switch (event.type) {
       case "email.sent":
-        console.log(`Email sent: ${event.data.email_id} to ${event.data.to.join(", ")}`);
+        console.log(`Email sent: ${resendEmailId} to ${event.data.to.join(", ")}`);
         break;
         
       case "email.delivered":
-        console.log(`Email delivered: ${event.data.email_id}`);
-        if (event.data.to?.[0]) {
-          // Track delivery event
-          await supabase.from("newsletter_events").insert({
-            event_type: "delivered",
-            subscriber_email: event.data.to[0],
-            send_id: event.data.email_id,
-          }).select().maybeSingle();
+        console.log(`Email delivered: ${resendEmailId}`);
+        if (email) {
+          await trackEvent("delivered");
           
           // Get current subscriber to increment count
           const { data: subscriber } = await supabase
             .from("newsletter_subscribers")
             .select("delivery_count")
-            .eq("email", event.data.to[0])
+            .eq("email", email)
             .maybeSingle();
           
           // Update subscriber delivery tracking
@@ -112,55 +161,31 @@ Deno.serve(async (req) => {
               last_delivered_at: new Date().toISOString(),
               delivery_count: (subscriber?.delivery_count || 0) + 1
             })
-            .eq("email", event.data.to[0]);
+            .eq("email", email);
           
-          console.log(`Marked ${event.data.to[0]} as delivered`);
+          console.log(`Marked ${email} as delivered`);
         }
         break;
         
       case "email.opened":
-        console.log(`Email opened: ${event.data.email_id}`);
-        if (event.data.to?.[0]) {
-          await supabase.from("newsletter_events").insert({
-            event_type: "open",
-            subscriber_email: event.data.to[0],
-            send_id: event.data.email_id,
-          }).select().maybeSingle();
-        }
+        console.log(`Email opened: ${resendEmailId} by ${email}`);
+        await trackEvent("open");
         break;
         
       case "email.clicked":
-        console.log(`Email clicked: ${event.data.email_id}, link: ${event.data.click?.link}`);
-        if (event.data.to?.[0]) {
-          await supabase.from("newsletter_events").insert({
-            event_type: "click",
-            subscriber_email: event.data.to[0],
-            send_id: event.data.email_id,
-            link_url: event.data.click?.link,
-          }).select().maybeSingle();
-        }
+        console.log(`Email clicked: ${resendEmailId}, link: ${event.data.click?.link}`);
+        await trackEvent("click", event.data.click?.link);
         break;
         
       case "email.delivery_delayed":
-        console.log(`Email delivery delayed: ${event.data.email_id} to ${event.data.to?.join(", ")}`);
-        if (event.data.to?.[0]) {
-          await supabase.from("newsletter_events").insert({
-            event_type: "delivery_delayed",
-            subscriber_email: event.data.to[0],
-            send_id: event.data.email_id,
-          }).select().maybeSingle();
-        }
+        console.log(`Email delivery delayed: ${resendEmailId} to ${event.data.to?.join(", ")}`);
+        await trackEvent("delivery_delayed");
         break;
 
       case "email.bounced":
-        console.log(`Email bounced: ${event.data.email_id}, reason: ${event.data.bounce?.message}`);
-        if (event.data.to?.[0]) {
-          // Track the bounce event
-          await supabase.from("newsletter_events").insert({
-            event_type: "bounce",
-            subscriber_email: event.data.to[0],
-            send_id: event.data.email_id,
-          }).select().maybeSingle();
+        console.log(`Email bounced: ${resendEmailId}, reason: ${event.data.bounce?.message}`);
+        if (email) {
+          await trackEvent("bounce");
           
           // Mark subscriber as bounced and deactivate
           await supabase
@@ -171,31 +196,24 @@ Deno.serve(async (req) => {
               bounced_at: new Date().toISOString(),
               bounce_type: event.data.bounce?.message || 'unknown'
             })
-            .eq("email", event.data.to[0]);
+            .eq("email", email);
           
-          console.log(`Marked ${event.data.to[0]} as bounced`);
+          console.log(`Marked ${email} as bounced`);
         }
         break;
         
       case "email.complained":
-        console.log(`Email complaint: ${event.data.email_id}`);
-        if (event.data.to?.[0]) {
-          // Track the complaint event
-          await supabase.from("newsletter_events").insert({
-            event_type: "complaint",
-            subscriber_email: event.data.to[0],
-            send_id: event.data.email_id,
-          }).select().maybeSingle();
+        console.log(`Email complaint: ${resendEmailId}`);
+        if (email) {
+          await trackEvent("complaint");
           
           // Deactivate subscriber
           await supabase
             .from("newsletter_subscribers")
             .update({ is_active: false })
-            .eq("email", event.data.to[0]);
+            .eq("email", email);
         }
         break;
-
-      // Duplicate cases removed - handled above
         
       default:
         console.log(`Unhandled event type: ${event.type}`);
@@ -213,3 +231,43 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+// Update aggregated metrics on newsletter_sends
+async function updateSendMetrics(supabase: any, sendId: string) {
+  try {
+    // Count unique and total opens
+    const { data: openData } = await supabase
+      .from("newsletter_events")
+      .select("subscriber_email")
+      .eq("send_id", sendId)
+      .eq("event_type", "open");
+
+    const totalOpens = openData?.length || 0;
+    const uniqueOpens = new Set(openData?.map((e: any) => e.subscriber_email)).size;
+
+    // Count unique and total clicks
+    const { data: clickData } = await supabase
+      .from("newsletter_events")
+      .select("subscriber_email")
+      .eq("send_id", sendId)
+      .eq("event_type", "click");
+
+    const totalClicks = clickData?.length || 0;
+    const uniqueClicks = new Set(clickData?.map((e: any) => e.subscriber_email)).size;
+
+    // Update the newsletter_sends record
+    await supabase
+      .from("newsletter_sends")
+      .update({
+        unique_opens: uniqueOpens,
+        total_opens: totalOpens,
+        unique_clicks: uniqueClicks,
+        total_clicks: totalClicks,
+      })
+      .eq("id", sendId);
+
+    console.log(`Updated metrics for send ${sendId}: ${uniqueOpens} unique opens, ${uniqueClicks} unique clicks`);
+  } catch (error) {
+    console.error("Failed to update send metrics:", error);
+  }
+}
