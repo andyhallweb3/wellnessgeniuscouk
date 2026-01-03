@@ -1629,23 +1629,339 @@ export const generatePromptPack = (): jsPDF => {
     yPos += 27;
   });
 
-  // Continue with remaining pages...
-  // Page 13-20 would contain additional templates, case studies, etc.
-  // For brevity, adding placeholder pages
+  // Page 13 - C.L.E.A.R Foundation Prompt
+  doc.addPage();
+  addHeader(doc, 13, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT 1: C.L.E.A.R FOUNDATION", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("C.L.E.A.R Foundation Prompt", 20, 52);
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Root prompt that everything else inherits from", 20, 65);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 75, 180, 135, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("C – CONTEXT:", 22, 90);
+  doc.setTextColor(...BRAND.white);
+  const clearC = doc.splitTextToSize("You are supporting a wellness business operating in a trust-sensitive environment where behaviour change, retention, and long-term engagement matter more than short-term activity.", 165);
+  doc.text(clearC, 22, 100);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("L – LENS:", 22, 122);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Adopt a commercial and behavioural lens, not a motivational or therapeutic one.", 22, 132);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("E – EXPECTATION:", 22, 147);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Your role is to help leaders make better decisions, not feel more confident.", 22, 157);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("A – ASSUMPTIONS:", 22, 172);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Do not assume perfect data, unlimited resources, or user compliance.", 22, 182);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("R – RESPONSE FORMAT:", 22, 197);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Respond with: Key insight • Commercial implication • Risk or limitation • Recommended next action", 22, 207);
 
-  for (let i = 13; i <= 20; i++) {
-    doc.addPage();
-    addHeader(doc, i, totalPages);
-    doc.setFontSize(14);
+  // Page 14 - Wellness Commercial Analyst
+  doc.addPage();
+  addHeader(doc, 14, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT 2: CORE SYSTEM", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Wellness Commercial Analyst", 20, 52);
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Used as the 'brain' of tools, agents, or assessments", 20, 65);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 75, 180, 145, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("SYSTEM ROLE:", 22, 90);
+  doc.setTextColor(...BRAND.white);
+  const analystRole = doc.splitTextToSize("You are a commercial analyst specialising in wellness, fitness, and health-adjacent businesses.", 165);
+  doc.text(analystRole, 22, 100);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("OBJECTIVE:", 22, 118);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Help operators make better decisions about engagement, retention, monetisation, and risk.", 22, 128);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PRIORITIES (IN ORDER):", 22, 143);
+  doc.setTextColor(...BRAND.white);
+  doc.text("1. Retention and lifetime value", 30, 153);
+  doc.text("2. Decision clarity", 30, 163);
+  doc.text("3. Risk reduction (regulatory, trust, financial)", 30, 173);
+  doc.text("4. Sustainable monetisation", 30, 183);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("DEFAULT POSITION:", 22, 200);
+  doc.setTextColor(...BRAND.white);
+  const defaultPos = doc.splitTextToSize("If data quality or clarity is weak, recommend fixing foundations before scaling.", 165);
+  doc.text(defaultPos, 22, 210);
+
+  // Page 15 - AI Governance & Trust Guardrail
+  doc.addPage();
+  addHeader(doc, 15, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT 3: GOVERNANCE", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("AI Governance & Trust Guardrail", 20, 52);
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Assessing AI features for trust and regulatory risk", 20, 65);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 75, 180, 140, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("C – CONTEXT:", 22, 90);
+  doc.setTextColor(...BRAND.white);
+  doc.text("This AI feature will affect user behaviour in a wellness context.", 22, 100);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("L – LENS:", 22, 115);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Trust, consent, and reputational risk.", 22, 125);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("E – EXPECTATION:", 22, 140);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Stress-test trust before approval.", 22, 150);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("A – ASSUMPTIONS:", 22, 165);
+  doc.setTextColor(...BRAND.white);
+  const govAssump = doc.splitTextToSize("Assume public scrutiny. If a feature would be uncomfortable to explain to a regulator, customer, or journalist, flag it.", 165);
+  doc.text(govAssump, 22, 175);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("R – RESPONSE FORMAT:", 22, 195);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Answer: What could go wrong? • Who would object? • How to redesign safely", 22, 205);
+
+  // Page 16 - Build vs Buy Decision
+  doc.addPage();
+  addHeader(doc, 16, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT 4: DECISION", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Build vs Buy Decision", 20, 52);
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Deciding whether to build, partner, or defer", 20, 65);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 75, 180, 140, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("C – CONTEXT:", 22, 90);
+  doc.setTextColor(...BRAND.white);
+  doc.text("A wellness organisation considering AI capability.", 22, 100);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("L – LENS:", 22, 115);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Board-level risk and return.", 22, 125);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("E – EXPECTATION:", 22, 140);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Recommend a clear path with reasoning.", 22, 150);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("A – ASSUMPTIONS:", 22, 165);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Assume limited internal AI capability unless proven otherwise.", 22, 175);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("R – RESPONSE FORMAT:", 22, 190);
+  doc.setTextColor(...BRAND.white);
+  const buildBuyFormat = doc.splitTextToSize("Return: Recommendation (Build/Buy/Partner/Wait) • Why this option fits now • Risks of other options • Conditions to revisit", 165);
+  doc.text(buildBuyFormat, 22, 200);
+
+  // Page 17 - Intervention Ladder
+  doc.addPage();
+  addHeader(doc, 17, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT 5: INTERVENTION", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Intervention Ladder (Margin-Safe)", 20, 52);
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Choosing the right intervention without burning margin", 20, 65);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 75, 180, 150, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("C – CONTEXT:", 22, 90);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Users are disengaging from a wellness product.", 22, 100);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("L – LENS:", 22, 112);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Margin protection and trust preservation.", 22, 122);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("RANKED LADDER:", 22, 137);
+  doc.setTextColor(...BRAND.white);
+  doc.text("1. Timing adjustment (Cost: £0)", 30, 149);
+  doc.text("2. Relevance/content shift (Cost: £0)", 30, 159);
+  doc.text("3. Goal reframing (Cost: £0)", 30, 169);
+  doc.text("4. Social proof (Cost: £0)", 30, 179);
+  doc.text("5. Human touch (Cost: Low)", 30, 189);
+  doc.text("6. Incentive (Cost: High - only if justified)", 30, 199);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Include: Which rung is appropriate now and why.", 22, 217);
+
+  // Page 18 - CFO Translation Engine
+  doc.addPage();
+  addHeader(doc, 18, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT 6: COMMERCIAL", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("CFO Translation Engine", 20, 52);
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Explaining engagement to finance audiences", 20, 65);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 75, 180, 140, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("C – CONTEXT:", 22, 90);
+  doc.setTextColor(...BRAND.white);
+  doc.text("We need to explain engagement impact to a finance audience.", 22, 100);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("L – LENS:", 22, 115);
+  doc.setTextColor(...BRAND.white);
+  doc.text("CFO / commercial director perspective.", 22, 125);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("E – EXPECTATION:", 22, 140);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Translate behaviour into financial implications.", 22, 150);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("A – ASSUMPTIONS:", 22, 165);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Use conservative assumptions. No hockey-stick growth.", 22, 175);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("R – RESPONSE FORMAT:", 22, 190);
+  doc.setTextColor(...BRAND.white);
+  const cfoFormat = doc.splitTextToSize("Return: Engagement behaviour • Observed change • Retention/LTV sensitivity • Revenue impact (range) • Confidence rating", 165);
+  doc.text(cfoFormat, 22, 200);
+
+  // Page 19 - 90-Day Planning Engine
+  doc.addPage();
+  addHeader(doc, 19, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT 7: PLANNING", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("90-Day Planning Engine", 20, 52);
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Creating a realistic 90-day AI activation plan", 20, 65);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 75, 180, 150, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("ASSUMPTIONS:", 22, 90);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Data is messy • Teams are stretched • Trust is fragile", 22, 100);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("MONTH 1 – FOUNDATIONS:", 22, 118);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Objectives • Data clean-up actions • Stop rules", 30, 130);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("MONTH 2 – ENGAGEMENT & SEGMENTATION:", 22, 148);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Behaviour signals to track • Journey hypotheses • Validation criteria", 30, 160);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("MONTH 3 – MONETISATION EXPERIMENTS:", 22, 178);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Low-risk tests • Success thresholds • What must NOT be automated yet", 30, 190);
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(15, 210, 180, 15, 2, 2, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("LENS: Operate as a cautious transformation lead accountable to a board.", 22, 220);
+
+  // Page 20 - Red-Flag Register
+  doc.addPage();
+  addHeader(doc, 20, totalPages);
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT 8: GOVERNANCE", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Red-Flag Register", 20, 52);
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Tracking and surfacing failure patterns", 20, 65);
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Identify which of these failure patterns are present:", 20, 82);
+  
+  const redFlags = [
+    { flag: "1. AI before decisions", desc: "Implementing AI before clarifying what decisions need support" },
+    { flag: "2. Weak consent models", desc: "Collecting data without clear, specific consent" },
+    { flag: "3. Scaling before trust", desc: "Rolling out widely before validating in controlled tests" },
+    { flag: "4. Vanity over value", desc: "Measuring engagement without commercial attribution" },
+    { flag: "5. Speed over governance", desc: "Moving fast without documenting decisions and risks" }
+  ];
+  
+  yPos = 95;
+  redFlags.forEach(rf => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos, 180, 28, 3, 3, "F");
+    doc.setFontSize(10);
     doc.setTextColor(...BRAND.teal);
-    doc.text(`SECTION ${i - 5}`, 20, 35);
-    doc.setFontSize(24);
-    doc.setTextColor(...BRAND.white);
-    doc.text("Additional Content", 20, 52);
-    doc.setFontSize(11);
+    doc.text(rf.flag, 22, yPos + 12);
+    doc.setFontSize(9);
     doc.setTextColor(...BRAND.muted);
-    doc.text("Further templates and guidance...", 20, 72);
-  }
+    doc.text(rf.desc, 22, yPos + 22);
+    yPos += 32;
+  });
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(15, yPos + 5, 180, 20, 2, 2, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("For each flag present: Explain why this is a risk and what to do about it.", 22, yPos + 18);
 
   // What Next page
   addWhatNextSection(doc, totalPages - 1, totalPages);
