@@ -66,8 +66,8 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { productId, email } = await req.json();
-    logStep("Request body parsed", { productId, email });
+    const { productId, email, couponCode } = await req.json();
+    logStep("Request body parsed", { productId, email, couponCode: couponCode ? "provided" : "none" });
 
     if (!productId) {
       throw new Error("Product ID is required");
@@ -153,8 +153,8 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://www.wellnessgenius.co.uk";
 
-    // Create checkout session for one-time payment
-    const session = await stripe.checkout.sessions.create({
+    // Build checkout session options
+    const sessionOptions: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
       line_items: [
@@ -169,7 +169,26 @@ serve(async (req) => {
       metadata: {
         productId,
       },
-    });
+      allow_promotion_codes: true, // Allow users to enter promo codes at checkout
+    };
+
+    // If a coupon code is provided, apply it directly
+    if (couponCode) {
+      try {
+        // Validate the coupon exists
+        const coupon = await stripe.coupons.retrieve(couponCode);
+        if (coupon && coupon.valid) {
+          sessionOptions.discounts = [{ coupon: couponCode }];
+          logStep("Coupon applied", { couponCode });
+        }
+      } catch (couponError) {
+        logStep("Coupon validation failed, continuing without discount", { couponCode, error: String(couponError) });
+        // Don't fail the checkout, just continue without the coupon
+      }
+    }
+
+    // Create checkout session for one-time payment
+    const session = await stripe.checkout.sessions.create(sessionOptions);
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 

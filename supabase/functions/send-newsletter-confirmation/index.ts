@@ -62,32 +62,54 @@ Deno.serve(async (req) => {
               <p style="margin: 0 0 20px 0; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
                 Thanks for subscribing to the Wellness Genius newsletter. You'll now receive curated insights on AI, automation, and growth strategies for wellness, fitness, and hospitality brands.
               </p>
-              
-              <p style="margin: 0 0 30px 0; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                <strong style="color: #ffffff;">What to expect:</strong>
+
+              <!-- Free Gift Section -->
+              <div style="background: linear-gradient(135deg, #14b8a6, #0d9488); border-radius: 12px; padding: 24px; margin: 24px 0;">
+                <h3 style="margin: 0 0 12px 0; color: #ffffff; font-size: 18px; font-weight: 600;">
+                  🎁 Your Free Gift: AI Prompt Pack
+                </h3>
+                <p style="margin: 0 0 16px 0; color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6;">
+                  As a thank you for subscribing, here's a 100% discount code for our Wellness AI Prompt Pack (worth £19.99):
+                </p>
+                <div style="background-color: rgba(0,0,0,0.3); border-radius: 8px; padding: 16px; text-align: center;">
+                  <code style="font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: 2px;">LzcFF5Ii</code>
+                </div>
+              </div>
+
+              <!-- How to Download Steps -->
+              <div style="background-color: #1a1a1a; border-radius: 12px; padding: 24px; margin: 24px 0; border: 1px solid #333;">
+                <h3 style="margin: 0 0 16px 0; color: #ffffff; font-size: 16px; font-weight: 600;">
+                  📥 How to Download Your Free Guide:
+                </h3>
+                <ol style="margin: 0; padding-left: 20px; color: #a1a1aa; font-size: 14px; line-height: 2;">
+                  <li>Click the button below to go to Products</li>
+                  <li>Find "Wellness AI Prompt Pack" and click <strong style="color: #ffffff;">Buy Now</strong></li>
+                  <li>On checkout, enter the promo code: <strong style="color: #14b8a6;">LzcFF5Ii</strong></li>
+                  <li>Complete checkout (£0.00) and download your PDF!</li>
+                </ol>
+              </div>
+
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #14b8a6, #0d9488); border-radius: 8px;">
+                    <a href="https://www.wellnessgenius.co.uk/products" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">
+                      Get Your Free AI Prompt Pack →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 30px 0 0 0; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">What to expect from our newsletter:</strong>
               </p>
               
-              <ul style="margin: 0 0 30px 0; padding-left: 20px; color: #a1a1aa; font-size: 16px; line-height: 1.8;">
+              <ul style="margin: 16px 0 0 0; padding-left: 20px; color: #a1a1aa; font-size: 16px; line-height: 1.8;">
                 <li>Weekly industry news and trends</li>
                 <li>AI and automation insights for operators</li>
                 <li>Practical strategies you can implement</li>
                 <li>Early access to resources and tools</li>
               </ul>
-              
-              <p style="margin: 0 0 30px 0; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                In the meantime, check out our latest insights and resources:
-              </p>
-              
-              <!-- CTA Button -->
-              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
-                <tr>
-                  <td style="background: linear-gradient(135deg, #14b8a6, #0d9488); border-radius: 8px;">
-                    <a href="https://wellnessgenius.co.uk/insights" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">
-                      Read Our Insights →
-                    </a>
-                  </td>
-                </tr>
-              </table>
             </td>
           </tr>
           
