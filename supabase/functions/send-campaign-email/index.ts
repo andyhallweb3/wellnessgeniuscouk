@@ -131,8 +131,8 @@ Deno.serve(async (req) => {
     const filterMode = onlyDelivered ? "confirmed deliveries only" : "all active";
     console.log(`Sending campaign to ${subscribers.length} subscribers (${filterMode})`);
 
-    // Send emails in batches of 50 to avoid rate limits
-    const batchSize = 50;
+    // Send emails in batches of 49 (Resend limit is 50 total recipients including the "to" address)
+    const batchSize = 49;
     const emails = subscribers.map((s) => s.email);
     let successCount = 0;
     let errorCount = 0;
