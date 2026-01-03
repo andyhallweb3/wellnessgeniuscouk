@@ -13,9 +13,18 @@ import {
   Users,
   Mail,
   MousePointer,
-  TrendingUp
+  TrendingUp,
+  RotateCcw,
+  ChevronDown,
+  ChevronUp,
+  XCircle
 } from "lucide-react";
 import EmailDeliveryMetrics from "@/components/admin/EmailDeliveryMetrics";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface NewsletterSend {
   id: string;
@@ -27,6 +36,15 @@ interface NewsletterSend {
   total_opens: number;
   unique_clicks: number;
   total_clicks: number;
+  error_message?: string | null;
+}
+
+interface RecipientError {
+  id: string;
+  email: string;
+  status: string;
+  error_message: string | null;
+  sent_at: string | null;
 }
 
 interface SendHistoryProps {
@@ -38,6 +56,10 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
   const [recentSends, setRecentSends] = useState<NewsletterSend[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedSendId, setSelectedSendId] = useState<string | null>(null);
+  const [expandedErrorId, setExpandedErrorId] = useState<string | null>(null);
+  const [recipientErrors, setRecipientErrors] = useState<Record<string, RecipientError[]>>({});
+  const [loadingErrors, setLoadingErrors] = useState<Record<string, boolean>>({});
+  const [retrying, setRetrying] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRecentSends();
@@ -60,7 +82,30 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
     }
   };
 
+  const fetchRecipientErrors = async (sendId: string) => {
+    if (recipientErrors[sendId] || loadingErrors[sendId]) return;
+    
+    setLoadingErrors(prev => ({ ...prev, [sendId]: true }));
+    try {
+      const { data, error } = await supabase
+        .from("newsletter_send_recipients")
+        .select("id, email, status, error_message, sent_at")
+        .eq("send_id", sendId)
+        .eq("status", "failed")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setRecipientErrors(prev => ({ ...prev, [sendId]: data || [] }));
+    } catch (error) {
+      console.error("Failed to fetch recipient errors:", error);
+    } finally {
+      setLoadingErrors(prev => ({ ...prev, [sendId]: false }));
+    }
+  };
+
   const resumeSend = async (sendId: string) => {
+    setRetrying(sendId);
     try {
       const { data, error } = await supabase.functions.invoke("newsletter-run", {
         body: { action: "resume", sendId },
@@ -71,17 +116,19 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
       if (data?.error) throw new Error(data.error);
 
       toast({
-        title: "Resend started",
-        description: "Resuming delivery to unsent recipients.",
+        title: "Retry started",
+        description: "Resuming delivery to failed/pending recipients.",
       });
 
       fetchRecentSends();
     } catch (error) {
       toast({
-        title: "Resume failed",
-        description: error instanceof Error ? error.message : "Failed to resume send",
+        title: "Retry failed",
+        description: error instanceof Error ? error.message : "Failed to retry send",
         variant: "destructive",
       });
+    } finally {
+      setRetrying(null);
     }
   };
 
@@ -137,7 +184,7 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
       case "failed":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-red-500/10 text-red-400">
-            <AlertCircle className="h-3 w-3" /> Failed
+            <XCircle className="h-3 w-3" /> Failed
           </span>
         );
       default:
@@ -146,6 +193,15 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
             {status}
           </span>
         );
+    }
+  };
+
+  const toggleErrorExpand = (sendId: string) => {
+    if (expandedErrorId === sendId) {
+      setExpandedErrorId(null);
+    } else {
+      setExpandedErrorId(sendId);
+      fetchRecipientErrors(sendId);
     }
   };
 
@@ -159,6 +215,7 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
         return sum;
       }, 0) / recentSends.filter(s => s.unique_opens !== null).length) || 0
     : 0;
+  const failedCount = recentSends.filter(s => s.status === "failed" || s.status === "partial").length;
 
   return (
     <div className="space-y-6">
@@ -197,11 +254,11 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <TrendingUp className="h-4 w-4" />
-              <span className="text-sm">Recent Status</span>
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">Failed/Partial</span>
             </div>
-            <p className="text-2xl font-bold">
-              {recentSends[0] ? getStatusBadge(recentSends[0].status) : "-"}
+            <p className={`text-2xl font-bold ${failedCount > 0 ? "text-destructive" : ""}`}>
+              {failedCount}
             </p>
           </CardContent>
         </Card>
@@ -241,8 +298,8 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
                   className="p-4 rounded-lg border hover:border-muted-foreground/50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {getStatusBadge(send.status)}
                         <span className="text-sm text-muted-foreground">
                           {formatDate(send.sent_at)}
@@ -251,6 +308,17 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
                       <p className="text-sm">
                         {send.article_count} articles to {send.recipient_count} recipients
                       </p>
+                      
+                      {/* Error message display */}
+                      {send.error_message && (
+                        <div className="mt-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                          <p className="text-sm text-destructive font-medium flex items-center gap-2">
+                            <XCircle className="h-4 w-4 flex-shrink-0" />
+                            <span className="break-all">{send.error_message}</span>
+                          </p>
+                        </div>
+                      )}
+                      
                       {(send.unique_opens || send.unique_clicks) && (
                         <div className="flex gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
@@ -264,14 +332,21 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      {send.status === "partial" && (
+                    <div className="flex gap-2 flex-wrap">
+                      {(send.status === "failed" || send.status === "partial") && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => resumeSend(send.id)}
+                          disabled={retrying === send.id}
+                          className="gap-1"
                         >
-                          Resume
+                          {retrying === send.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RotateCcw className="h-3 w-3" />
+                          )}
+                          Retry
                         </Button>
                       )}
                       {send.status === "sending" && (
@@ -292,6 +367,60 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Expandable recipient errors for failed/partial sends */}
+                  {(send.status === "failed" || send.status === "partial") && (
+                    <Collapsible 
+                      open={expandedErrorId === send.id}
+                      onOpenChange={() => toggleErrorExpand(send.id)}
+                      className="mt-3"
+                    >
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+                          {expandedErrorId === send.id ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          )}
+                          View recipient errors
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2">
+                        {loadingErrors[send.id] ? (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground p-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading errors...
+                          </div>
+                        ) : recipientErrors[send.id]?.length === 0 ? (
+                          <p className="text-sm text-muted-foreground p-2">
+                            No per-recipient errors recorded
+                          </p>
+                        ) : (
+                          <div className="max-h-48 overflow-y-auto rounded-md border bg-muted/30">
+                            <table className="w-full text-sm">
+                              <thead className="sticky top-0 bg-muted">
+                                <tr>
+                                  <th className="text-left p-2 font-medium">Email</th>
+                                  <th className="text-left p-2 font-medium">Error</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {recipientErrors[send.id]?.map((r) => (
+                                  <tr key={r.id} className="border-t">
+                                    <td className="p-2 font-mono text-xs">{r.email}</td>
+                                    <td className="p-2 text-destructive text-xs">
+                                      {r.error_message || "Unknown error"}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+
                   {selectedSendId === send.id && (
                     <div className="mt-4 pt-4 border-t">
                       <EmailDeliveryMetrics getAuthHeaders={getAuthHeaders} />
