@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
@@ -9,8 +10,9 @@ const emailSchema = z.string().trim().email({ message: "Please enter a valid ema
 const RATE_LIMIT_KEY = 'newsletter_last_attempt';
 const RATE_LIMIT_MS = 60000; // 1 minute between attempts
 
-export const useNewsletter = () => {
+export const useNewsletter = (redirectOnSuccess = false) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,11 +78,15 @@ export const useNewsletter = () => {
         }
       }
       
-      // Always show same message regardless of whether email was new or existing
-      toast({
-        title: "You're on the list!",
-        description: "You'll receive insights on AI and automation for wellness brands.",
-      });
+      // Redirect or show toast based on configuration
+      if (redirectOnSuccess) {
+        navigate("/newsletter/thank-you");
+      } else {
+        toast({
+          title: "You're on the list!",
+          description: "You'll receive insights on AI and automation for wellness brands.",
+        });
+      }
       setEmail("");
     } catch (error) {
       logger.error("Newsletter subscription error:", error);

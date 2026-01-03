@@ -51,6 +51,7 @@ import PrivacyReadinessAssessment from "./pages/PrivacyReadinessAssessment";
 import PrivacyReadinessResults from "./pages/PrivacyReadinessResults";
 import NotFound from "./pages/NotFound";
 import NewsletterSignup from "./pages/NewsletterSignup";
+import NewsletterThankYou from "./pages/NewsletterThankYou";
 import FounderToday from "./pages/founder/FounderToday";
 import BusinessHealth from "./pages/founder/BusinessHealth";
 import GrowthLevers from "./pages/founder/GrowthLevers";
@@ -114,6 +115,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/subscribe" element={<NewsletterSignup />} />
             <Route path="/newsletter" element={<NewsletterSignup />} />
+            <Route path="/newsletter/thank-you" element={<NewsletterThankYou />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />

@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const NewsletterSignup = () => {
-  const { email, setEmail, isSubmitting, subscribe } = useNewsletter();
+  const { email, setEmail, isSubmitting, subscribe } = useNewsletter(true); // Enable redirect to thank you page
 
   // Fetch subscriber count (returns count from edge function for privacy)
   const { data: subscriberCount } = useQuery({
