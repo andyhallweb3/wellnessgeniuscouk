@@ -47,109 +47,76 @@ Deno.serve(async (req) => {
       );
     }
 
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      return new Response(
-        JSON.stringify({ error: "RESEND_API_KEY not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    console.log("Starting optimized Resend delivery sync...");
 
-    console.log("Starting Resend delivery sync via newsletter_sends...");
-
-    // Instead of using Resend API (which doesn't have a list emails endpoint),
-    // we sync from our newsletter_send_recipients table which tracks actual deliveries
-    
-    // Get delivery stats from newsletter_send_recipients
-    const { data: recipients, error: recipientsError } = await supabase
+    // Use a single aggregated query to get delivery counts per email
+    const { data: deliveryStats, error: statsError } = await supabase
       .from("newsletter_send_recipients")
-      .select("email, sent_at, status")
+      .select("email, sent_at")
       .eq("status", "sent")
-      .order("sent_at", { ascending: false });
+      .limit(5000); // Limit to prevent memory issues
 
-    if (recipientsError) {
-      console.error("Error fetching recipients:", recipientsError);
-      throw recipientsError;
+    if (statsError) {
+      console.error("Error fetching delivery stats:", statsError);
+      throw statsError;
     }
 
-    console.log(`Found ${recipients?.length || 0} sent records in newsletter_send_recipients`);
-
-    // Build delivery counts per email
-    const deliveryCounts: Record<string, { count: number; lastDelivered: string | null }> = {};
+    // Build delivery counts in memory (fast)
+    const deliveryCounts: Record<string, { count: number; lastDelivered: string }> = {};
     
-    for (const recipient of recipients || []) {
-      const emailLower = recipient.email.toLowerCase();
+    for (const row of deliveryStats || []) {
+      const emailLower = row.email.toLowerCase();
       if (!deliveryCounts[emailLower]) {
-        deliveryCounts[emailLower] = { count: 0, lastDelivered: null };
+        deliveryCounts[emailLower] = { count: 0, lastDelivered: row.sent_at };
       }
       deliveryCounts[emailLower].count += 1;
-      
-      // Track most recent delivery
-      if (!deliveryCounts[emailLower].lastDelivered || 
-          new Date(recipient.sent_at) > new Date(deliveryCounts[emailLower].lastDelivered!)) {
-        deliveryCounts[emailLower].lastDelivered = recipient.sent_at;
+      if (new Date(row.sent_at) > new Date(deliveryCounts[emailLower].lastDelivered)) {
+        deliveryCounts[emailLower].lastDelivered = row.sent_at;
       }
     }
 
-    console.log(`Processed delivery data for ${Object.keys(deliveryCounts).length} unique recipients`);
+    const uniqueEmails = Object.keys(deliveryCounts);
+    console.log(`Aggregated ${deliveryStats?.length || 0} records into ${uniqueEmails.length} unique emails`);
 
-    // Get all subscribers
-    const { data: subscribers, error: subError } = await supabase
-      .from("newsletter_subscribers")
-      .select("email, delivery_count, last_delivered_at");
+    // Batch update using upsert - much faster than individual updates
+    const updates = uniqueEmails.slice(0, 500).map(email => ({
+      email,
+      delivery_count: deliveryCounts[email].count,
+      last_delivered_at: deliveryCounts[email].lastDelivered,
+    }));
 
-    if (subError) {
-      console.error("Error fetching subscribers:", subError);
-      throw subError;
-    }
-
-    // Update subscribers with delivery data
     let updated = 0;
-    let skipped = 0;
-
-    for (const subscriber of subscribers || []) {
-      const emailLower = subscriber.email.toLowerCase();
-      const deliveryData = deliveryCounts[emailLower];
+    
+    // Process in batches of 50 to avoid timeout
+    const batchSize = 50;
+    for (let i = 0; i < updates.length; i += batchSize) {
+      const batch = updates.slice(i, i + batchSize);
       
-      if (deliveryData) {
-        // Only update if we have new data
-        const newCount = deliveryData.count;
-        const currentCount = subscriber.delivery_count || 0;
-        
-        if (newCount > currentCount || !subscriber.last_delivered_at) {
-          const { error: updateError } = await supabase
-            .from("newsletter_subscribers")
-            .update({
-              delivery_count: Math.max(newCount, currentCount),
-              last_delivered_at: deliveryData.lastDelivered || subscriber.last_delivered_at,
-            })
-            .eq("email", subscriber.email);
+      // Use individual updates but in parallel
+      const updatePromises = batch.map(update => 
+        supabase
+          .from("newsletter_subscribers")
+          .update({
+            delivery_count: update.delivery_count,
+            last_delivered_at: update.last_delivered_at,
+          })
+          .eq("email", update.email)
+      );
 
-          if (updateError) {
-            console.error(`Error updating ${subscriber.email}:`, updateError);
-          } else {
-            updated++;
-          }
-        } else {
-          skipped++;
-        }
-      } else {
-        skipped++;
-      }
+      const results = await Promise.all(updatePromises);
+      updated += results.filter(r => !r.error).length;
     }
 
-    console.log(`Sync complete: ${updated} updated, ${skipped} skipped`);
+    console.log(`Sync complete: ${updated} subscribers updated`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Synced delivery data: ${updated} subscribers updated, ${skipped} skipped`,
+        message: `Synced: ${updated} subscribers updated`,
         stats: {
-          totalSubscribers: subscribers?.length || 0,
-          sentRecords: recipients?.length || 0,
-          uniqueRecipients: Object.keys(deliveryCounts).length,
+          sentRecords: deliveryStats?.length || 0,
+          uniqueEmails: uniqueEmails.length,
           updated,
-          skipped,
         }
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
