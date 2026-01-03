@@ -79,22 +79,24 @@ Deno.serve(async (req) => {
               <!-- How to Download Steps -->
               <div style="background-color: #1a1a1a; border-radius: 12px; padding: 24px; margin: 24px 0; border: 1px solid #333;">
                 <h3 style="margin: 0 0 16px 0; color: #ffffff; font-size: 16px; font-weight: 600;">
-                  📥 How to Download Your Free Guide:
+                  📥 How to Claim Your Free Guide:
                 </h3>
                 <ol style="margin: 0; padding-left: 20px; color: #a1a1aa; font-size: 14px; line-height: 2;">
-                  <li>Click the button below to go to Products</li>
-                  <li>Find "Wellness AI Prompt Pack" and click <strong style="color: #ffffff;">Buy Now</strong></li>
-                  <li>On checkout, enter the promo code: <strong style="color: #14b8a6;">LzcFF5Ii</strong></li>
-                  <li>Complete checkout (£0.00) and download your PDF!</li>
+                  <li>Click the button below to create your free account</li>
+                  <li>Sign up using this email address</li>
+                  <li>Your AI Prompt Pack will be waiting in your Downloads Library!</li>
                 </ol>
+                <p style="margin: 16px 0 0 0; color: #71717a; font-size: 13px;">
+                  💡 Your promo code <strong style="color: #14b8a6;">LzcFF5Ii</strong> is linked to your email - no need to enter it manually.
+                </p>
               </div>
 
               <!-- CTA Button -->
               <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
                 <tr>
                   <td style="background: linear-gradient(135deg, #14b8a6, #0d9488); border-radius: 8px;">
-                    <a href="https://www.wellnessgenius.co.uk/products" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">
-                      Get Your Free AI Prompt Pack →
+                    <a href="https://www.wellnessgenius.co.uk/auth?signup=true" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">
+                      Create Account & Get Your Guide →
                     </a>
                   </td>
                 </tr>
