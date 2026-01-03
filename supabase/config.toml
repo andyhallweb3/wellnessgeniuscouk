@@ -1,5 +1,8 @@
 project_id = "hiayegpvrsxhhemyxghz"
 
+[functions.send-campaign-email]
+verify_jwt = false
+
 [functions.summarize-session]
 verify_jwt = false
 

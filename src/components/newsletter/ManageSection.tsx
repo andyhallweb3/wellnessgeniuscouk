@@ -8,11 +8,13 @@ import {
   Shield, 
   Settings,
   LogOut,
-  Sparkles
+  Sparkles,
+  Mail
 } from "lucide-react";
 import { SubscriberManager } from "./SubscriberManager";
 import { BlogPostManager } from "./BlogPostManager";
 import { AdminManager } from "./AdminManager";
+import { EmailCampaigns } from "./EmailCampaigns";
 import AIArticleGenerator from "@/components/admin/AIArticleGenerator";
 
 interface ManageSectionProps {
@@ -39,8 +41,12 @@ export const ManageSection = ({ getAuthHeaders, onLogout }: ManageSectionProps) 
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="subscribers">
-            <TabsList className="mb-6">
+          <Tabs defaultValue="campaigns">
+            <TabsList className="mb-6 flex-wrap">
+              <TabsTrigger value="campaigns" className="gap-2">
+                <Mail className="h-4 w-4" />
+                Email Campaigns
+              </TabsTrigger>
               <TabsTrigger value="subscribers" className="gap-2">
                 <Users className="h-4 w-4" />
                 Subscribers
@@ -58,6 +64,10 @@ export const ManageSection = ({ getAuthHeaders, onLogout }: ManageSectionProps) 
                 Admins
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="campaigns">
+              <EmailCampaigns getAuthHeaders={getAuthHeaders} />
+            </TabsContent>
 
             <TabsContent value="subscribers">
               <SubscriberManager getAuthHeaders={getAuthHeaders} />
