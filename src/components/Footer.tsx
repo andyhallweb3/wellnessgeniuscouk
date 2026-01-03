@@ -116,49 +116,24 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Links */}
+            {/* Services */}
             <div>
               <h3 className="font-medium mb-4">Services</h3>
               <ul className="space-y-3 text-sm text-primary-foreground/70">
                 <li>
-                  <a href="#services" className="hover:text-primary-foreground transition-colors">
-                    AI Agent Starter
-                  </a>
-                </li>
-                <li>
-                  <a href="#services" className="hover:text-primary-foreground transition-colors">
-                    Growth Accelerator
-                  </a>
-                </li>
-                <li>
-                  <a href="#services" className="hover:text-primary-foreground transition-colors">
-                    Enterprise Partnership
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-4">Resources</h3>
-              <ul className="space-y-3 text-sm text-primary-foreground/70">
-                <li>
-                  <Link to="/products" className="hover:text-primary-foreground transition-colors">
-                    Products
+                  <Link to="/services" className="hover:text-primary-foreground transition-colors">
+                    AI Consulting & Builds
                   </Link>
                 </li>
                 <li>
-                  <Link to="/bundles" className="hover:text-primary-foreground transition-colors">
-                    Bundles
+                  <Link to="/software" className="hover:text-primary-foreground transition-colors">
+                    Custom AI Agents
                   </Link>
                 </li>
                 <li>
-                  <Link to="/insights" className="hover:text-primary-foreground transition-colors">
-                    Insights
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/news" className="hover:text-primary-foreground transition-colors">
-                    Latest News
+                  <Link to="/ai-advisor" className="hover:text-primary-foreground transition-colors flex items-center gap-1.5">
+                    <Bot size={14} />
+                    AI Advisor
                   </Link>
                 </li>
                 <li>
@@ -166,9 +141,36 @@ const Footer = () => {
                     AI Readiness Assessment
                   </Link>
                 </li>
+              </ul>
+            </div>
+
+            {/* Products & Resources */}
+            <div>
+              <h3 className="font-medium mb-4">Products & Resources</h3>
+              <ul className="space-y-3 text-sm text-primary-foreground/70">
                 <li>
-                  <Link to="/roadmap" className="hover:text-primary-foreground transition-colors">
-                    Roadmap & Feedback
+                  <Link to="/products" className="hover:text-accent transition-colors font-medium">
+                    Free AI Prompt Guide
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/products" className="hover:text-primary-foreground transition-colors">
+                    Playbooks & Templates
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/bundles" className="hover:text-primary-foreground transition-colors">
+                    Product Bundles
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/insights" className="hover:text-primary-foreground transition-colors">
+                    Blog & Insights
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/news" className="hover:text-primary-foreground transition-colors">
+                    Operator Intelligence
                   </Link>
                 </li>
                 <li>
@@ -176,14 +178,6 @@ const Footer = () => {
                     Speaker Kit
                   </Link>
                 </li>
-                {user && (
-                  <li>
-                    <Link to="/hub/coach" className="hover:text-primary-foreground transition-colors flex items-center gap-1.5">
-                      <Bot size={14} />
-                      AI Advisor
-                    </Link>
-                  </li>
-                )}
               </ul>
             </div>
 
