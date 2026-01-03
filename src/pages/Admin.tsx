@@ -4,6 +4,14 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { 
   Loader2, 
   Lock,
@@ -16,9 +24,10 @@ import {
   Shield,
   MessageSquareWarning,
   BookOpen,
-  Gift
+  Gift,
+  Home,
+  LayoutDashboard
 } from "lucide-react";
-
 const ADMIN_SECTIONS = [
   { 
     id: "newsletter", 
@@ -210,6 +219,12 @@ const Admin = () => {
             <h1 className="font-heading text-xl">Admin Dashboard</h1>
           </div>
           <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/hub">
+                <LayoutDashboard size={16} />
+                Back to Hub
+              </Link>
+            </Button>
             <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
               View Site
             </Link>
@@ -220,6 +235,32 @@ const Admin = () => {
           </div>
         </div>
       </header>
+
+      {/* Breadcrumb */}
+      <div className="container-wide px-6 py-3 border-b border-border/50 bg-muted/30">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/" className="flex items-center gap-1">
+                  <Home size={14} />
+                  Home
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/hub">My Hub</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Admin Dashboard</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
       {/* Content */}
       <main className="container-wide py-8 px-6">
