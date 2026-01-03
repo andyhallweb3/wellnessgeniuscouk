@@ -169,40 +169,54 @@ serve(async (req) => {
       metadata: {
         productId,
       },
-      allow_promotion_codes: true, // Allow users to enter promo codes at checkout
     };
 
-    // If a coupon code is provided, apply it directly
+    // If a coupon code is provided, apply it directly (cannot combine with allow_promotion_codes)
     if (couponCode) {
       try {
-        // Validate the coupon exists
+        // Validate the coupon exists and check redemption limit
         const coupon = await stripe.coupons.retrieve(couponCode);
         if (coupon && coupon.valid) {
-          sessionOptions.discounts = [{ coupon: couponCode }];
-          logStep("Coupon applied", { couponCode });
+          // Check if redemption limit reached (500 max)
+          const maxRedemptions = coupon.max_redemptions || 500;
+          const timesRedeemed = coupon.times_redeemed || 0;
           
-          // Track coupon usage in newsletter_subscribers
-          if (userEmail) {
-            try {
-              await supabaseClient
-                .from("newsletter_subscribers")
-                .update({
-                  coupon_code: couponCode,
-                  coupon_used_at: new Date().toISOString(),
-                  coupon_product_id: productId,
-                })
-                .eq("email", userEmail.toLowerCase());
-              logStep("Coupon usage tracked", { email: userEmail, couponCode });
-            } catch (trackErr) {
-              logStep("Failed to track coupon usage", { error: String(trackErr) });
-              // Don't fail checkout for tracking errors
+          if (timesRedeemed >= 500) {
+            logStep("Coupon redemption limit reached", { couponCode, timesRedeemed });
+            // Don't apply coupon, allow manual promo code entry
+            sessionOptions.allow_promotion_codes = true;
+          } else {
+            sessionOptions.discounts = [{ coupon: couponCode }];
+            logStep("Coupon applied", { couponCode, timesRedeemed, maxRedemptions });
+            
+            // Track coupon usage in newsletter_subscribers
+            if (userEmail) {
+              try {
+                await supabaseClient
+                  .from("newsletter_subscribers")
+                  .update({
+                    coupon_code: couponCode,
+                    coupon_used_at: new Date().toISOString(),
+                    coupon_product_id: productId,
+                  })
+                  .eq("email", userEmail.toLowerCase());
+                logStep("Coupon usage tracked", { email: userEmail, couponCode });
+              } catch (trackErr) {
+                logStep("Failed to track coupon usage", { error: String(trackErr) });
+              }
             }
           }
+        } else {
+          logStep("Coupon invalid, allowing manual promo codes", { couponCode });
+          sessionOptions.allow_promotion_codes = true;
         }
       } catch (couponError) {
-        logStep("Coupon validation failed, continuing without discount", { couponCode, error: String(couponError) });
-        // Don't fail the checkout, just continue without the coupon
+        logStep("Coupon validation failed, allowing manual promo codes", { couponCode, error: String(couponError) });
+        sessionOptions.allow_promotion_codes = true;
       }
+    } else {
+      // No coupon provided, allow users to enter promo codes at checkout
+      sessionOptions.allow_promotion_codes = true;
     }
 
     // Create checkout session for one-time payment
