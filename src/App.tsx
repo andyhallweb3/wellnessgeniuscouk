@@ -50,6 +50,7 @@ import PrivacyReadinessLanding from "./pages/PrivacyReadinessLanding";
 import PrivacyReadinessAssessment from "./pages/PrivacyReadinessAssessment";
 import PrivacyReadinessResults from "./pages/PrivacyReadinessResults";
 import NotFound from "./pages/NotFound";
+import NewsletterSignup from "./pages/NewsletterSignup";
 import FounderToday from "./pages/founder/FounderToday";
 import BusinessHealth from "./pages/founder/BusinessHealth";
 import GrowthLevers from "./pages/founder/GrowthLevers";
@@ -111,6 +112,8 @@ const App = () => (
             <Route path="/knowledge/admin" element={<KnowledgeBaseAdmin />} />
             <Route path="/roadmap" element={<Roadmap />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/subscribe" element={<NewsletterSignup />} />
+            <Route path="/newsletter" element={<NewsletterSignup />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
