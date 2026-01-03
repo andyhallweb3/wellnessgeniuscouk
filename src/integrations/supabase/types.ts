@@ -1197,10 +1197,12 @@ export type Database = {
           coupon_code: string | null
           coupon_product_id: string | null
           coupon_used_at: string | null
+          delivery_count: number | null
           email: string
           id: string
           ip_address: string | null
           is_active: boolean
+          last_delivered_at: string | null
           name: string | null
           source: string | null
           subscribed_at: string
@@ -1212,10 +1214,12 @@ export type Database = {
           coupon_code?: string | null
           coupon_product_id?: string | null
           coupon_used_at?: string | null
+          delivery_count?: number | null
           email: string
           id?: string
           ip_address?: string | null
           is_active?: boolean
+          last_delivered_at?: string | null
           name?: string | null
           source?: string | null
           subscribed_at?: string
@@ -1227,10 +1231,12 @@ export type Database = {
           coupon_code?: string | null
           coupon_product_id?: string | null
           coupon_used_at?: string | null
+          delivery_count?: number | null
           email?: string
           id?: string
           ip_address?: string | null
           is_active?: boolean
+          last_delivered_at?: string | null
           name?: string | null
           source?: string | null
           subscribed_at?: string

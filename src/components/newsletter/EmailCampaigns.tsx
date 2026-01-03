@@ -40,11 +40,25 @@ interface EmailCampaignsProps {
   getAuthHeaders: () => Record<string, string>;
 }
 
+interface SubscriberStats {
+  total: number;
+  active: number;
+  delivered: number;
+  bounced: number;
+  neverDelivered: number;
+}
+
 export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
   const { toast } = useToast();
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [subscriberCount, setSubscriberCount] = useState(0);
+  const [subscriberStats, setSubscriberStats] = useState<SubscriberStats>({
+    total: 0,
+    active: 0,
+    delivered: 0,
+    bounced: 0,
+    neverDelivered: 0,
+  });
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
@@ -54,7 +68,7 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
 
   useEffect(() => {
     fetchTemplates();
-    fetchSubscriberCount();
+    fetchSubscriberStats();
   }, []);
 
   const fetchTemplates = async () => {
@@ -80,17 +94,26 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
     }
   };
 
-  const fetchSubscriberCount = async () => {
+  const fetchSubscriberStats = async () => {
     try {
-      const { count, error } = await supabase
+      // Get all subscribers with their status
+      const { data, error } = await supabase
         .from("newsletter_subscribers")
-        .select("*", { count: "exact", head: true })
-        .eq("is_active", true);
+        .select("is_active, bounced, last_delivered_at");
 
       if (error) throw error;
-      setSubscriberCount(count || 0);
+
+      const stats: SubscriberStats = {
+        total: data?.length || 0,
+        active: data?.filter(s => s.is_active && !s.bounced).length || 0,
+        delivered: data?.filter(s => s.is_active && !s.bounced && s.last_delivered_at).length || 0,
+        bounced: data?.filter(s => s.bounced).length || 0,
+        neverDelivered: data?.filter(s => s.is_active && !s.bounced && !s.last_delivered_at).length || 0,
+      };
+
+      setSubscriberStats(stats);
     } catch (error) {
-      console.error("Error fetching subscriber count:", error);
+      console.error("Error fetching subscriber stats:", error);
     }
   };
 
@@ -155,8 +178,10 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
 
       toast({
         title: "Campaign sent!",
-        description: `Email sent to ${data?.recipientCount || subscriberCount} subscribers`,
+        description: `Email sent to ${data?.recipientCount || subscriberStats.active} subscribers`,
       });
+      setSendDialogOpen(false);
+      fetchSubscriberStats(); // Refresh stats
       setSendDialogOpen(false);
     } catch (error: any) {
       console.error("Error sending campaign:", error);
@@ -187,16 +212,43 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
             Send email templates to your subscribers via Resend
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Badge variant="secondary" className="text-sm py-1 px-3">
-            <Users className="h-4 w-4 mr-1" />
-            {subscriberCount} active subscribers
-          </Badge>
-          <Button variant="outline" size="sm" onClick={fetchTemplates}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => { fetchTemplates(); fetchSubscriberStats(); }}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Subscriber Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <Card className="p-3">
+          <div className="text-sm text-muted-foreground">Total</div>
+          <div className="text-2xl font-bold">{subscriberStats.total}</div>
+        </Card>
+        <Card className="p-3 border-green-200 bg-green-50 dark:bg-green-950/20">
+          <div className="text-sm text-green-600 flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" />
+            Delivered
+          </div>
+          <div className="text-2xl font-bold text-green-700">{subscriberStats.delivered}</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-sm text-muted-foreground flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            Active (will receive)
+          </div>
+          <div className="text-2xl font-bold">{subscriberStats.active}</div>
+        </Card>
+        <Card className="p-3 border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+          <div className="text-sm text-amber-600">New (no delivery yet)</div>
+          <div className="text-2xl font-bold text-amber-700">{subscriberStats.neverDelivered}</div>
+        </Card>
+        <Card className="p-3 border-red-200 bg-red-50 dark:bg-red-950/20">
+          <div className="text-sm text-red-600 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Bounced
+          </div>
+          <div className="text-2xl font-bold text-red-700">{subscriberStats.bounced}</div>
+        </Card>
       </div>
 
       {templates.length === 0 ? (
@@ -314,11 +366,29 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
 
             {/* Send to All Section */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-amber-600">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  This will send to {subscriberCount} subscribers
-                </span>
+              <div className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Will be sent to:</span>
+                  <span className="font-medium">{subscriberStats.active} subscribers</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3 text-green-500" />
+                    Previously delivered
+                  </span>
+                  <span className="font-medium text-green-600">{subscriberStats.delivered}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">New (first email)</span>
+                  <span className="font-medium text-amber-600">{subscriberStats.neverDelivered}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3 text-red-500" />
+                    Excluded (bounced)
+                  </span>
+                  <span className="font-medium text-red-600">{subscriberStats.bounced}</span>
+                </div>
               </div>
               
               <Button
