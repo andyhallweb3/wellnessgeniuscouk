@@ -54,7 +54,18 @@ const NewsletterThankYou = () => {
                 <Sparkles className="h-5 w-5 text-primary" />
               </h1>
               <p className="text-muted-foreground">
-                Check your inbox for a confirmation email. Your first strategic briefing will arrive soon.
+                Check your inbox for a confirmation email with your discount code and download instructions.
+              </p>
+            </div>
+
+            {/* Spam Notice */}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm">
+              <p className="text-amber-700 dark:text-amber-400 font-medium flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Haven't received it yet?
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Check your <span className="font-medium">spam or promotions folder</span>. The email comes from Wellness Genius and contains your free discount code.
               </p>
             </div>
 
@@ -107,14 +118,14 @@ const NewsletterThankYou = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Apply this code at checkout to download your free guide
+                  Click below — the code will be applied automatically at checkout!
                 </p>
               </div>
 
-              <Link to="/products" className="block">
+              <Link to={`/products?coupon=${DISCOUNT_CODE}&product=prompt-pack`} className="block">
                 <Button className="w-full" size="lg">
                   <FileText className="mr-2 h-4 w-4" />
-                  Get Your Free Guide
+                  Get Your Free Guide (Auto-Applied)
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
