@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,11 @@ import {
   Trash2,
   Search,
   Download,
-  Upload
+  Upload,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Mail
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -30,6 +35,12 @@ interface Subscriber {
   source: string | null;
   is_active: boolean;
   subscribed_at: string;
+  // Resend delivery metrics
+  last_delivered_at: string | null;
+  delivery_count: number | null;
+  bounced: boolean | null;
+  bounced_at: string | null;
+  bounce_type: string | null;
 }
 
 interface SubscriberManagerProps {
@@ -41,7 +52,7 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "delivered" | "bounced" | "new">("all");
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [editing, setEditing] = useState<Subscriber | null>(null);
@@ -216,9 +227,19 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
 
   const exportSubscribers = () => {
     const csv = [
-      ["Email", "Name", "Source", "Status", "Subscribed At"].join(","),
+      ["Email", "Name", "Source", "Status", "Subscribed At", "Last Delivered", "Delivery Count", "Bounced", "Bounce Type"].join(","),
       ...subscribers.map((s) =>
-        [s.email, s.name || "", s.source || "", s.is_active ? "active" : "inactive", s.subscribed_at].join(",")
+        [
+          s.email, 
+          s.name || "", 
+          s.source || "", 
+          s.is_active ? "active" : "inactive", 
+          s.subscribed_at,
+          s.last_delivered_at || "",
+          s.delivery_count || 0,
+          s.bounced ? "yes" : "no",
+          s.bounce_type || ""
+        ].join(",")
       ),
     ].join("\n");
 
@@ -236,22 +257,59 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
       !search ||
       sub.email.toLowerCase().includes(search.toLowerCase()) ||
       sub.name?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && sub.is_active) ||
-      (statusFilter === "inactive" && !sub.is_active);
+    
+    let matchesStatus = true;
+    switch (statusFilter) {
+      case "active":
+        matchesStatus = sub.is_active && !sub.bounced;
+        break;
+      case "inactive":
+        matchesStatus = !sub.is_active;
+        break;
+      case "delivered":
+        matchesStatus = !!sub.last_delivered_at && !sub.bounced;
+        break;
+      case "bounced":
+        matchesStatus = !!sub.bounced;
+        break;
+      case "new":
+        matchesStatus = !sub.last_delivered_at && !sub.bounced && sub.is_active;
+        break;
+    }
     return matchesSearch && matchesStatus;
   });
 
-  const activeCount = subscribers.filter((s) => s.is_active).length;
+  const activeCount = subscribers.filter((s) => s.is_active && !s.bounced).length;
+  const deliveredCount = subscribers.filter((s) => s.last_delivered_at && !s.bounced).length;
+  const bouncedCount = subscribers.filter((s) => s.bounced).length;
+  const newCount = subscribers.filter((s) => !s.last_delivered_at && !s.bounced && s.is_active).length;
+
+  const getSubscriberStatus = (sub: Subscriber) => {
+    if (sub.bounced) return { label: "Bounced", color: "destructive" as const, icon: XCircle };
+    if (!sub.is_active) return { label: "Unsubscribed", color: "secondary" as const, icon: AlertTriangle };
+    if (sub.last_delivered_at) return { label: "Delivered", color: "default" as const, icon: CheckCircle };
+    return { label: "New", color: "outline" as const, icon: Mail };
+  };
 
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
         <span className="flex items-center gap-1">
           <Users className="h-4 w-4" />
           {subscribers.length} total
+        </span>
+        <span className="flex items-center gap-1">
+          <CheckCircle className="h-3 w-3 text-green-500" />
+          {deliveredCount} delivered
+        </span>
+        <span className="flex items-center gap-1">
+          <Mail className="h-3 w-3 text-blue-500" />
+          {newCount} new
+        </span>
+        <span className="flex items-center gap-1">
+          <XCircle className="h-3 w-3 text-red-500" />
+          {bouncedCount} bounced
         </span>
         <span>{activeCount} active</span>
       </div>
@@ -274,8 +332,11 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
           onChange={(e) => setStatusFilter(e.target.value as any)}
           className="bg-secondary border border-border rounded-md px-3 py-2"
         >
-          <option value="all">All</option>
-          <option value="active">Active</option>
+          <option value="all">All ({subscribers.length})</option>
+          <option value="delivered">Delivered ({deliveredCount})</option>
+          <option value="new">New ({newCount})</option>
+          <option value="bounced">Bounced ({bouncedCount})</option>
+          <option value="active">Active ({activeCount})</option>
           <option value="inactive">Inactive</option>
         </select>
         <Button variant="outline" onClick={openAdd}>
@@ -303,33 +364,51 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
         </div>
       ) : (
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
-          {filtered.map((sub) => (
-            <div
-              key={sub.id}
-              className="flex items-center justify-between p-3 rounded-lg border"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{sub.email}</p>
-                <p className="text-xs text-muted-foreground">
-                  {sub.name && `${sub.name} • `}
-                  {sub.source || "unknown"} •{" "}
-                  {new Date(sub.subscribed_at).toLocaleDateString()}
-                </p>
+          {filtered.map((sub) => {
+            const status = getSubscriberStatus(sub);
+            const StatusIcon = status.icon;
+            return (
+              <div
+                key={sub.id}
+                className={`flex items-center justify-between p-3 rounded-lg border ${sub.bounced ? 'border-red-500/30 bg-red-500/5' : ''}`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium truncate">{sub.email}</p>
+                    <Badge variant={status.color} className="text-xs flex items-center gap-1">
+                      <StatusIcon className="h-3 w-3" />
+                      {status.label}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {sub.name && `${sub.name} • `}
+                    {sub.source || "unknown"} •{" "}
+                    {new Date(sub.subscribed_at).toLocaleDateString()}
+                    {sub.last_delivered_at && (
+                      <span className="text-green-600"> • Last delivered: {new Date(sub.last_delivered_at).toLocaleDateString()}</span>
+                    )}
+                    {sub.delivery_count ? ` • ${sub.delivery_count} delivered` : ''}
+                    {sub.bounced && sub.bounce_type && (
+                      <span className="text-red-500"> • Bounce: {sub.bounce_type}</span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={sub.is_active}
+                    onCheckedChange={() => toggleActive(sub)}
+                    disabled={!!sub.bounced}
+                  />
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(sub)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(sub)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
               </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={sub.is_active}
-                  onCheckedChange={() => toggleActive(sub)}
-                />
-                <Button variant="ghost" size="sm" onClick={() => openEdit(sub)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(sub)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
