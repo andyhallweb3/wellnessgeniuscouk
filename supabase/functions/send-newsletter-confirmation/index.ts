@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
                   As a thank you for subscribing, here's a 100% discount code for our Wellness AI Prompt Pack (worth £19.99):
                 </p>
                 <div style="background-color: rgba(0,0,0,0.3); border-radius: 8px; padding: 16px; text-align: center;">
-                  <code style="font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: 2px;">LzcFF5Ii</code>
+                  <code style="font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: 2px;">WG2026</code>
                 </div>
               </div>
 
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
                   <li>Your AI Prompt Pack will be waiting in your Downloads Library!</li>
                 </ol>
                 <p style="margin: 16px 0 0 0; color: #71717a; font-size: 13px;">
-                  💡 Your promo code <strong style="color: #14b8a6;">LzcFF5Ii</strong> is linked to your email - no need to enter it manually.
+                  💡 Your promo code <strong style="color: #14b8a6;">WG2026</strong> is linked to your email - no need to enter it manually.
                 </p>
               </div>
 
