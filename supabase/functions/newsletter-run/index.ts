@@ -921,6 +921,39 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Subscriber stats endpoint for campaign page
+    if (body.action === 'subscriber-stats') {
+      console.log('Fetching subscriber stats for campaign page');
+      
+      const { data: subscribers, error: subsError } = await supabase
+        .from('newsletter_subscribers')
+        .select('is_active, bounced, last_delivered_at, delivery_count');
+
+      if (subsError) {
+        console.error('Error fetching subscribers:', subsError);
+        return new Response(
+          JSON.stringify({ success: false, error: subsError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const stats = {
+        total: subscribers?.length || 0,
+        active: subscribers?.filter(s => s.is_active && !s.bounced).length || 0,
+        delivered: subscribers?.filter(s => s.is_active && !s.bounced && s.last_delivered_at).length || 0,
+        bounced: subscribers?.filter(s => s.bounced).length || 0,
+        neverDelivered: subscribers?.filter(s => s.is_active && !s.bounced && !s.last_delivered_at).length || 0,
+        unsubscribed: subscribers?.filter(s => !s.is_active && !s.bounced).length || 0,
+      };
+
+      console.log('Subscriber stats:', stats);
+
+      return new Response(
+        JSON.stringify({ success: true, stats }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // History endpoint to fetch recent sends
     if (body.action === 'history') {
       const limit = body.limit || 10;
