@@ -5,7 +5,7 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-secret",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 interface CampaignRequest {
@@ -23,15 +23,47 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify admin auth
-    const adminSecret = req.headers.get("x-admin-secret");
-    if (adminSecret !== Deno.env.get("ADMIN_SECRET")) {
-      console.error("Unauthorized: Invalid admin secret");
+    // Verify admin auth via JWT
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("Unauthorized: No authorization header");
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Create supabase client to verify admin role
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !user) {
+      console.error("Unauthorized: Invalid token", userError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check admin role
+    const { data: isAdmin, error: roleError } = await supabaseAuth.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin',
+    });
+
+    if (roleError || !isAdmin) {
+      console.error("Unauthorized: User is not admin", roleError);
+      return new Response(
+        JSON.stringify({ error: "Admin access required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Admin ${user.email} sending campaign`);
 
     const { templateId, subject, html, previewText, testEmail, onlyDelivered }: CampaignRequest = await req.json();
 
@@ -43,8 +75,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    // Initialize Supabase client with service role for data access
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
