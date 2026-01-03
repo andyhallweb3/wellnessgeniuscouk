@@ -15,6 +15,7 @@ interface CampaignRequest {
   previewText?: string;
   testEmail?: string;
   onlyDelivered?: boolean;
+  sendMode?: "batch" | "individual"; // batch = BCC, individual = one email per recipient
 }
 
 Deno.serve(async (req) => {
@@ -65,7 +66,7 @@ Deno.serve(async (req) => {
 
     console.log(`Admin ${user.email} sending campaign`);
 
-    const { templateId, subject, html, previewText, testEmail, onlyDelivered }: CampaignRequest = await req.json();
+    const { templateId, subject, html, previewText, testEmail, onlyDelivered, sendMode = "batch" }: CampaignRequest = await req.json();
 
     if (!subject || !html) {
       console.error("Missing required fields");
@@ -129,43 +130,87 @@ Deno.serve(async (req) => {
     }
 
     const filterMode = onlyDelivered ? "confirmed deliveries only" : "all active";
-    console.log(`Sending campaign to ${subscribers.length} subscribers (${filterMode})`);
+    console.log(`Sending campaign to ${subscribers.length} subscribers (${filterMode}) using ${sendMode} mode`);
 
-    // Send emails in batches of 48 (Resend limit is 50 total: to + cc + bcc combined)
-    const batchSize = 48;
     const emails = subscribers.map((s) => s.email);
     let successCount = 0;
     let errorCount = 0;
+    const recipientResults: { email: string; messageId?: string; error?: string }[] = [];
 
-    for (let i = 0; i < emails.length; i += batchSize) {
-      const batch = emails.slice(i, i + batchSize);
+    if (sendMode === "individual") {
+      // Individual mode: send one email per recipient for better tracking
+      console.log("Using individual sending mode for per-recipient tracking");
       
-      // Use batch sending with BCC for efficiency
-      try {
-        const { data, error } = await resend.emails.send({
-          from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
-          reply_to: "andy@wellnessgenius.co.uk",
-          to: ["newsletter@news.wellnessgenius.co.uk"], // Send to self
-          bcc: batch, // BCC all recipients in batch
-          subject: subject,
-          html: html,
-        });
+      for (let i = 0; i < emails.length; i++) {
+        const email = emails[i];
+        try {
+          const { data, error } = await resend.emails.send({
+            from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
+            reply_to: "andy@wellnessgenius.co.uk",
+            to: [email],
+            subject: subject,
+            html: html,
+          });
 
-        if (error) {
-          console.error(`Batch ${i / batchSize + 1} error:`, error);
-          errorCount += batch.length;
-        } else {
-          console.log(`Batch ${i / batchSize + 1} sent successfully:`, data?.id);
-          successCount += batch.length;
+          if (error) {
+            console.error(`Email to ${email} failed:`, error);
+            errorCount++;
+            recipientResults.push({ email, error: error.message });
+          } else {
+            console.log(`Email to ${email} sent:`, data?.id);
+            successCount++;
+            recipientResults.push({ email, messageId: data?.id });
+            
+            // Update subscriber with message ID for tracking
+            await supabase
+              .from("newsletter_subscribers")
+              .update({ last_message_id: data?.id })
+              .eq("email", email);
+          }
+        } catch (sendError: any) {
+          console.error(`Email to ${email} error:`, sendError);
+          errorCount++;
+          recipientResults.push({ email, error: sendError.message });
         }
-      } catch (batchError) {
-        console.error(`Batch ${i / batchSize + 1} failed:`, batchError);
-        errorCount += batch.length;
-      }
 
-      // Small delay between batches to avoid rate limits
-      if (i + batchSize < emails.length) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Rate limit: ~10 emails per second (100ms delay)
+        if (i < emails.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+    } else {
+      // Batch mode: use BCC for efficiency (less tracking granularity)
+      console.log("Using batch BCC mode");
+      const batchSize = 48;
+
+      for (let i = 0; i < emails.length; i += batchSize) {
+        const batch = emails.slice(i, i + batchSize);
+        
+        try {
+          const { data, error } = await resend.emails.send({
+            from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
+            reply_to: "andy@wellnessgenius.co.uk",
+            to: ["newsletter@news.wellnessgenius.co.uk"],
+            bcc: batch,
+            subject: subject,
+            html: html,
+          });
+
+          if (error) {
+            console.error(`Batch ${i / batchSize + 1} error:`, error);
+            errorCount += batch.length;
+          } else {
+            console.log(`Batch ${i / batchSize + 1} sent successfully:`, data?.id);
+            successCount += batch.length;
+          }
+        } catch (batchError) {
+          console.error(`Batch ${i / batchSize + 1} failed:`, batchError);
+          errorCount += batch.length;
+        }
+
+        if (i + batchSize < emails.length) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
       }
     }
 

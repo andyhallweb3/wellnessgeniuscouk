@@ -70,6 +70,7 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
   const [sendingTest, setSendingTest] = useState(false);
   const [sendingCampaign, setSendingCampaign] = useState(false);
   const [onlyDelivered, setOnlyDelivered] = useState(false);
+  const [sendMode, setSendMode] = useState<"batch" | "individual">("batch");
 
   useEffect(() => {
     fetchTemplates();
@@ -179,6 +180,7 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
           html: selectedTemplate.html_content,
           previewText: selectedTemplate.preview_text,
           onlyDelivered: onlyDelivered,
+          sendMode: sendMode,
         },
         headers: getAuthHeaders(),
       });
@@ -396,6 +398,23 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
 
             {/* Send to All Section */}
             <div className="space-y-3">
+              {/* Send mode toggle */}
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="send-mode" className="font-medium">
+                    Individual sending mode
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Send one email per recipient for better delivery tracking (slower)
+                  </p>
+                </div>
+                <Switch
+                  id="send-mode"
+                  checked={sendMode === "individual"}
+                  onCheckedChange={(checked) => setSendMode(checked ? "individual" : "batch")}
+                />
+              </div>
+
               {/* Filter toggle */}
               <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
                 <div className="space-y-0.5">
