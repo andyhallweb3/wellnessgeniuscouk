@@ -331,7 +331,7 @@ const MemberHub = () => {
             </div>
             <div className="flex items-center gap-3">
               <Button variant="accent" size="sm" asChild>
-                <Link to="/downloads">
+                <Link to="/hub/downloads">
                   <Library size={16} />
                   Downloads Library
                 </Link>
