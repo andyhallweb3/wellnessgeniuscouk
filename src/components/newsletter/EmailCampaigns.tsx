@@ -189,11 +189,10 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
 
       toast({
         title: "Campaign sent!",
-        description: `Email sent to ${data?.recipientCount || subscriberStats.active} subscribers`,
+        description: `Email sent to ${data?.recipientCount || 0} subscribers${data?.errorCount ? ` (${data.errorCount} failed)` : ''}`,
       });
       setSendDialogOpen(false);
-      fetchSubscriberStats(); // Refresh stats
-      setSendDialogOpen(false);
+      fetchSubscriberStats();
     } catch (error: any) {
       console.error("Error sending campaign:", error);
       toast({
