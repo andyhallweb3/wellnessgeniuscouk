@@ -15,7 +15,8 @@ import {
   ArrowRight,
   Shield,
   MessageSquareWarning,
-  BookOpen
+  BookOpen,
+  Gift
 } from "lucide-react";
 
 const ADMIN_SECTIONS = [
@@ -74,6 +75,14 @@ const ADMIN_SECTIONS = [
     icon: BookOpen,
     path: "/knowledge/admin",
     color: "bg-teal-500/10 text-teal-600"
+  },
+  { 
+    id: "coupons", 
+    label: "Coupon Analytics", 
+    description: "Track newsletter coupon redemptions and conversion rates",
+    icon: Gift,
+    path: "/coupons/admin",
+    color: "bg-pink-500/10 text-pink-600"
   },
 ];
 
