@@ -422,7 +422,8 @@ const EmailTemplatesAdmin = () => {
       const { data, error } = await supabase
         .from("email_templates")
         .select("*")
-        .eq("template_type", "onboarding")
+        .in("template_type", ["onboarding", "campaign", "marketing"])
+        .order("template_type", { ascending: true })
         .order("sequence_order", { ascending: true });
 
       if (error) throw error;
