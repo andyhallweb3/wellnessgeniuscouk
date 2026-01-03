@@ -18,6 +18,30 @@ interface CampaignRequest {
   sendMode?: "batch" | "individual"; // batch = BCC, individual = one email per recipient
 }
 
+type ResendMaybeError = {
+  message?: string;
+  name?: string;
+  statusCode?: number;
+};
+
+const isLikelyEmail = (value: string) => {
+  // Intentionally simple (Resend will do final validation) – prevents obvious list issues.
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+};
+
+const normalizeEmail = (value: unknown) => {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed;
+};
+
+const json = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,10 +52,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       console.error("Unauthorized: No authorization header");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(401, { error: "Unauthorized" });
     }
 
     // Create supabase client to verify admin role
@@ -44,36 +65,35 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
     if (!user) {
       console.error("Unauthorized: Invalid token or no user", userError);
-      return new Response(
-        JSON.stringify({ error: `Authentication error: ${userError?.message || 'No user found'}` }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(401, { error: `Authentication error: ${userError?.message || "No user found"}` });
     }
 
     // Check admin role
-    const { data: isAdmin, error: roleError } = await supabaseAuth.rpc('has_role', {
+    const { data: isAdmin, error: roleError } = await supabaseAuth.rpc("has_role", {
       _user_id: user.id,
-      _role: 'admin',
+      _role: "admin",
     });
 
     if (roleError || !isAdmin) {
       console.error("Unauthorized: User is not admin", roleError);
-      return new Response(
-        JSON.stringify({ error: "Admin access required" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(403, { error: "Admin access required" });
     }
 
     console.log(`Admin ${user.email} sending campaign`);
 
-    const { templateId, subject, html, previewText, testEmail, onlyDelivered, sendMode = "batch" }: CampaignRequest = await req.json();
+    const {
+      templateId,
+      subject,
+      html,
+      previewText,
+      testEmail,
+      onlyDelivered,
+      sendMode = "batch",
+    }: CampaignRequest = await req.json();
 
     if (!subject || !html) {
       console.error("Missing required fields");
-      return new Response(
-        JSON.stringify({ error: "Subject and HTML content are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(400, { error: "Subject and HTML content are required" });
     }
 
     // Initialize Supabase client with service role for data access
@@ -82,25 +102,32 @@ Deno.serve(async (req) => {
 
     // If test email, just send to that address
     if (testEmail) {
-      console.log(`Sending test email to: ${testEmail}`);
+      const normalizedTestEmail = normalizeEmail(testEmail);
+      if (!normalizedTestEmail || !isLikelyEmail(normalizedTestEmail)) {
+        return json(400, { error: "Invalid test email address" });
+      }
+
+      console.log(`Sending test email to: ${normalizedTestEmail}`);
+
       const { data, error } = await resend.emails.send({
         from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
         reply_to: "andy@wellnessgenius.co.uk",
-        to: [testEmail],
+        to: [normalizedTestEmail],
         subject: `[TEST] ${subject}`,
-        html: html,
+        html,
       });
 
       if (error) {
-        console.error("Test email error:", error);
-        throw new Error(error.message);
+        const e = error as ResendMaybeError;
+        console.error("Resend test email error:", JSON.stringify(error));
+        return json(e.statusCode ?? 422, {
+          error: e.message ?? "Resend validation error",
+          resend: { name: e.name, statusCode: e.statusCode },
+        });
       }
 
       console.log("Test email sent:", data?.id);
-      return new Response(
-        JSON.stringify({ success: true, testEmail, messageId: data?.id }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(200, { success: true, testEmail: normalizedTestEmail, messageId: data?.id });
     }
 
     // Build query for active subscribers - EXCLUDE bounced and unsubscribed
@@ -123,16 +150,34 @@ Deno.serve(async (req) => {
     }
 
     if (!subscribers || subscribers.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No eligible subscribers found" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(400, { error: "No eligible subscribers found" });
     }
 
     const filterMode = onlyDelivered ? "confirmed deliveries only" : "all active";
-    console.log(`Sending campaign to ${subscribers.length} subscribers (${filterMode}) using ${sendMode} mode`);
+    console.log(
+      `Sending campaign to ${subscribers.length} subscribers (${filterMode}) using ${sendMode} mode`
+    );
 
-    const emails = subscribers.map((s) => s.email);
+    // Normalize + basic validation to avoid Resend 422 due to stray whitespace/bad rows.
+    const rawEmails = subscribers.map((s) => s.email);
+    const normalizedEmails = rawEmails
+      .map((e) => normalizeEmail(e))
+      .filter((e): e is string => Boolean(e));
+
+    const invalidEmails = normalizedEmails.filter((e) => !isLikelyEmail(e));
+    const emails = normalizedEmails.filter((e) => isLikelyEmail(e));
+
+    if (invalidEmails.length > 0) {
+      console.warn(
+        `Found ${invalidEmails.length} invalid subscriber emails; excluding from send. Examples:`,
+        invalidEmails.slice(0, 5)
+      );
+    }
+
+    if (emails.length === 0) {
+      return json(400, { error: "No valid subscriber emails to send to" });
+    }
+
     let successCount = 0;
     let errorCount = 0;
     const recipientResults: { email: string; messageId?: string; error?: string }[] = [];
@@ -140,7 +185,7 @@ Deno.serve(async (req) => {
     if (sendMode === "individual") {
       // Individual mode: send one email per recipient for better tracking
       console.log("Using individual sending mode for per-recipient tracking");
-      
+
       for (let i = 0; i < emails.length; i++) {
         const email = emails[i];
         try {
@@ -148,29 +193,24 @@ Deno.serve(async (req) => {
             from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
             reply_to: "andy@wellnessgenius.co.uk",
             to: [email],
-            subject: subject,
-            html: html,
+            subject,
+            html,
           });
 
           if (error) {
-            console.error(`Email to ${email} failed:`, error);
+            const e = error as ResendMaybeError;
+            console.error(`Email to ${email} failed:`, JSON.stringify(error));
             errorCount++;
-            recipientResults.push({ email, error: error.message });
+            recipientResults.push({ email, error: e.message ?? "Resend error" });
           } else {
             console.log(`Email to ${email} sent:`, data?.id);
             successCount++;
             recipientResults.push({ email, messageId: data?.id });
-            
-            // Update subscriber with message ID for tracking
-            await supabase
-              .from("newsletter_subscribers")
-              .update({ last_message_id: data?.id })
-              .eq("email", email);
           }
         } catch (sendError: any) {
           console.error(`Email to ${email} error:`, sendError);
           errorCount++;
-          recipientResults.push({ email, error: sendError.message });
+          recipientResults.push({ email, error: sendError?.message ?? "Unknown send error" });
         }
 
         // Rate limit: ~10 emails per second (100ms delay)
@@ -185,25 +225,35 @@ Deno.serve(async (req) => {
 
       for (let i = 0; i < emails.length; i += batchSize) {
         const batch = emails.slice(i, i + batchSize);
-        
+
         try {
           const { data, error } = await resend.emails.send({
             from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
             reply_to: "andy@wellnessgenius.co.uk",
             to: ["newsletter@news.wellnessgenius.co.uk"],
             bcc: batch,
-            subject: subject,
-            html: html,
+            subject,
+            html,
           });
 
           if (error) {
-            console.error(`Batch ${i / batchSize + 1} error:`, error);
+            const e = error as ResendMaybeError;
+            console.error(`Batch ${i / batchSize + 1} error:`, JSON.stringify(error));
             errorCount += batch.length;
+
+            // If Resend gives us a specific validation error, bubble it up.
+            // This makes it obvious whether it's FROM/domain, recipient list, etc.
+            if (e.statusCode === 422) {
+              return json(422, {
+                error: e.message ?? "Resend validation error",
+                resend: { name: e.name, statusCode: e.statusCode },
+              });
+            }
           } else {
             console.log(`Batch ${i / batchSize + 1} sent successfully:`, data?.id);
             successCount += batch.length;
           }
-        } catch (batchError) {
+        } catch (batchError: any) {
           console.error(`Batch ${i / batchSize + 1} failed:`, batchError);
           errorCount += batch.length;
         }
@@ -224,20 +274,15 @@ Deno.serve(async (req) => {
       email_html: html,
     });
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        recipientCount: successCount,
-        errorCount: errorCount,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json(200, {
+      success: true,
+      recipientCount: successCount,
+      errorCount,
+      excludedInvalidEmails: invalidEmails.length,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error sending campaign:", message);
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json(500, { error: message });
   }
 });
