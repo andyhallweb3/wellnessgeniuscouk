@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Lock, ArrowRight, CheckCircle, BarChart3, Save, Loader2, Lightbulb, Sparkles, Gift } from "lucide-react";
+import { Lock, ArrowRight, CheckCircle, BarChart3, Save, Loader2, Lightbulb, Sparkles, Gift, Download } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { PILLARS, getScoreBand as getScoreBandFromData, getPillarStatus } from "@/data/aiReadinessQuestions";
+import { generateReadinessReport } from "@/lib/pdf-generators";
 
 interface ResultData {
   overallScore: number;
@@ -188,6 +189,7 @@ const AIReadinessResults = () => {
     
     setIsSaving(true);
     try {
+      // Save to user_saved_outputs
       const { error } = await supabase.from("user_saved_outputs").insert({
         user_id: user.id,
         output_type: "ai-readiness",
@@ -201,6 +203,20 @@ const AIReadinessResults = () => {
       });
       
       if (error) throw error;
+      
+      // Also save to product_downloads so the AI Advisor can see it
+      const userEmail = user.email;
+      if (userEmail) {
+        await supabase.from("product_downloads").insert({
+          email: userEmail,
+          name: user.user_metadata?.full_name || null,
+          product_id: "readiness-score",
+          product_name: `AI Readiness Score: ${resultData.overallScore}/100 (${resultData.scoreBand})`,
+          download_type: "free",
+          product_type: "free",
+        });
+      }
+      
       setIsSaved(true);
       toast.success("Assessment saved to your hub!");
     } catch (error) {
@@ -208,6 +224,42 @@ const AIReadinessResults = () => {
       toast.error("Failed to save assessment");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!resultData) return;
+    
+    try {
+      const doc = generateReadinessReport({
+        overallScore: resultData.overallScore,
+        scoreBand: resultData.scoreBand,
+        scoreBandDescription: resultData.subheadline,
+        pillarScores: resultData.pillarScores,
+        completedAt: new Date().toLocaleDateString('en-GB'),
+        userName: user?.user_metadata?.full_name || undefined,
+        companyName: undefined,
+      });
+      
+      doc.save(`ai-readiness-score-${resultData.overallScore}.pdf`);
+      toast.success("PDF downloaded!");
+      
+      // Track download if user is logged in
+      if (user?.email) {
+        supabase.from("product_downloads").insert({
+          email: user.email,
+          name: user.user_metadata?.full_name || null,
+          product_id: "readiness-score-pdf",
+          product_name: `AI Readiness Report PDF (Score: ${resultData.overallScore})`,
+          download_type: "free",
+          product_type: "free",
+        }).then(({ error }) => {
+          if (error) console.log("Failed to track PDF download:", error);
+        });
+      }
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Failed to generate PDF");
     }
   };
 
@@ -314,9 +366,21 @@ const AIReadinessResults = () => {
               ))}
             </div>
 
-            {/* Save to Hub Button - for logged in users */}
-            {user && (
-              <div className="mt-6 pt-6 border-t border-border">
+            {/* Actions - Save & Download */}
+            <div className="mt-6 pt-6 border-t border-border space-y-3">
+              {/* Download PDF - available to everyone */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadPDF}
+                className="w-full"
+              >
+                <Download size={14} />
+                Download PDF Report
+              </Button>
+              
+              {/* Save to Hub Button - for logged in users */}
+              {user && (
                 <Button
                   variant={isSaved ? "outline" : "accent"}
                   size="sm"
@@ -333,8 +397,8 @@ const AIReadinessResults = () => {
                   )}
                   {isSaved ? "Saved to Hub" : "Save to My Hub"}
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Free Account Prompt - for non-authenticated users */}

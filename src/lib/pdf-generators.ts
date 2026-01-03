@@ -2989,3 +2989,183 @@ export const generateGamificationPlaybook = (): jsPDF => {
 
   return doc;
 };
+
+// AI Readiness Score Report PDF - for saving to downloads
+interface PillarScore {
+  pillar: string;
+  shortName: string;
+  score: number;
+  status: string;
+  statusVariant: "critical" | "warning" | "healthy" | "strong";
+  insight: string;
+}
+
+interface ReadinessReportData {
+  overallScore: number;
+  scoreBand: string;
+  scoreBandDescription: string;
+  pillarScores: PillarScore[];
+  completedAt: string;
+  userName?: string;
+  companyName?: string;
+}
+
+export const generateReadinessReport = (data: ReadinessReportData): jsPDF => {
+  const doc = new jsPDF();
+  const totalPages = 3;
+  
+  // Page 1 - Cover
+  addHeader(doc, 1, totalPages);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("WELLNESS GENIUS", 105, 40, { align: "center" });
+  
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("AI Readiness Score", 105, 65, { align: "center" });
+  doc.text("Report", 105, 80, { align: "center" });
+  
+  // Score Circle (visual representation)
+  doc.setFillColor(...BRAND.cardBg);
+  doc.circle(105, 130, 35, "F");
+  doc.setFontSize(36);
+  doc.setTextColor(...BRAND.teal);
+  doc.text(String(data.overallScore), 105, 135, { align: "center" });
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("/ 100", 105, 148, { align: "center" });
+  
+  // Score Band
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(55, 175, 100, 20, 3, 3, "F");
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text(data.scoreBand, 105, 188, { align: "center" });
+  
+  // Description
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.muted);
+  const descLines = doc.splitTextToSize(data.scoreBandDescription, 140);
+  doc.text(descLines, 105, 215, { align: "center" });
+  
+  // Footer info
+  if (data.userName || data.companyName) {
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.muted);
+    const infoText = [data.userName, data.companyName].filter(Boolean).join(" - ");
+    doc.text(infoText, 105, 250, { align: "center" });
+  }
+  doc.text(`Completed: ${data.completedAt}`, 105, 262, { align: "center" });
+  
+  // Page 2 - Pillar Breakdown
+  doc.addPage();
+  addHeader(doc, 2, totalPages);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PILLAR BREAKDOWN", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Your AI Readiness by Dimension", 20, 52);
+  
+  let yPos = 75;
+  
+  data.pillarScores.forEach((pillar) => {
+    // Card background
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos - 5, 180, 35, 3, 3, "F");
+    
+    // Pillar name and status
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.white);
+    doc.text(pillar.pillar, 25, yPos + 8);
+    
+    // Status badge color
+    const statusColors: Record<string, [number, number, number]> = {
+      critical: [239, 68, 68],
+      warning: [234, 179, 8],
+      healthy: [45, 212, 191],
+      strong: [34, 197, 94],
+    };
+    const statusColor = statusColors[pillar.statusVariant] || BRAND.muted;
+    doc.setTextColor(...statusColor);
+    doc.setFontSize(10);
+    doc.text(pillar.status, 25, yPos + 20);
+    
+    // Score
+    doc.setFontSize(16);
+    doc.setTextColor(...BRAND.teal);
+    doc.text(`${pillar.score}%`, 180, yPos + 12, { align: "right" });
+    
+    // Progress bar
+    doc.setFillColor(60, 60, 66);
+    doc.roundedRect(100, yPos + 16, 75, 4, 2, 2, "F");
+    doc.setFillColor(...BRAND.teal);
+    doc.roundedRect(100, yPos + 16, (pillar.score / 100) * 75, 4, 2, 2, "F");
+    
+    yPos += 42;
+  });
+  
+  // Page 3 - Insights & Next Steps
+  doc.addPage();
+  addHeader(doc, 3, totalPages);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("INSIGHTS", 20, 35);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Key Observations", 20, 52);
+  
+  yPos = 75;
+  
+  // Show insights for critical/warning pillars
+  const priorityPillars = data.pillarScores
+    .filter(p => p.statusVariant === "critical" || p.statusVariant === "warning")
+    .slice(0, 3);
+  
+  priorityPillars.forEach((pillar) => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos - 5, 180, 30, 3, 3, "F");
+    
+    doc.setFontSize(11);
+    doc.setTextColor(...BRAND.teal);
+    doc.text(pillar.shortName + ":", 25, yPos + 8);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND.muted);
+    const insightLines = doc.splitTextToSize(pillar.insight, 155);
+    doc.text(insightLines, 25, yPos + 18);
+    
+    yPos += 38;
+  });
+  
+  // Next Steps
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("NEXT STEPS", 20, yPos + 15);
+  
+  const nextSteps = [
+    "Use the AI Advisor to explore your weakest pillars",
+    "Download the 90-Day Activation Playbook for implementation",
+    "Consider the full AI Readiness Report for detailed recommendations",
+  ];
+  
+  yPos += 30;
+  nextSteps.forEach((step) => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(15, yPos, 180, 18, 3, 3, "F");
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND.white);
+    doc.text("- " + step, 25, yPos + 11);
+    yPos += 24;
+  });
+  
+  // CTA
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("wellnessgenius.co.uk/genie", 105, yPos + 20, { align: "center" });
+
+  return doc;
+};
