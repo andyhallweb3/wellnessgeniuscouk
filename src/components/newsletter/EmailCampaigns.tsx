@@ -47,6 +47,7 @@ interface SubscriberStats {
   delivered: number;
   bounced: number;
   neverDelivered: number;
+  unsubscribed: number;
 }
 
 export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
@@ -59,7 +60,9 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
     delivered: 0,
     bounced: 0,
     neverDelivered: 0,
+    unsubscribed: 0,
   });
+  const [statsLoading, setStatsLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
@@ -97,25 +100,28 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
   };
 
   const fetchSubscriberStats = async () => {
+    setStatsLoading(true);
     try {
-      // Get all subscribers with their status
-      const { data, error } = await supabase
-        .from("newsletter_subscribers")
-        .select("is_active, bounced, last_delivered_at");
+      // Use edge function to bypass RLS
+      const { data, error } = await supabase.functions.invoke("newsletter-run", {
+        body: { action: "subscriber-stats" },
+        headers: getAuthHeaders(),
+      });
 
       if (error) throw error;
 
-      const stats: SubscriberStats = {
-        total: data?.length || 0,
-        active: data?.filter(s => s.is_active && !s.bounced).length || 0,
-        delivered: data?.filter(s => s.is_active && !s.bounced && s.last_delivered_at).length || 0,
-        bounced: data?.filter(s => s.bounced).length || 0,
-        neverDelivered: data?.filter(s => s.is_active && !s.bounced && !s.last_delivered_at).length || 0,
-      };
-
-      setSubscriberStats(stats);
+      if (data?.stats) {
+        setSubscriberStats(data.stats);
+      }
     } catch (error) {
       console.error("Error fetching subscriber stats:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load subscriber stats",
+        variant: "destructive",
+      });
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -222,35 +228,56 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
       </div>
 
       {/* Subscriber Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Card className="p-3">
           <div className="text-sm text-muted-foreground">Total</div>
-          <div className="text-2xl font-bold">{subscriberStats.total}</div>
+          <div className="text-2xl font-bold">
+            {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : subscriberStats.total}
+          </div>
         </Card>
-        <Card className="p-3 border-green-200 bg-green-50 dark:bg-green-950/20">
-          <div className="text-sm text-green-600 flex items-center gap-1">
+        <Card className="p-3 border-green-500/30 bg-green-500/10">
+          <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
             <CheckCircle className="h-3 w-3" />
             Delivered
           </div>
-          <div className="text-2xl font-bold text-green-700">{subscriberStats.delivered}</div>
+          <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+            {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : subscriberStats.delivered}
+          </div>
+          <div className="text-xs text-muted-foreground">confirmed receipt</div>
         </Card>
         <Card className="p-3">
           <div className="text-sm text-muted-foreground flex items-center gap-1">
             <Users className="h-3 w-3" />
-            Active (will receive)
+            Active
           </div>
-          <div className="text-2xl font-bold">{subscriberStats.active}</div>
+          <div className="text-2xl font-bold">
+            {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : subscriberStats.active}
+          </div>
+          <div className="text-xs text-muted-foreground">will receive campaign</div>
         </Card>
-        <Card className="p-3 border-amber-200 bg-amber-50 dark:bg-amber-950/20">
-          <div className="text-sm text-amber-600">New (no delivery yet)</div>
-          <div className="text-2xl font-bold text-amber-700">{subscriberStats.neverDelivered}</div>
+        <Card className="p-3 border-amber-500/30 bg-amber-500/10">
+          <div className="text-sm text-amber-600 dark:text-amber-400">New</div>
+          <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">
+            {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : subscriberStats.neverDelivered}
+          </div>
+          <div className="text-xs text-muted-foreground">no delivery yet</div>
         </Card>
-        <Card className="p-3 border-red-200 bg-red-50 dark:bg-red-950/20">
-          <div className="text-sm text-red-600 flex items-center gap-1">
+        <Card className="p-3 border-red-500/30 bg-red-500/10">
+          <div className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
             Bounced
           </div>
-          <div className="text-2xl font-bold text-red-700">{subscriberStats.bounced}</div>
+          <div className="text-2xl font-bold text-red-700 dark:text-red-400">
+            {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : subscriberStats.bounced}
+          </div>
+          <div className="text-xs text-muted-foreground">excluded from sends</div>
+        </Card>
+        <Card className="p-3 border-muted">
+          <div className="text-sm text-muted-foreground">Unsubscribed</div>
+          <div className="text-2xl font-bold text-muted-foreground">
+            {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : subscriberStats.unsubscribed}
+          </div>
+          <div className="text-xs text-muted-foreground">opted out</div>
         </Card>
       </div>
 
