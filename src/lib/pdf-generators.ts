@@ -1184,7 +1184,7 @@ export const generateReadinessScore = (): jsPDF => {
 };
 
 // ============================================================================
-// PRODUCT 2: WELLNESS AI BUILDER – OPERATOR EDITION
+// PRODUCT 2: WELLNESS AI PROMPT PACK – OPERATOR EDITION
 // ============================================================================
 export const generatePromptPack = (): jsPDF => {
   const doc = new jsPDF();
@@ -1194,7 +1194,7 @@ export const generatePromptPack = (): jsPDF => {
   addHeader(doc, 1, totalPages);
   doc.setFontSize(28);
   doc.setTextColor(...BRAND.white);
-  doc.text("Wellness AI Builder", 105, 80, { align: "center" });
+  doc.text("Wellness AI Prompt Pack", 105, 80, { align: "center" });
   doc.setFontSize(20);
   doc.setTextColor(...BRAND.teal);
   doc.text("Operator Edition", 105, 100, { align: "center" });
