@@ -55,6 +55,44 @@ Deno.serve(async (req) => {
       console.log('Audit log:', actionType, 'newsletter_subscribers', details || '');
     };
 
+    // Handle coupon analytics action
+    if (action === 'coupon-analytics') {
+      // Get all subscribers
+      const { data: allSubscribers, error: subError } = await supabase
+        .from('newsletter_subscribers')
+        .select('email, coupon_code, subscribed_at, coupon_used_at, coupon_product_id')
+        .order('subscribed_at', { ascending: false });
+
+      if (subError) throw subError;
+
+      const totalSubscribers = allSubscribers?.length || 0;
+      const subscribersWithCoupon = allSubscribers?.filter(s => s.coupon_code).length || 0;
+      const couponsRedeemed = allSubscribers?.filter(s => s.coupon_used_at).length || 0;
+      
+      // Calculate rates
+      const redemptionRate = subscribersWithCoupon > 0 ? (couponsRedeemed / subscribersWithCoupon) * 100 : 0;
+      const conversionRate = totalSubscribers > 0 ? (couponsRedeemed / totalSubscribers) * 100 : 0;
+
+      // Get recent redemptions for the table
+      const redemptions = allSubscribers?.filter(s => s.coupon_code)?.slice(0, 50) || [];
+
+      await logAudit('coupon-analytics', totalSubscribers);
+
+      return new Response(
+        JSON.stringify({
+          stats: {
+            totalSubscribers,
+            subscribersWithCoupon,
+            couponsRedeemed,
+            redemptionRate,
+            conversionRate,
+          },
+          redemptions,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     switch (action) {
       case 'list': {
         let query = supabase
