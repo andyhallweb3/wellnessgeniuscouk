@@ -1110,6 +1110,98 @@ serve(async (req) => {
           console.log("[GENIE] Guardrails fetch skipped:", guardrailErr);
         }
 
+        // Fetch user's AI Readiness scores for context
+        let readinessContext = "";
+        try {
+          const { data: readinessData } = await supabase
+            .from("ai_readiness_completions")
+            .select("overall_score, score_band, leadership_score, data_score, people_score, process_score, risk_score, completed_at, company, industry")
+            .eq("user_id", userId)
+            .order("completed_at", { ascending: false })
+            .limit(3);
+          
+          if (readinessData && readinessData.length > 0) {
+            const latest = readinessData[0];
+            readinessContext = "\n\n## AI READINESS ASSESSMENT HISTORY\n";
+            readinessContext += `Latest Score: ${latest.overall_score}/100 (${latest.score_band || 'Unrated'})\n`;
+            readinessContext += `Completed: ${new Date(latest.completed_at).toLocaleDateString('en-GB')}\n`;
+            if (latest.company) readinessContext += `Company: ${latest.company}\n`;
+            if (latest.industry) readinessContext += `Industry: ${latest.industry}\n`;
+            readinessContext += `\nPillar Breakdown:\n`;
+            readinessContext += `- Leadership & Strategy: ${latest.leadership_score || 0}%\n`;
+            readinessContext += `- Data Infrastructure: ${latest.data_score || 0}%\n`;
+            readinessContext += `- People & Skills: ${latest.people_score || 0}%\n`;
+            readinessContext += `- Process Maturity: ${latest.process_score || 0}%\n`;
+            readinessContext += `- Risk & Governance: ${latest.risk_score || 0}%\n`;
+            
+            if (readinessData.length > 1) {
+              readinessContext += `\nPrevious assessments: ${readinessData.length - 1} on record\n`;
+              const oldScore = readinessData[1].overall_score;
+              const scoreDelta = latest.overall_score - oldScore;
+              readinessContext += `Score trend: ${scoreDelta > 0 ? '+' : ''}${scoreDelta} from previous\n`;
+            }
+            console.log("[GENIE] Loaded AI Readiness context, score:", latest.overall_score);
+          }
+        } catch (readinessErr) {
+          console.log("[GENIE] Readiness fetch skipped:", readinessErr);
+        }
+
+        // Fetch user's download history for context
+        let downloadsContext = "";
+        try {
+          const userEmail = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("id", userId)
+            .single();
+          
+          if (userEmail.data?.email) {
+            const { data: downloads } = await supabase
+              .from("product_downloads")
+              .select("product_name, product_type, created_at")
+              .eq("email", userEmail.data.email)
+              .order("created_at", { ascending: false })
+              .limit(10);
+            
+            if (downloads && downloads.length > 0) {
+              downloadsContext = "\n\n## RESOURCES USER HAS ACCESSED\n";
+              const uniqueProducts = [...new Map(downloads.map((d: any) => [d.product_name, d])).values()];
+              uniqueProducts.slice(0, 5).forEach((d: any) => {
+                downloadsContext += `- ${d.product_name} (${d.product_type}, ${new Date(d.created_at).toLocaleDateString('en-GB')})\n`;
+              });
+              console.log("[GENIE] Loaded", uniqueProducts.length, "download records");
+            }
+          }
+        } catch (downloadErr) {
+          console.log("[GENIE] Downloads fetch skipped:", downloadErr);
+        }
+
+        // Fetch saved insights from previous sessions
+        let insightsContext = "";
+        try {
+          const { data: insights } = await supabase
+            .from("genie_insights")
+            .select("insight_type, content, created_at")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(10);
+          
+          if (insights && insights.length > 0) {
+            insightsContext = "\n\n## PREVIOUS INSIGHTS FROM CONVERSATIONS\n";
+            insights.forEach((i: any) => {
+              insightsContext += `- [${i.insight_type}] ${i.content}\n`;
+            });
+            console.log("[GENIE] Loaded", insights.length, "previous insights");
+          }
+        } catch (insightErr) {
+          console.log("[GENIE] Insights fetch skipped:", insightErr);
+        }
+
+        // Add all context to guardrails context (which gets prepended to system prompt)
+        if (readinessContext) guardrailsContext += readinessContext;
+        if (downloadsContext) guardrailsContext += downloadsContext;
+        if (insightsContext) guardrailsContext += insightsContext;
+
         // Fetch knowledge base entries (active only, sorted by priority)
         try {
           const { data: knowledgeEntries } = await supabase
