@@ -27,10 +27,7 @@ import {
   Trophy,
   Home,
   Flame,
-  Shield,
-  Newspaper,
-  Mail,
-  Coins
+  Shield
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -95,41 +92,6 @@ const PRODUCT_ICONS: Record<string, React.ReactNode> = {
   "reality-checklist": <FileText size={20} />,
   "myths-deck": <FileText size={20} />,
 };
-
-const ADMIN_SECTIONS = [
-  { 
-    id: "newsletter", 
-    label: "Newsletter", 
-    description: "Manage articles, subscribers, and send newsletters",
-    icon: Newspaper,
-    path: "/news/admin",
-    color: "bg-blue-500/10 text-blue-600"
-  },
-  { 
-    id: "downloads", 
-    label: "Downloads & Upsells", 
-    description: "Track downloads, manage upsell campaigns, view A/B tests",
-    icon: Download,
-    path: "/downloads/admin",
-    color: "bg-green-500/10 text-green-600"
-  },
-  { 
-    id: "emails", 
-    label: "Email Templates", 
-    description: "Create and manage email templates for automation",
-    icon: Mail,
-    path: "/emails/admin",
-    color: "bg-purple-500/10 text-purple-600"
-  },
-  { 
-    id: "credits", 
-    label: "Coach Credits", 
-    description: "Manage user credits, view transactions, trigger resets",
-    icon: Coins,
-    path: "/coach/admin",
-    color: "bg-amber-500/10 text-amber-600"
-  },
-];
 
 interface ReadinessScore {
   id: string;
@@ -835,42 +797,21 @@ const MemberHub = () => {
               {/* ADMIN TAB - Only shown to admins */}
               {isAdmin && (
                 <TabsContent value="admin">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-lg bg-accent/10">
-                        <Shield size={20} className="text-accent" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-heading">Admin Dashboard</h2>
-                        <p className="text-sm text-muted-foreground">Manage your platform</p>
-                      </div>
+                  <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                    <div className="p-4 rounded-full bg-accent/10">
+                      <Shield size={32} className="text-accent" />
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {ADMIN_SECTIONS.map((section) => {
-                        const Icon = section.icon;
-                        
-                        return (
-                          <Link
-                            key={section.id}
-                            to={section.path}
-                            className="group text-left p-6 rounded-2xl border border-border bg-card hover:border-accent/50 hover:shadow-lg transition-all duration-200"
-                          >
-                            <div className="flex items-start justify-between mb-4">
-                              <div className={`p-3 rounded-xl ${section.color}`}>
-                                <Icon size={24} />
-                              </div>
-                              <ArrowRight 
-                                size={20} 
-                                className="text-muted-foreground group-hover:text-accent group-hover:translate-x-1 transition-all" 
-                              />
-                            </div>
-                            <h3 className="text-lg font-heading mb-2">{section.label}</h3>
-                            <p className="text-sm text-muted-foreground">{section.description}</p>
-                          </Link>
-                        );
-                      })}
-                    </div>
+                    <h2 className="text-xl font-heading">Admin Dashboard</h2>
+                    <p className="text-muted-foreground text-center max-w-md">
+                      Access the full admin dashboard to manage newsletters, downloads, email templates, and more.
+                    </p>
+                    <Button variant="accent" size="lg" asChild>
+                      <Link to="/admin">
+                        <Shield size={18} />
+                        Go to Admin Dashboard
+                        <ArrowRight size={16} />
+                      </Link>
+                    </Button>
                   </div>
                 </TabsContent>
               )}
