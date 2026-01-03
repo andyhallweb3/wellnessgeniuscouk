@@ -49,6 +49,7 @@ import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import DownloadHistory from "@/components/hub/DownloadHistory";
 import ReadinessScoreHistory from "@/components/hub/ReadinessScoreHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
+import { ProfessionalFeed } from "@/components/feed";
 import WelcomeModal from "@/components/hub/WelcomeModal";
 import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -329,6 +330,10 @@ const MemberHub = () => {
                 <TabsTrigger value="products" className="flex items-center gap-2">
                   <Package size={16} />
                   Products
+                </TabsTrigger>
+                <TabsTrigger value="feed" className="flex items-center gap-2">
+                  <MessageCircle size={16} />
+                  Feed
                 </TabsTrigger>
                 <TabsTrigger value="community" className="flex items-center gap-2">
                   <Trophy size={16} />
@@ -751,6 +756,11 @@ const MemberHub = () => {
                     </div>
                   </div>
                 </div>
+              </TabsContent>
+
+              {/* FEED TAB */}
+              <TabsContent value="feed">
+                <ProfessionalFeed />
               </TabsContent>
 
               {/* COMMUNITY TAB */}
