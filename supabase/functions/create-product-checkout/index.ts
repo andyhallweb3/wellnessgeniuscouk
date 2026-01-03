@@ -180,6 +180,24 @@ serve(async (req) => {
         if (coupon && coupon.valid) {
           sessionOptions.discounts = [{ coupon: couponCode }];
           logStep("Coupon applied", { couponCode });
+          
+          // Track coupon usage in newsletter_subscribers
+          if (userEmail) {
+            try {
+              await supabaseClient
+                .from("newsletter_subscribers")
+                .update({
+                  coupon_code: couponCode,
+                  coupon_used_at: new Date().toISOString(),
+                  coupon_product_id: productId,
+                })
+                .eq("email", userEmail.toLowerCase());
+              logStep("Coupon usage tracked", { email: userEmail, couponCode });
+            } catch (trackErr) {
+              logStep("Failed to track coupon usage", { error: String(trackErr) });
+              // Don't fail checkout for tracking errors
+            }
+          }
         }
       } catch (couponError) {
         logStep("Coupon validation failed, continuing without discount", { couponCode, error: String(couponError) });

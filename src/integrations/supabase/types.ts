@@ -1191,6 +1191,9 @@ export type Database = {
       }
       newsletter_subscribers: {
         Row: {
+          coupon_code: string | null
+          coupon_product_id: string | null
+          coupon_used_at: string | null
           email: string
           id: string
           ip_address: string | null
@@ -1200,6 +1203,9 @@ export type Database = {
           subscribed_at: string
         }
         Insert: {
+          coupon_code?: string | null
+          coupon_product_id?: string | null
+          coupon_used_at?: string | null
           email: string
           id?: string
           ip_address?: string | null
@@ -1209,6 +1215,9 @@ export type Database = {
           subscribed_at?: string
         }
         Update: {
+          coupon_code?: string | null
+          coupon_product_id?: string | null
+          coupon_used_at?: string | null
           email?: string
           id?: string
           ip_address?: string | null

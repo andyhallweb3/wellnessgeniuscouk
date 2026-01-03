@@ -643,6 +643,24 @@ const Products = () => {
     }
   }, [searchParams, user]);
 
+  // Auto-open checkout if coupon and product are in URL (from newsletter thank you page)
+  useEffect(() => {
+    const coupon = searchParams.get("coupon");
+    const productId = searchParams.get("product");
+    const payment = searchParams.get("payment");
+    
+    // Only auto-checkout if we have coupon + product and not already processed a payment
+    if (coupon && productId && !payment) {
+      const product = [...products, ...bundles, ...subscriptions].find(p => p.id === productId);
+      if (product && product.isStripeProduct) {
+        // Small delay to let the page render first
+        setTimeout(() => {
+          handleBuyClickWithCoupon(product, coupon);
+        }, 500);
+      }
+    }
+  }, [searchParams]);
+
   const handleDownloadClick = (product: Product) => {
     setEmailGateModal({ isOpen: true, product });
   };
@@ -651,7 +669,7 @@ const Products = () => {
     setEmailGateModal({ isOpen: false, product: null });
   };
 
-  const handleBuyClick = async (product: Product) => {
+  const handleBuyClickWithCoupon = async (product: Product, couponCode?: string) => {
     setProcessingProductId(product.id);
 
     try {
@@ -672,7 +690,7 @@ const Products = () => {
       }
 
       const { data, error } = await supabase.functions.invoke("create-product-checkout", {
-        body: { productId: product.id },
+        body: { productId: product.id, couponCode },
       });
 
       if (error) throw error;
@@ -733,6 +751,10 @@ const Products = () => {
     } finally {
       setProcessingProductId(null);
     }
+  };
+
+  const handleBuyClick = async (product: Product) => {
+    handleBuyClickWithCoupon(product);
   };
 
   return (
