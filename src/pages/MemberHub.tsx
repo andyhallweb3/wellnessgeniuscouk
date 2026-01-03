@@ -328,6 +328,12 @@ const MemberHub = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <Button variant="accent" size="sm" asChild>
+                <Link to="/downloads">
+                  <Library size={16} />
+                  Downloads Library
+                </Link>
+              </Button>
               <ReportProblemButton featureArea="Navigation" />
               <Button variant="outline" size="sm" asChild>
                 <Link to="/products">
