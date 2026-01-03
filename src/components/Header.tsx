@@ -76,6 +76,7 @@ const Header = () => {
   const aboutLinks = [
     { href: "/news", label: "Industry News", isRoute: true },
     { href: "/speaker-kit", label: "Speaking", isRoute: true },
+    { href: "/newsletter", label: "Subscribe", isRoute: true, icon: Mail },
   ];
 
   const hubLinks = [
@@ -158,7 +159,8 @@ const Header = () => {
               <DropdownMenuContent align="start" className="bg-popover border border-border shadow-lg z-50">
                 {aboutLinks.map((link) => (
                   <DropdownMenuItem key={link.href} asChild>
-                    <Link to={link.href} className="w-full">
+                    <Link to={link.href} className={`w-full flex items-center gap-2 ${isActive(link.href) ? "text-accent font-medium" : ""}`}>
+                      {link.icon && <link.icon size={16} />}
                       {link.label}
                     </Link>
                   </DropdownMenuItem>
@@ -252,12 +254,6 @@ const Header = () => {
                     Try it!
                   </span>
                 )}
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/newsletter">
-                <Mail size={14} />
-                Subscribe
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
@@ -387,12 +383,6 @@ const Header = () => {
                         Try it!
                       </Badge>
                     )}
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link to="/newsletter" onClick={() => setIsMenuOpen(false)}>
-                    <Mail size={16} />
-                    Subscribe
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
