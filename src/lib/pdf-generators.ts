@@ -1184,790 +1184,475 @@ export const generateReadinessScore = (): jsPDF => {
 };
 
 // ============================================================================
-// PRODUCT 2: WELLNESS AI PROMPT PACK – OPERATOR EDITION
+// PRODUCT 2: WELLNESS GENIUS – AI PROMPT PACK
 // ============================================================================
 export const generatePromptPack = (): jsPDF => {
   const doc = new jsPDF();
-  const totalPages = 22;
+  const totalPages = 14;
   
   // Page 1 - Cover
   addHeader(doc, 1, totalPages);
   doc.setFontSize(28);
   doc.setTextColor(...BRAND.white);
-  doc.text("Wellness AI Prompt Pack", 105, 80, { align: "center" });
-  doc.setFontSize(20);
+  doc.text("Wellness Genius", 105, 70, { align: "center" });
+  doc.setFontSize(24);
   doc.setTextColor(...BRAND.teal);
-  doc.text("Operator Edition", 105, 100, { align: "center" });
-  doc.setFontSize(12);
+  doc.text("AI Prompt Pack", 105, 92, { align: "center" });
+  doc.setFontSize(16);
+  doc.setTextColor(...BRAND.white);
+  doc.text("From AI Curiosity to AI That Actually Delivers", 105, 125, { align: "center" });
+  doc.setFontSize(11);
   doc.setTextColor(...BRAND.muted);
-  doc.text("Stop wellness teams building AI that sounds impressive", 105, 130, { align: "center" });
-  doc.text("but delivers no operational or commercial value.", 105, 142, { align: "center" });
+  doc.text("Designed to work with the Wellness Genius platform,", 105, 150, { align: "center" });
+  doc.text("including the AI Readiness Score and industry intelligence.", 105, 162, { align: "center" });
   doc.setFontSize(10);
-  doc.text("Wellness Genius • wellnessgenius.co.uk", 105, 200, { align: "center" });
-  
-  // Page 2 - Why AI Fails
+  doc.setTextColor(...BRAND.teal);
+  doc.text("It is not theoretical. It is built for operators who need results.", 105, 185, { align: "center" });
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Wellness Genius • wellnessgenius.co.uk", 105, 220, { align: "center" });
+
+  // Page 2 - Core System Prompt
   doc.addPage();
   addHeader(doc, 2, totalPages);
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("SECTION 1", 20, 35);
-  doc.setFontSize(24);
+  doc.text("PROMPT 1: CORE SYSTEM", 20, 35);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.white);
-  doc.text("Why AI Fails in Wellness", 20, 52);
-  
-  doc.setFontSize(11);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("AI fails in wellness when:", 20, 72);
-  
-  const failReasons = [
-    "• decisions aren't clearly defined",
-    "• data reflects activity, not behaviour",
-    "• trust and consent are treated as afterthoughts"
-  ];
-  let yPos = 87;
-  failReasons.forEach(item => {
-    doc.setTextColor(...BRAND.white);
-    doc.text(item, 25, yPos);
-    yPos += 12;
-  });
+  doc.text("The Operating System of Wellness Genius AI", 20, 52);
   
   doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, yPos + 15, 180, 50, 3, 3, "F");
-  doc.setFontSize(14);
+  doc.roundedRect(15, 68, 180, 180, 3, 3, "F");
+  
+  doc.setFontSize(10);
   doc.setTextColor(...BRAND.teal);
-  doc.text("This product is designed to:", 25, yPos + 35);
+  doc.text("PROMPT:", 22, 83);
   doc.setTextColor(...BRAND.white);
-  doc.text("Stop bad AI projects before they start.", 25, yPos + 50);
+  doc.text("You are a Wellness Genius AI advisor.", 22, 95);
+  
   doc.setTextColor(...BRAND.muted);
-  doc.text("Saving time, money, and credibility.", 25, yPos + 62);
+  const coreDesc = doc.splitTextToSize("You support founders, operators, and commercial leaders across fitness, wellness, hospitality, insurance, rewards, and consumer engagement platforms.", 165);
+  doc.text(coreDesc, 22, 108);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("You reference:", 22, 130);
+  doc.setTextColor(...BRAND.white);
+  doc.text("• the user's Wellness Genius AI Readiness Score", 30, 142);
+  doc.text("• industry benchmarks from the Wellness Genius intelligence layer", 30, 152);
+  doc.text("• proven engagement and monetisation models", 30, 162);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("You prioritise:", 22, 178);
+  doc.setTextColor(...BRAND.white);
+  doc.text("• behaviour change", 30, 190);
+  doc.text("• engagement frequency", 30, 200);
+  doc.text("• retention", 30, 210);
+  doc.text("• monetisation", 30, 220);
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(15, 252, 180, 20, 2, 2, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("Tone: direct, commercially aware, encouraging, sceptical of hype.", 22, 264);
 
-  // Page 3 - NEW: AI Decision Readiness Filter
+  // Page 3 - AI Readiness Score Deep Dive
   doc.addPage();
   addHeader(doc, 3, totalPages);
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("TEMPLATE 1", 20, 35);
-  doc.setFontSize(24);
+  doc.text("PROMPT 2: AI READINESS SCORE", 20, 35);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.white);
-  doc.text("AI Decision Readiness Filter", 20, 52);
-  doc.setFontSize(14);
+  doc.text("AI Readiness Score Deep Dive", 20, 52);
+  doc.setFontSize(11);
   doc.setTextColor(...BRAND.teal);
-  doc.text("(Yes / No Gate)", 20, 68);
+  doc.text("Turning a score into a strategy", 20, 65);
   
   doc.setFontSize(10);
   doc.setTextColor(...BRAND.muted);
-  doc.text("Answer these before any AI initiative. If 2+ are 'No' → STOP.", 20, 85);
+  doc.text("This prompt extends the Wellness Genius AI Readiness Score.", 20, 82);
   
-  const gateQuestions = [
-    { q: "Is the decision repeated weekly?", why: "If not, automation won't pay back" },
-    { q: "Is the decision financially material?", why: "If not, why are we prioritising this?" },
-    { q: "Is the data clean and consented?", why: "If not, we're building on sand" },
-    { q: "Is failure low-risk?", why: "If not, start with something safer" }
-  ];
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 92, 180, 160, 3, 3, "F");
   
-  yPos = 100;
-  gateQuestions.forEach((gate, i) => {
-    doc.setFillColor(...BRAND.cardBg);
-    doc.roundedRect(15, yPos, 180, 35, 3, 3, "F");
-    doc.setFontSize(11);
-    doc.setTextColor(...BRAND.white);
-    doc.text(`${i + 1}. ${gate.q}`, 22, yPos + 14);
-    doc.setFontSize(9);
-    doc.setTextColor(...BRAND.muted);
-    doc.text(gate.why, 32, yPos + 26);
-    doc.setDrawColor(...BRAND.teal);
-    doc.rect(165, yPos + 8, 8, 8);
-    doc.text("Y", 167, yPos + 14);
-    doc.rect(178, yPos + 8, 8, 8);
-    doc.text("N", 180, yPos + 14);
-    yPos += 42;
-  });
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT:", 22, 107);
+  doc.setTextColor(...BRAND.white);
+  const readinessPrompt = doc.splitTextToSize("Using the user's Wellness Genius AI Readiness Score, break down performance across:", 165);
+  doc.text(readinessPrompt, 22, 118);
   
-  doc.setFillColor(...BRAND.teal);
-  doc.roundedRect(15, yPos + 5, 180, 25, 3, 3, "F");
-  doc.setFontSize(11);
-  doc.setTextColor(...BRAND.darkBg);
-  doc.text("If 2+ answers are 'No': DO NOT BUILD AI YET.", 105, yPos + 20, { align: "center" });
+  doc.setTextColor(...BRAND.muted);
+  doc.text("• Data readiness", 30, 133);
+  doc.text("• Engagement maturity", 30, 143);
+  doc.text("• Integration capability", 30, 153);
+  doc.text("• Monetisation readiness", 30, 163);
+  doc.text("• Governance, privacy, and trust", 30, 173);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("For each dimension:", 22, 188);
+  doc.setTextColor(...BRAND.white);
+  doc.text("→ Explain what this score means in practical terms", 30, 200);
+  doc.text("→ Highlight commercial risks if it stays at this level", 30, 210);
+  doc.text("→ Recommend one Wellness Genius tool to improve it", 30, 220);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("End with:", 22, 235);
+  doc.setTextColor(...BRAND.white);
+  doc.text('"Biggest risk if nothing changes"', 30, 245);
 
-  // Page 4 - NEW: AI Build Brief Template (CRITICAL)
+  // Page 4 - Engagement & Behaviour Engine
   doc.addPage();
   addHeader(doc, 4, totalPages);
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("TEMPLATE 2 (CRITICAL)", 20, 35);
-  doc.setFontSize(24);
+  doc.text("PROMPT 3: ENGAGEMENT ENGINE", 20, 35);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.white);
-  doc.text("AI Build Brief", 20, 52);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Hand this directly to dev teams, agencies, or vendors.", 20, 70);
+  doc.text("Engagement & Behaviour Engine", 20, 52);
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Mapped to Wellness Genius capabilities", 20, 65);
   
   doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 80, 180, 175, 3, 3, "F");
-  
-  const briefFields = [
-    "Decision Supported:",
-    "User(s) Impacted:",
-    "Current Decision Method:",
-    "Data Required (Confirmed Only):",
-    "Risk If Wrong:",
-    "Commercial Upside (Low–High):",
-    "Trust / Compliance Concerns:",
-    "Kill Conditions:"
-  ];
-  
-  yPos = 95;
-  briefFields.forEach(field => {
-    doc.setFontSize(10);
-    doc.setTextColor(...BRAND.teal);
-    doc.text(field, 22, yPos);
-    doc.setDrawColor(...BRAND.muted);
-    doc.line(22, yPos + 12, 188, yPos + 12);
-    yPos += 20;
-  });
+  doc.roundedRect(15, 78, 180, 175, 3, 3, "F");
   
   doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT:", 22, 93);
   doc.setTextColor(...BRAND.white);
-  doc.text("This brief eliminates misinterpretation during build.", 22, yPos + 5);
+  doc.text("Design an engagement engine using:", 22, 105);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("• activity and behaviour signals", 30, 117);
+  doc.text("• rewards or incentives", 30, 127);
+  doc.text("• nudges and challenges", 30, 137);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Align the engine to the user's AI Readiness Score band:", 22, 152);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Low readiness: simple, low-risk engagement loops", 30, 164);
+  doc.text("Mid readiness: personalised challenges and incentives", 30, 174);
+  doc.text("High readiness: predictive nudging and adaptive rewards", 30, 184);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Reference relevant Wellness Genius tools:", 22, 199);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("• activity tracking SDKs", 30, 211);
+  doc.text("• rewards and incentives logic", 30, 221);
+  doc.text("• engagement analytics", 30, 231);
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(15, 257, 180, 20, 2, 2, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("This prevents teams overbuilding before they're ready.", 22, 269);
 
-  // Page 5 - NEW: Counter-Brief
+  // Page 5 - Personalisation & Trust
   doc.addPage();
   addHeader(doc, 5, totalPages);
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("TEMPLATE 3", 20, 35);
-  doc.setFontSize(24);
+  doc.text("PROMPT 4: PERSONALISATION & TRUST", 20, 35);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.white);
-  doc.text("\"Why This AI Should NOT Exist\"", 20, 52);
-  doc.setFontSize(14);
+  doc.text("Personalisation & Trust", 20, 52);
+  doc.setFontSize(11);
   doc.setTextColor(...BRAND.teal);
-  doc.text("Counter-Brief", 20, 68);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Force yourself to argue against building. This builds trust and maturity.", 20, 85);
+  doc.text("Built for GDPR reality, not AI theatre", 20, 65);
   
   doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 100, 180, 130, 3, 3, "F");
+  doc.roundedRect(15, 78, 180, 175, 3, 3, "F");
   
-  const counterFields = [
-    "Best Argument Against This AI:",
-    "What Could Go Wrong:",
-    "Cheaper Alternative:",
-    "What Problem We Might Be Avoiding:"
-  ];
-  
-  yPos = 115;
-  counterFields.forEach(field => {
-    doc.setFontSize(10);
-    doc.setTextColor(...BRAND.teal);
-    doc.text(field, 22, yPos);
-    doc.setDrawColor(...BRAND.muted);
-    doc.line(22, yPos + 12, 188, yPos + 12);
-    doc.line(22, yPos + 22, 188, yPos + 22);
-    yPos += 30;
-  });
-  
-  doc.setFontSize(11);
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT:", 22, 93);
   doc.setTextColor(...BRAND.white);
-  doc.text("If you cannot complete this brief honestly, you are not ready to build.", 20, 245);
+  doc.text("Create a personalisation strategy based on:", 22, 105);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("• behavioural data", 30, 117);
+  doc.text("• usage patterns", 30, 127);
+  doc.text("• engagement frequency", 30, 137);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Explicitly avoid:", 22, 152);
+  doc.setTextColor(255, 150, 150);
+  doc.text("✗ medical diagnosis", 30, 164);
+  doc.text("✗ sensitive health inference", 30, 174);
+  doc.text("✗ opaque decision-making", 30, 184);
+  
+  doc.setTextColor(...BRAND.white);
+  const trustNote = doc.splitTextToSize("Reference how Wellness Genius transparency and data governance principles should be communicated to users in plain English.", 165);
+  doc.text(trustNote, 22, 199);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Flag: trust risks • regulatory risks • reputational risks", 22, 222);
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(15, 257, 180, 20, 2, 2, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("Critical for enterprise, hospitality, and insurance partners.", 22, 269);
 
-  // Page 6 - NEW: AI Data Readiness Scorecard
+  // Page 6 - Monetisation Prompt
   doc.addPage();
   addHeader(doc, 6, totalPages);
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("TEMPLATE 4", 20, 35);
-  doc.setFontSize(24);
+  doc.text("PROMPT 5: MONETISATION", 20, 35);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.white);
-  doc.text("AI Data Readiness Scorecard", 20, 52);
+  doc.text("Monetisation Prompt", 20, 52);
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Connected to real Wellness Genius revenue paths", 20, 65);
   
-  doc.setFontSize(10);
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 78, 180, 175, 3, 3, "F");
+  
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT:", 22, 93);
+  doc.setTextColor(...BRAND.white);
+  const monetPrompt = doc.splitTextToSize("Based on the organisation's AI Readiness Score, recommend:", 165);
+  doc.text(monetPrompt, 22, 105);
+  
   doc.setTextColor(...BRAND.muted);
-  doc.text("Score yourself honestly. Inspired by ABC Fitness AI adoption research.", 20, 70);
+  doc.text("• One monetisation model they are ready for today", 30, 120);
+  doc.text("• One model they should prepare for", 30, 132);
+  doc.text("• One model they should avoid for now", 30, 144);
   
-  const scoreItems = [
-    { area: "Data silo score", desc: "How many systems hold customer data?" },
-    { area: "Member journey visibility", desc: "Can you see end-to-end member journey?" },
-    { area: "Forecasting maturity", desc: "Can you predict churn/retention?" },
-    { area: "Operational automation", desc: "What runs without manual intervention?" },
-    { area: "CRM completeness", desc: "Is member data complete and current?" }
-  ];
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Use Wellness Genius-supported approaches:", 22, 162);
+  doc.setTextColor(...BRAND.white);
+  doc.text("→ B2B licensing", 30, 174);
+  doc.text("→ rewards and merchant-funded incentives", 30, 186);
+  doc.text("→ premium insight or engagement layers", 30, 198);
   
-  yPos = 85;
-  scoreItems.forEach(item => {
-    doc.setFillColor(...BRAND.cardBg);
-    doc.roundedRect(15, yPos, 180, 32, 3, 3, "F");
-    doc.setFontSize(10);
-    doc.setTextColor(...BRAND.white);
-    doc.text(item.area, 22, yPos + 12);
-    doc.setFontSize(9);
-    doc.setTextColor(...BRAND.muted);
-    doc.text(item.desc, 22, yPos + 23);
-    
-    // Score boxes
-    doc.setDrawColor(...BRAND.teal);
-    for (let i = 1; i <= 5; i++) {
-      doc.rect(140 + (i * 10), yPos + 8, 8, 8);
-      doc.setFontSize(8);
-      doc.setTextColor(...BRAND.teal);
-      doc.text(String(i), 142 + (i * 10), yPos + 14);
-    }
-    yPos += 38;
-  });
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Define:", 22, 216);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("• who pays", 30, 228);
+  doc.text("• why they pay", 30, 238);
+  doc.text("• the KPI that proves ROI", 30, 248);
+  
+  doc.setFillColor(80, 40, 40);
+  doc.roundedRect(15, 257, 180, 20, 2, 2, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(255, 150, 150);
+  doc.text('Kill any model that relies on "we\'ll monetise later".', 22, 269);
 
-  // Page 7 - Decision Tree
+  // Page 7 - Operator Co-Pilot
   doc.addPage();
   addHeader(doc, 7, totalPages);
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("SECTION 2", 20, 35);
-  doc.setFontSize(24);
+  doc.text("PROMPT 6: OPERATOR CO-PILOT", 20, 35);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.white);
-  doc.text("AI Decision Tree", 20, 52);
-  
+  doc.text("Operator Co-Pilot", 20, 52);
   doc.setFontSize(11);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Use this to determine if AI is the right solution:", 20, 72);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("The human + AI layer Wellness Genius is built for", 20, 65);
   
   doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 85, 180, 140, 3, 3, "F");
+  doc.roundedRect(15, 78, 180, 175, 3, 3, "F");
   
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setTextColor(...BRAND.teal);
-  doc.text("START: Do you have a repeated decision?", 22, 100);
+  doc.text("PROMPT:", 22, 93);
   doc.setTextColor(...BRAND.white);
-  doc.text("NO → Fix process first, not AI", 32, 112);
-  doc.text("YES → Continue", 32, 124);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("Is the data clean and consented?", 22, 142);
-  doc.setTextColor(...BRAND.white);
-  doc.text("NO → Fix data foundations first", 32, 154);
-  doc.text("YES → Continue", 32, 166);
+  const coPrompt = doc.splitTextToSize("Act as an AI co-pilot for a wellness operator using the Wellness Genius platform.", 165);
+  doc.text(coPrompt, 22, 105);
   
   doc.setTextColor(...BRAND.teal);
-  doc.text("Is the decision financially material?", 22, 184);
-  doc.setTextColor(...BRAND.white);
-  doc.text("NO → Deprioritise", 32, 196);
-  doc.text("YES → Build AI with clear success criteria", 32, 208);
+  doc.text("DAILY:", 22, 125);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("• reference engagement and readiness indicators", 30, 137);
+  doc.text("• suggest one practical action", 30, 149);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("WEEKLY:", 22, 167);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("• summarise trends using Wellness Genius analytics", 30, 179);
+  doc.text("• recommend one experiment", 30, 191);
+  
+  doc.setTextColor(...BRAND.teal);
+  doc.text("MONTHLY:", 22, 209);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("• explain how AI readiness has shifted", 30, 221);
+  doc.text("• highlight commercial impact", 30, 233);
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(15, 257, 180, 20, 2, 2, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("Always connect actions back to the AI Readiness Score.", 22, 269);
 
-  // Page 8 - Use Case Library
+  // Page 8 - Investor & Board Translation
   doc.addPage();
   addHeader(doc, 8, totalPages);
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("SECTION 3", 20, 35);
-  doc.setFontSize(24);
+  doc.text("PROMPT 7: INVESTOR TRANSLATION", 20, 35);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.white);
-  doc.text("Wellness AI Use Case Library", 20, 52);
-  
+  doc.text("Investor & Board Translation", 20, 52);
   doc.setFontSize(11);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Wellness Genius, explained without the woo", 20, 65);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(15, 78, 180, 140, 3, 3, "F");
+  
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("PROMPT:", 22, 93);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Explain the organisation's AI position using:", 22, 105);
   doc.setTextColor(...BRAND.muted);
-  doc.text("Proven use cases with clear ROI:", 20, 72);
+  doc.text("• the Wellness Genius AI Readiness Score", 30, 117);
+  doc.text("• engagement data", 30, 129);
+  doc.text("• monetisation readiness", 30, 141);
   
-  const useCases = [
-    { name: "Churn Prediction", roi: "High", complexity: "Medium", data: "Attendance + engagement" },
-    { name: "Class Demand Forecasting", roi: "Medium", complexity: "Low", data: "Booking history" },
-    { name: "Personalised Outreach", roi: "High", complexity: "Medium", data: "Behaviour + preferences" },
-    { name: "Content Recommendation", roi: "Low", complexity: "High", data: "Usage patterns" }
-  ];
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Translate this into:", 22, 159);
+  doc.setTextColor(...BRAND.white);
+  doc.text("→ growth narrative", 30, 171);
+  doc.text("→ defensibility", 30, 183);
+  doc.text("→ capital efficiency", 30, 195);
   
-  yPos = 95;
-  useCases.forEach(uc => {
-    doc.setFillColor(...BRAND.cardBg);
-    doc.roundedRect(15, yPos - 5, 180, 35, 3, 3, "F");
-    doc.setFontSize(12);
-    doc.setTextColor(...BRAND.teal);
-    doc.text(uc.name, 22, yPos + 8);
-    doc.setFontSize(9);
-    doc.setTextColor(...BRAND.white);
-    doc.text(`ROI: ${uc.roi} | Complexity: ${uc.complexity}`, 22, yPos + 20);
-    doc.setTextColor(...BRAND.muted);
-    doc.text(`Data: ${uc.data}`, 120, yPos + 20);
-    yPos += 42;
-  });
+  doc.setTextColor(...BRAND.muted);
+  const investorNote = doc.splitTextToSize("Avoid technical jargon unless it supports valuation, scalability, or risk mitigation.", 165);
+  doc.text(investorNote, 22, 210);
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(15, 230, 180, 20, 2, 2, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("Built for decks, not demos.", 22, 242);
 
-  // Page 9 - Prompt Templates
+  // Page 9 - Red-Flag Prompt
   doc.addPage();
   addHeader(doc, 9, totalPages);
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("SECTION 4", 20, 35);
-  doc.setFontSize(24);
+  doc.text("PROMPT 8: RED-FLAG REGISTER", 20, 35);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.white);
-  doc.text("Prompt Templates", 20, 52);
-  
+  doc.text("Red-Flag Prompt", 20, 52);
   doc.setFontSize(11);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Copy-paste ready prompts for common wellness AI tasks:", 20, 72);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("What Wellness Genius actively warns against", 20, 65);
   
   doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 85, 180, 60, 3, 3, "F");
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("CHURN PREDICTION PROMPT", 22, 100);
+  doc.roundedRect(15, 78, 180, 100, 3, 3, "F");
+  
   doc.setFontSize(9);
-  doc.setTextColor(...BRAND.white);
-  const prompt1 = "Analyse member attendance patterns over the last 90 days. Identify members with declining frequency who are at risk of churn. Provide confidence scores and recommended interventions.";
-  const p1Lines = doc.splitTextToSize(prompt1, 160);
-  doc.text(p1Lines, 22, 112);
-
-  doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 155, 180, 60, 3, 3, "F");
-  doc.setFontSize(10);
   doc.setTextColor(...BRAND.teal);
-  doc.text("ENGAGEMENT SEGMENTATION PROMPT", 22, 170);
-  doc.setFontSize(9);
+  doc.text("PROMPT:", 22, 93);
   doc.setTextColor(...BRAND.white);
-  const prompt2 = "Segment members based on engagement patterns: MVPs (3+ visits/week), Regulars (1-2 visits/week), At-Risk (<1 visit/week). For each segment, recommend tailored retention strategies.";
-  const p2Lines = doc.splitTextToSize(prompt2, 160);
-  doc.text(p2Lines, 22, 182);
+  doc.text("Based on the AI Readiness Score, list:", 22, 105);
+  doc.setTextColor(255, 150, 150);
+  doc.text("• features that are premature", 30, 120);
+  doc.text("• tools that will add complexity without ROI", 30, 132);
+  doc.text("• common wellness AI traps", 30, 144);
+  
+  doc.setTextColor(...BRAND.white);
+  const redFlagNote = doc.splitTextToSize("Recommend simpler Wellness Genius-supported alternatives instead.", 165);
+  doc.text(redFlagNote, 22, 162);
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(15, 190, 180, 20, 2, 2, "F");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("This is where trust is earned.", 22, 202);
 
-  // Page 10 - Data Schema Templates
+  // Page 10 - Strategic Positioning
   doc.addPage();
   addHeader(doc, 10, totalPages);
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("SECTION 5", 20, 35);
-  doc.setFontSize(24);
+  doc.text("STRATEGIC POSITIONING", 20, 35);
+  doc.setFontSize(20);
   doc.setTextColor(...BRAND.white);
-  doc.text("Data Schema Templates", 20, 52);
+  doc.text("How This Positions Wellness Genius", 20, 52);
   
   doc.setFontSize(11);
   doc.setTextColor(...BRAND.muted);
-  doc.text("Standard data structures for wellness AI:", 20, 72);
+  doc.text("Wellness Genius becomes:", 20, 75);
   
-  doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 85, 180, 100, 3, 3, "F");
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("MEMBER ENGAGEMENT SCHEMA", 22, 100);
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.white);
-  const schemaFields = [
-    "member_id (unique identifier)",
-    "visit_date (timestamp)",
-    "visit_type (class, gym, PT, etc.)",
-    "duration_minutes (integer)",
-    "engagement_score (0-100)",
-    "last_visit_days_ago (integer)"
-  ];
-  yPos = 115;
-  schemaFields.forEach(field => {
-    doc.text("• " + field, 32, yPos);
-    yPos += 10;
-  });
-
-  // Pages 11-20: Additional content sections
-  // Page 11 - Testing Framework
-  doc.addPage();
-  addHeader(doc, 11, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("SECTION 6", 20, 35);
-  doc.setFontSize(24);
-  doc.setTextColor(...BRAND.white);
-  doc.text("AI Testing Framework", 20, 52);
-  
-  doc.setFontSize(11);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("How to test AI before full deployment:", 20, 72);
-  
-  const testingSteps = [
-    { step: "1. Define success criteria", desc: "What does 'working' look like?" },
-    { step: "2. Set kill conditions", desc: "When do we stop?" },
-    { step: "3. Run pilot (30 days)", desc: "Small scale, controlled environment" },
-    { step: "4. Measure against baseline", desc: "Compare to pre-AI performance" },
-    { step: "5. Decide: Scale, Adjust, or Kill", desc: "Based on evidence, not hope" }
+  const positions = [
+    { layer: "Diagnostic Layer", desc: "AI Readiness Score" },
+    { layer: "Intelligence Layer", desc: "Industry insight + benchmarks" },
+    { layer: "Activation Layer", desc: "SDKs, engagement, rewards" },
+    { layer: "Decision Layer", desc: "AI co-pilot + prompts" }
   ];
   
-  yPos = 95;
-  testingSteps.forEach(ts => {
+  let yPos = 92;
+  positions.forEach(pos => {
     doc.setFillColor(...BRAND.cardBg);
-    doc.roundedRect(15, yPos - 5, 180, 30, 3, 3, "F");
-    doc.setFontSize(11);
+    doc.roundedRect(15, yPos, 180, 32, 3, 3, "F");
+    doc.setFontSize(12);
     doc.setTextColor(...BRAND.teal);
-    doc.text(ts.step, 22, yPos + 8);
-    doc.setFontSize(9);
-    doc.setTextColor(...BRAND.muted);
-    doc.text(ts.desc, 22, yPos + 20);
-    yPos += 37;
-  });
-
-  // Page 12 - Vendor Evaluation Checklist
-  doc.addPage();
-  addHeader(doc, 12, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("SECTION 7", 20, 35);
-  doc.setFontSize(24);
-  doc.setTextColor(...BRAND.white);
-  doc.text("AI Vendor Evaluation Checklist", 20, 52);
-  
-  doc.setFontSize(11);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Questions to ask before signing with an AI vendor:", 20, 72);
-  
-  const vendorQuestions = [
-    "Can they explain their model in plain English?",
-    "Do they provide confidence scores with predictions?",
-    "Can you export your data at any time?",
-    "What happens if their AI makes a wrong decision?",
-    "Do they have wellness-specific experience?",
-    "Can they show evidence of ROI from similar clients?"
-  ];
-  
-  yPos = 95;
-  vendorQuestions.forEach(vq => {
-    doc.setFillColor(...BRAND.cardBg);
-    doc.roundedRect(15, yPos - 5, 180, 20, 3, 3, "F");
+    doc.text(pos.layer, 25, yPos + 14);
     doc.setFontSize(10);
     doc.setTextColor(...BRAND.white);
-    doc.text("□ " + vq, 22, yPos + 8);
-    yPos += 27;
-  });
-
-  // Page 13 - C.L.E.A.R Foundation Prompt
-  doc.addPage();
-  addHeader(doc, 13, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("PROMPT 1: C.L.E.A.R FOUNDATION", 20, 35);
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND.white);
-  doc.text("C.L.E.A.R Foundation Prompt", 20, 52);
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Root prompt that everything else inherits from", 20, 65);
-  
-  doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 75, 180, 135, 3, 3, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("C – CONTEXT:", 22, 90);
-  doc.setTextColor(...BRAND.white);
-  const clearC = doc.splitTextToSize("You are supporting a wellness business operating in a trust-sensitive environment where behaviour change, retention, and long-term engagement matter more than short-term activity.", 165);
-  doc.text(clearC, 22, 100);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("L – LENS:", 22, 122);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Adopt a commercial and behavioural lens, not a motivational or therapeutic one.", 22, 132);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("E – EXPECTATION:", 22, 147);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Your role is to help leaders make better decisions, not feel more confident.", 22, 157);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("A – ASSUMPTIONS:", 22, 172);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Do not assume perfect data, unlimited resources, or user compliance.", 22, 182);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("R – RESPONSE FORMAT:", 22, 197);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Respond with: Key insight • Commercial implication • Risk or limitation • Recommended next action", 22, 207);
-
-  // Page 14 - Wellness Commercial Analyst
-  doc.addPage();
-  addHeader(doc, 14, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("PROMPT 2: CORE SYSTEM", 20, 35);
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Wellness Commercial Analyst", 20, 52);
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Used as the 'brain' of tools, agents, or assessments", 20, 65);
-  
-  doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 75, 180, 145, 3, 3, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("SYSTEM ROLE:", 22, 90);
-  doc.setTextColor(...BRAND.white);
-  const analystRole = doc.splitTextToSize("You are a commercial analyst specialising in wellness, fitness, and health-adjacent businesses.", 165);
-  doc.text(analystRole, 22, 100);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("OBJECTIVE:", 22, 118);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Help operators make better decisions about engagement, retention, monetisation, and risk.", 22, 128);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("PRIORITIES (IN ORDER):", 22, 143);
-  doc.setTextColor(...BRAND.white);
-  doc.text("1. Retention and lifetime value", 30, 153);
-  doc.text("2. Decision clarity", 30, 163);
-  doc.text("3. Risk reduction (regulatory, trust, financial)", 30, 173);
-  doc.text("4. Sustainable monetisation", 30, 183);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("DEFAULT POSITION:", 22, 200);
-  doc.setTextColor(...BRAND.white);
-  const defaultPos = doc.splitTextToSize("If data quality or clarity is weak, recommend fixing foundations before scaling.", 165);
-  doc.text(defaultPos, 22, 210);
-
-  // Page 15 - AI Governance & Trust Guardrail
-  doc.addPage();
-  addHeader(doc, 15, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("PROMPT 3: GOVERNANCE", 20, 35);
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND.white);
-  doc.text("AI Governance & Trust Guardrail", 20, 52);
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Assessing AI features for trust and regulatory risk", 20, 65);
-  
-  doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 75, 180, 140, 3, 3, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("C – CONTEXT:", 22, 90);
-  doc.setTextColor(...BRAND.white);
-  doc.text("This AI feature will affect user behaviour in a wellness context.", 22, 100);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("L – LENS:", 22, 115);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Trust, consent, and reputational risk.", 22, 125);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("E – EXPECTATION:", 22, 140);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Stress-test trust before approval.", 22, 150);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("A – ASSUMPTIONS:", 22, 165);
-  doc.setTextColor(...BRAND.white);
-  const govAssump = doc.splitTextToSize("Assume public scrutiny. If a feature would be uncomfortable to explain to a regulator, customer, or journalist, flag it.", 165);
-  doc.text(govAssump, 22, 175);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("R – RESPONSE FORMAT:", 22, 195);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Answer: What could go wrong? • Who would object? • How to redesign safely", 22, 205);
-
-  // Page 16 - Build vs Buy Decision
-  doc.addPage();
-  addHeader(doc, 16, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("PROMPT 4: DECISION", 20, 35);
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Build vs Buy Decision", 20, 52);
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Deciding whether to build, partner, or defer", 20, 65);
-  
-  doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 75, 180, 140, 3, 3, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("C – CONTEXT:", 22, 90);
-  doc.setTextColor(...BRAND.white);
-  doc.text("A wellness organisation considering AI capability.", 22, 100);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("L – LENS:", 22, 115);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Board-level risk and return.", 22, 125);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("E – EXPECTATION:", 22, 140);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Recommend a clear path with reasoning.", 22, 150);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("A – ASSUMPTIONS:", 22, 165);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Assume limited internal AI capability unless proven otherwise.", 22, 175);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("R – RESPONSE FORMAT:", 22, 190);
-  doc.setTextColor(...BRAND.white);
-  const buildBuyFormat = doc.splitTextToSize("Return: Recommendation (Build/Buy/Partner/Wait) • Why this option fits now • Risks of other options • Conditions to revisit", 165);
-  doc.text(buildBuyFormat, 22, 200);
-
-  // Page 17 - Intervention Ladder
-  doc.addPage();
-  addHeader(doc, 17, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("PROMPT 5: INTERVENTION", 20, 35);
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Intervention Ladder (Margin-Safe)", 20, 52);
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Choosing the right intervention without burning margin", 20, 65);
-  
-  doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 75, 180, 150, 3, 3, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("C – CONTEXT:", 22, 90);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Users are disengaging from a wellness product.", 22, 100);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("L – LENS:", 22, 112);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Margin protection and trust preservation.", 22, 122);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("RANKED LADDER:", 22, 137);
-  doc.setTextColor(...BRAND.white);
-  doc.text("1. Timing adjustment (Cost: £0)", 30, 149);
-  doc.text("2. Relevance/content shift (Cost: £0)", 30, 159);
-  doc.text("3. Goal reframing (Cost: £0)", 30, 169);
-  doc.text("4. Social proof (Cost: £0)", 30, 179);
-  doc.text("5. Human touch (Cost: Low)", 30, 189);
-  doc.text("6. Incentive (Cost: High - only if justified)", 30, 199);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("Include: Which rung is appropriate now and why.", 22, 217);
-
-  // Page 18 - CFO Translation Engine
-  doc.addPage();
-  addHeader(doc, 18, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("PROMPT 6: COMMERCIAL", 20, 35);
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND.white);
-  doc.text("CFO Translation Engine", 20, 52);
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Explaining engagement to finance audiences", 20, 65);
-  
-  doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 75, 180, 140, 3, 3, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("C – CONTEXT:", 22, 90);
-  doc.setTextColor(...BRAND.white);
-  doc.text("We need to explain engagement impact to a finance audience.", 22, 100);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("L – LENS:", 22, 115);
-  doc.setTextColor(...BRAND.white);
-  doc.text("CFO / commercial director perspective.", 22, 125);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("E – EXPECTATION:", 22, 140);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Translate behaviour into financial implications.", 22, 150);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("A – ASSUMPTIONS:", 22, 165);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Use conservative assumptions. No hockey-stick growth.", 22, 175);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("R – RESPONSE FORMAT:", 22, 190);
-  doc.setTextColor(...BRAND.white);
-  const cfoFormat = doc.splitTextToSize("Return: Engagement behaviour • Observed change • Retention/LTV sensitivity • Revenue impact (range) • Confidence rating", 165);
-  doc.text(cfoFormat, 22, 200);
-
-  // Page 19 - 90-Day Planning Engine
-  doc.addPage();
-  addHeader(doc, 19, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("PROMPT 7: PLANNING", 20, 35);
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND.white);
-  doc.text("90-Day Planning Engine", 20, 52);
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Creating a realistic 90-day AI activation plan", 20, 65);
-  
-  doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(15, 75, 180, 150, 3, 3, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("ASSUMPTIONS:", 22, 90);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Data is messy • Teams are stretched • Trust is fragile", 22, 100);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("MONTH 1 – FOUNDATIONS:", 22, 118);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Objectives • Data clean-up actions • Stop rules", 30, 130);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("MONTH 2 – ENGAGEMENT & SEGMENTATION:", 22, 148);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Behaviour signals to track • Journey hypotheses • Validation criteria", 30, 160);
-  
-  doc.setTextColor(...BRAND.teal);
-  doc.text("MONTH 3 – MONETISATION EXPERIMENTS:", 22, 178);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Low-risk tests • Success thresholds • What must NOT be automated yet", 30, 190);
-  
-  doc.setFillColor(...BRAND.teal);
-  doc.roundedRect(15, 210, 180, 15, 2, 2, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.darkBg);
-  doc.text("LENS: Operate as a cautious transformation lead accountable to a board.", 22, 220);
-
-  // Page 20 - Red-Flag Register
-  doc.addPage();
-  addHeader(doc, 20, totalPages);
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("PROMPT 8: GOVERNANCE", 20, 35);
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Red-Flag Register", 20, 52);
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Tracking and surfacing failure patterns", 20, 65);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(...BRAND.white);
-  doc.text("Identify which of these failure patterns are present:", 20, 82);
-  
-  const redFlags = [
-    { flag: "1. AI before decisions", desc: "Implementing AI before clarifying what decisions need support" },
-    { flag: "2. Weak consent models", desc: "Collecting data without clear, specific consent" },
-    { flag: "3. Scaling before trust", desc: "Rolling out widely before validating in controlled tests" },
-    { flag: "4. Vanity over value", desc: "Measuring engagement without commercial attribution" },
-    { flag: "5. Speed over governance", desc: "Moving fast without documenting decisions and risks" }
-  ];
-  
-  yPos = 95;
-  redFlags.forEach(rf => {
-    doc.setFillColor(...BRAND.cardBg);
-    doc.roundedRect(15, yPos, 180, 28, 3, 3, "F");
-    doc.setFontSize(10);
-    doc.setTextColor(...BRAND.teal);
-    doc.text(rf.flag, 22, yPos + 12);
-    doc.setFontSize(9);
-    doc.setTextColor(...BRAND.muted);
-    doc.text(rf.desc, 22, yPos + 22);
-    yPos += 32;
+    doc.text(pos.desc, 25, yPos + 26);
+    yPos += 38;
   });
   
   doc.setFillColor(...BRAND.teal);
-  doc.roundedRect(15, yPos + 5, 180, 20, 2, 2, "F");
-  doc.setFontSize(9);
+  doc.roundedRect(15, yPos + 10, 180, 30, 3, 3, "F");
+  doc.setFontSize(11);
   doc.setTextColor(...BRAND.darkBg);
-  doc.text("For each flag present: Explain why this is a risk and what to do about it.", 22, yPos + 18);
+  doc.text('Not "another AI tool".', 25, yPos + 22);
+  doc.text("A control panel for wellness AI maturity.", 25, yPos + 34);
+
+  // Page 11 - The Truth
+  doc.addPage();
+  addHeader(doc, 11, totalPages);
+  doc.setFontSize(24);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Straight Truth", 105, 80, { align: "center" });
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(25, 100, 160, 80, 5, 5, "F");
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Most companies don't need more AI.", 105, 130, { align: "center" });
+  doc.setFontSize(16);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("They need clarity, sequencing,", 105, 155, { align: "center" });
+  doc.text("and restraint.", 105, 172, { align: "center" });
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("This Prompt Pack makes Wellness Genius", 105, 210, { align: "center" });
+  doc.text("the place where that happens.", 105, 225, { align: "center" });
 
   // What Next page
-  addWhatNextSection(doc, totalPages - 1, totalPages);
+  addWhatNextSection(doc, 12, totalPages);
   
   // CTA page
-  addCTAPage(doc, totalPages, totalPages);
+  addCTAPage(doc, 13, totalPages);
+  
+  // Page 14 - Back Cover
+  doc.addPage();
+  addHeader(doc, 14, totalPages);
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Wellness Genius", 105, 100, { align: "center" });
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.white);
+  doc.text("AI Prompt Pack", 105, 120, { align: "center" });
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("From AI Curiosity to AI That Actually Delivers", 105, 145, { align: "center" });
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("wellnessgenius.co.uk", 105, 180, { align: "center" });
   
   return doc;
 };
