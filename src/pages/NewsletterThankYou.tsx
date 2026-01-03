@@ -1,26 +1,9 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, ArrowRight, Mail, Sparkles, FileText, Star, BarChart3, Lightbulb, ExternalLink, Gift, Copy, Check } from "lucide-react";
+import { CheckCircle, ArrowRight, Mail, Sparkles, Star, BarChart3, Lightbulb, ExternalLink, Gift } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.webp";
-import { toast } from "sonner";
-
-const DISCOUNT_CODE = "LzcFF5Ii";
 
 const NewsletterThankYou = () => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(DISCOUNT_CODE);
-      setCopied(true);
-      toast.success("Discount code copied!");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Failed to copy code");
-    }
-  };
-
   // Email preview content with premium icons instead of emojis
   const emailSections = [
     { icon: Star, label: "Editor's Choice", desc: "The story with full strategic analysis" },
@@ -54,7 +37,7 @@ const NewsletterThankYou = () => {
                 <Sparkles className="h-5 w-5 text-primary" />
               </h1>
               <p className="text-muted-foreground">
-                Check your inbox for a confirmation email with your discount code and download instructions.
+                Create your free account to access your AI Prompt Pack in your Downloads Library.
               </p>
             </div>
 
@@ -62,17 +45,17 @@ const NewsletterThankYou = () => {
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm">
               <p className="text-amber-700 dark:text-amber-400 font-medium flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                Haven't received it yet?
+                Check your inbox
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
-                Check your <span className="font-medium">spam or promotions folder</span>. The email comes from Wellness Genius and contains your free discount code.
+                We've sent a confirmation email to your inbox. Check <span className="font-medium">spam or promotions</span> if you don't see it.
               </p>
             </div>
 
             {/* Divider */}
             <div className="border-t border-border" />
 
-            {/* Free Resource CTA with Discount Code */}
+            {/* Free Resource CTA - Account First Flow */}
             <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 text-left space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -91,41 +74,20 @@ const NewsletterThankYou = () => {
                 </div>
               </div>
 
-              {/* Discount Code Box */}
-              <div className="bg-background/80 border-2 border-dashed border-primary/30 rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Your 100% Discount Code</p>
-                    <p className="text-2xl font-mono font-bold text-primary tracking-wider">{DISCOUNT_CODE}</p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleCopyCode}
-                    className="flex items-center gap-2"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="h-4 w-4 text-primary" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Click below — the code will be applied automatically at checkout!
-                </p>
+              {/* Steps to claim */}
+              <div className="bg-background/80 border border-border rounded-lg p-4 space-y-3">
+                <p className="text-sm font-medium text-foreground">How to claim your free guide:</p>
+                <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                  <li>Create your free account using the same email</li>
+                  <li>Your AI Prompt Pack will be waiting in your <span className="font-medium text-foreground">Downloads Library</span></li>
+                  <li>Download anytime — it's yours to keep!</li>
+                </ol>
               </div>
 
-              <Link to={`/products?coupon=${DISCOUNT_CODE}&product=prompt-pack`} className="block">
+              <Link to="/auth?signup=true" className="block">
                 <Button className="w-full" size="lg">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Get Your Free Guide (Auto-Applied)
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Create Free Account
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
