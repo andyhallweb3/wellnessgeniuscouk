@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown, LayoutDashboard, Bookmark, Sparkles, Shield } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, Bookmark, Sparkles, Shield, Mail } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -255,6 +255,12 @@ const Header = () => {
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
+              <Link to="/newsletter">
+                <Mail size={14} />
+                Subscribe
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
               <a href="#contact">Book a Call</a>
             </Button>
           </div>
@@ -381,6 +387,12 @@ const Header = () => {
                         Try it!
                       </Badge>
                     )}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link to="/newsletter" onClick={() => setIsMenuOpen(false)}>
+                    <Mail size={16} />
+                    Subscribe
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
