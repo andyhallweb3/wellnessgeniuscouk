@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb";
 import { 
   Download, 
   RefreshCw, 
@@ -387,8 +388,9 @@ const DownloadsAdmin = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <AdminBreadcrumb currentPage="Downloads & Upsells" />
       
-      <main className="pt-24 pb-16">
+      <main className="pt-8 pb-16">
         <div className="container-wide section-padding">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">

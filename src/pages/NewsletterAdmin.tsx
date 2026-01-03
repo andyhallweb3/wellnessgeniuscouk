@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { NewsletterWorkflow } from "@/components/newsletter";
+import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb";
 import { 
   Mail, 
   Lock,
@@ -333,13 +334,11 @@ const NewsletterAdmin = () => {
   return (
     <div className="min-h-screen bg-background dark">
       <Header />
-      <main className="pt-24 lg:pt-32 pb-20">
+      <AdminBreadcrumb currentPage="Newsletter" />
+      <main className="pt-8 pb-20">
         <section className="section-padding">
           <div className="container-wide">
             <div className="mb-8">
-              <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
-                <ArrowLeft className="h-4 w-4" /> Back to Home
-              </Link>
               <h1 className="text-3xl font-bold">Newsletter Admin</h1>
               <p className="text-muted-foreground">Manage your newsletter, subscribers, and content.</p>
             </div>

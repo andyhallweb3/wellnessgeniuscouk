@@ -1,10 +1,10 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, Lock } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Loader2, Lock } from "lucide-react";
 import { FeedbackAdminList } from "@/components/feedback/FeedbackAdminList";
 import { Button } from "@/components/ui/button";
+import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb";
 
 const FeedbackAdmin = () => {
   const { isAdmin, isLoading: authLoading, isAuthenticated } = useAdminAuth();
@@ -56,6 +56,8 @@ const FeedbackAdmin = () => {
           </Link>
         </div>
       </header>
+
+      <AdminBreadcrumb currentPage="Feedback Reports" />
 
       <main className="container-wide py-8 px-6 max-w-4xl mx-auto">
         <FeedbackAdminList />
