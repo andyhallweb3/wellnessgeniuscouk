@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -61,10 +62,26 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
   const [bulkEmails, setBulkEmails] = useState("");
   const [bulkImporting, setBulkImporting] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
 
   useEffect(() => {
     fetchSubscribers();
   }, []);
+
+  useEffect(() => {
+    if (!syncing) {
+      setSyncProgress(0);
+      return;
+    }
+
+    // Indeterminate-ish progress while request is in-flight
+    setSyncProgress(12);
+    const id = window.setInterval(() => {
+      setSyncProgress((p) => (p >= 92 ? 92 : p + Math.max(1, Math.round((92 - p) * 0.08))));
+    }, 300);
+
+    return () => window.clearInterval(id);
+  }, [syncing]);
 
   const fetchSubscribers = async () => {
     setLoading(true);
@@ -235,14 +252,21 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
       });
 
       if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
 
-      toast({
-        title: "Sync Complete",
-        description: data.message || `Updated ${data.stats?.updated || 0} subscribers`,
-      });
-
-      fetchSubscribers();
+      // New behavior: backend runs in background to avoid timeouts
+      if (data?.started) {
+        toast({
+          title: "Sync started",
+          description: data.message || "Sync is running in the background. Refresh in a minute.",
+        });
+      } else {
+        toast({
+          title: "Sync Complete",
+          description: data?.message || `Updated ${data?.stats?.updated || 0} subscribers`,
+        });
+        fetchSubscribers();
+      }
     } catch (error) {
       toast({
         title: "Sync Failed",
@@ -251,6 +275,8 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
       });
     } finally {
       setSyncing(false);
+      setSyncProgress(100);
+      window.setTimeout(() => setSyncProgress(0), 500);
     }
   };
 
@@ -381,10 +407,22 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
           Export
         </Button>
         <Button variant="outline" onClick={syncResendDelivery} disabled={syncing}>
-          <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-          {syncing ? 'Syncing...' : 'Sync Resend'}
+          <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} />
+          {syncing ? "Syncing..." : "Sync Resend"}
         </Button>
       </div>
+
+      {syncing && (
+        <div className="rounded-lg border bg-card p-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Syncing delivery data (runs in background to avoid timeouts)…
+          </div>
+          <div className="mt-2">
+            <Progress value={syncProgress || 12} />
+          </div>
+        </div>
+      )}
 
       {/* List */}
       {loading ? (
