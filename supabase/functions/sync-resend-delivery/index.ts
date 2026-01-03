@@ -5,10 +5,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type DeliveryAgg = { count: number; lastDelivered: string };
+
+function waitUntil(promise: Promise<unknown>) {
+  // EdgeRuntime.waitUntil is available in Supabase Edge runtime
+  // Fall back to awaiting (useful for local / tests).
+  // deno-lint-ignore no-explicit-any
+  const er = (globalThis as any).EdgeRuntime;
+  if (er?.waitUntil) {
+    er.waitUntil(promise);
+    return;
+  }
+  // eslint-disable-next-line no-console
+  console.warn("EdgeRuntime.waitUntil not available; running sync inline");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const startedAt = new Date().toISOString();
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -18,114 +35,158 @@ Deno.serve(async (req) => {
     // Verify admin auth via JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
+
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Check admin role
-    const { data: isAdmin } = await supabase.rpc("has_role", {
+    const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
       _user_id: user.id,
       _role: "admin",
     });
 
+    if (roleError) {
+      console.error("[sync-resend-delivery] has_role error", roleError);
+      return new Response(JSON.stringify({ error: "Role check failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!isAdmin) {
-      return new Response(
-        JSON.stringify({ error: "Forbidden: Admin access required" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    console.log("Starting optimized Resend delivery sync...");
+    console.log("[sync-resend-delivery] Accepted sync request", { startedAt, userId: user.id });
 
-    // Use a single aggregated query to get delivery counts per email
-    const { data: deliveryStats, error: statsError } = await supabase
-      .from("newsletter_send_recipients")
-      .select("email, sent_at")
-      .eq("status", "sent")
-      .limit(5000); // Limit to prevent memory issues
+    const backgroundTask = async () => {
+      const t0 = Date.now();
+      console.log("[sync-resend-delivery] Background sync started", { startedAt });
 
-    if (statsError) {
-      console.error("Error fetching delivery stats:", statsError);
-      throw statsError;
-    }
+      const deliveryCounts: Record<string, DeliveryAgg> = {};
 
-    // Build delivery counts in memory (fast)
-    const deliveryCounts: Record<string, { count: number; lastDelivered: string }> = {};
-    
-    for (const row of deliveryStats || []) {
-      const emailLower = row.email.toLowerCase();
-      if (!deliveryCounts[emailLower]) {
-        deliveryCounts[emailLower] = { count: 0, lastDelivered: row.sent_at };
+      // Paginate through newsletter_send_recipients to avoid loading everything at once.
+      const pageSize = 1000;
+      let from = 0;
+      let totalRows = 0;
+
+      while (true) {
+        const { data, error } = await supabase
+          .from("newsletter_send_recipients")
+          .select("email, sent_at")
+          .eq("status", "sent")
+          .order("sent_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+
+        if (error) {
+          console.error("[sync-resend-delivery] Error fetching recipients page", { from, error });
+          throw error;
+        }
+
+        if (!data || data.length === 0) break;
+
+        totalRows += data.length;
+
+        for (const row of data) {
+          const emailLower = row.email.toLowerCase();
+          const sentAt = row.sent_at as string;
+
+          const existing = deliveryCounts[emailLower];
+          if (!existing) {
+            deliveryCounts[emailLower] = { count: 1, lastDelivered: sentAt };
+            continue;
+          }
+
+          existing.count += 1;
+          if (new Date(sentAt) > new Date(existing.lastDelivered)) {
+            existing.lastDelivered = sentAt;
+          }
+        }
+
+        from += pageSize;
+
+        // Safety stop to prevent runaway jobs
+        if (from >= 200_000) {
+          console.warn("[sync-resend-delivery] Safety stop hit (200k rows)");
+          break;
+        }
       }
-      deliveryCounts[emailLower].count += 1;
-      if (new Date(row.sent_at) > new Date(deliveryCounts[emailLower].lastDelivered)) {
-        deliveryCounts[emailLower].lastDelivered = row.sent_at;
-      }
-    }
 
-    const uniqueEmails = Object.keys(deliveryCounts);
-    console.log(`Aggregated ${deliveryStats?.length || 0} records into ${uniqueEmails.length} unique emails`);
+      const emails = Object.keys(deliveryCounts);
+      console.log("[sync-resend-delivery] Aggregated recipients", {
+        totalRows,
+        uniqueEmails: emails.length,
+      });
 
-    // Batch update using upsert - much faster than individual updates
-    const updates = uniqueEmails.slice(0, 500).map(email => ({
-      email,
-      delivery_count: deliveryCounts[email].count,
-      last_delivered_at: deliveryCounts[email].lastDelivered,
-    }));
+      // Concurrency-limited update pool
+      const concurrency = 15;
+      let idx = 0;
+      let updated = 0;
+      let failed = 0;
 
-    let updated = 0;
-    
-    // Process in batches of 50 to avoid timeout
-    const batchSize = 50;
-    for (let i = 0; i < updates.length; i += batchSize) {
-      const batch = updates.slice(i, i + batchSize);
-      
-      // Use individual updates but in parallel
-      const updatePromises = batch.map(update => 
-        supabase
-          .from("newsletter_subscribers")
-          .update({
-            delivery_count: update.delivery_count,
-            last_delivered_at: update.last_delivered_at,
-          })
-          .eq("email", update.email)
-      );
+      const worker = async () => {
+        while (idx < emails.length) {
+          const email = emails[idx++];
+          const agg = deliveryCounts[email];
 
-      const results = await Promise.all(updatePromises);
-      updated += results.filter(r => !r.error).length;
-    }
+          const { error } = await supabase
+            .from("newsletter_subscribers")
+            .update({
+              delivery_count: agg.count,
+              last_delivered_at: agg.lastDelivered,
+            })
+            .eq("email", email);
 
-    console.log(`Sync complete: ${updated} subscribers updated`);
+          if (error) {
+            failed++;
+            console.error("[sync-resend-delivery] Update failed", { email, error });
+          } else {
+            updated++;
+          }
+        }
+      };
+
+      await Promise.all(Array.from({ length: concurrency }, () => worker()));
+
+      console.log("[sync-resend-delivery] Background sync finished", {
+        totalRows,
+        uniqueEmails: emails.length,
+        updated,
+        failed,
+        ms: Date.now() - t0,
+      });
+    };
+
+    // Run async in background so the UI doesn't time out.
+    waitUntil(backgroundTask());
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: `Synced: ${updated} subscribers updated`,
-        stats: {
-          sentRecords: deliveryStats?.length || 0,
-          uniqueEmails: uniqueEmails.length,
-          updated,
-        }
+      JSON.stringify({
+        started: true,
+        message: "Sync started in the background. Refresh subscribers in a minute.",
+        started_at: startedAt,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
-    console.error("Sync error:", error);
+    console.error("[sync-resend-delivery] Handler error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
