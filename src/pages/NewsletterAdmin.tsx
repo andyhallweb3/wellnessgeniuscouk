@@ -18,6 +18,7 @@ const NewsletterAdmin = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const isResetMode = searchParams.get('reset') === 'true';
+  const initialTab = searchParams.get('tab') || undefined;
   
   const { 
     user, 
@@ -343,7 +344,7 @@ const NewsletterAdmin = () => {
               <p className="text-muted-foreground">Manage your newsletter, subscribers, and content.</p>
             </div>
 
-            <NewsletterWorkflow getAuthHeaders={getAuthHeaders} onLogout={handleLogout} />
+            <NewsletterWorkflow getAuthHeaders={getAuthHeaders} onLogout={handleLogout} initialTab={initialTab} />
           </div>
         </section>
       </main>

@@ -17,10 +17,17 @@ import { ManageSection } from "./ManageSection";
 interface NewsletterWorkflowProps {
   getAuthHeaders: () => Record<string, string>;
   onLogout: () => void;
+  initialTab?: string;
 }
 
-export const NewsletterWorkflow = ({ getAuthHeaders, onLogout }: NewsletterWorkflowProps) => {
-  const [activeTab, setActiveTab] = useState("articles");
+export const NewsletterWorkflow = ({ getAuthHeaders, onLogout, initialTab }: NewsletterWorkflowProps) => {
+  // Map 'campaigns' to 'manage' tab since campaigns is inside manage
+  const getInitialTab = () => {
+    if (initialTab === 'campaigns') return 'manage';
+    return initialTab || 'articles';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab());
   const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [articles, setArticles] = useState<any[]>([]);
