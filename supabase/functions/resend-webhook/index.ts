@@ -90,6 +90,32 @@ Deno.serve(async (req) => {
         
       case "email.delivered":
         console.log(`Email delivered: ${event.data.email_id}`);
+        if (event.data.to?.[0]) {
+          // Track delivery event
+          await supabase.from("newsletter_events").insert({
+            event_type: "delivered",
+            subscriber_email: event.data.to[0],
+            send_id: event.data.email_id,
+          }).select().maybeSingle();
+          
+          // Get current subscriber to increment count
+          const { data: subscriber } = await supabase
+            .from("newsletter_subscribers")
+            .select("delivery_count")
+            .eq("email", event.data.to[0])
+            .maybeSingle();
+          
+          // Update subscriber delivery tracking
+          await supabase
+            .from("newsletter_subscribers")
+            .update({ 
+              last_delivered_at: new Date().toISOString(),
+              delivery_count: (subscriber?.delivery_count || 0) + 1
+            })
+            .eq("email", event.data.to[0]);
+          
+          console.log(`Marked ${event.data.to[0]} as delivered`);
+        }
         break;
         
       case "email.opened":
@@ -169,13 +195,7 @@ Deno.serve(async (req) => {
         }
         break;
 
-      case "email.sent":
-        console.log(`Email sent: ${event.data.email_id} to ${event.data.to?.join(", ")}`);
-        break;
-        
-      case "email.delivered":
-        console.log(`Email delivered: ${event.data.email_id}`);
-        break;
+      // Duplicate cases removed - handled above
         
       default:
         console.log(`Unhandled event type: ${event.type}`);
