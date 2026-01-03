@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, Loader2, CheckCircle } from "lucide-react";
+import { Download, Loader2, CheckCircle, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { generateAIMythsDeck, generate90DayChecklist, generateQuickCheck } from "@/lib/pdf-generators";
@@ -28,6 +29,7 @@ const EmailGateModal = ({
   productName,
   productId,
 }: EmailGateModalProps) => {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,23 +113,33 @@ const EmailGateModal = ({
         generateAndDownloadPDF();
       }, 500);
 
-      // Close modal after download starts
-      setTimeout(() => {
-        onClose();
-        setIsSuccess(false);
-        setName("");
-        setEmail("");
-      }, 2000);
     } catch (error: unknown) {
       console.error("Error saving subscriber:", error);
       toast.error("Something went wrong. Please try again.");
-    } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleCreateAccount = () => {
+    // Store email for pre-filling signup form
+    sessionStorage.setItem("signup_email", email.trim().toLowerCase());
+    sessionStorage.setItem("signup_name", name.trim() || "");
+    onClose();
+    setIsSuccess(false);
+    setName("");
+    setEmail("");
+    navigate("/auth?mode=signup&from=download");
+  };
+
+  const handleSkipAccount = () => {
+    onClose();
+    setIsSuccess(false);
+    setName("");
+    setEmail("");
+  };
+
   const handleClose = () => {
-    if (!isSubmitting) {
+    if (!isSubmitting && !isSuccess) {
       onClose();
       setIsSuccess(false);
       setName("");
@@ -140,23 +152,67 @@ const EmailGateModal = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Download size={20} className="text-accent" />
-            Download {productName}
+            {isSuccess ? (
+              <>
+                <CheckCircle size={20} className="text-green-500" />
+                Download Complete!
+              </>
+            ) : (
+              <>
+                <Download size={20} className="text-accent" />
+                Download {productName}
+              </>
+            )}
           </DialogTitle>
           <DialogDescription>
-            Enter your email to receive your free PDF. We will also send you occasional insights (you can unsubscribe anytime).
+            {isSuccess 
+              ? "Create a free account to access your downloads anytime and get personalised AI insights."
+              : "Enter your email to receive your free PDF. We will also send you occasional insights (you can unsubscribe anytime)."
+            }
           </DialogDescription>
         </DialogHeader>
 
         {isSuccess ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
-              <CheckCircle size={32} className="text-green-500" />
+          <div className="space-y-4 py-4">
+            <div className="flex flex-col items-center justify-center text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+                <CheckCircle size={32} className="text-green-500" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Check your downloads folder for the PDF.
+              </p>
             </div>
-            <h3 className="text-lg font-medium mb-2">Download Starting!</h3>
-            <p className="text-sm text-muted-foreground">
-              Check your downloads folder for the PDF.
-            </p>
+
+            <div className="bg-accent/5 border border-accent/20 rounded-lg p-4">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <UserPlus size={16} className="text-accent" />
+                Why create an account?
+              </h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Access your downloads anytime</li>
+                <li>• Get personalised AI recommendations</li>
+                <li>• Track your AI readiness progress</li>
+                <li>• Unlock member-only resources</li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="accent"
+                className="w-full"
+                onClick={handleCreateAccount}
+              >
+                <UserPlus size={16} />
+                Create Free Account
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-muted-foreground"
+                onClick={handleSkipAccount}
+              >
+                Maybe Later
+              </Button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

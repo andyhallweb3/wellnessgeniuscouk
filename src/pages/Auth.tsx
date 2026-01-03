@@ -43,12 +43,25 @@ const Auth = () => {
   const redirectUrl = searchParams.get("redirect") || "/hub";
   const initialMode = searchParams.get("mode") === "login" ? "login" : "signup";
   const isFromAssessment = redirectUrl.includes("/ai-readiness/results/");
+  const isFromDownload = searchParams.get("from") === "download";
   
   const [mode, setMode] = useState<"login" | "signup" | "reset">(initialMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+
+  // Get pre-filled values from sessionStorage (set by EmailGateModal)
+  const prefillEmail = sessionStorage.getItem("signup_email") || "";
+  const prefillName = sessionStorage.getItem("signup_name") || "";
+
+  // Clear sessionStorage after reading
+  useEffect(() => {
+    if (prefillEmail || prefillName) {
+      sessionStorage.removeItem("signup_email");
+      sessionStorage.removeItem("signup_name");
+    }
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -59,17 +72,22 @@ const Auth = () => {
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: prefillEmail, password: "" },
   });
 
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { 
+      fullName: prefillName, 
+      email: prefillEmail, 
+      password: "", 
+      confirmPassword: "" 
+    },
   });
 
   const resetForm = useForm<ResetFormData>({
     resolver: zodResolver(resetSchema),
-    defaultValues: { email: "" },
+    defaultValues: { email: prefillEmail },
   });
 
   const handleLogin = async (data: LoginFormData) => {
@@ -135,10 +153,10 @@ const Auth = () => {
           <div className="max-w-md mx-auto">
             {/* Header */}
             <div className="text-center mb-8">
-              {isFromAssessment && mode === "signup" && (
+              {(isFromAssessment || isFromDownload) && mode === "signup" && (
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
                   <Gift size={16} />
-                  Get 10 free AI Advisor sessions
+                  {isFromDownload ? "Access your downloads anytime" : "Get 10 free AI Advisor sessions"}
                 </div>
               )}
               <h1 className="text-3xl font-heading mb-2">
@@ -148,7 +166,9 @@ const Auth = () => {
                 {mode === "login" 
                   ? "Sign in to access your downloads and saved outputs."
                   : mode === "signup"
-                  ? isFromAssessment 
+                  ? isFromDownload
+                    ? "Create an account to access your downloads anytime and get personalised AI insights."
+                    : isFromAssessment 
                     ? "Save your assessment and unlock 10 free AI Advisor sessions."
                     : "Join to access your purchased products and save your progress."
                   : "Enter your email and we'll send you a reset link."
