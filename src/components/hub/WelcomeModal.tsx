@@ -41,7 +41,7 @@ const WelcomeModal = ({ userEmail }: WelcomeModalProps) => {
       title: "Downloads Library",
       description: "Access all your free and purchased resources in one place",
       color: "bg-accent/10 text-accent",
-      link: "/downloads",
+      link: "/hub/downloads",
       primary: true,
     },
     {
@@ -113,7 +113,7 @@ const WelcomeModal = ({ userEmail }: WelcomeModalProps) => {
 
         <div className="flex flex-col gap-3 pt-2">
           <Button variant="accent" onClick={handleClose} asChild>
-            <Link to="/downloads">
+            <Link to="/hub/downloads">
               <Library size={18} />
               Go to Downloads Library
             </Link>
