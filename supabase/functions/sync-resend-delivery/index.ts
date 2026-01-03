@@ -55,7 +55,43 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Starting Resend delivery sync...");
+    console.log("Starting Resend delivery sync via newsletter_sends...");
+
+    // Instead of using Resend API (which doesn't have a list emails endpoint),
+    // we sync from our newsletter_send_recipients table which tracks actual deliveries
+    
+    // Get delivery stats from newsletter_send_recipients
+    const { data: recipients, error: recipientsError } = await supabase
+      .from("newsletter_send_recipients")
+      .select("email, sent_at, status")
+      .eq("status", "sent")
+      .order("sent_at", { ascending: false });
+
+    if (recipientsError) {
+      console.error("Error fetching recipients:", recipientsError);
+      throw recipientsError;
+    }
+
+    console.log(`Found ${recipients?.length || 0} sent records in newsletter_send_recipients`);
+
+    // Build delivery counts per email
+    const deliveryCounts: Record<string, { count: number; lastDelivered: string | null }> = {};
+    
+    for (const recipient of recipients || []) {
+      const emailLower = recipient.email.toLowerCase();
+      if (!deliveryCounts[emailLower]) {
+        deliveryCounts[emailLower] = { count: 0, lastDelivered: null };
+      }
+      deliveryCounts[emailLower].count += 1;
+      
+      // Track most recent delivery
+      if (!deliveryCounts[emailLower].lastDelivered || 
+          new Date(recipient.sent_at) > new Date(deliveryCounts[emailLower].lastDelivered!)) {
+        deliveryCounts[emailLower].lastDelivered = recipient.sent_at;
+      }
+    }
+
+    console.log(`Processed delivery data for ${Object.keys(deliveryCounts).length} unique recipients`);
 
     // Get all subscribers
     const { data: subscribers, error: subError } = await supabase
@@ -66,58 +102,6 @@ Deno.serve(async (req) => {
       console.error("Error fetching subscribers:", subError);
       throw subError;
     }
-
-    console.log(`Found ${subscribers?.length || 0} subscribers to sync`);
-
-    // Fetch emails from Resend API using fetch directly
-    let emails: any[] = [];
-    try {
-      const response = await fetch("https://api.resend.com/emails", {
-        headers: {
-          "Authorization": `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        console.error("Resend API error:", response.status, await response.text());
-      } else {
-        const data = await response.json();
-        emails = data.data || [];
-        console.log(`Fetched ${emails.length} emails from Resend`);
-      }
-    } catch (err) {
-      console.error("Error fetching emails from Resend:", err);
-      // Continue with what we have
-    }
-
-    // Build delivery counts per email
-    const deliveryCounts: Record<string, { count: number; lastDelivered: string | null }> = {};
-    
-    for (const email of emails) {
-      // Each email has a 'to' array and a 'last_event' status
-      const recipients = email.to || [];
-      const status = email.last_event;
-      const createdAt = email.created_at;
-      
-      if (status === "delivered" || status === "opened" || status === "clicked") {
-        for (const recipient of recipients) {
-          const recipientLower = recipient.toLowerCase();
-          if (!deliveryCounts[recipientLower]) {
-            deliveryCounts[recipientLower] = { count: 0, lastDelivered: null };
-          }
-          deliveryCounts[recipientLower].count += 1;
-          
-          // Track most recent delivery
-          if (!deliveryCounts[recipientLower].lastDelivered || 
-              new Date(createdAt) > new Date(deliveryCounts[recipientLower].lastDelivered!)) {
-            deliveryCounts[recipientLower].lastDelivered = createdAt;
-          }
-        }
-      }
-    }
-
-    console.log(`Processed delivery data for ${Object.keys(deliveryCounts).length} unique recipients`);
 
     // Update subscribers with delivery data
     let updated = 0;
@@ -162,7 +146,7 @@ Deno.serve(async (req) => {
         message: `Synced delivery data: ${updated} subscribers updated, ${skipped} skipped`,
         stats: {
           totalSubscribers: subscribers?.length || 0,
-          emailsFromResend: emails.length,
+          sentRecords: recipients?.length || 0,
           uniqueRecipients: Object.keys(deliveryCounts).length,
           updated,
           skipped,
