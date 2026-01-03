@@ -14,6 +14,7 @@ interface CampaignRequest {
   html: string;
   previewText?: string;
   testEmail?: string;
+  onlyDelivered?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -32,7 +33,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { templateId, subject, html, previewText, testEmail }: CampaignRequest = await req.json();
+    const { templateId, subject, html, previewText, testEmail, onlyDelivered }: CampaignRequest = await req.json();
 
     if (!subject || !html) {
       console.error("Missing required fields");
@@ -70,12 +71,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch active subscribers - EXCLUDE bounced and unsubscribed
-    const { data: subscribers, error: fetchError } = await supabase
+    // Build query for active subscribers - EXCLUDE bounced and unsubscribed
+    let query = supabase
       .from("newsletter_subscribers")
-      .select("email")
+      .select("email, last_delivered_at")
       .eq("is_active", true)
       .eq("bounced", false);
+
+    // If onlyDelivered flag is set, only include subscribers with prior confirmed delivery
+    if (onlyDelivered) {
+      query = query.not("last_delivered_at", "is", null);
+    }
+
+    const { data: subscribers, error: fetchError } = await query;
 
     if (fetchError) {
       console.error("Error fetching subscribers:", fetchError);
@@ -84,12 +92,13 @@ Deno.serve(async (req) => {
 
     if (!subscribers || subscribers.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No active subscribers found" }),
+        JSON.stringify({ error: "No eligible subscribers found" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Sending campaign to ${subscribers.length} active, non-bounced subscribers`);
+    const filterMode = onlyDelivered ? "confirmed deliveries only" : "all active";
+    console.log(`Sending campaign to ${subscribers.length} subscribers (${filterMode})`);
 
     // Send emails in batches of 50 to avoid rate limits
     const batchSize = 50;

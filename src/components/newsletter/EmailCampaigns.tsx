@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -65,6 +66,7 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
   const [testEmail, setTestEmail] = useState("");
   const [sendingTest, setSendingTest] = useState(false);
   const [sendingCampaign, setSendingCampaign] = useState(false);
+  const [onlyDelivered, setOnlyDelivered] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -170,6 +172,7 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
           subject: selectedTemplate.subject,
           html: selectedTemplate.html_content,
           previewText: selectedTemplate.preview_text,
+          onlyDelivered: onlyDelivered,
         },
         headers: getAuthHeaders(),
       });
@@ -366,26 +369,49 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
 
             {/* Send to All Section */}
             <div className="space-y-3">
+              {/* Filter toggle */}
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="only-delivered" className="font-medium">
+                    Only send to confirmed deliveries
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Exclude new subscribers who haven't received an email yet
+                  </p>
+                </div>
+                <Switch
+                  id="only-delivered"
+                  checked={onlyDelivered}
+                  onCheckedChange={setOnlyDelivered}
+                />
+              </div>
+
               <div className="rounded-lg border p-3 space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Will be sent to:</span>
-                  <span className="font-medium">{subscriberStats.active} subscribers</span>
+                  <span className="font-bold text-lg">
+                    {onlyDelivered ? subscriberStats.delivered : subscriberStats.active} subscribers
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground flex items-center gap-1">
                     <CheckCircle className="h-3 w-3 text-green-500" />
                     Previously delivered
                   </span>
-                  <span className="font-medium text-green-600">{subscriberStats.delivered}</span>
+                  <span className={`font-medium ${onlyDelivered ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    {subscriberStats.delivered}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">New (first email)</span>
-                  <span className="font-medium text-amber-600">{subscriberStats.neverDelivered}</span>
+                  <span className={`font-medium ${onlyDelivered ? 'line-through text-muted-foreground' : 'text-amber-600'}`}>
+                    {subscriberStats.neverDelivered} {onlyDelivered && '(excluded)'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground flex items-center gap-1">
                     <AlertCircle className="h-3 w-3 text-red-500" />
-                    Excluded (bounced)
+                    Bounced (always excluded)
                   </span>
                   <span className="font-medium text-red-600">{subscriberStats.bounced}</span>
                 </div>
