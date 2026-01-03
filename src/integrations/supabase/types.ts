@@ -1191,6 +1191,9 @@ export type Database = {
       }
       newsletter_subscribers: {
         Row: {
+          bounce_type: string | null
+          bounced: boolean | null
+          bounced_at: string | null
           coupon_code: string | null
           coupon_product_id: string | null
           coupon_used_at: string | null
@@ -1203,6 +1206,9 @@ export type Database = {
           subscribed_at: string
         }
         Insert: {
+          bounce_type?: string | null
+          bounced?: boolean | null
+          bounced_at?: string | null
           coupon_code?: string | null
           coupon_product_id?: string | null
           coupon_used_at?: string | null
@@ -1215,6 +1221,9 @@ export type Database = {
           subscribed_at?: string
         }
         Update: {
+          bounce_type?: string | null
+          bounced?: boolean | null
+          bounced_at?: string | null
           coupon_code?: string | null
           coupon_product_id?: string | null
           coupon_used_at?: string | null

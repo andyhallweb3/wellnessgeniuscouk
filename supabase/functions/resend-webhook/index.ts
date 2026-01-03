@@ -136,11 +136,18 @@ Deno.serve(async (req) => {
             send_id: event.data.email_id,
           }).select().maybeSingle();
           
-          // Deactivate subscriber
+          // Mark subscriber as bounced and deactivate
           await supabase
             .from("newsletter_subscribers")
-            .update({ is_active: false })
+            .update({ 
+              is_active: false,
+              bounced: true,
+              bounced_at: new Date().toISOString(),
+              bounce_type: event.data.bounce?.message || 'unknown'
+            })
             .eq("email", event.data.to[0]);
+          
+          console.log(`Marked ${event.data.to[0]} as bounced`);
         }
         break;
         

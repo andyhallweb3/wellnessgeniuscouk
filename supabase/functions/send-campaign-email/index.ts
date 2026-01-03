@@ -13,6 +13,7 @@ interface CampaignRequest {
   subject: string;
   html: string;
   previewText?: string;
+  testEmail?: string;
 }
 
 Deno.serve(async (req) => {
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { templateId, subject, html, previewText }: CampaignRequest = await req.json();
+    const { templateId, subject, html, previewText, testEmail }: CampaignRequest = await req.json();
 
     if (!subject || !html) {
       console.error("Missing required fields");
@@ -46,11 +47,35 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch active subscribers
+    // If test email, just send to that address
+    if (testEmail) {
+      console.log(`Sending test email to: ${testEmail}`);
+      const { data, error } = await resend.emails.send({
+        from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
+        reply_to: "andy@wellnessgenius.co.uk",
+        to: [testEmail],
+        subject: `[TEST] ${subject}`,
+        html: html,
+      });
+
+      if (error) {
+        console.error("Test email error:", error);
+        throw new Error(error.message);
+      }
+
+      console.log("Test email sent:", data?.id);
+      return new Response(
+        JSON.stringify({ success: true, testEmail, messageId: data?.id }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Fetch active subscribers - EXCLUDE bounced and unsubscribed
     const { data: subscribers, error: fetchError } = await supabase
       .from("newsletter_subscribers")
       .select("email")
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .eq("bounced", false);
 
     if (fetchError) {
       console.error("Error fetching subscribers:", fetchError);
@@ -64,7 +89,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Sending campaign to ${subscribers.length} subscribers`);
+    console.log(`Sending campaign to ${subscribers.length} active, non-bounced subscribers`);
 
     // Send emails in batches of 50 to avoid rate limits
     const batchSize = 50;
