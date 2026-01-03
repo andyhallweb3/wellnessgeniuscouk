@@ -1210,6 +1210,7 @@ serve(async (req) => {
           { role: "system", content: fullSystemPrompt },
           ...messages,
         ],
+        max_tokens: 1000,
         stream: true,
       }),
     });
