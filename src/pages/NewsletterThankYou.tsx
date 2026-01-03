@@ -1,76 +1,24 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Download, ArrowRight, Mail, Sparkles, FileText, Star, BarChart3, Lightbulb, ExternalLink, Lock } from "lucide-react";
+import { CheckCircle, ArrowRight, Mail, Sparkles, FileText, Star, BarChart3, Lightbulb, ExternalLink, Gift, Copy, Check } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.webp";
-import { supabase } from "@/integrations/supabase/client";
-import { generateQuickCheck } from "@/lib/pdf-generators";
 import { toast } from "sonner";
 
+const DISCOUNT_CODE = "LzcFF5Ii";
+
 const NewsletterThankYou = () => {
-  const [isVerified, setIsVerified] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    // Check if user is authenticated and email is confirmed
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email_confirmed_at) {
-        setIsVerified(true);
-        setUserEmail(session.user.email ?? null);
-      }
-    };
-    
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user?.email_confirmed_at) {
-        setIsVerified(true);
-        setUserEmail(session.user.email ?? null);
-      } else {
-        setIsVerified(false);
-        setUserEmail(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleDownload = async () => {
-    if (!isVerified) {
-      toast.error("Please verify your email first to download");
-      return;
-    }
-
-    setIsDownloading(true);
+  const handleCopyCode = async () => {
     try {
-      // Log the download
-      if (userEmail) {
-        await supabase.from("product_downloads").insert({
-          email: userEmail,
-          product_id: "quick-check-lite",
-          product_name: "AI Prompt Guide for Wellness Operators",
-          product_type: "free",
-          download_type: "free",
-        });
-      }
-
-      // Generate and download PDF
-      const doc = generateQuickCheck();
-      doc.save("AI-Prompt-Guide-Wellness-Operators.pdf");
-      toast.success("Download started!");
-    } catch (error) {
-      console.error("Download error:", error);
-      toast.error("Download failed. Please try again.");
-    } finally {
-      setIsDownloading(false);
+      await navigator.clipboard.writeText(DISCOUNT_CODE);
+      setCopied(true);
+      toast.success("Discount code copied!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy code");
     }
-  };
-
-  const handleVerifyRedirect = () => {
-    navigate("/auth?redirect=/newsletter/thank-you");
   };
 
   // Email preview content with premium icons instead of emojis
@@ -113,52 +61,63 @@ const NewsletterThankYou = () => {
             {/* Divider */}
             <div className="border-t border-border" />
 
-            {/* Free Resource CTA */}
+            {/* Free Resource CTA with Discount Code */}
             <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 text-left space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <FileText className="h-5 w-5 text-primary" />
+                  <Gift className="h-5 w-5 text-primary" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-primary font-semibold uppercase tracking-wide">
-                    Your Free Resource
+                    Exclusive Subscriber Gift
                   </p>
                   <h3 className="text-lg font-semibold text-foreground">
                     AI Prompt Guide for Wellness Operators
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    20+ battle-tested prompts to automate marketing, operations, and client engagement in your wellness business.
+                    20+ battle-tested prompts to automate marketing, operations, and client engagement. Worth £19.99 — <span className="text-primary font-medium">free for subscribers</span>.
                   </p>
                 </div>
               </div>
 
-              {isVerified ? (
-                <Button 
-                  className="w-full" 
-                  size="lg"
-                  onClick={handleDownload}
-                  disabled={isDownloading}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  {isDownloading ? "Downloading..." : "Download Free Guide"}
+              {/* Discount Code Box */}
+              <div className="bg-background/80 border-2 border-dashed border-primary/30 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Your 100% Discount Code</p>
+                    <p className="text-2xl font-mono font-bold text-primary tracking-wider">{DISCOUNT_CODE}</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleCopyCode}
+                    className="flex items-center gap-2"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4 text-primary" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Apply this code at checkout to download your free guide
+                </p>
+              </div>
+
+              <Link to="/products" className="block">
+                <Button className="w-full" size="lg">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Get Your Free Guide
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              ) : (
-                <div className="space-y-3">
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    onClick={handleVerifyRedirect}
-                  >
-                    <Lock className="mr-2 h-4 w-4" />
-                    Verify Email to Download
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Create an account or sign in to access your free guide
-                  </p>
-                </div>
-              )}
+              </Link>
             </div>
 
             {/* Email Preview */}
