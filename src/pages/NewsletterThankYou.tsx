@@ -1,20 +1,21 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Download, ArrowRight, Mail, Sparkles } from "lucide-react";
+import { CheckCircle, Download, ArrowRight, Mail, Sparkles, FileText } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.webp";
-import { getFreeResources } from "@/data/downloadableResources";
+import EmailGateModal from "@/components/EmailGateModal";
 
 const NewsletterThankYou = () => {
-  const freeResource = getFreeResources()[0]; // Get first free resource
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   // Email preview content
   const emailPreview = {
-    subject: "AI & Wellness Weekly: Top Industry News",
-    preview: "Here are the top stories from the intersection of AI, wellness, and fitness this week—with insights on why they matter for your business.",
+    subject: "AI & Wellness Weekly: Strategic Industry Intelligence",
+    preview: "This week's top developments at the intersection of AI and the wellness economy—with strategic implications for your business.",
     sections: [
-      "⭐ Editor's Choice - The top story with full AI analysis",
-      "📊 Why It Matters - Actionable bullet points for your business",
-      "💡 Commercial Angle - How to capitalize on each trend",
+      "⭐ Editor's Choice - The story with full strategic analysis",
+      "📊 Why It Matters - Executive summary and action points",
+      "💡 Commercial Angle - Revenue and efficiency opportunities",
       "🔗 Full Article Links - Quick access to original sources",
     ],
   };
@@ -43,7 +44,7 @@ const NewsletterThankYou = () => {
                 You're in! 🎉
               </h1>
               <p className="text-muted-foreground">
-                Check your inbox for a confirmation email. Your first newsletter will arrive soon.
+                Check your inbox for a confirmation email. Your first strategic briefing will arrive soon.
               </p>
             </div>
 
@@ -51,33 +52,34 @@ const NewsletterThankYou = () => {
             <div className="border-t border-border" />
 
             {/* Free Resource CTA */}
-            {freeResource && (
-              <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 text-left space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                    <Download className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-primary font-semibold uppercase tracking-wide">
-                      Free Resource
-                    </p>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {freeResource.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {freeResource.description}
-                    </p>
-                  </div>
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 text-left space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <FileText className="h-5 w-5 text-primary" />
                 </div>
-
-                <Link to="/downloads">
-                  <Button className="w-full" size="lg">
-                    Download Free Template
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+                <div className="space-y-1">
+                  <p className="text-xs text-primary font-semibold uppercase tracking-wide">
+                    Your Free Resource
+                  </p>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    AI Prompt Guide for Wellness Operators
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    20+ battle-tested prompts to automate marketing, operations, and client engagement in your wellness business.
+                  </p>
+                </div>
               </div>
-            )}
+
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={() => setShowDownloadModal(true)}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download Free Guide
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
 
             {/* Email Preview */}
             <div className="text-left space-y-4">
@@ -137,6 +139,15 @@ const NewsletterThankYou = () => {
           </p>
         </div>
       </div>
+
+      {/* Download Modal */}
+      <EmailGateModal
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+        productName="AI Prompt Guide for Wellness Operators"
+        productId="quick-check-lite"
+        downloadUrl=""
+      />
     </>
   );
 };
