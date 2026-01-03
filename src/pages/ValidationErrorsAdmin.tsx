@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
+import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb";
 import { 
   Loader2, 
   ArrowLeft,
@@ -458,6 +459,8 @@ const ValidationErrorsAdmin = () => {
           </div>
         </div>
       </header>
+
+      <AdminBreadcrumb currentPage="Validation Errors" />
 
       <main className="container-wide py-8 px-6">
         {isLoading ? (

@@ -43,6 +43,7 @@ import Footer from "@/components/Footer";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb";
 
 interface EmailTemplate {
   id: string;
@@ -689,8 +690,9 @@ const EmailTemplatesAdmin = () => {
       </Helmet>
 
       <Header />
+      <AdminBreadcrumb currentPage="Email Templates" />
 
-      <main className="pt-24 pb-16">
+      <main className="pt-8 pb-16">
         <div className="container-wide section-padding">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">

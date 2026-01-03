@@ -6,6 +6,7 @@ import { ArrowLeft, Gift, Users, ShoppingCart, TrendingUp, Percent, RefreshCw } 
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb";
 import {
   Table,
   TableBody,
@@ -87,24 +88,27 @@ const CouponAnalyticsAdmin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Coupon Analytics</h1>
-              <p className="text-muted-foreground">Newsletter signup coupon performance</p>
+    <div className="min-h-screen bg-background">
+      <AdminBreadcrumb currentPage="Coupon Analytics" />
+      
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold">Coupon Analytics</h1>
+                <p className="text-muted-foreground">Newsletter signup coupon performance</p>
+              </div>
             </div>
+            <Button onClick={fetchAnalytics} disabled={loading} variant="outline" className="gap-2">
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
-          <Button onClick={fetchAnalytics} disabled={loading} variant="outline" className="gap-2">
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
 
         {/* Stats Cards */}
         {stats && (
@@ -226,6 +230,7 @@ const CouponAnalyticsAdmin = () => {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

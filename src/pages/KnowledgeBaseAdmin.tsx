@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Loader2, ArrowLeft, Shield } from "lucide-react";
 import { KnowledgeBaseManager } from "@/components/admin/KnowledgeBaseManager";
+import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb";
 
 const KnowledgeBaseAdmin = () => {
   const { isAdmin, isLoading: authLoading, isAuthenticated } = useAdminAuth();
@@ -56,6 +57,8 @@ const KnowledgeBaseAdmin = () => {
           </div>
         </div>
       </header>
+
+      <AdminBreadcrumb currentPage="Knowledge Base" />
 
       {/* Content */}
       <main className="container-wide py-8 px-6">
