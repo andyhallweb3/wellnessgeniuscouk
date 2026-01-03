@@ -1238,17 +1238,17 @@ export const generatePromptPack = (): jsPDF => {
   doc.setTextColor(...BRAND.teal);
   doc.text("You reference:", 22, 130);
   doc.setTextColor(...BRAND.white);
-  doc.text("• the user's Wellness Genius AI Readiness Score", 30, 142);
-  doc.text("• industry benchmarks from the Wellness Genius intelligence layer", 30, 152);
-  doc.text("• proven engagement and monetisation models", 30, 162);
+  doc.text("- The user's Wellness Genius AI Readiness Score", 30, 142);
+  doc.text("- Industry benchmarks from the Wellness Genius intelligence layer", 30, 152);
+  doc.text("- Proven engagement and monetisation models", 30, 162);
   
   doc.setTextColor(...BRAND.teal);
   doc.text("You prioritise:", 22, 178);
   doc.setTextColor(...BRAND.white);
-  doc.text("• behaviour change", 30, 190);
-  doc.text("• engagement frequency", 30, 200);
-  doc.text("• retention", 30, 210);
-  doc.text("• monetisation", 30, 220);
+  doc.text("- Behaviour change", 30, 190);
+  doc.text("- Engagement frequency", 30, 200);
+  doc.text("- Retention", 30, 210);
+  doc.text("- Monetisation", 30, 220);
   
   doc.setFillColor(...BRAND.teal);
   doc.roundedRect(15, 252, 180, 20, 2, 2, "F");
@@ -1284,10 +1284,10 @@ export const generatePromptPack = (): jsPDF => {
   doc.text(readinessPrompt, 22, 118);
   
   doc.setTextColor(...BRAND.muted);
-  doc.text("• Data readiness", 30, 133);
-  doc.text("• Engagement maturity", 30, 143);
-  doc.text("• Integration capability", 30, 153);
-  doc.text("• Monetisation readiness", 30, 163);
+  doc.text("- Data readiness", 30, 133);
+  doc.text("- Engagement maturity", 30, 143);
+  doc.text("- Integration capability", 30, 153);
+  doc.text("- Monetisation readiness", 30, 163);
   doc.text("• Governance, privacy, and trust", 30, 173);
   
   doc.setTextColor(...BRAND.teal);
@@ -1324,9 +1324,9 @@ export const generatePromptPack = (): jsPDF => {
   doc.setTextColor(...BRAND.white);
   doc.text("Design an engagement engine using:", 22, 105);
   doc.setTextColor(...BRAND.muted);
-  doc.text("• activity and behaviour signals", 30, 117);
-  doc.text("• rewards or incentives", 30, 127);
-  doc.text("• nudges and challenges", 30, 137);
+  doc.text("- Activity and behaviour signals", 30, 117);
+  doc.text("- Rewards or incentives", 30, 127);
+  doc.text("- Nudges and challenges", 30, 137);
   
   doc.setTextColor(...BRAND.teal);
   doc.text("Align the engine to the user's AI Readiness Score band:", 22, 152);
@@ -1338,9 +1338,9 @@ export const generatePromptPack = (): jsPDF => {
   doc.setTextColor(...BRAND.teal);
   doc.text("Reference relevant Wellness Genius tools:", 22, 199);
   doc.setTextColor(...BRAND.muted);
-  doc.text("• activity tracking SDKs", 30, 211);
-  doc.text("• rewards and incentives logic", 30, 221);
-  doc.text("• engagement analytics", 30, 231);
+  doc.text("- Activity tracking SDKs", 30, 211);
+  doc.text("- Rewards and incentives logic", 30, 221);
+  doc.text("- Engagement analytics", 30, 231);
   
   doc.setFillColor(...BRAND.teal);
   doc.roundedRect(15, 257, 180, 20, 2, 2, "F");
@@ -1370,16 +1370,16 @@ export const generatePromptPack = (): jsPDF => {
   doc.setTextColor(...BRAND.white);
   doc.text("Create a personalisation strategy based on:", 22, 105);
   doc.setTextColor(...BRAND.muted);
-  doc.text("• behavioural data", 30, 117);
-  doc.text("• usage patterns", 30, 127);
-  doc.text("• engagement frequency", 30, 137);
+  doc.text("- Behavioural data", 30, 117);
+  doc.text("- Usage patterns", 30, 127);
+  doc.text("- Engagement frequency", 30, 137);
   
   doc.setTextColor(...BRAND.teal);
   doc.text("Explicitly avoid:", 22, 152);
   doc.setTextColor(255, 150, 150);
-  doc.text("✗ medical diagnosis", 30, 164);
-  doc.text("✗ sensitive health inference", 30, 174);
-  doc.text("✗ opaque decision-making", 30, 184);
+  doc.text("X  Medical diagnosis", 30, 164);
+  doc.text("X  Sensitive health inference", 30, 174);
+  doc.text("X  Opaque decision-making", 30, 184);
   
   doc.setTextColor(...BRAND.white);
   const trustNote = doc.splitTextToSize("Reference how Wellness Genius transparency and data governance principles should be communicated to users in plain English.", 165);
@@ -1418,9 +1418,9 @@ export const generatePromptPack = (): jsPDF => {
   doc.text(monetPrompt, 22, 105);
   
   doc.setTextColor(...BRAND.muted);
-  doc.text("• One monetisation model they are ready for today", 30, 120);
-  doc.text("• One model they should prepare for", 30, 132);
-  doc.text("• One model they should avoid for now", 30, 144);
+  doc.text("- One monetisation model they are ready for today", 30, 120);
+  doc.text("- One model they should prepare for", 30, 132);
+  doc.text("- One model they should avoid for now", 30, 144);
   
   doc.setTextColor(...BRAND.teal);
   doc.text("Use Wellness Genius-supported approaches:", 22, 162);
@@ -1432,9 +1432,9 @@ export const generatePromptPack = (): jsPDF => {
   doc.setTextColor(...BRAND.teal);
   doc.text("Define:", 22, 216);
   doc.setTextColor(...BRAND.muted);
-  doc.text("• who pays", 30, 228);
-  doc.text("• why they pay", 30, 238);
-  doc.text("• the KPI that proves ROI", 30, 248);
+  doc.text("- Who pays", 30, 228);
+  doc.text("- Why they pay", 30, 238);
+  doc.text("- The KPI that proves ROI", 30, 248);
   
   doc.setFillColor(80, 40, 40);
   doc.roundedRect(15, 257, 180, 20, 2, 2, "F");
@@ -1468,20 +1468,20 @@ export const generatePromptPack = (): jsPDF => {
   doc.setTextColor(...BRAND.teal);
   doc.text("DAILY:", 22, 125);
   doc.setTextColor(...BRAND.muted);
-  doc.text("• reference engagement and readiness indicators", 30, 137);
-  doc.text("• suggest one practical action", 30, 149);
+  doc.text("- Reference engagement and readiness indicators", 30, 137);
+  doc.text("- Suggest one practical action", 30, 149);
   
   doc.setTextColor(...BRAND.teal);
   doc.text("WEEKLY:", 22, 167);
   doc.setTextColor(...BRAND.muted);
-  doc.text("• summarise trends using Wellness Genius analytics", 30, 179);
-  doc.text("• recommend one experiment", 30, 191);
+  doc.text("- Summarise trends using Wellness Genius analytics", 30, 179);
+  doc.text("- Recommend one experiment", 30, 191);
   
   doc.setTextColor(...BRAND.teal);
   doc.text("MONTHLY:", 22, 209);
   doc.setTextColor(...BRAND.muted);
-  doc.text("• explain how AI readiness has shifted", 30, 221);
-  doc.text("• highlight commercial impact", 30, 233);
+  doc.text("- Explain how AI readiness has shifted", 30, 221);
+  doc.text("- Highlight commercial impact", 30, 233);
   
   doc.setFillColor(...BRAND.teal);
   doc.roundedRect(15, 257, 180, 20, 2, 2, "F");
@@ -1511,9 +1511,9 @@ export const generatePromptPack = (): jsPDF => {
   doc.setTextColor(...BRAND.white);
   doc.text("Explain the organisation's AI position using:", 22, 105);
   doc.setTextColor(...BRAND.muted);
-  doc.text("• the Wellness Genius AI Readiness Score", 30, 117);
-  doc.text("• engagement data", 30, 129);
-  doc.text("• monetisation readiness", 30, 141);
+  doc.text("- The Wellness Genius AI Readiness Score", 30, 117);
+  doc.text("- Engagement data", 30, 129);
+  doc.text("- Monetisation readiness", 30, 141);
   
   doc.setTextColor(...BRAND.teal);
   doc.text("Translate this into:", 22, 159);
@@ -1554,9 +1554,9 @@ export const generatePromptPack = (): jsPDF => {
   doc.setTextColor(...BRAND.white);
   doc.text("Based on the AI Readiness Score, list:", 22, 105);
   doc.setTextColor(255, 150, 150);
-  doc.text("• features that are premature", 30, 120);
-  doc.text("• tools that will add complexity without ROI", 30, 132);
-  doc.text("• common wellness AI traps", 30, 144);
+  doc.text("- Features that are premature", 30, 120);
+  doc.text("- Tools that will add complexity without ROI", 30, 132);
+  doc.text("- Common wellness AI traps", 30, 144);
   
   doc.setTextColor(...BRAND.white);
   const redFlagNote = doc.splitTextToSize("Recommend simpler Wellness Genius-supported alternatives instead.", 165);
