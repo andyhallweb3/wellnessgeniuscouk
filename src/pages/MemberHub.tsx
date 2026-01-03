@@ -52,6 +52,7 @@ import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import DownloadHistory from "@/components/hub/DownloadHistory";
 import ReadinessScoreHistory from "@/components/hub/ReadinessScoreHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
+import WelcomeModal from "@/components/hub/WelcomeModal";
 import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useDownloadTracking } from "@/hooks/useDownloadTracking";
@@ -315,6 +316,7 @@ const MemberHub = () => {
         <meta name="description" content="Access your purchased products, downloads, and saved outputs." />
       </Helmet>
       
+      <WelcomeModal userEmail={user?.email} />
       <Header />
       
       <main className="pt-24 pb-16">
