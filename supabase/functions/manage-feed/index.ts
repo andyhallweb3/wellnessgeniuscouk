@@ -48,7 +48,7 @@ serve(async (req) => {
           link_summary: article.business_lens || `Industry news from ${article.category}`,
           source_article_id: article.id,
           tags: [article.category].filter(Boolean),
-          quality_score: 50, // Base quality for curated content
+          quality_score: 50,
           created_at: article.published_at,
         }));
 
@@ -86,7 +86,7 @@ serve(async (req) => {
           link_summary: `From the Wellness Genius blog`,
           source_blog_id: post.id,
           tags: [post.category].filter(Boolean),
-          quality_score: 60, // Higher quality for our own content
+          quality_score: 60,
           is_featured: true,
           created_at: post.created_at,
         }));
@@ -104,6 +104,77 @@ serve(async (req) => {
           success: true, 
           articlesAdded: newPosts.length,
           blogPostsAdded: newBlogPosts.length
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Seed RSS news into feed (called hourly by cron)
+    if (action === 'seed_rss_news') {
+      console.log('Starting RSS news feed sync...');
+      
+      // Get existing feed posts with link_url to check for duplicates
+      const { data: existingPosts, error: existingError } = await supabase
+        .from('feed_posts')
+        .select('link_url')
+        .eq('post_type', 'system_article');
+
+      if (existingError) {
+        console.error('Error fetching existing posts:', existingError);
+        throw existingError;
+      }
+
+      const existingUrls = new Set((existingPosts || []).map(p => p.link_url));
+      console.log(`Found ${existingUrls.size} existing RSS posts in feed`);
+
+      // Fetch recent RSS news from cache (last 24 hours)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: rssNews, error: rssError } = await supabase
+        .from('rss_news_cache')
+        .select('news_id, title, summary, source_url, source_name, category, business_lens, published_date')
+        .gte('published_date', oneDayAgo)
+        .order('published_date', { ascending: false })
+        .limit(50);
+
+      if (rssError) {
+        console.error('Error fetching RSS news:', rssError);
+        throw rssError;
+      }
+
+      console.log(`Found ${rssNews?.length || 0} RSS news items from last 24h`);
+
+      // Filter out duplicates by URL
+      const newRssItems = (rssNews || []).filter(item => !existingUrls.has(item.source_url));
+      console.log(`${newRssItems.length} new items to add (after deduplication)`);
+
+      if (newRssItems.length > 0) {
+        const feedPosts = newRssItems.map(item => ({
+          post_type: 'system_article',
+          content: item.summary || item.title,
+          link_url: item.source_url,
+          link_summary: item.business_lens || `Industry news from ${item.source_name}`,
+          tags: [item.category].filter(Boolean),
+          quality_score: 50,
+          created_at: item.published_date,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('feed_posts')
+          .insert(feedPosts);
+
+        if (insertError) {
+          console.error('Error inserting RSS posts:', insertError);
+          throw insertError;
+        }
+
+        console.log(`Successfully added ${feedPosts.length} RSS news items to feed`);
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          rssNewsAdded: newRssItems.length,
+          timestamp: new Date().toISOString()
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
