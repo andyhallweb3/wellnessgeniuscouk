@@ -52,7 +52,7 @@ Keep it professional and focused on business value. Do not use bullet points, ju
             content: `Summarize this ${mode || 'general'} conversation:\n\n${conversationText}`
           }
         ],
-        max_tokens: 150,
+        max_tokens: 1000,
         temperature: 0.3,
       }),
     });
