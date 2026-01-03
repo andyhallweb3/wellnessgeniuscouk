@@ -608,6 +608,210 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          is_helpful: boolean
+          like_count: number
+          moderation_status: Database["public"]["Enums"]["moderation_status"]
+          parent_comment_id: string | null
+          post_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_helpful?: boolean
+          like_count?: number
+          moderation_status?: Database["public"]["Enums"]["moderation_status"]
+          parent_comment_id?: string | null
+          post_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_helpful?: boolean
+          like_count?: number
+          moderation_status?: Database["public"]["Enums"]["moderation_status"]
+          parent_comment_id?: string | null
+          post_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "feed_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_likes: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "feed_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_posts: {
+        Row: {
+          author_id: string | null
+          comment_count: number
+          content: string
+          created_at: string
+          id: string
+          is_featured: boolean
+          like_count: number
+          link_summary: string | null
+          link_url: string | null
+          moderation_status: Database["public"]["Enums"]["moderation_status"]
+          post_type: Database["public"]["Enums"]["feed_post_type"]
+          quality_score: number
+          source_article_id: string | null
+          source_blog_id: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          comment_count?: number
+          content: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          like_count?: number
+          link_summary?: string | null
+          link_url?: string | null
+          moderation_status?: Database["public"]["Enums"]["moderation_status"]
+          post_type?: Database["public"]["Enums"]["feed_post_type"]
+          quality_score?: number
+          source_article_id?: string | null
+          source_blog_id?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          comment_count?: number
+          content?: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          like_count?: number
+          link_summary?: string | null
+          link_url?: string | null
+          moderation_status?: Database["public"]["Enums"]["moderation_status"]
+          post_type?: Database["public"]["Enums"]["feed_post_type"]
+          quality_score?: number
+          source_article_id?: string | null
+          source_blog_id?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      feed_reports: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          details: string | null
+          id: string
+          post_id: string | null
+          reason: string
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          post_id?: string | null
+          reason: string
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          post_id?: string | null
+          reason?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "feed_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback_reports: {
         Row: {
           admin_notes: string | null
@@ -1393,6 +1597,99 @@ export type Database = {
         }
         Relationships: []
       }
+      professional_score_log: {
+        Row: {
+          change_amount: number
+          created_at: string
+          id: string
+          reason: string
+          related_comment_id: string | null
+          related_post_id: string | null
+          user_id: string
+        }
+        Insert: {
+          change_amount: number
+          created_at?: string
+          id?: string
+          reason: string
+          related_comment_id?: string | null
+          related_post_id?: string | null
+          user_id: string
+        }
+        Update: {
+          change_amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          related_comment_id?: string | null
+          related_post_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      professional_scores: {
+        Row: {
+          created_at: string
+          id: string
+          last_activity_at: string | null
+          last_moderation_action_at: string | null
+          linkedin_url: string | null
+          linkedin_url_added: boolean
+          organisation: string | null
+          posting_suspended_until: string | null
+          profile_photo_added: boolean
+          role: string | null
+          score: number
+          total_comments: number
+          total_helpful_marks: number
+          total_likes_received: number
+          total_posts: number
+          updated_at: string
+          user_id: string
+          weeks_without_reports: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_activity_at?: string | null
+          last_moderation_action_at?: string | null
+          linkedin_url?: string | null
+          linkedin_url_added?: boolean
+          organisation?: string | null
+          posting_suspended_until?: string | null
+          profile_photo_added?: boolean
+          role?: string | null
+          score?: number
+          total_comments?: number
+          total_helpful_marks?: number
+          total_likes_received?: number
+          total_posts?: number
+          updated_at?: string
+          user_id: string
+          weeks_without_reports?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_activity_at?: string | null
+          last_moderation_action_at?: string | null
+          linkedin_url?: string | null
+          linkedin_url_added?: boolean
+          organisation?: string | null
+          posting_suspended_until?: string | null
+          profile_photo_added?: boolean
+          role?: string | null
+          score?: number
+          total_comments?: number
+          total_helpful_marks?: number
+          total_likes_received?: number
+          total_posts?: number
+          updated_at?: string
+          user_id?: string
+          weeks_without_reports?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1632,6 +1929,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_user_comment: { Args: { p_user_id: string }; Returns: boolean }
+      can_user_post: { Args: { p_user_id: string }; Returns: boolean }
       get_current_user_email: { Args: never; Returns: string }
       get_leaderboard_stats: {
         Args: { p_business_type?: string; p_size_band?: string }
@@ -1652,6 +1951,13 @@ export type Database = {
           id: string
           share_token: string
           view_count: number
+        }[]
+      }
+      get_user_rate_limits: {
+        Args: { p_user_id: string }
+        Returns: {
+          comments_per_day: number
+          posts_per_day: number
         }[]
       }
       has_role: {
@@ -1678,6 +1984,17 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      feed_post_type:
+        | "user_post"
+        | "shared_article"
+        | "system_article"
+        | "blog_post"
+      moderation_status:
+        | "pending"
+        | "approved"
+        | "flagged"
+        | "hidden"
+        | "removed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1806,6 +2123,19 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      feed_post_type: [
+        "user_post",
+        "shared_article",
+        "system_article",
+        "blog_post",
+      ],
+      moderation_status: [
+        "pending",
+        "approved",
+        "flagged",
+        "hidden",
+        "removed",
+      ],
     },
   },
 } as const
