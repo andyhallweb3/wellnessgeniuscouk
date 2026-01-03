@@ -1,24 +1,85 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Download, ArrowRight, Mail, Sparkles, FileText } from "lucide-react";
+import { CheckCircle, Download, ArrowRight, Mail, Sparkles, FileText, Star, BarChart3, Lightbulb, ExternalLink, Lock } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.webp";
-import EmailGateModal from "@/components/EmailGateModal";
+import { supabase } from "@/integrations/supabase/client";
+import { generateQuickCheck } from "@/lib/pdf-generators";
+import { toast } from "sonner";
 
 const NewsletterThankYou = () => {
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // Email preview content
-  const emailPreview = {
-    subject: "AI & Wellness Weekly: Strategic Industry Intelligence",
-    preview: "This week's top developments at the intersection of AI and the wellness economy—with strategic implications for your business.",
-    sections: [
-      "⭐ Editor's Choice - The story with full strategic analysis",
-      "📊 Why It Matters - Executive summary and action points",
-      "💡 Commercial Angle - Revenue and efficiency opportunities",
-      "🔗 Full Article Links - Quick access to original sources",
-    ],
+  useEffect(() => {
+    // Check if user is authenticated and email is confirmed
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email_confirmed_at) {
+        setIsVerified(true);
+        setUserEmail(session.user.email ?? null);
+      }
+    };
+    
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user?.email_confirmed_at) {
+        setIsVerified(true);
+        setUserEmail(session.user.email ?? null);
+      } else {
+        setIsVerified(false);
+        setUserEmail(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleDownload = async () => {
+    if (!isVerified) {
+      toast.error("Please verify your email first to download");
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      // Log the download
+      if (userEmail) {
+        await supabase.from("product_downloads").insert({
+          email: userEmail,
+          product_id: "quick-check-lite",
+          product_name: "AI Prompt Guide for Wellness Operators",
+          product_type: "free",
+          download_type: "free",
+        });
+      }
+
+      // Generate and download PDF
+      const doc = generateQuickCheck();
+      doc.save("AI-Prompt-Guide-Wellness-Operators.pdf");
+      toast.success("Download started!");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Download failed. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
+
+  const handleVerifyRedirect = () => {
+    navigate("/auth?redirect=/newsletter/thank-you");
+  };
+
+  // Email preview content with premium icons instead of emojis
+  const emailSections = [
+    { icon: Star, label: "Editor's Choice", desc: "The story with full strategic analysis" },
+    { icon: BarChart3, label: "Why It Matters", desc: "Executive summary and action points" },
+    { icon: Lightbulb, label: "Commercial Angle", desc: "Revenue and efficiency opportunities" },
+    { icon: ExternalLink, label: "Full Article Links", desc: "Quick access to original sources" },
+  ];
 
   return (
     <>
@@ -40,8 +101,9 @@ const NewsletterThankYou = () => {
 
             {/* Success Message */}
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-foreground">
-                You're in! 🎉
+              <h1 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
+                You're in!
+                <Sparkles className="h-5 w-5 text-primary" />
               </h1>
               <p className="text-muted-foreground">
                 Check your inbox for a confirmation email. Your first strategic briefing will arrive soon.
@@ -70,15 +132,33 @@ const NewsletterThankYou = () => {
                 </div>
               </div>
 
-              <Button 
-                className="w-full" 
-                size="lg"
-                onClick={() => setShowDownloadModal(true)}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download Free Guide
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              {isVerified ? (
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {isDownloading ? "Downloading..." : "Download Free Guide"}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={handleVerifyRedirect}
+                  >
+                    <Lock className="mr-2 h-4 w-4" />
+                    Verify Email to Download
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Create an account or sign in to access your free guide
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Email Preview */}
@@ -97,19 +177,21 @@ const NewsletterThankYou = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">Wellness Genius Weekly</p>
-                    <p className="text-xs text-muted-foreground">{emailPreview.subject}</p>
+                    <p className="text-xs text-muted-foreground">AI & Wellness Weekly: Strategic Industry Intelligence</p>
                   </div>
                 </div>
                 
                 <p className="text-xs text-muted-foreground italic border-l-2 border-primary/30 pl-3">
-                  "{emailPreview.preview}"
+                  "This week's top developments at the intersection of AI and the wellness economy—with strategic implications for your business."
                 </p>
 
-                <div className="space-y-1.5">
-                  {emailPreview.sections.map((section, index) => (
-                    <p key={index} className="text-xs text-muted-foreground">
-                      {section}
-                    </p>
+                <div className="space-y-2">
+                  {emailSections.map((section, index) => (
+                    <div key={index} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <section.icon className="h-3.5 w-3.5 text-primary/70" />
+                      <span className="font-medium">{section.label}</span>
+                      <span className="text-muted-foreground/60">— {section.desc}</span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -139,15 +221,6 @@ const NewsletterThankYou = () => {
           </p>
         </div>
       </div>
-
-      {/* Download Modal */}
-      <EmailGateModal
-        isOpen={showDownloadModal}
-        onClose={() => setShowDownloadModal(false)}
-        productName="AI Prompt Guide for Wellness Operators"
-        productId="quick-check-lite"
-        downloadUrl=""
-      />
     </>
   );
 };
