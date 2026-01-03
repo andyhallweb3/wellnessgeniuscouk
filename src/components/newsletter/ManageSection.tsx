@@ -20,9 +20,10 @@ import AIArticleGenerator from "@/components/admin/AIArticleGenerator";
 interface ManageSectionProps {
   getAuthHeaders: () => Record<string, string>;
   onLogout: () => void;
+  defaultTab?: string;
 }
 
-export const ManageSection = ({ getAuthHeaders, onLogout }: ManageSectionProps) => {
+export const ManageSection = ({ getAuthHeaders, onLogout, defaultTab = "campaigns" }: ManageSectionProps) => {
   const [showAIGenerator, setShowAIGenerator] = useState(false);
 
   return (

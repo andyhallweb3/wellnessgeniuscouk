@@ -29,6 +29,14 @@ const ADMIN_SECTIONS = [
     color: "bg-blue-500/10 text-blue-600"
   },
   { 
+    id: "campaigns", 
+    label: "Email Campaigns", 
+    description: "Send campaign emails to subscribers via templates",
+    icon: Mail,
+    path: "/news/admin?tab=campaigns",
+    color: "bg-indigo-500/10 text-indigo-600"
+  },
+  { 
     id: "downloads", 
     label: "Downloads & Upsells", 
     description: "Track downloads, manage upsell campaigns, view A/B tests",
