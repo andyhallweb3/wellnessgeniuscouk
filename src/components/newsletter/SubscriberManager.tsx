@@ -24,7 +24,8 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Mail
+  Mail,
+  RefreshCw
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -59,6 +60,7 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
   const [form, setForm] = useState({ email: "", name: "", source: "admin-manual", is_active: true });
   const [bulkEmails, setBulkEmails] = useState("");
   const [bulkImporting, setBulkImporting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     fetchSubscribers();
@@ -225,6 +227,33 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
     }
   };
 
+  const syncResendDelivery = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-resend-delivery", {
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      toast({
+        title: "Sync Complete",
+        description: data.message || `Updated ${data.stats?.updated || 0} subscribers`,
+      });
+
+      fetchSubscribers();
+    } catch (error) {
+      toast({
+        title: "Sync Failed",
+        description: error instanceof Error ? error.message : "Failed to sync delivery data",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const exportSubscribers = () => {
     const csv = [
       ["Email", "Name", "Source", "Status", "Subscribed At", "Last Delivered", "Delivery Count", "Bounced", "Bounce Type"].join(","),
@@ -350,6 +379,10 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
         <Button variant="outline" onClick={exportSubscribers}>
           <Download className="h-4 w-4 mr-1" />
           Export
+        </Button>
+        <Button variant="outline" onClick={syncResendDelivery} disabled={syncing}>
+          <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+          {syncing ? 'Syncing...' : 'Sync Resend'}
         </Button>
       </div>
 
