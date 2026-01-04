@@ -1114,16 +1114,20 @@ Deno.serve(async (req) => {
 
       console.log(`${resendToMissing ? 'Resending' : 'Sending'} newsletter ${sendId} to ${newEmails.length} subscribers`);
 
-      // Insert recipient records for new subscribers
+      // Insert recipient records for new subscribers (use upsert to handle any edge cases)
       const recipientRows = newEmails.map(email => ({
         send_id: sendId,
-        email,
+        email: email.toLowerCase().trim(),
         status: 'pending',
       }));
 
+      // Use upsert with onConflict to gracefully handle duplicates
       const { error: insertError } = await supabase
         .from('newsletter_send_recipients')
-        .insert(recipientRows);
+        .upsert(recipientRows, { 
+          onConflict: 'send_id,email',
+          ignoreDuplicates: true 
+        });
 
       if (insertError) {
         console.error('Failed to insert recipient rows:', insertError);
