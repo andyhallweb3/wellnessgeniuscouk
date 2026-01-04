@@ -111,9 +111,10 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           query,
-          limit: 8,
+          limit: 10,
           scrapeOptions: {
             formats: ["markdown"],
+            onlyMainContent: true,
           },
         }),
       });
@@ -130,12 +131,12 @@ serve(async (req) => {
 
       console.log(`[GENIE-WEB] Search returned ${data.data?.length || 0} results`);
       
-      // Format results for the AI
+      // Format results for the AI - increase content limit for better analysis
       const results = (data.data || []).map((item: any) => ({
         url: item.url,
         title: item.title || item.metadata?.title || "Untitled",
         description: item.description || item.metadata?.description || "",
-        content: item.markdown?.slice(0, 1500) || "", // Limit content per result
+        content: item.markdown?.slice(0, 3000) || "", // Increased from 1500 for better competitor analysis
       }));
 
       return new Response(
