@@ -10,7 +10,7 @@ import ChatSidebar from "@/components/genie/ChatSidebar";
 import ChatInterface from "@/components/genie/ChatInterface";
 import DocumentManager from "@/components/genie/DocumentManager";
 import TrustSettingsToggle from "@/components/genie/TrustSettingsToggle";
-import { ADVISOR_MODES } from "@/components/advisor/AdvisorModes";
+import { ADVISOR_MODES, CREDIT_COST_PER_MESSAGE } from "@/components/advisor/AdvisorModes";
 import { useBusinessMemory } from "@/hooks/useBusinessMemory";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
@@ -125,11 +125,11 @@ const Genie = () => {
   }, [saveSession, currentSessionId]);
 
   const handleGenerateBrief = async () => {
-    if (credits.balance < 2) {
+    if (credits.balance < CREDIT_COST_PER_MESSAGE) {
       toast.error("Not enough credits for daily briefing.");
       return;
     }
-    const deducted = await deductCredits(2, "daily_briefing");
+    const deducted = await deductCredits(CREDIT_COST_PER_MESSAGE, "daily_briefing");
     if (!deducted) {
       toast.error("Failed to deduct credits");
       return;
@@ -205,6 +205,8 @@ const Genie = () => {
           onUploadDocument={uploadDocument}
           uploadingDocument={uploadingDocument}
           businessName={memory?.business_name || undefined}
+          isFreeTrial={credits.isFreeTrial}
+          daysRemaining={credits.isFreeTrial ? Math.max(0, Math.ceil((new Date(credits.freeTrialExpiresAt || "").getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : undefined}
         />
       </main>
 

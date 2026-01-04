@@ -17,7 +17,7 @@ import {
   TrendingUp,
   AlertTriangle
 } from "lucide-react";
-import { ADVISOR_MODES, getModeById, WEB_RESEARCH_MODES } from "@/components/advisor/AdvisorModes";
+import { ADVISOR_MODES, getModeById, WEB_RESEARCH_MODES, CREDIT_COST_PER_MESSAGE } from "@/components/advisor/AdvisorModes";
 import { getAdvisorIcon } from "@/components/advisor/AdvisorIcons";
 import GenieMessage, { TrustMetadata } from "@/components/genie/GenieMessage";
 import { BriefData } from "@/components/genie/DailyBriefCard";
@@ -68,6 +68,8 @@ interface ChatInterfaceProps {
   onUploadDocument?: (file: File) => Promise<boolean>;
   uploadingDocument?: boolean;
   businessName?: string;
+  daysRemaining?: number;
+  isFreeTrial?: boolean;
 }
 
 // Quick action suggestions for empty state
@@ -95,6 +97,8 @@ export default function ChatInterface({
   onUploadDocument,
   uploadingDocument = false,
   businessName,
+  daysRemaining,
+  isFreeTrial,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -262,10 +266,9 @@ export default function ChatInterface({
       return;
     }
 
-    const modeConfig = getModeById(selectedMode);
-    
-    if (credits < modeConfig.creditCost) {
-      toast.error("Not enough credits.");
+    // All modes cost 1 credit now - simpler check
+    if (credits < CREDIT_COST_PER_MESSAGE) {
+      toast.error("Not enough credits. Upgrade to continue.");
       return;
     }
 
@@ -276,7 +279,7 @@ export default function ChatInterface({
     setIsStreaming(true);
 
     try {
-      const deducted = await onDeductCredits(modeConfig.creditCost, selectedMode);
+      const deducted = await onDeductCredits(CREDIT_COST_PER_MESSAGE, selectedMode);
       if (!deducted) throw new Error("Failed to deduct credits");
 
       let webContext = "";
@@ -327,6 +330,7 @@ export default function ChatInterface({
   const currentMode = getModeById(selectedMode);
   const isWebMode = WEB_RESEARCH_MODES.includes(selectedMode);
   const hasMessages = messages.length > 0;
+  const hasEnoughCredits = credits >= CREDIT_COST_PER_MESSAGE;
 
   // Quick mode buttons
   const quickModes = ADVISOR_MODES.filter(m => 
@@ -342,21 +346,20 @@ export default function ChatInterface({
             <TooltipProvider delayDuration={200}>
               {quickModes.map((mode) => {
                 const isSelected = selectedMode === mode.id;
-                const canAfford = credits >= mode.creditCost;
                 const isWeb = WEB_RESEARCH_MODES.includes(mode.id);
                 
                 return (
                   <Tooltip key={mode.id}>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={() => canAfford && setSelectedMode(mode.id)}
-                        disabled={!canAfford || isStreaming}
+                        onClick={() => hasEnoughCredits && setSelectedMode(mode.id)}
+                        disabled={!hasEnoughCredits || isStreaming}
                         className={cn(
                           "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0",
                           isSelected
                             ? "bg-accent text-accent-foreground"
                             : "bg-secondary/80 hover:bg-secondary text-foreground/80 hover:text-foreground",
-                          !canAfford && "opacity-40 cursor-not-allowed"
+                          !hasEnoughCredits && "opacity-40 cursor-not-allowed"
                         )}
                       >
                         {getAdvisorIcon(mode.icon, 12)}
@@ -366,7 +369,6 @@ export default function ChatInterface({
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
                       <p>{mode.tagline}</p>
-                      <p className="text-muted-foreground">{mode.creditCost} credits</p>
                     </TooltipContent>
                   </Tooltip>
                 );
@@ -374,21 +376,20 @@ export default function ChatInterface({
               
               {/* More modes */}
               {ADVISOR_MODES.filter(m => !quickModes.some(q => q.id === m.id)).map((mode) => {
-                const canAfford = credits >= mode.creditCost;
                 const isWeb = WEB_RESEARCH_MODES.includes(mode.id);
                 
                 return (
                   <Tooltip key={mode.id}>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={() => canAfford && setSelectedMode(mode.id)}
-                        disabled={!canAfford || isStreaming}
+                        onClick={() => hasEnoughCredits && setSelectedMode(mode.id)}
+                        disabled={!hasEnoughCredits || isStreaming}
                         className={cn(
                           "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0",
                           selectedMode === mode.id
                             ? "bg-accent text-accent-foreground"
                             : "bg-secondary/50 hover:bg-secondary text-foreground/60 hover:text-foreground",
-                          !canAfford && "opacity-40 cursor-not-allowed"
+                          !hasEnoughCredits && "opacity-40 cursor-not-allowed"
                         )}
                       >
                         {getAdvisorIcon(mode.icon, 12)}
@@ -398,15 +399,21 @@ export default function ChatInterface({
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
                       <p>{mode.tagline}</p>
-                      <p className="text-muted-foreground">{mode.creditCost} credits</p>
                     </TooltipContent>
                   </Tooltip>
                 );
               })}
             </TooltipProvider>
             
-            <div className="ml-auto shrink-0 text-xs text-muted-foreground pl-4">
-              {credits} credits
+            <div className="ml-auto shrink-0 flex items-center gap-2 pl-4">
+              {isFreeTrial && daysRemaining !== undefined && daysRemaining > 0 && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                  {daysRemaining}d trial left
+                </span>
+              )}
+              <span className="text-xs text-muted-foreground">
+                {credits} credits
+              </span>
             </div>
           </div>
         </div>
