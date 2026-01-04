@@ -1010,10 +1010,13 @@ Deno.serve(async (req) => {
     }
 
     // ========================================
-    // ACTION: Resend to new subscribers (joined after original send)
+    // ACTION: Resend to new subscribers OR missing subscribers
     // ========================================
-    if (body.action === 'resend-to-new' && body.sendId) {
+    if ((body.action === 'resend-to-new' || body.action === 'resend-to-missing') && body.sendId) {
       const sendId = body.sendId as string;
+      const resendToMissing = body.action === 'resend-to-missing';
+
+      console.log(`${resendToMissing ? 'Resend-to-missing' : 'Resend-to-new'} for send ${sendId}`);
 
       // Get original send details
       const { data: sendRow, error: sendRowError } = await supabase
@@ -1037,25 +1040,51 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Find subscribers who joined AFTER the original send
-      const { data: newSubscribers, error: subError } = await supabase
-        .from('newsletter_subscribers')
-        .select('email')
-        .eq('is_active', true)
-        .eq('bounced', false)
-        .gt('subscribed_at', sendRow.sent_at)
-        .order('subscribed_at', { ascending: true });
+      let candidateEmails: string[] = [];
 
-      if (subError) {
-        return new Response(
-          JSON.stringify({ success: false, error: subError.message }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      if (resendToMissing) {
+        // Find all active subscribers who haven't received this newsletter
+        const { data: allSubscribers, error: allSubError } = await supabase
+          .from('newsletter_subscribers')
+          .select('email')
+          .eq('is_active', true)
+          .eq('bounced', false);
+
+        if (allSubError) {
+          return new Response(
+            JSON.stringify({ success: false, error: allSubError.message }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        candidateEmails = (allSubscribers || []).map(s => s.email);
+      } else {
+        // Find subscribers who joined AFTER the original send
+        const { data: newSubscribers, error: subError } = await supabase
+          .from('newsletter_subscribers')
+          .select('email')
+          .eq('is_active', true)
+          .eq('bounced', false)
+          .gt('subscribed_at', sendRow.sent_at)
+          .order('subscribed_at', { ascending: true });
+
+        if (subError) {
+          return new Response(
+            JSON.stringify({ success: false, error: subError.message }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        candidateEmails = (newSubscribers || []).map(s => s.email);
       }
 
-      if (!newSubscribers || newSubscribers.length === 0) {
+      if (candidateEmails.length === 0) {
         return new Response(
-          JSON.stringify({ success: true, message: 'No new subscribers since this newsletter was sent', count: 0 }),
+          JSON.stringify({ 
+            success: true, 
+            message: resendToMissing ? 'No active subscribers found' : 'No new subscribers since this newsletter was sent', 
+            count: 0 
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -1067,18 +1096,23 @@ Deno.serve(async (req) => {
         .eq('send_id', sendId);
 
       const alreadySentEmails = new Set((alreadySent || []).map(r => r.email.toLowerCase()));
-      const newEmails = newSubscribers
-        .map(s => s.email)
+      const newEmails = candidateEmails
         .filter(email => !alreadySentEmails.has(email.toLowerCase()));
 
       if (newEmails.length === 0) {
         return new Response(
-          JSON.stringify({ success: true, message: 'All new subscribers already received this newsletter', count: 0 }),
+          JSON.stringify({ 
+            success: true, 
+            message: resendToMissing 
+              ? 'All subscribers have already received this newsletter' 
+              : 'All new subscribers already received this newsletter', 
+            count: 0 
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      console.log(`Resending newsletter ${sendId} to ${newEmails.length} new subscribers`);
+      console.log(`${resendToMissing ? 'Resending' : 'Sending'} newsletter ${sendId} to ${newEmails.length} subscribers`);
 
       // Insert recipient records for new subscribers
       const recipientRows = newEmails.map(email => ({

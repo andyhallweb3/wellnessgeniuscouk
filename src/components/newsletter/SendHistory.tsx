@@ -17,7 +17,8 @@ import {
   ChevronDown,
   ChevronUp,
   XCircle,
-  UserPlus
+  UserPlus,
+  MailCheck
 } from "lucide-react";
 import EmailDeliveryMetrics from "@/components/admin/EmailDeliveryMetrics";
 import {
@@ -61,6 +62,7 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
   const [loadingErrors, setLoadingErrors] = useState<Record<string, boolean>>({});
   const [retrying, setRetrying] = useState<string | null>(null);
   const [resending, setResending] = useState<string | null>(null);
+  const [resendingMissing, setResendingMissing] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRecentSends();
@@ -164,6 +166,40 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
       });
     } finally {
       setResending(null);
+    }
+  };
+
+  const resendToMissing = async (sendId: string) => {
+    setResendingMissing(sendId);
+    try {
+      const { data, error } = await supabase.functions.invoke("newsletter-run", {
+        body: { action: "resend-to-missing", sendId },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data.count === 0) {
+        toast({
+          title: "All caught up",
+          description: data.message || "All subscribers have already received this newsletter.",
+        });
+      } else {
+        toast({
+          title: "Sending to missing subscribers",
+          description: `Sending to ${data.count} subscriber(s) who haven't received this newsletter.`,
+        });
+        fetchRecentSends();
+      }
+    } catch (error) {
+      toast({
+        title: "Resend failed",
+        description: error instanceof Error ? error.message : "Failed to resend to missing subscribers",
+        variant: "destructive",
+      });
+    } finally {
+      setResendingMissing(null);
     }
   };
 
@@ -369,20 +405,36 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {send.status === "sent" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => resendToNewSubscribers(send.id)}
-                          disabled={resending === send.id}
-                          className="gap-1"
-                        >
-                          {resending === send.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <UserPlus className="h-3 w-3" />
-                          )}
-                          Send to New
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resendToNewSubscribers(send.id)}
+                            disabled={resending === send.id}
+                            className="gap-1"
+                          >
+                            {resending === send.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <UserPlus className="h-3 w-3" />
+                            )}
+                            Send to New
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resendToMissing(send.id)}
+                            disabled={resendingMissing === send.id}
+                            className="gap-1"
+                          >
+                            {resendingMissing === send.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <MailCheck className="h-3 w-3" />
+                            )}
+                            Send to Missing
+                          </Button>
+                        </>
                       )}
                       {(send.status === "failed" || send.status === "partial") && (
                         <Button

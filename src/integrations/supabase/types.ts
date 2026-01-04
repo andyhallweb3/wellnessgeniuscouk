@@ -1804,6 +1804,30 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriber_groups: {
+        Row: {
+          created_at: string
+          emails: string[]
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          emails?: string[]
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          emails?: string[]
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
