@@ -1313,6 +1313,92 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Retry a single failed recipient
+    if (body.action === 'retry-recipient' && body.sendId && body.recipientId) {
+      const sendId = body.sendId as string;
+      const recipientId = body.recipientId as string;
+      const email = body.email as string;
+
+      // Get the send record
+      const { data: sendRow, error: sendRowError } = await supabase
+        .from('newsletter_sends')
+        .select('id, email_html')
+        .eq('id', sendId)
+        .single();
+
+      if (sendRowError || !sendRow) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Send not found' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const storedHtml = sendRow.email_html as string | null;
+      if (!storedHtml) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'No stored HTML for this send' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Reset recipient status to pending
+      await supabase
+        .from('newsletter_send_recipients')
+        .update({ status: 'pending', error_message: null })
+        .eq('id', recipientId);
+
+      const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
+
+      // Generate personalized HTML for this single recipient
+      const pixelUrl = `${trackingBaseUrl}?t=open&s=${sendId}&e=${encodeURIComponent(email)}`;
+      const unsubUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/unsubscribe?email=${encodeURIComponent(email)}`;
+      
+      let personalizedHtml = storedHtml
+        .replace(/\[UNSUBSCRIBE_URL\]/g, unsubUrl)
+        .replace('</body>', `<img src="${pixelUrl}" width="1" height="1" alt="" style="display:none;" /></body>`);
+
+      // Send to this single recipient
+      try {
+        const resendApiKey = Deno.env.get('RESEND_API_KEY');
+        if (!resendApiKey) throw new Error('RESEND_API_KEY not configured');
+
+        const resend = new Resend(resendApiKey);
+        const result = await resend.emails.send({
+          from: 'Wellness Genius <news@wellnessgenius.ai>',
+          to: [email],
+          subject: '🧠 Wellness Genius Weekly Intelligence',
+          html: personalizedHtml,
+        });
+
+        if (result.error) throw new Error(result.error.message);
+
+        // Mark as sent
+        await supabase
+          .from('newsletter_send_recipients')
+          .update({ status: 'sent', sent_at: new Date().toISOString(), error_message: null })
+          .eq('id', recipientId);
+
+        console.log(`Retry successful for ${email}`);
+
+        return new Response(
+          JSON.stringify({ success: true, message: `Retry sent to ${email}` }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (emailError) {
+        const errorMessage = emailError instanceof Error ? emailError.message : 'Unknown error';
+        
+        await supabase
+          .from('newsletter_send_recipients')
+          .update({ status: 'failed', error_message: errorMessage })
+          .eq('id', recipientId);
+
+        return new Response(
+          JSON.stringify({ success: false, error: errorMessage }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Resume sending to unsent recipients for an existing send
     if (body.action === 'resume' && body.sendId) {
       const sendId = body.sendId as string;
