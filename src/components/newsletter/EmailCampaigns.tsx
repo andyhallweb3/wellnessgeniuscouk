@@ -107,9 +107,8 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
       const { data, error } = await supabase
         .from("email_templates")
         .select("*")
-        .in("template_type", ["campaign", "marketing", "announcement"])
         .eq("is_active", true)
-        .order("created_at", { ascending: false });
+        .order("sequence_order", { ascending: true });
 
       if (error) throw error;
       setTemplates(data || []);
