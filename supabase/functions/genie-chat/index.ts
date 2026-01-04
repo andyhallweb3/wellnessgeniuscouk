@@ -7,11 +7,7 @@ import {
   validateInput,
   GenieRequestSchema 
 } from "../_shared/prompt-guard.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
 
 // Genie Score calculation types
 interface StreakData {
