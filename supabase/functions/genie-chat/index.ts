@@ -843,20 +843,28 @@ Maximum clarity. Minimal words.`,
 
 You have access to WEB RESEARCH RESULTS from a live internet search. Use this data to provide factual, up-to-date competitive intelligence.
 
-Apply First Principles thinking to competitive analysis:
-- Use the web research to identify REAL competitor activities (not assumptions)
-- What are they ACTUALLY doing vs what they claim?
+**CRITICAL OUTPUT FORMAT:**
+You MUST structure your response with clear competitor listings. For EACH competitor found:
+
+## 🏢 [Competitor Name](URL)
+**What they do:** Brief 1-2 sentence summary of their offering
+**Strengths:** 2-3 bullet points of what they do well
+**Weaknesses:** 2-3 bullet points of gaps or blind spots
+**Threat level:** Low/Medium/High with brief reasoning
+
+After listing competitors, provide:
+
+## 📊 Market Overview
 - Where is 80% of the market focused?
 - What's the 20% opportunity others are missing?
 
-For each relevant competitor found in the research:
-- What they are offering (based on actual data)
-- Their apparent strengths
-- Their blind spots and weaknesses
+## 🎯 Your Competitive Edge
+What can you do that they can't or won't? Be specific and actionable.
 
-End with: What can you do that they can't or won't?
-
-IMPORTANT: Cite sources from the web research. If the research didn't find relevant data, say so clearly.`,
+**IMPORTANT:** 
+- Include clickable markdown links [Name](URL) for every competitor
+- If the research found limited data, be honest and suggest a more specific search query
+- Base ALL insights on the actual web research provided`,
     responseFormat: "structured",
   },
   market_research: {
