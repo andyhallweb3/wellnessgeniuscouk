@@ -16,6 +16,7 @@ interface CampaignRequest {
   testEmail?: string;
   onlyDelivered?: boolean;
   sendMode?: "batch" | "individual"; // batch = BCC, individual = one email per recipient
+  specificEmail?: string; // Send to a specific subscriber email
 }
 
 type ResendMaybeError = {
@@ -89,6 +90,7 @@ Deno.serve(async (req) => {
       testEmail,
       onlyDelivered,
       sendMode = "batch",
+      specificEmail,
     }: CampaignRequest = await req.json();
 
     if (!subject || !html) {
@@ -130,6 +132,44 @@ Deno.serve(async (req) => {
       return json(200, { success: true, testEmail: normalizedTestEmail, messageId: data?.id });
     }
 
+    // If specificEmail, send to that single subscriber
+    if (specificEmail) {
+      const normalizedSpecificEmail = normalizeEmail(specificEmail);
+      if (!normalizedSpecificEmail || !isLikelyEmail(normalizedSpecificEmail)) {
+        return json(400, { error: "Invalid email address" });
+      }
+
+      console.log(`Sending campaign to specific email: ${normalizedSpecificEmail}`);
+
+      const { data, error } = await resend.emails.send({
+        from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
+        reply_to: "andy@wellnessgenius.co.uk",
+        to: [normalizedSpecificEmail],
+        subject,
+        html,
+      });
+
+      if (error) {
+        const e = error as ResendMaybeError;
+        console.error("Resend specific email error:", JSON.stringify(error));
+        return json(e.statusCode ?? 422, {
+          error: e.message ?? "Resend validation error",
+          resend: { name: e.name, statusCode: e.statusCode },
+        });
+      }
+
+      console.log("Specific email sent:", data?.id);
+      
+      // Log the campaign send
+      await supabase.from("newsletter_sends").insert({
+        article_count: 0,
+        recipient_count: 1,
+        status: "completed",
+        email_html: html,
+      });
+      
+      return json(200, { success: true, email: normalizedSpecificEmail, messageId: data?.id });
+    }
     // Build query for active subscribers - EXCLUDE bounced and unsubscribed
     let query = supabase
       .from("newsletter_subscribers")

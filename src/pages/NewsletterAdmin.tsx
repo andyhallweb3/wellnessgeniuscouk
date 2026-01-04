@@ -331,10 +331,24 @@ const NewsletterAdmin = () => {
   }
 
   // Main admin panel with workflow
+  const getTabLabel = () => {
+    switch (initialTab) {
+      case 'campaigns': return 'Email Campaigns';
+      case 'articles': return 'Select Articles';
+      case 'preview': return 'Preview';
+      case 'send': return 'Send';
+      case 'history': return 'Send History';
+      case 'manage': return 'Manage';
+      default: return null;
+    }
+  };
+
+  const tabLabel = getTabLabel();
+
   return (
     <div className="min-h-screen bg-background dark">
       <Header />
-      <AdminBreadcrumb currentPage="Newsletter" />
+      <AdminBreadcrumb currentPage={tabLabel ? `Newsletter › ${tabLabel}` : "Newsletter"} />
       <main className="pt-8 pb-20">
         <section className="section-padding">
           <div className="container-wide">

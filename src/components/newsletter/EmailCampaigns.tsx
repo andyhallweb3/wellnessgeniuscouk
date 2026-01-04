@@ -14,7 +14,9 @@ import {
   Loader2, 
   CheckCircle,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Search,
+  UserPlus
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +52,13 @@ interface SubscriberStats {
   unsubscribed: number;
 }
 
+interface Subscriber {
+  id: string;
+  email: string;
+  name: string | null;
+  is_active: boolean;
+}
+
 export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
   const { toast } = useToast();
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -71,6 +80,14 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
   const [sendingCampaign, setSendingCampaign] = useState(false);
   const [onlyDelivered, setOnlyDelivered] = useState(false);
   const [sendMode, setSendMode] = useState<"batch" | "individual">("batch");
+  
+  // Subscriber search state
+  const [subscriberSearch, setSubscriberSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<Subscriber[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedSubscriber, setSelectedSubscriber] = useState<Subscriber | null>(null);
+  const [sendToSpecificOpen, setSendToSpecificOpen] = useState(false);
+  const [sendingToSpecific, setSendingToSpecific] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -126,6 +143,38 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
     }
   };
 
+  const searchSubscribers = async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setSearchLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("newsletter_subscribers")
+        .select("id, email, name, is_active")
+        .ilike("email", `%${query}%`)
+        .eq("is_active", true)
+        .eq("bounced", false)
+        .limit(10);
+
+      if (error) throw error;
+      setSearchResults(data || []);
+    } catch (error) {
+      console.error("Error searching subscribers:", error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      searchSubscribers(subscriberSearch);
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [subscriberSearch]);
+
   const handlePreview = (template: EmailTemplate) => {
     setSelectedTemplate(template);
     setPreviewOpen(true);
@@ -134,6 +183,51 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
   const handleSendDialog = (template: EmailTemplate) => {
     setSelectedTemplate(template);
     setSendDialogOpen(true);
+  };
+
+  const handleSendToSpecific = (template: EmailTemplate) => {
+    setSelectedTemplate(template);
+    setSendToSpecificOpen(true);
+    setSubscriberSearch("");
+    setSearchResults([]);
+    setSelectedSubscriber(null);
+  };
+
+  const sendToSpecificSubscriber = async () => {
+    if (!selectedTemplate || !selectedSubscriber) return;
+
+    setSendingToSpecific(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-campaign-email", {
+        body: {
+          templateId: selectedTemplate.id,
+          subject: selectedTemplate.subject,
+          html: selectedTemplate.html_content,
+          previewText: selectedTemplate.preview_text,
+          specificEmail: selectedSubscriber.email,
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email sent!",
+        description: `Sent to ${selectedSubscriber.email}`,
+      });
+      setSendToSpecificOpen(false);
+      setSelectedSubscriber(null);
+      setSubscriberSearch("");
+    } catch (error: any) {
+      console.error("Error sending to specific subscriber:", error);
+      toast({
+        title: "Failed to send",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingToSpecific(false);
+    }
   };
 
   const sendTestEmail = async () => {
@@ -313,7 +407,7 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
                     {template.preview_text}
                   </p>
                 )}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <Button
                     variant="outline"
                     size="sm"
@@ -323,11 +417,19 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
                     Preview
                   </Button>
                   <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSendToSpecific(template)}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Send to Email
+                  </Button>
+                  <Button
                     size="sm"
                     onClick={() => handleSendDialog(template)}
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    Send Campaign
+                    Send to All
                   </Button>
                 </div>
               </CardContent>
@@ -480,6 +582,101 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send to Specific Email Dialog */}
+      <Dialog open={sendToSpecificOpen} onOpenChange={setSendToSpecificOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send to Specific Email</DialogTitle>
+            <DialogDescription>
+              Search for a subscriber and send "{selectedTemplate?.name}" to them
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Search Subscriber</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="Search by email..."
+                  value={subscriberSearch}
+                  onChange={(e) => setSubscriberSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {searchLoading && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
+
+            {!searchLoading && searchResults.length > 0 && (
+              <div className="border rounded-lg divide-y max-h-48 overflow-auto">
+                {searchResults.map((subscriber) => (
+                  <button
+                    key={subscriber.id}
+                    onClick={() => {
+                      setSelectedSubscriber(subscriber);
+                      setSearchResults([]);
+                      setSubscriberSearch(subscriber.email);
+                    }}
+                    className={`w-full px-3 py-2 text-left hover:bg-muted/50 transition-colors ${
+                      selectedSubscriber?.id === subscriber.id ? "bg-accent/10" : ""
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{subscriber.email}</div>
+                    {subscriber.name && (
+                      <div className="text-xs text-muted-foreground">{subscriber.name}</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {!searchLoading && subscriberSearch.length >= 2 && searchResults.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No active subscribers found matching "{subscriberSearch}"
+              </p>
+            )}
+
+            {selectedSubscriber && (
+              <div className="rounded-lg border p-3 bg-accent/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{selectedSubscriber.email}</div>
+                    {selectedSubscriber.name && (
+                      <div className="text-sm text-muted-foreground">{selectedSubscriber.name}</div>
+                    )}
+                  </div>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                </div>
+              </div>
+            )}
+
+            <Button
+              className="w-full"
+              onClick={sendToSpecificSubscriber}
+              disabled={!selectedSubscriber || sendingToSpecific}
+            >
+              {sendingToSpecific ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send to {selectedSubscriber?.email || "Selected Email"}
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
