@@ -65,6 +65,15 @@ interface EmailTemplate {
   is_active: boolean;
 }
 
+interface PastNewsletter {
+  id: string;
+  sent_at: string;
+  article_count: number;
+  recipient_count: number;
+  email_html: string | null;
+  article_ids: string[] | null;
+}
+
 interface SendHistoryItem {
   id: string;
   email: string;
@@ -101,7 +110,10 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
   const [sendEmailOpen, setSendEmailOpen] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
+  const [pastNewsletters, setPastNewsletters] = useState<PastNewsletter[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [selectedNewsletter, setSelectedNewsletter] = useState<string>("");
+  const [sendType, setSendType] = useState<"campaign" | "newsletter">("campaign");
   const [selectedSubscriber, setSelectedSubscriber] = useState<Subscriber | null>(null);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   
@@ -332,61 +344,102 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
     setSelectedSubscriber(sub);
     setSendEmailOpen(true);
     setSelectedTemplate("");
+    setSelectedNewsletter("");
+    setSendType("campaign");
     
-    // Fetch templates if not already loaded
-    if (emailTemplates.length === 0) {
-      setLoadingTemplates(true);
-      try {
-        const { data, error } = await supabase
+    setLoadingTemplates(true);
+    try {
+      // Fetch templates and past newsletters in parallel
+      const [templatesResult, newslettersResult] = await Promise.all([
+        supabase
           .from("email_templates")
           .select("id, name, subject, html_content, preview_text, template_type, is_active")
           .eq("is_active", true)
           .in("template_type", ["campaign", "marketing"])
-          .order("name");
+          .order("name"),
+        supabase
+          .from("newsletter_sends")
+          .select("id, sent_at, article_count, recipient_count, email_html, article_ids")
+          .eq("status", "sent")
+          .order("sent_at", { ascending: false })
+          .limit(20)
+      ]);
 
-        if (error) throw error;
-        setEmailTemplates(data || []);
-      } catch (error) {
-        console.error("Failed to fetch templates:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load email templates",
-          variant: "destructive",
-        });
-      } finally {
-        setLoadingTemplates(false);
-      }
+      if (templatesResult.error) throw templatesResult.error;
+      if (newslettersResult.error) throw newslettersResult.error;
+      
+      setEmailTemplates(templatesResult.data || []);
+      setPastNewsletters(newslettersResult.data || []);
+    } catch (error) {
+      console.error("Failed to fetch templates:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load email options",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingTemplates(false);
     }
   };
 
   const sendEmailToSubscriber = async () => {
-    if (!selectedSubscriber || !selectedTemplate) return;
+    if (!selectedSubscriber) return;
     
-    const template = emailTemplates.find(t => t.id === selectedTemplate);
-    if (!template) return;
-
     setSendingEmail(true);
     try {
-      const { error } = await supabase.functions.invoke("send-campaign-email", {
-        body: {
-          templateId: template.id,
-          subject: template.subject,
-          html: template.html_content,
-          previewText: template.preview_text,
-          specificEmail: selectedSubscriber.email,
-        },
-        headers: getAuthHeaders(),
-      });
+      if (sendType === "campaign" && selectedTemplate) {
+        const template = emailTemplates.find(t => t.id === selectedTemplate);
+        if (!template) return;
 
-      if (error) throw error;
+        const { error } = await supabase.functions.invoke("send-campaign-email", {
+          body: {
+            templateId: template.id,
+            subject: template.subject,
+            html: template.html_content,
+            previewText: template.preview_text,
+            specificEmail: selectedSubscriber.email,
+          },
+          headers: getAuthHeaders(),
+        });
 
-      toast({
-        title: "Email sent!",
-        description: `"${template.name}" sent to ${selectedSubscriber.email}`,
-      });
+        if (error) throw error;
+
+        toast({
+          title: "Email sent!",
+          description: `"${template.name}" sent to ${selectedSubscriber.email}`,
+        });
+      } else if (sendType === "newsletter" && selectedNewsletter) {
+        const newsletter = pastNewsletters.find(n => n.id === selectedNewsletter);
+        if (!newsletter || !newsletter.email_html) {
+          toast({
+            title: "Error",
+            description: "Newsletter content not available",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { error } = await supabase.functions.invoke("manage-subscribers", {
+          body: {
+            action: "send-newsletter",
+            sendId: newsletter.id,
+            email: selectedSubscriber.email,
+          },
+          headers: getAuthHeaders(),
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Newsletter sent!",
+          description: `Newsletter with ${newsletter.article_count} articles sent to ${selectedSubscriber.email}`,
+        });
+      }
+
       setSendEmailOpen(false);
       setSelectedSubscriber(null);
       setSelectedTemplate("");
+      setSelectedNewsletter("");
     } catch (error: any) {
       console.error("Error sending email:", error);
       toast({
@@ -750,7 +803,7 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
 
       {/* Send Email to Subscriber Modal */}
       <Dialog open={sendEmailOpen} onOpenChange={setSendEmailOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Send Email to Subscriber</DialogTitle>
           </DialogHeader>
@@ -768,29 +821,88 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
-            ) : emailTemplates.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No email templates available. Create a campaign or marketing template first.
-              </p>
             ) : (
-              <div className="space-y-2">
-                <Label>Select Email Template</Label>
-                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a template..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {emailTemplates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        <div className="flex flex-col">
-                          <span>{template.name}</span>
-                          <span className="text-xs text-muted-foreground">{template.subject}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                {/* Type selector */}
+                <div className="flex gap-2">
+                  <Button
+                    variant={sendType === "campaign" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSendType("campaign");
+                      setSelectedNewsletter("");
+                    }}
+                    className="flex-1"
+                  >
+                    Campaign Template
+                  </Button>
+                  <Button
+                    variant={sendType === "newsletter" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSendType("newsletter");
+                      setSelectedTemplate("");
+                    }}
+                    className="flex-1"
+                  >
+                    Past Newsletter
+                  </Button>
+                </div>
+
+                {sendType === "campaign" ? (
+                  emailTemplates.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No campaign templates available. Create one first.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>Select Campaign Template</Label>
+                      <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose a template..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {emailTemplates.map((template) => (
+                            <SelectItem key={template.id} value={template.id}>
+                              <div className="flex flex-col">
+                                <span>{template.name}</span>
+                                <span className="text-xs text-muted-foreground">{template.subject}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )
+                ) : (
+                  pastNewsletters.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No past newsletters available.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>Select Past Newsletter</Label>
+                      <Select value={selectedNewsletter} onValueChange={setSelectedNewsletter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose a newsletter..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {pastNewsletters.map((nl) => (
+                            <SelectItem key={nl.id} value={nl.id}>
+                              <div className="flex flex-col">
+                                <span>{new Date(nl.sent_at).toLocaleDateString()}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {nl.article_count} articles • {nl.recipient_count} recipients
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )
+                )}
+              </>
             )}
           </div>
           <DialogFooter>
@@ -799,7 +911,7 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
             </Button>
             <Button 
               onClick={sendEmailToSubscriber} 
-              disabled={sendingEmail || !selectedTemplate}
+              disabled={sendingEmail || (sendType === "campaign" ? !selectedTemplate : !selectedNewsletter)}
             >
               {sendingEmail && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               <Send className="h-4 w-4 mr-2" />
