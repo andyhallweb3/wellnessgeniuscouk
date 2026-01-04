@@ -83,10 +83,12 @@ export const GenieRequestSchema = z.object({
   messages: z.array(StrictMessageSchema).max(50, "Maximum 50 messages allowed"),
   mode: z.enum([
     "daily_operator", "quick_question", "weekly_review", "decision_support",
-    "board_mode", "build_mode", "daily_briefing", "diagnostic", "commercial_lens", "ops_mode"
+    "board_mode", "build_mode", "daily_briefing", "diagnostic", "commercial_lens", "ops_mode",
+    "competitor_scan", "market_research", "growth_planning"
   ]).default("daily_operator"),
   memoryContext: StrictMemoryContextSchema,
   documentContext: z.string().max(50000, "Document context must be less than 50,000 characters").optional().nullable(),
+  webContext: z.string().max(100000, "Web context must be less than 100,000 characters").optional().nullable(),
   conversationHistory: z.array(StrictMessageSchema).max(10).optional().nullable(),
   isTrialMode: z.boolean().optional().default(false),
   _hp_field: z.string().optional(),
