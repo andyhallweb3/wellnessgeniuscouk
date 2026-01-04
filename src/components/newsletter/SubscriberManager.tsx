@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,8 +27,16 @@ import {
   XCircle,
   AlertTriangle,
   Mail,
-  RefreshCw
+  RefreshCw,
+  Send
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 interface Subscriber {
@@ -43,6 +52,16 @@ interface Subscriber {
   bounced: boolean | null;
   bounced_at: string | null;
   bounce_type: string | null;
+}
+
+interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  html_content: string;
+  preview_text: string | null;
+  template_type: string;
+  is_active: boolean;
 }
 
 interface SubscriberManagerProps {
@@ -63,6 +82,14 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
   const [bulkImporting, setBulkImporting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
+  
+  // Send email to subscriber state
+  const [sendEmailOpen, setSendEmailOpen] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [selectedSubscriber, setSelectedSubscriber] = useState<Subscriber | null>(null);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   useEffect(() => {
     fetchSubscribers();
@@ -280,6 +307,77 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
     }
   };
 
+  const openSendEmail = async (sub: Subscriber) => {
+    setSelectedSubscriber(sub);
+    setSendEmailOpen(true);
+    setSelectedTemplate("");
+    
+    // Fetch templates if not already loaded
+    if (emailTemplates.length === 0) {
+      setLoadingTemplates(true);
+      try {
+        const { data, error } = await supabase
+          .from("email_templates")
+          .select("id, name, subject, html_content, preview_text, template_type, is_active")
+          .eq("is_active", true)
+          .in("template_type", ["campaign", "marketing"])
+          .order("name");
+
+        if (error) throw error;
+        setEmailTemplates(data || []);
+      } catch (error) {
+        console.error("Failed to fetch templates:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load email templates",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingTemplates(false);
+      }
+    }
+  };
+
+  const sendEmailToSubscriber = async () => {
+    if (!selectedSubscriber || !selectedTemplate) return;
+    
+    const template = emailTemplates.find(t => t.id === selectedTemplate);
+    if (!template) return;
+
+    setSendingEmail(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-campaign-email", {
+        body: {
+          templateId: template.id,
+          subject: template.subject,
+          html: template.html_content,
+          previewText: template.preview_text,
+          specificEmail: selectedSubscriber.email,
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email sent!",
+        description: `"${template.name}" sent to ${selectedSubscriber.email}`,
+      });
+      setSendEmailOpen(false);
+      setSelectedSubscriber(null);
+      setSelectedTemplate("");
+    } catch (error: any) {
+      console.error("Error sending email:", error);
+      toast({
+        title: "Failed to send",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const exportSubscribers = () => {
     const csv = [
       ["Email", "Name", "Source", "Status", "Subscribed At", "Last Delivered", "Delivery Count", "Bounced", "Bounce Type"].join(","),
@@ -465,6 +563,15 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => openSendEmail(sub)}
+                    disabled={!!sub.bounced || !sub.is_active}
+                    title="Send email to this subscriber"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
                   <Switch
                     checked={sub.is_active}
                     onCheckedChange={() => toggleActive(sub)}
@@ -546,6 +653,67 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
             <Button onClick={handleBulkImport} disabled={bulkImporting}>
               {bulkImporting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Import
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Email to Subscriber Modal */}
+      <Dialog open={sendEmailOpen} onOpenChange={setSendEmailOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Email to Subscriber</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedSubscriber && (
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">{selectedSubscriber.email}</p>
+                {selectedSubscriber.name && (
+                  <p className="text-sm text-muted-foreground">{selectedSubscriber.name}</p>
+                )}
+              </div>
+            )}
+            
+            {loadingTemplates ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : emailTemplates.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No email templates available. Create a campaign or marketing template first.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <Label>Select Email Template</Label>
+                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {emailTemplates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        <div className="flex flex-col">
+                          <span>{template.name}</span>
+                          <span className="text-xs text-muted-foreground">{template.subject}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendEmailOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={sendEmailToSubscriber} 
+              disabled={sendingEmail || !selectedTemplate}
+            >
+              {sendingEmail && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              <Send className="h-4 w-4 mr-2" />
+              Send Email
             </Button>
           </DialogFooter>
         </DialogContent>
