@@ -14,18 +14,13 @@ import {
   Mail,
   MousePointer,
   RotateCcw,
-  ChevronDown,
-  ChevronUp,
   XCircle,
   UserPlus,
-  MailCheck
+  MailCheck,
+  List
 } from "lucide-react";
 import EmailDeliveryMetrics from "@/components/admin/EmailDeliveryMetrics";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { RecipientStatusTable } from "./RecipientStatusTable";
 
 interface NewsletterSend {
   id: string;
@@ -40,13 +35,6 @@ interface NewsletterSend {
   error_message?: string | null;
 }
 
-interface RecipientError {
-  id: string;
-  email: string;
-  status: string;
-  error_message: string | null;
-  sent_at: string | null;
-}
 
 interface SendHistoryProps {
   getAuthHeaders: () => Record<string, string>;
@@ -57,9 +45,7 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
   const [recentSends, setRecentSends] = useState<NewsletterSend[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedSendId, setSelectedSendId] = useState<string | null>(null);
-  const [expandedErrorId, setExpandedErrorId] = useState<string | null>(null);
-  const [recipientErrors, setRecipientErrors] = useState<Record<string, RecipientError[]>>({});
-  const [loadingErrors, setLoadingErrors] = useState<Record<string, boolean>>({});
+  const [recipientTableSendId, setRecipientTableSendId] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [resending, setResending] = useState<string | null>(null);
   const [resendingMissing, setResendingMissing] = useState<string | null>(null);
@@ -85,27 +71,6 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
     }
   };
 
-  const fetchRecipientErrors = async (sendId: string) => {
-    if (recipientErrors[sendId] || loadingErrors[sendId]) return;
-    
-    setLoadingErrors(prev => ({ ...prev, [sendId]: true }));
-    try {
-      const { data, error } = await supabase
-        .from("newsletter_send_recipients")
-        .select("id, email, status, error_message, sent_at")
-        .eq("send_id", sendId)
-        .eq("status", "failed")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      setRecipientErrors(prev => ({ ...prev, [sendId]: data || [] }));
-    } catch (error) {
-      console.error("Failed to fetch recipient errors:", error);
-    } finally {
-      setLoadingErrors(prev => ({ ...prev, [sendId]: false }));
-    }
-  };
 
   const resumeSend = async (sendId: string) => {
     setRetrying(sendId);
@@ -267,14 +232,6 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
     }
   };
 
-  const toggleErrorExpand = (sendId: string) => {
-    if (expandedErrorId === sendId) {
-      setExpandedErrorId(null);
-    } else {
-      setExpandedErrorId(sendId);
-      fetchRecipientErrors(sendId);
-    }
-  };
 
   // Calculate totals
   const totalEmailsSent = recentSends.reduce((sum, s) => sum + (s.recipient_count || 0), 0);
@@ -468,60 +425,27 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
                       >
                         {selectedSendId === send.id ? "Hide" : "Details"}
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRecipientTableSendId(recipientTableSendId === send.id ? null : send.id)}
+                        className="gap-1"
+                      >
+                        <List className="h-3 w-3" />
+                        Recipients
+                      </Button>
                     </div>
                   </div>
 
-                  {/* Expandable recipient errors for failed/partial sends */}
-                  {(send.status === "failed" || send.status === "partial") && (
-                    <Collapsible 
-                      open={expandedErrorId === send.id}
-                      onOpenChange={() => toggleErrorExpand(send.id)}
-                      className="mt-3"
-                    >
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-                          {expandedErrorId === send.id ? (
-                            <ChevronUp className="h-3 w-3" />
-                          ) : (
-                            <ChevronDown className="h-3 w-3" />
-                          )}
-                          View recipient errors
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-2">
-                        {loadingErrors[send.id] ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground p-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading errors...
-                          </div>
-                        ) : recipientErrors[send.id]?.length === 0 ? (
-                          <p className="text-sm text-muted-foreground p-2">
-                            No per-recipient errors recorded
-                          </p>
-                        ) : (
-                          <div className="max-h-48 overflow-y-auto rounded-md border bg-muted/30">
-                            <table className="w-full text-sm">
-                              <thead className="sticky top-0 bg-muted">
-                                <tr>
-                                  <th className="text-left p-2 font-medium">Email</th>
-                                  <th className="text-left p-2 font-medium">Error</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {recipientErrors[send.id]?.map((r) => (
-                                  <tr key={r.id} className="border-t">
-                                    <td className="p-2 font-mono text-xs">{r.email}</td>
-                                    <td className="p-2 text-destructive text-xs">
-                                      {r.error_message || "Unknown error"}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </CollapsibleContent>
-                    </Collapsible>
+                  {/* Recipient status table */}
+                  {recipientTableSendId === send.id && (
+                    <div className="mt-4 pt-4 border-t">
+                      <RecipientStatusTable
+                        sendId={send.id}
+                        getAuthHeaders={getAuthHeaders}
+                        onClose={() => setRecipientTableSendId(null)}
+                      />
+                    </div>
                   )}
 
                   {selectedSendId === send.id && (
