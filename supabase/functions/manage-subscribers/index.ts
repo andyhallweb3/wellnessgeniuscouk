@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { action, subscriber, emails, since } = await req.json();
+    const { action, subscriber, emails, since, email } = await req.json();
 
     // Helper to log admin actions
     const logAudit = async (actionType: string, resourceCount?: number, details?: string) => {
@@ -307,6 +307,82 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true, resendDeleted }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'get-send-history': {
+        if (!email) {
+          return new Response(
+            JSON.stringify({ error: 'Email is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Get send history for this email from newsletter_send_recipients
+        // Join with newsletter_sends to get template info
+        const { data: recipients, error: recipientsError } = await supabase
+          .from('newsletter_send_recipients')
+          .select(`
+            id,
+            email,
+            status,
+            sent_at,
+            error_message,
+            send_id
+          `)
+          .eq('email', email.toLowerCase())
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (recipientsError) throw recipientsError;
+
+        // Get the send details to find template info
+        const sendIds = [...new Set(recipients?.map(r => r.send_id) || [])];
+        
+        let sendDetails: Record<string, { template_name?: string; template_subject?: string }> = {};
+        
+        if (sendIds.length > 0) {
+          // Get newsletter_sends
+          const { data: sends } = await supabase
+            .from('newsletter_sends')
+            .select('id, article_ids')
+            .in('id', sendIds);
+
+          // For each send, try to get template info from email_templates if article_ids contains a template ID
+          if (sends) {
+            for (const send of sends) {
+              // article_ids might contain template IDs for campaign emails
+              if (send.article_ids && send.article_ids.length > 0) {
+                const templateId = send.article_ids[0];
+                const { data: template } = await supabase
+                  .from('email_templates')
+                  .select('name, subject')
+                  .eq('id', templateId)
+                  .single();
+                
+                if (template) {
+                  sendDetails[send.id] = {
+                    template_name: template.name,
+                    template_subject: template.subject,
+                  };
+                }
+              }
+            }
+          }
+        }
+
+        // Merge template info into history
+        const history = (recipients || []).map(r => ({
+          ...r,
+          template_name: sendDetails[r.send_id]?.template_name,
+          template_subject: sendDetails[r.send_id]?.template_subject,
+        }));
+
+        await logAudit('get-send-history', history.length, `email: ${email}`);
+
+        return new Response(
+          JSON.stringify({ history }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
