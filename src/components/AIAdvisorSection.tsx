@@ -1,146 +1,115 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Brain, Mic, Sparkles, Coins, MessageSquare, BarChart3, MessageCircle, Search, Info } from "lucide-react";
+import { ArrowRight, Brain, Sparkles, CheckCircle2, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { ADVISOR_MODES } from "@/components/advisor/AdvisorModes";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-// Map icon names to components
-const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  BarChart3,
-  MessageCircle,
-  Brain,
-  Search,
-};
 
 const AIAdvisorSection = () => {
   const { user } = useAuth();
-  const featuredModes = ADVISOR_MODES.slice(0, 4);
+
+  const benefits = [
+    "Answers in 60 seconds, not 6 weeks",
+    "Trained on 10+ years of wellness data",
+    "Remembers your business context",
+    "8 expert modes for every situation",
+    "Voice mode for hands-free thinking",
+    "Pay only for what you use",
+  ];
+
+  const questions = [
+    "Why is my retention dropping?",
+    "Should I raise membership prices?",
+    "What should I focus on this quarter?",
+    "How do I reduce staff turnover?",
+    "Is my marketing spend working?",
+    "When should I expand my space?",
+  ];
 
   return (
-    <section className="section-padding bg-gradient-to-b from-card to-background">
+    <section className="section-padding bg-gradient-to-b from-background via-card to-background overflow-hidden">
       <div className="container-wide">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left - Content */}
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-medium mb-6">
-              <Brain size={12} />
-              AI-Powered Business Advisor
-            </div>
-            
-            <h2 className="text-3xl lg:text-4xl xl:text-5xl tracking-tight mb-4">
-              Ask anything about your{" "}
-              <span className="text-accent">wellness business.</span>
-            </h2>
-            
-            <p className="text-muted-foreground text-lg mb-8">
-              "Should I raise prices?" "Why is retention dropping?" "What should I focus on this quarter?" 
-              Get strategic answers in 60 seconds, not 6 weeks.
-            </p>
+        {/* Section header */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
+            <Brain size={16} />
+            The Core Product
+          </div>
+          <h2 className="text-3xl lg:text-5xl tracking-tight mb-6 font-bold">
+            Stop guessing. Start{" "}
+            <span className="text-primary">knowing.</span>
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Your 24/7 strategic advisor that understands wellness businesses inside out. 
+            Ask anything. Get action-ready answers.
+          </p>
+        </div>
 
-            {/* Features */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Mic size={16} className="text-blue-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Voice Mode</p>
-                  <p className="text-xs text-muted-foreground">Talk hands-free</p>
-                </div>
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left - Questions showcase */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-3xl -z-10" />
+            <div className="p-8 lg:p-10">
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-6">
+                Questions operators ask every day
+              </p>
+              <div className="space-y-3">
+                {questions.map((question, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-background/80 border border-border hover:border-primary/50 transition-all cursor-pointer group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-medium text-primary">{i + 1}</span>
+                    </div>
+                    <p className="text-sm lg:text-base font-medium group-hover:text-primary transition-colors">
+                      "{question}"
+                    </p>
+                    <ArrowRight size={16} className="ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                ))}
               </div>
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <Sparkles size={16} className="text-purple-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Business Memory</p>
-                  <p className="text-xs text-muted-foreground">Remembers your context</p>
-                </div>
+              <div className="mt-6 pt-6 border-t border-border">
+                <p className="text-sm text-muted-foreground">
+                  <span className="text-primary font-medium">2,847 questions</span> answered this month alone
+                </p>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <MessageSquare size={16} className="text-green-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">8 Expert Modes</p>
-                  <p className="text-xs text-muted-foreground">From quick Q&A to planning</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-orange-500/10">
-                  <Coins size={16} className="text-orange-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Pay As You Go</p>
-                  <p className="text-xs text-muted-foreground">No subscription needed</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Button variant="accent" size="lg" asChild>
-                <Link to="/advisor">
-                  <Brain size={18} />
-                  Learn More
-                  <ArrowRight size={16} />
-                </Link>
-              </Button>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    <Info size={14} />
-                    What can I do with 10 credits?
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs bg-popover border border-border">
-                  <p className="text-sm">
-                    <strong>10 credits gets you:</strong>
-                    <br />
-                    • 10 quick questions (1 credit each)
-                    <br />
-                    • 5 daily briefings (2 credits each)
-                    <br />
-                    • 2 deep decision analyses (4-5 credits each)
-                    <br />
-                    <span className="text-muted-foreground">Mix and match as needed.</span>
-                  </p>
-                </TooltipContent>
-              </Tooltip>
             </div>
           </div>
 
-          {/* Right - Mode Cards */}
-          <div className="grid grid-cols-2 gap-3">
-            {featuredModes.map((mode) => {
-              const IconComponent = iconMap[mode.icon] || Brain;
-              return (
-                <Link
-                  key={mode.id}
-                  to="/advisor"
-                  className="group p-4 rounded-xl bg-background border border-border hover:border-accent/50 transition-all hover:shadow-lg"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="p-2 rounded-lg bg-accent/10">
-                      <IconComponent size={20} className="text-accent" />
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
-                      {mode.creditCost} credit{mode.creditCost > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <h3 className="font-medium text-sm mb-1 group-hover:text-accent transition-colors">
-                    {mode.name}
-                  </h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {mode.tagline}
-                  </p>
+          {/* Right - Benefits + CTA */}
+          <div>
+            <h3 className="text-2xl lg:text-3xl font-bold mb-6">
+              Built for wellness operators, <br />
+              <span className="text-muted-foreground">not generic business advice.</span>
+            </h3>
+
+            <div className="grid grid-cols-1 gap-3 mb-8">
+              {benefits.map((benefit, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <CheckCircle2 size={18} className="text-primary shrink-0" />
+                  <p className="text-muted-foreground">{benefit}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button variant="accent" size="xl" asChild className="shadow-glow">
+                <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
+                  <Sparkles size={18} />
+                  Try Free — 10 Credits
+                  <ArrowRight size={18} />
                 </Link>
-              );
-            })}
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link to="/advisor">
+                  <Play size={16} />
+                  Watch Demo
+                </Link>
+              </Button>
+            </div>
+
+            <p className="text-sm text-muted-foreground mt-4">
+              No card required • Credits never expire
+            </p>
           </div>
         </div>
       </div>
