@@ -108,6 +108,7 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
   const [historySubscriber, setHistorySubscriber] = useState<Subscriber | null>(null);
   const [sendHistory, setSendHistory] = useState<SendHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSubscribers();
@@ -419,6 +420,41 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
       });
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const resendFailedEmail = async (historyItem: SendHistoryItem) => {
+    if (!historySubscriber) return;
+    
+    setResendingId(historyItem.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-subscribers", {
+        body: { 
+          action: "resend-failed", 
+          sendId: historyItem.send_id,
+          email: historySubscriber.email
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email resent!",
+        description: `Successfully resent to ${historySubscriber.email}`,
+      });
+
+      // Refresh history
+      openSendHistory(historySubscriber);
+    } catch (error: any) {
+      console.error("Failed to resend email:", error);
+      toast({
+        title: "Resend failed",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -803,12 +839,28 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
                       <p className="font-medium text-sm truncate flex-1">
                         {item.template_name || "Campaign Email"}
                       </p>
-                      <Badge 
-                        variant={item.status === "sent" ? "default" : item.status === "failed" ? "destructive" : "secondary"}
-                        className="ml-2"
-                      >
-                        {item.status}
-                      </Badge>
+                      <div className="flex items-center gap-2 ml-2">
+                        <Badge 
+                          variant={item.status === "sent" ? "default" : item.status === "failed" ? "destructive" : "secondary"}
+                        >
+                          {item.status}
+                        </Badge>
+                        {item.status === "failed" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => resendFailedEmail(item)}
+                            disabled={resendingId === item.id}
+                            className="h-6 px-2"
+                          >
+                            {resendingId === item.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-3 w-3" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     {item.template_subject && (
                       <p className="text-xs text-muted-foreground mt-1 truncate">

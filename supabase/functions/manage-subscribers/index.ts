@@ -387,6 +387,113 @@ Deno.serve(async (req) => {
         );
       }
 
+      case 'resend-failed': {
+        const { sendId, email: targetEmail } = await req.json().catch(() => ({ sendId: null, email: null }));
+        
+        if (!sendId || !targetEmail) {
+          return new Response(
+            JSON.stringify({ error: 'sendId and email are required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Get the original send details
+        const { data: originalSend, error: sendError } = await supabase
+          .from('newsletter_sends')
+          .select('id, email_html, article_ids')
+          .eq('id', sendId)
+          .single();
+
+        if (sendError || !originalSend) {
+          return new Response(
+            JSON.stringify({ error: 'Original send not found' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Get template info if available
+        let subject = 'Wellness Genius Newsletter';
+        let htmlContent = originalSend.email_html;
+
+        if (originalSend.article_ids && originalSend.article_ids.length > 0) {
+          const templateId = originalSend.article_ids[0];
+          const { data: template } = await supabase
+            .from('email_templates')
+            .select('subject, html_content, preview_text')
+            .eq('id', templateId)
+            .single();
+          
+          if (template) {
+            subject = template.subject;
+            htmlContent = template.html_content;
+          }
+        }
+
+        if (!htmlContent) {
+          return new Response(
+            JSON.stringify({ error: 'No email content found for this send' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Send the email using Resend
+        const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+        if (!RESEND_API_KEY) {
+          throw new Error('RESEND_API_KEY not configured');
+        }
+
+        const resendResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Wellness Genius <hello@wellnessgenius.co>',
+            to: [targetEmail.toLowerCase()],
+            subject: subject,
+            html: htmlContent,
+          }),
+        });
+
+        if (!resendResponse.ok) {
+          const errorData = await resendResponse.text();
+          console.error('Resend error:', errorData);
+          
+          // Update the recipient status to failed again with new error
+          await supabase
+            .from('newsletter_send_recipients')
+            .update({ 
+              status: 'failed', 
+              error_message: `Resend failed: ${errorData}`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('send_id', sendId)
+            .eq('email', targetEmail.toLowerCase());
+
+          throw new Error('Failed to resend email');
+        }
+
+        // Update the recipient status to sent
+        await supabase
+          .from('newsletter_send_recipients')
+          .update({ 
+            status: 'sent', 
+            sent_at: new Date().toISOString(),
+            error_message: null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('send_id', sendId)
+          .eq('email', targetEmail.toLowerCase());
+
+        await logAudit('resend-failed', 1, `email: ${targetEmail}, send_id: ${sendId}`);
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: 'Invalid action' }),
