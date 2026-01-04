@@ -42,7 +42,7 @@ const ServicesPage = () => {
           </div>
         </section>
 
-        <Services />
+        <Services hideHeader />
         <Contact />
       </main>
       

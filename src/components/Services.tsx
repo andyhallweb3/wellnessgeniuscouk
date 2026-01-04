@@ -2,6 +2,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ClipboardCheck, Compass, GraduationCap } from "lucide-react";
 import { Link } from "react-router-dom";
 
+interface ServicesProps {
+  hideHeader?: boolean;
+}
+
 const services = [
   {
     icon: ClipboardCheck,
@@ -75,22 +79,24 @@ const services = [
   },
 ];
 
-const Services = () => {
+const Services = ({ hideHeader = false }: ServicesProps) => {
   return (
     <section id="services" className="section-padding bg-card">
       <div className="container-wide">
         {/* Header */}
-        <div className="max-w-2xl mb-16">
-          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
-            Consulting Services
-          </p>
-          <h2 className="text-3xl lg:text-4xl xl:text-5xl mb-4 tracking-tight">
-            Hands-on AI guidance
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            Strategy, training, and roadmaps. For teams who want expert support before they build.
-          </p>
-        </div>
+        {!hideHeader && (
+          <div className="max-w-2xl mb-16">
+            <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-3">
+              Consulting Services
+            </p>
+            <h2 className="text-3xl lg:text-4xl xl:text-5xl mb-4 tracking-tight">
+              Hands-on AI guidance
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              Strategy, training, and roadmaps. For teams who want expert support before they build.
+            </p>
+          </div>
+        )}
 
         {/* Progression indicator */}
         <div className="hidden lg:flex items-center justify-center gap-4 mb-16">
