@@ -12,9 +12,16 @@ import {
   Twitter,
   Linkedin,
   Copy,
-  AlertCircle
+  AlertCircle,
+  Search,
+  UserCheck,
+  X
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +47,13 @@ interface SendProgress {
   sendId: string | null;
 }
 
+interface Subscriber {
+  id: string;
+  email: string;
+  name: string | null;
+  is_active: boolean;
+}
+
 export const SendNewsletter = ({
   previewHtml,
   articles,
@@ -51,16 +65,21 @@ export const SendNewsletter = ({
   const { toast } = useToast();
   const [sending, setSending] = useState(false);
   const [sendProgress, setSendProgress] = useState<SendProgress | null>(null);
-  const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
+  const [subscriberSearch, setSubscriberSearch] = useState("");
+  const [sendMode, setSendMode] = useState<"all" | "selected">("all");
   const [showTwitterModal, setShowTwitterModal] = useState(false);
   const [customTweet, setCustomTweet] = useState("");
   const [postingToTwitter, setPostingToTwitter] = useState(false);
+  const [loadingSubscribers, setLoadingSubscribers] = useState(false);
 
   useEffect(() => {
-    fetchSubscriberCount();
+    fetchSubscribers();
   }, []);
 
-  const fetchSubscriberCount = async () => {
+  const fetchSubscribers = async () => {
+    setLoadingSubscribers(true);
     try {
       const { data, error } = await supabase.functions.invoke("manage-subscribers", {
         body: { action: "list" },
@@ -68,12 +87,41 @@ export const SendNewsletter = ({
       });
 
       if (error) throw error;
-      const active = (data.subscribers || []).filter((s: any) => s.is_active);
-      setSubscriberCount(active.length);
+      const active = (data.subscribers || []).filter((s: any) => s.is_active && !s.bounced);
+      setSubscribers(active);
     } catch (error) {
-      console.error("Failed to fetch subscriber count:", error);
+      console.error("Failed to fetch subscribers:", error);
+    } finally {
+      setLoadingSubscribers(false);
     }
   };
+
+  const subscriberCount = subscribers.length;
+  
+  const filteredSubscribers = subscribers.filter(sub => 
+    sub.email.toLowerCase().includes(subscriberSearch.toLowerCase()) ||
+    sub.name?.toLowerCase().includes(subscriberSearch.toLowerCase())
+  );
+
+  const toggleSubscriber = (email: string) => {
+    const newSelected = new Set(selectedEmails);
+    if (newSelected.has(email)) {
+      newSelected.delete(email);
+    } else {
+      newSelected.add(email);
+    }
+    setSelectedEmails(newSelected);
+  };
+
+  const selectAll = () => {
+    setSelectedEmails(new Set(filteredSubscribers.map(s => s.email)));
+  };
+
+  const clearSelection = () => {
+    setSelectedEmails(new Set());
+  };
+
+  const recipientCount = sendMode === "all" ? subscriberCount : selectedEmails.size;
 
   const sendNewsletter = async () => {
     if (!previewHtml) {
@@ -85,15 +133,30 @@ export const SendNewsletter = ({
       return;
     }
 
-    if (!confirm(`Are you sure you want to send this newsletter to ${subscriberCount} active subscribers?`)) {
+    if (sendMode === "selected" && selectedEmails.size === 0) {
+      toast({
+        title: "No Recipients",
+        description: "Please select at least one subscriber.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const recipientLabel = sendMode === "all" 
+      ? `${subscriberCount} active subscribers` 
+      : `${selectedEmails.size} selected subscriber${selectedEmails.size > 1 ? 's' : ''}`;
+    
+    if (!confirm(`Are you sure you want to send this newsletter to ${recipientLabel}?`)) {
       return;
     }
 
     setSending(true);
 
     try {
+      const targetEmails = sendMode === "selected" ? Array.from(selectedEmails) : undefined;
+      
       const { data, error } = await supabase.functions.invoke("newsletter-run", {
-        body: { preview: false, selectedArticleIds },
+        body: { preview: false, selectedArticleIds, targetEmails },
         headers: getAuthHeaders(),
       });
 
@@ -327,6 +390,102 @@ AI-powered insights for wellness, fitness and hospitality operators.
             </div>
           )}
 
+          {/* Send Mode Selection */}
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Button
+                variant={sendMode === "all" ? "default" : "outline"}
+                onClick={() => setSendMode("all")}
+                className="flex-1"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                All Subscribers ({subscriberCount})
+              </Button>
+              <Button
+                variant={sendMode === "selected" ? "default" : "outline"}
+                onClick={() => setSendMode("selected")}
+                className="flex-1"
+              >
+                <UserCheck className="h-4 w-4 mr-2" />
+                Select Recipients {selectedEmails.size > 0 && `(${selectedEmails.size})`}
+              </Button>
+            </div>
+
+            {/* Subscriber Selection Panel */}
+            {sendMode === "selected" && (
+              <div className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search subscribers..."
+                      value={subscriberSearch}
+                      onChange={(e) => setSubscriberSearch(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Button variant="outline" size="sm" onClick={selectAll}>
+                    Select All
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={clearSelection}>
+                    Clear
+                  </Button>
+                </div>
+
+                {/* Selected chips */}
+                {selectedEmails.size > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from(selectedEmails).slice(0, 10).map(email => (
+                      <Badge key={email} variant="secondary" className="gap-1">
+                        {email}
+                        <X 
+                          className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                          onClick={() => toggleSubscriber(email)}
+                        />
+                      </Badge>
+                    ))}
+                    {selectedEmails.size > 10 && (
+                      <Badge variant="outline">+{selectedEmails.size - 10} more</Badge>
+                    )}
+                  </div>
+                )}
+
+                {/* Subscriber list */}
+                <ScrollArea className="h-48 border rounded-md">
+                  {loadingSubscribers ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
+                  ) : filteredSubscribers.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                      No subscribers found
+                    </div>
+                  ) : (
+                    <div className="p-2 space-y-1">
+                      {filteredSubscribers.map(sub => (
+                        <label
+                          key={sub.id}
+                          className="flex items-center gap-3 p-2 rounded hover:bg-accent cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={selectedEmails.has(sub.email)}
+                            onCheckedChange={() => toggleSubscriber(sub.email)}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{sub.email}</p>
+                            {sub.name && (
+                              <p className="text-xs text-muted-foreground truncate">{sub.name}</p>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
+            )}
+          </div>
+
           {/* Send controls */}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="p-4 rounded-lg border space-y-3">
@@ -335,9 +494,11 @@ AI-powered insights for wellness, fitness and hospitality operators.
                 <span className="font-medium">Recipients</span>
               </div>
               <p className="text-2xl font-bold">
-                {subscriberCount !== null ? subscriberCount : "..."}
+                {recipientCount}
               </p>
-              <p className="text-sm text-muted-foreground">Active subscribers</p>
+              <p className="text-sm text-muted-foreground">
+                {sendMode === "all" ? "All active subscribers" : "Selected subscribers"}
+              </p>
             </div>
 
             <div className="p-4 rounded-lg border space-y-3">
@@ -350,7 +511,7 @@ AI-powered insights for wellness, fitness and hospitality operators.
               </p>
               <Button
                 onClick={sendNewsletter}
-                disabled={sending || !subscriberCount}
+                disabled={sending || recipientCount === 0}
                 className="w-full"
                 variant="default"
               >
@@ -362,7 +523,7 @@ AI-powered insights for wellness, fitness and hospitality operators.
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Send Newsletter
+                    Send to {recipientCount} {recipientCount === 1 ? 'Recipient' : 'Recipients'}
                   </>
                 )}
               </Button>
