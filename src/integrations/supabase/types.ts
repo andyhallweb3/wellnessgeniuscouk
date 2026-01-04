@@ -608,6 +608,63 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_interactions: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          entity_id: string | null
+          feature_used: string | null
+          id: string
+          input_summary: string | null
+          interaction_category: string | null
+          interaction_type: string
+          mode: string | null
+          output_type: string | null
+          satisfaction_signal: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          entity_id?: string | null
+          feature_used?: string | null
+          id?: string
+          input_summary?: string | null
+          interaction_category?: string | null
+          interaction_type: string
+          mode?: string | null
+          output_type?: string | null
+          satisfaction_signal?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          entity_id?: string | null
+          feature_used?: string | null
+          id?: string
+          input_summary?: string | null
+          interaction_category?: string | null
+          interaction_type?: string
+          mode?: string | null
+          output_type?: string | null
+          satisfaction_signal?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_interactions_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "wellness_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_interactions_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "wellness_entities_ml_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feed_comments: {
         Row: {
           author_id: string
@@ -1741,6 +1798,30 @@ export type Database = {
         }
         Relationships: []
       }
+      revenue_bands: {
+        Row: {
+          id: string
+          label: string
+          max_value: number | null
+          min_value: number | null
+          sort_order: number | null
+        }
+        Insert: {
+          id: string
+          label: string
+          max_value?: number | null
+          min_value?: number | null
+          sort_order?: number | null
+        }
+        Update: {
+          id?: string
+          label?: string
+          max_value?: number | null
+          min_value?: number | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       rss_cache_metadata: {
         Row: {
           id: string
@@ -1864,6 +1945,30 @@ export type Database = {
         }
         Relationships: []
       }
+      team_size_bands: {
+        Row: {
+          id: string
+          label: string
+          max_size: number | null
+          min_size: number | null
+          sort_order: number | null
+        }
+        Insert: {
+          id: string
+          label: string
+          max_size?: number | null
+          min_size?: number | null
+          sort_order?: number | null
+        }
+        Update: {
+          id?: string
+          label?: string
+          max_size?: number | null
+          min_size?: number | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       user_purchases: {
         Row: {
           currency: string
@@ -1948,11 +2053,224 @@ export type Database = {
         }
         Relationships: []
       }
+      wellness_business_types: {
+        Row: {
+          category: string
+          description: string | null
+          id: string
+          label: string
+          parent_type: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          category: string
+          description?: string | null
+          id: string
+          label: string
+          parent_type?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          category?: string
+          description?: string | null
+          id?: string
+          label?: string
+          parent_type?: string | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wellness_business_types_parent_type_fkey"
+            columns: ["parent_type"]
+            isOneToOne: false
+            referencedRelation: "wellness_business_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wellness_entities: {
+        Row: {
+          ai_readiness_assessed_at: string | null
+          ai_readiness_band: string | null
+          ai_readiness_score: number | null
+          business_description: string | null
+          business_name: string
+          business_type_id: string | null
+          certifications: string[] | null
+          city: string | null
+          communication_preference: string | null
+          country_code: string | null
+          created_at: string
+          customer_segments: string[] | null
+          data_source: string | null
+          decision_style: string | null
+          email: string | null
+          embedding: string | null
+          first_interaction_at: string | null
+          id: string
+          key_challenges: string[] | null
+          last_interaction_at: string | null
+          legal_name: string | null
+          location_count: number | null
+          member_count: number | null
+          pillar_scores: Json | null
+          primary_goals: string[] | null
+          profile_completeness_score: number | null
+          region: string | null
+          revenue_band_id: string | null
+          services_offered: string[] | null
+          team_size_band_id: string | null
+          technology_stack: string[] | null
+          total_interactions: number | null
+          updated_at: string
+          user_id: string | null
+          verified_at: string | null
+          years_in_business: number | null
+        }
+        Insert: {
+          ai_readiness_assessed_at?: string | null
+          ai_readiness_band?: string | null
+          ai_readiness_score?: number | null
+          business_description?: string | null
+          business_name: string
+          business_type_id?: string | null
+          certifications?: string[] | null
+          city?: string | null
+          communication_preference?: string | null
+          country_code?: string | null
+          created_at?: string
+          customer_segments?: string[] | null
+          data_source?: string | null
+          decision_style?: string | null
+          email?: string | null
+          embedding?: string | null
+          first_interaction_at?: string | null
+          id?: string
+          key_challenges?: string[] | null
+          last_interaction_at?: string | null
+          legal_name?: string | null
+          location_count?: number | null
+          member_count?: number | null
+          pillar_scores?: Json | null
+          primary_goals?: string[] | null
+          profile_completeness_score?: number | null
+          region?: string | null
+          revenue_band_id?: string | null
+          services_offered?: string[] | null
+          team_size_band_id?: string | null
+          technology_stack?: string[] | null
+          total_interactions?: number | null
+          updated_at?: string
+          user_id?: string | null
+          verified_at?: string | null
+          years_in_business?: number | null
+        }
+        Update: {
+          ai_readiness_assessed_at?: string | null
+          ai_readiness_band?: string | null
+          ai_readiness_score?: number | null
+          business_description?: string | null
+          business_name?: string
+          business_type_id?: string | null
+          certifications?: string[] | null
+          city?: string | null
+          communication_preference?: string | null
+          country_code?: string | null
+          created_at?: string
+          customer_segments?: string[] | null
+          data_source?: string | null
+          decision_style?: string | null
+          email?: string | null
+          embedding?: string | null
+          first_interaction_at?: string | null
+          id?: string
+          key_challenges?: string[] | null
+          last_interaction_at?: string | null
+          legal_name?: string | null
+          location_count?: number | null
+          member_count?: number | null
+          pillar_scores?: Json | null
+          primary_goals?: string[] | null
+          profile_completeness_score?: number | null
+          region?: string | null
+          revenue_band_id?: string | null
+          services_offered?: string[] | null
+          team_size_band_id?: string | null
+          technology_stack?: string[] | null
+          total_interactions?: number | null
+          updated_at?: string
+          user_id?: string | null
+          verified_at?: string | null
+          years_in_business?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wellness_entities_business_type_id_fkey"
+            columns: ["business_type_id"]
+            isOneToOne: false
+            referencedRelation: "wellness_business_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wellness_entities_revenue_band_id_fkey"
+            columns: ["revenue_band_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_bands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wellness_entities_team_size_band_id_fkey"
+            columns: ["team_size_band_id"]
+            isOneToOne: false
+            referencedRelation: "team_size_bands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      wellness_entities_ml_view: {
+        Row: {
+          ai_readiness_band: string | null
+          ai_readiness_score: number | null
+          business_category: string | null
+          business_description: string | null
+          business_name: string | null
+          business_type: string | null
+          city: string | null
+          communication_preference: string | null
+          country_code: string | null
+          created_at: string | null
+          customer_segments: string[] | null
+          decision_style: string | null
+          id: string | null
+          key_challenges: string[] | null
+          last_interaction_at: string | null
+          location_count: number | null
+          member_count: number | null
+          pillar_scores: Json | null
+          primary_goals: string[] | null
+          profile_completeness_score: number | null
+          region: string | null
+          revenue_band: string | null
+          revenue_max_k: number | null
+          revenue_min_k: number | null
+          services_offered: string[] | null
+          team_max: number | null
+          team_min: number | null
+          team_size: string | null
+          technology_stack: string[] | null
+          total_interactions: number | null
+          years_in_business: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      calculate_entity_completeness: {
+        Args: { entity_id: string }
+        Returns: number
+      }
       can_user_comment: { Args: { p_user_id: string }; Returns: boolean }
       can_user_post: { Args: { p_user_id: string }; Returns: boolean }
       get_current_user_email: { Args: never; Returns: string }
