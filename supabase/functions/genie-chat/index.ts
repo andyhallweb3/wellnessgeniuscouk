@@ -839,20 +839,47 @@ Maximum clarity. Minimal words.`,
     responseFormat: "structured",
   },
   competitor_scan: {
-    prompt: `MODE: Competitor Scan
+    prompt: `MODE: Competitor Scan (Web Research)
+
+You have access to WEB RESEARCH RESULTS from a live internet search. Use this data to provide factual, up-to-date competitive intelligence.
 
 Apply First Principles thinking to competitive analysis:
-- Strip away assumptions about competitors
-- What are they ACTUALLY doing (vs what they claim)?
+- Use the web research to identify REAL competitor activities (not assumptions)
+- What are they ACTUALLY doing vs what they claim?
 - Where is 80% of the market focused?
 - What's the 20% opportunity others are missing?
 
-For each relevant competitor:
-- What they are offering
+For each relevant competitor found in the research:
+- What they are offering (based on actual data)
 - Their apparent strengths
-- Their blind spots
+- Their blind spots and weaknesses
 
-End with: What can you do that they can't or won't?`,
+End with: What can you do that they can't or won't?
+
+IMPORTANT: Cite sources from the web research. If the research didn't find relevant data, say so clearly.`,
+    responseFormat: "structured",
+  },
+  market_research: {
+    prompt: `MODE: Market Research (Web Research)
+
+You have access to WEB RESEARCH RESULTS from a live internet search. Use this data to provide current market intelligence.
+
+Synthesise the web research into actionable market intelligence:
+- What's actually happening in the market RIGHT NOW
+- Key trends with evidence from the research
+- Notable funding, launches, or acquisitions
+- Regulatory changes worth knowing
+
+Apply Pareto:
+- Focus on the 20% of news that actually matters to this business
+- Skip the noise
+
+End with:
+- 3 high-leverage opportunities based on the research
+- 2-3 risks worth monitoring
+- What to safely ignore
+
+IMPORTANT: Base insights on the actual web research provided. Cite sources where possible.`,
     responseFormat: "structured",
   },
   weekly_briefing: {
@@ -1016,7 +1043,7 @@ serve(async (req) => {
       );
     }
 
-    const { messages, mode = "daily_operator", memoryContext: rawMemoryContext, documentContext, _hp_field, isTrialMode } = rawBody;
+    const { messages, mode = "daily_operator", memoryContext: rawMemoryContext, documentContext, webContext, _hp_field, isTrialMode } = rawBody;
     
     // Normalize memoryContext to string (it may come as an object from the client)
     const memoryContext = typeof rawMemoryContext === 'string' 
@@ -1287,6 +1314,12 @@ serve(async (req) => {
     if (documentContext && documentContext.trim()) {
       fullSystemPrompt += `\n\n## UPLOADED DOCUMENTS:\n${documentContext}`;
     }
+    
+    // Add web research context for research modes
+    if (webContext && webContext.trim()) {
+      fullSystemPrompt += `\n\n## WEB RESEARCH (Live internet search results - USE THIS DATA):\n${webContext}`;
+      console.log("[GENIE] Web research context added, length:", webContext.length);
+    }
 
     // Add knowledge base context
     if (knowledgeBaseContext) {
@@ -1298,7 +1331,7 @@ serve(async (req) => {
     console.log("[GENIE] Mode:", mode, "Score:", trustMetadata.genieScore.overall, "Sessions:", sessionSignals.totalSessions);
 
     // Use Pro model for high-value strategic modes, Flash for quick questions
-    const strategicModes = ["decision_support", "board_mode", "commercial_lens", "diagnostic", "build_mode"];
+    const strategicModes = ["decision_support", "board_mode", "commercial_lens", "diagnostic", "build_mode", "competitor_scan", "market_research"];
     const useProModel = strategicModes.includes(mode) && !isTrialMode;
     const selectedModel = useProModel ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
 
