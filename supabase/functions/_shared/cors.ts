@@ -5,22 +5,33 @@ const ALLOWED_ORIGINS = [
   'https://wellnessgenius.co.uk',
   'https://www.wellnessgenius.co.uk',
   'https://wellnessgenius.lovable.app',
-  // Development origins (only used in development)
+  // Development origins
   'http://localhost:5173',
   'http://localhost:8080',
   'http://localhost:3000',
 ];
 
+function isAllowedOrigin(origin: string): boolean {
+  if (!origin) return false;
+
+  // Exact allowlist (prod + local dev)
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+
+  // Allow Lovable hosted domains (preview + production)
+  // - *.lovable.app (custom project domains)
+  // - *.lovableproject.com (editor preview domains)
+  if (origin.endsWith('.lovable.app')) return true;
+  if (origin.endsWith('.lovableproject.com')) return true;
+
+  return false;
+}
+
 export function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('origin') || '';
-  
-  // Check if the origin is in the allowed list
-  const isAllowed = ALLOWED_ORIGINS.some(allowed => 
-    origin === allowed || origin.endsWith('.lovable.app')
-  );
-  
+  const allowed = isAllowedOrigin(origin);
+
   return {
-    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Origin': allowed ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   };
 }
@@ -28,12 +39,10 @@ export function getCorsHeaders(req: Request): Record<string, string> {
 // Helper to create CORS headers from origin string directly
 export function getCorsHeadersFromOrigin(origin: string | null): Record<string, string> {
   const originStr = origin || '';
-  const isAllowed = ALLOWED_ORIGINS.some(allowed => 
-    originStr === allowed || originStr.endsWith('.lovable.app')
-  );
-  
+  const allowed = isAllowedOrigin(originStr);
+
   return {
-    'Access-Control-Allow-Origin': isAllowed ? originStr : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Origin': allowed ? originStr : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   };
 }
@@ -43,3 +52,4 @@ export const corsHeaders = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGINS[0],
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
