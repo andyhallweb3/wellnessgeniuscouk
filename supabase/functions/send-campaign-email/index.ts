@@ -217,6 +217,24 @@ Deno.serve(async (req) => {
 
       console.log(`Found ${missingEmails.length} missing subscribers to send to`);
 
+      // Create send record first
+      const { data: sendRecord, error: sendError } = await supabase
+        .from("newsletter_sends")
+        .insert({
+          article_count: 0,
+          recipient_count: 0,
+          status: "sending",
+          email_html: html,
+        })
+        .select("id")
+        .single();
+
+      if (sendError || !sendRecord) {
+        console.error("Failed to create send record:", sendError);
+        throw sendError || new Error("Failed to create send record");
+      }
+
+      const sendId = sendRecord.id;
       let successCount = 0;
       let errorCount = 0;
 
@@ -235,13 +253,33 @@ Deno.serve(async (req) => {
           if (error) {
             console.error(`Email to ${email} failed:`, JSON.stringify(error));
             errorCount++;
+            // Log recipient status
+            await supabase.from("newsletter_send_recipients").insert({
+              send_id: sendId,
+              email,
+              status: "failed",
+              error_message: (error as any).message || "Send failed",
+            });
           } else {
             console.log(`Email to ${email} sent:`, data?.id);
             successCount++;
+            // Log recipient status
+            await supabase.from("newsletter_send_recipients").insert({
+              send_id: sendId,
+              email,
+              status: "sent",
+              sent_at: new Date().toISOString(),
+            });
           }
         } catch (sendError: any) {
           console.error(`Email to ${email} error:`, sendError);
           errorCount++;
+          await supabase.from("newsletter_send_recipients").insert({
+            send_id: sendId,
+            email,
+            status: "failed",
+            error_message: sendError?.message || "Unknown error",
+          });
         }
 
         // Rate limit: ~10 emails per second
@@ -252,19 +290,21 @@ Deno.serve(async (req) => {
 
       console.log(`Send to missing complete: ${successCount} sent, ${errorCount} failed`);
 
-      // Log the campaign send
-      await supabase.from("newsletter_sends").insert({
-        article_count: 0,
-        recipient_count: successCount,
-        status: errorCount === 0 ? "completed" : "partial",
-        email_html: html,
-      });
+      // Update the send record with final counts
+      await supabase
+        .from("newsletter_sends")
+        .update({
+          recipient_count: successCount,
+          status: errorCount === 0 ? "completed" : "partial",
+        })
+        .eq("id", sendId);
 
       return json(200, {
         success: true,
         recipientCount: successCount,
         errorCount,
         mode: "send-to-missing",
+        sendId,
       });
     }
 
