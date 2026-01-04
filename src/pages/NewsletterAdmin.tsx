@@ -44,7 +44,7 @@ const NewsletterAdmin = () => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
 
   useEffect(() => {
-    document.title = "Newsletter Admin | Wellness Genius";
+    document.title = "Email Campaigns | Wellness Genius";
   }, []);
 
   useEffect(() => {
@@ -291,7 +291,7 @@ const NewsletterAdmin = () => {
             <div className="container-wide max-w-md mx-auto">
               <div className="card-glass p-8 text-center">
                 <Lock className="h-8 w-8 text-accent mx-auto mb-4" />
-                <h1 className="text-2xl font-bold mb-2">Newsletter Admin</h1>
+                <h1 className="text-2xl font-bold mb-2">Email Campaigns</h1>
                 <p className="text-muted-foreground mb-6">{authMode === 'login' ? 'Sign in to access the admin panel.' : 'Create an admin account.'}</p>
                 
                 <div className="flex mb-6 bg-secondary rounded-lg p-1">
@@ -361,8 +361,8 @@ const NewsletterAdmin = () => {
               </Link>
             </div>
             <div className="mb-8">
-              <h1 className="text-3xl font-bold">Newsletter Admin</h1>
-              <p className="text-muted-foreground">Manage your newsletter, subscribers, and content.</p>
+              <h1 className="text-3xl font-bold">Email Campaigns</h1>
+              <p className="text-muted-foreground">Manage your email campaigns, newsletters, and subscribers.</p>
             </div>
 
             <NewsletterWorkflow getAuthHeaders={getAuthHeaders} onLogout={handleLogout} initialTab={initialTab} />

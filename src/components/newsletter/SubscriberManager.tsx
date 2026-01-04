@@ -74,6 +74,8 @@ interface SendHistoryItem {
   send_id: string;
   template_name?: string;
   template_subject?: string;
+  type: 'campaign' | 'newsletter';
+  article_count?: number;
 }
 
 interface SubscriberManagerProps {
@@ -836,9 +838,14 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
                 {sendHistory.map((item) => (
                   <div key={item.id} className="p-3 border rounded-lg">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-sm truncate flex-1">
-                        {item.template_name || "Campaign Email"}
-                      </p>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Badge variant={item.type === 'newsletter' ? 'outline' : 'secondary'} className="text-xs shrink-0">
+                          {item.type === 'newsletter' ? 'Newsletter' : 'Campaign'}
+                        </Badge>
+                        <p className="font-medium text-sm truncate">
+                          {item.template_name || (item.type === 'newsletter' ? `Newsletter (${item.article_count || 0} articles)` : "Campaign Email")}
+                        </p>
+                      </div>
                       <div className="flex items-center gap-2 ml-2">
                         <Badge 
                           variant={item.status === "sent" ? "default" : item.status === "failed" ? "destructive" : "secondary"}
