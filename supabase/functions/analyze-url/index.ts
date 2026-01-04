@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.21.0";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
 
 async function fetchPageContent(url: string): Promise<string> {
   try {
@@ -75,9 +71,11 @@ async function fetchPageContent(url: string): Promise<string> {
 }
 
 serve(async (req) => {
+  const dynamicCorsHeaders = getCorsHeaders(req);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: dynamicCorsHeaders });
   }
 
   try {
@@ -86,7 +84,7 @@ serve(async (req) => {
     if (!url) {
       return new Response(
         JSON.stringify({ error: 'URL is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -197,7 +195,7 @@ Analyze this competitor landing page content. Compare it to my business context 
     parsedData.analyzed_at = new Date().toISOString();
 
     return new Response(JSON.stringify(parsedData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (error) {
@@ -206,7 +204,7 @@ Analyze this competitor landing page content. Compare it to my business context 
       error: error instanceof Error ? error.message : "Unknown error occurred" 
     }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
     });
   }
 });

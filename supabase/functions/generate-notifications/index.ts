@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
 
 interface BusinessMemory {
   id: string;
@@ -463,8 +459,10 @@ async function checkStreakRecovery(
 }
 
 serve(async (req) => {
+  const dynamicCorsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: dynamicCorsHeaders });
   }
 
   try {
@@ -498,7 +496,7 @@ serve(async (req) => {
           streakNotifications: streakResults.notificationsSent,
           streakEmails: streakResults.emailsSent
         }),
-        { headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { headers: { "Content-Type": "application/json", ...dynamicCorsHeaders } }
       );
     }
 
@@ -635,14 +633,14 @@ serve(async (req) => {
         streakNotifications: streakResults.notificationsSent,
         streakEmails: streakResults.emailsSent
       }),
-      { headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { headers: { "Content-Type": "application/json", ...dynamicCorsHeaders } }
     );
   } catch (error: unknown) {
     console.error("Error in generate-notifications:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 500, headers: { "Content-Type": "application/json", ...dynamicCorsHeaders } }
     );
   }
 });
