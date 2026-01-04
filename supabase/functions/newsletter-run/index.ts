@@ -1009,6 +1009,135 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ========================================
+    // ACTION: Resend to new subscribers (joined after original send)
+    // ========================================
+    if (body.action === 'resend-to-new' && body.sendId) {
+      const sendId = body.sendId as string;
+
+      // Get original send details
+      const { data: sendRow, error: sendRowError } = await supabase
+        .from('newsletter_sends')
+        .select('id, status, article_ids, sent_at, email_html')
+        .eq('id', sendId)
+        .single();
+
+      if (sendRowError || !sendRow) {
+        return new Response(
+          JSON.stringify({ success: false, error: sendRowError?.message || 'Send not found' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const articleIds = (sendRow.article_ids || []) as string[];
+      if (!articleIds.length || !sendRow.email_html) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Cannot resend: this send has no stored content (older send).'}),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Find subscribers who joined AFTER the original send
+      const { data: newSubscribers, error: subError } = await supabase
+        .from('newsletter_subscribers')
+        .select('email')
+        .eq('is_active', true)
+        .eq('bounced', false)
+        .gt('subscribed_at', sendRow.sent_at)
+        .order('subscribed_at', { ascending: true });
+
+      if (subError) {
+        return new Response(
+          JSON.stringify({ success: false, error: subError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!newSubscribers || newSubscribers.length === 0) {
+        return new Response(
+          JSON.stringify({ success: true, message: 'No new subscribers since this newsletter was sent', count: 0 }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check which of these already received this newsletter (prevent duplicates)
+      const { data: alreadySent } = await supabase
+        .from('newsletter_send_recipients')
+        .select('email')
+        .eq('send_id', sendId);
+
+      const alreadySentEmails = new Set((alreadySent || []).map(r => r.email.toLowerCase()));
+      const newEmails = newSubscribers
+        .map(s => s.email)
+        .filter(email => !alreadySentEmails.has(email.toLowerCase()));
+
+      if (newEmails.length === 0) {
+        return new Response(
+          JSON.stringify({ success: true, message: 'All new subscribers already received this newsletter', count: 0 }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Resending newsletter ${sendId} to ${newEmails.length} new subscribers`);
+
+      // Insert recipient records for new subscribers
+      const recipientRows = newEmails.map(email => ({
+        send_id: sendId,
+        email,
+        status: 'pending',
+      }));
+
+      const { error: insertError } = await supabase
+        .from('newsletter_send_recipients')
+        .insert(recipientRows);
+
+      if (insertError) {
+        console.error('Failed to insert recipient rows:', insertError);
+        return new Response(
+          JSON.stringify({ success: false, error: insertError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get articles for the send workflow
+      const { data: sendArticles, error: sendArticlesError } = await supabase
+        .from('articles')
+        .select('*')
+        .in('id', articleIds);
+
+      if (sendArticlesError || !sendArticles || sendArticles.length === 0) {
+        return new Response(
+          JSON.stringify({ success: false, error: sendArticlesError?.message || 'Failed to load send articles' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Update send status
+      await supabase
+        .from('newsletter_sends')
+        .update({ status: 'sending' })
+        .eq('id', sendId);
+
+      const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
+
+      // @ts-ignore
+      EdgeRuntime.waitUntil(runSendWorkflow({
+        sendId,
+        articles: sendArticles as Article[],
+        trackingBaseUrl,
+      }));
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Sending to ${newEmails.length} new subscribers`,
+          count: newEmails.length,
+          sendId 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Resume sending to unsent recipients for an existing send
     if (body.action === 'resume' && body.sendId) {
       const sendId = body.sendId as string;
