@@ -755,6 +755,151 @@ Deno.serve(async (req) => {
       }
     };
 
+    // Simplified resend workflow that uses already-stored HTML template
+    const runResendWorkflow = async (opts: {
+      sendId: string;
+      storedHtml: string;
+      trackingBaseUrl: string;
+      targetEmails: string[];
+    }) => {
+      const { sendId, storedHtml, trackingBaseUrl, targetEmails } = opts;
+
+      let sentTotal = 0;
+      let failedTotal = 0;
+
+      try {
+        // Get existing sent count for this send
+        const { count: existingSentCount } = await supabase
+          .from('newsletter_send_recipients')
+          .select('*', { count: 'exact', head: true })
+          .eq('send_id', sendId)
+          .eq('status', 'sent');
+
+        sentTotal = existingSentCount || 0;
+
+        // Process pending recipients in batches
+        const BATCH_SIZE = 50;
+        const DELAY_MS = 2000;
+
+        while (true) {
+          const { data: pendingRows, error: pendingError } = await supabase
+            .from('newsletter_send_recipients')
+            .select('id, email')
+            .eq('send_id', sendId)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: true })
+            .limit(BATCH_SIZE);
+
+          if (pendingError) throw pendingError;
+          if (!pendingRows || pendingRows.length === 0) break;
+
+          const ids = pendingRows.map((r) => r.id);
+
+          // Claim the batch
+          await supabase
+            .from('newsletter_send_recipients')
+            .update({ status: 'sending' })
+            .eq('send_id', sendId)
+            .in('id', ids)
+            .eq('status', 'pending');
+
+          console.log(`Resend batch (claimed ${ids.length}) for send ${sendId}`);
+
+          const results = await Promise.all(
+            pendingRows.map(async (row) => {
+              // Personalize the stored HTML with tracking for this subscriber
+              const unsubscribeToken = unsubscribeSecret 
+                ? await generateUnsubscribeToken(row.email, unsubscribeSecret) 
+                : '';
+
+              // Replace placeholder tracking URLs in stored HTML
+              let personalizedHtml = storedHtml;
+
+              // Add tracking pixel
+              const trackingPixel = `<img src="${trackingBaseUrl}?sid=${sendId}&e=${encodeURIComponent(row.email)}&t=o" width="1" height="1" style="display:block;width:1px;height:1px;border:0;" alt="" />`;
+              personalizedHtml = personalizedHtml.replace('</body>', `${trackingPixel}</body>`);
+
+              // Update unsubscribe link if present
+              if (unsubscribeToken) {
+                const unsubscribeUrl = `${supabaseUrl}/functions/v1/unsubscribe?token=${unsubscribeToken}`;
+                personalizedHtml = personalizedHtml.replace(
+                  /href="[^"]*\/unsubscribe[^"]*"/g,
+                  `href="${unsubscribeUrl}"`
+                );
+              }
+
+              try {
+                // Extract subject from HTML title or use a default
+                const titleMatch = personalizedHtml.match(/<title>([^<]+)<\/title>/i);
+                const subject = titleMatch ? titleMatch[1] : 'AI & Wellness Weekly';
+
+                await resend.emails.send({
+                  from: 'Wellness Genius <newsletter@news.wellnessgenius.co.uk>',
+                  to: [row.email],
+                  subject,
+                  html: personalizedHtml,
+                });
+
+                await supabase
+                  .from('newsletter_send_recipients')
+                  .update({ status: 'sent', sent_at: new Date().toISOString(), error_message: null })
+                  .eq('id', row.id);
+
+                return { ok: true } as const;
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : 'Unknown error';
+                await supabase
+                  .from('newsletter_send_recipients')
+                  .update({ status: 'failed', error_message: msg })
+                  .eq('id', row.id);
+
+                console.error(`Failed to resend to ${row.email}: ${msg}`);
+                return { ok: false } as const;
+              }
+            })
+          );
+
+          const ok = results.filter((r) => r.ok).length;
+          const bad = results.length - ok;
+          sentTotal += ok;
+          failedTotal += bad;
+
+          await supabase
+            .from('newsletter_sends')
+            .update({ recipient_count: sentTotal })
+            .eq('id', sendId);
+
+          console.log(`Resend progress for ${sendId}: sent=${sentTotal}, failed=${failedTotal}`);
+
+          // Delay between batches if more pending
+          if (pendingRows.length === BATCH_SIZE) {
+            await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+          }
+        }
+
+        await supabase
+          .from('newsletter_sends')
+          .update({
+            recipient_count: sentTotal,
+            status: failedTotal > 0 ? 'partial' : 'sent',
+            error_message: failedTotal > 0 ? `${failedTotal} emails failed to send` : null,
+          })
+          .eq('id', sendId);
+
+        console.log(`Resend ${sendId} completed: sent=${sentTotal}, failed=${failedTotal}`);
+      } catch (err) {
+        console.error('Resend workflow failed:', err);
+        await supabase
+          .from('newsletter_sends')
+          .update({
+            status: 'failed',
+            error_message: err instanceof Error ? err.message : 'Resend workflow failed',
+            recipient_count: sentTotal,
+          })
+          .eq('id', sendId);
+      }
+    };
+
     const body = await req.json().catch(() => ({}));
     const previewOnly = body.preview === true;
     const targetEmails: string[] | undefined = Array.isArray(body.targetEmails) ? body.targetEmails : undefined;
@@ -1137,18 +1282,10 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Get articles for the send workflow
-      const { data: sendArticles, error: sendArticlesError } = await supabase
-        .from('articles')
-        .select('*')
-        .in('id', articleIds);
-
-      if (sendArticlesError || !sendArticles || sendArticles.length === 0) {
-        return new Response(
-          JSON.stringify({ success: false, error: sendArticlesError?.message || 'Failed to load send articles' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      // For resends, we use the stored email_html template and just send to new recipients
+      // No need to reload articles - the HTML is already generated and stored
+      const storedHtml = sendRow.email_html as string;
+      const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
 
       // Update send status
       await supabase
@@ -1156,19 +1293,19 @@ Deno.serve(async (req) => {
         .update({ status: 'sending' })
         .eq('id', sendId);
 
-      const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
-
+      // Use a simpler resend workflow that uses stored HTML
       // @ts-ignore
-      EdgeRuntime.waitUntil(runSendWorkflow({
+      EdgeRuntime.waitUntil(runResendWorkflow({
         sendId,
-        articles: sendArticles as Article[],
+        storedHtml,
         trackingBaseUrl,
+        targetEmails: newEmails,
       }));
 
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: `Sending to ${newEmails.length} new subscribers`,
+          message: `Sending to ${newEmails.length} ${resendToMissing ? 'missing' : 'new'} subscribers`,
           count: newEmails.length,
           sendId 
         }),
