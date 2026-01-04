@@ -16,7 +16,8 @@ import {
   AlertCircle,
   RefreshCw,
   Search,
-  UserPlus
+  UserPlus,
+  UserMinus
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -88,6 +89,13 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
   const [selectedSubscriber, setSelectedSubscriber] = useState<Subscriber | null>(null);
   const [sendToSpecificOpen, setSendToSpecificOpen] = useState(false);
   const [sendingToSpecific, setSendingToSpecific] = useState(false);
+  
+  // Send to missing state
+  const [sendToMissingOpen, setSendToMissingOpen] = useState(false);
+  const [sendingToMissing, setSendingToMissing] = useState(false);
+  const [previousSends, setPreviousSends] = useState<Array<{ id: string; sent_at: string; recipient_count: number }>>([]);
+  const [selectedPreviousSend, setSelectedPreviousSend] = useState<string>("");
+  const [loadingPreviousSends, setLoadingPreviousSends] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -189,6 +197,70 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
     setSubscriberSearch("");
     setSearchResults([]);
     setSelectedSubscriber(null);
+  };
+
+  const handleSendToMissing = async (template: EmailTemplate) => {
+    setSelectedTemplate(template);
+    setSendToMissingOpen(true);
+    setSelectedPreviousSend("");
+    setLoadingPreviousSends(true);
+    
+    try {
+      // Fetch recent sends
+      const { data, error } = await supabase.functions.invoke("newsletter-run", {
+        body: { action: "get-previous-sends", limit: 20 },
+        headers: getAuthHeaders(),
+      });
+      
+      if (error) throw error;
+      setPreviousSends(data?.sends || []);
+    } catch (error) {
+      console.error("Error fetching previous sends:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load previous sends",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPreviousSends(false);
+    }
+  };
+
+  const sendToMissingSubscribers = async () => {
+    if (!selectedTemplate || !selectedPreviousSend) return;
+
+    setSendingToMissing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-campaign-email", {
+        body: {
+          templateId: selectedTemplate.id,
+          subject: selectedTemplate.subject,
+          html: selectedTemplate.html_content,
+          previewText: selectedTemplate.preview_text,
+          sendToMissing: true,
+          previousSendId: selectedPreviousSend,
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Campaign sent!",
+        description: `Sent to ${data?.recipientCount || 0} missing subscribers${data?.errorCount ? ` (${data.errorCount} failed)` : ''}`,
+      });
+      setSendToMissingOpen(false);
+      fetchSubscriberStats();
+    } catch (error: any) {
+      console.error("Error sending to missing:", error);
+      toast({
+        title: "Failed to send",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingToMissing(false);
+    }
   };
 
   const sendToSpecificSubscriber = async () => {
@@ -421,6 +493,14 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
                     Send to Email
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSendToMissing(template)}
+                  >
+                    <UserMinus className="h-4 w-4 mr-2" />
+                    Send to Missing
                   </Button>
                   <Button
                     size="sm"
@@ -672,6 +752,94 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
                 <>
                   <Send className="h-4 w-4 mr-2" />
                   Send to {selectedSubscriber?.email || "Selected Email"}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send to Missing Dialog */}
+      <Dialog open={sendToMissingOpen} onOpenChange={setSendToMissingOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send to Missing Recipients</DialogTitle>
+            <DialogDescription>
+              Send "{selectedTemplate?.name}" to subscribers who didn't receive a previous send
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Previous Send</Label>
+              {loadingPreviousSends ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : previousSends.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No previous sends found. Send a campaign first.
+                </p>
+              ) : (
+                <div className="border rounded-lg divide-y max-h-64 overflow-auto">
+                  {previousSends.map((send) => (
+                    <button
+                      key={send.id}
+                      onClick={() => setSelectedPreviousSend(send.id)}
+                      className={`w-full px-3 py-3 text-left hover:bg-muted/50 transition-colors ${
+                        selectedPreviousSend === send.id ? "bg-accent/10 border-l-2 border-l-accent" : ""
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm font-medium">
+                            {new Date(send.sent_at).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Sent to {send.recipient_count} recipients
+                          </div>
+                        </div>
+                        {selectedPreviousSend === send.id && (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {selectedPreviousSend && (
+              <div className="rounded-lg border p-3 bg-amber-500/10 border-amber-500/30">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <UserMinus className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    Will send to subscribers who didn't receive the selected send
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <Button
+              className="w-full"
+              onClick={sendToMissingSubscribers}
+              disabled={!selectedPreviousSend || sendingToMissing || previousSends.length === 0}
+            >
+              {sendingToMissing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send to Missing Recipients
                 </>
               )}
             </Button>

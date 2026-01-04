@@ -1135,6 +1135,34 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get previous sends for "send to missing" feature
+    if (body.action === 'get-previous-sends') {
+      const limit = body.limit || 20;
+      console.log('Fetching previous sends, limit:', limit);
+      
+      const { data: sends, error: sendsError } = await supabase
+        .from('newsletter_sends')
+        .select('id, sent_at, recipient_count, status')
+        .in('status', ['completed', 'partial', 'sent'])
+        .order('sent_at', { ascending: false })
+        .limit(limit);
+
+      if (sendsError) {
+        console.error('Error fetching previous sends:', sendsError);
+        return new Response(
+          JSON.stringify({ success: false, error: sendsError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Found previous sends:', sends?.length || 0);
+
+      return new Response(
+        JSON.stringify({ success: true, sends: sends || [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // History endpoint to fetch recent sends
     if (body.action === 'history') {
       const limit = body.limit || 10;

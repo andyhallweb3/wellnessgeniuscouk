@@ -17,6 +17,8 @@ interface CampaignRequest {
   onlyDelivered?: boolean;
   sendMode?: "batch" | "individual"; // batch = BCC, individual = one email per recipient
   specificEmail?: string; // Send to a specific subscriber email
+  sendToMissing?: boolean; // Send only to subscribers who didn't receive a previous send
+  previousSendId?: string; // The ID of the previous send to compare against
 }
 
 type ResendMaybeError = {
@@ -91,6 +93,8 @@ Deno.serve(async (req) => {
       onlyDelivered,
       sendMode = "batch",
       specificEmail,
+      sendToMissing,
+      previousSendId,
     }: CampaignRequest = await req.json();
 
     if (!subject || !html) {
@@ -170,6 +174,100 @@ Deno.serve(async (req) => {
       
       return json(200, { success: true, email: normalizedSpecificEmail, messageId: data?.id });
     }
+
+    // If sendToMissing, find subscribers who didn't receive the previous send
+    if (sendToMissing && previousSendId) {
+      console.log(`Sending to missing subscribers from send ${previousSendId}`);
+
+      // Get emails that were sent in the previous send
+      const { data: previousRecipients, error: recipientError } = await supabase
+        .from("newsletter_send_recipients")
+        .select("email")
+        .eq("send_id", previousSendId)
+        .eq("status", "sent");
+
+      if (recipientError) {
+        console.error("Error fetching previous recipients:", recipientError);
+        throw recipientError;
+      }
+
+      const previousEmails = new Set((previousRecipients || []).map((r) => r.email.toLowerCase()));
+      console.log(`Previous send had ${previousEmails.size} successful recipients`);
+
+      // Get all active subscribers
+      const { data: allSubscribers, error: subError } = await supabase
+        .from("newsletter_subscribers")
+        .select("email")
+        .eq("is_active", true)
+        .eq("bounced", false);
+
+      if (subError) {
+        console.error("Error fetching subscribers:", subError);
+        throw subError;
+      }
+
+      // Filter to only those who weren't in the previous send
+      const missingEmails = (allSubscribers || [])
+        .map((s) => normalizeEmail(s.email))
+        .filter((e): e is string => e !== null && isLikelyEmail(e) && !previousEmails.has(e.toLowerCase()));
+
+      if (missingEmails.length === 0) {
+        return json(400, { error: "No missing subscribers found - everyone received the previous send" });
+      }
+
+      console.log(`Found ${missingEmails.length} missing subscribers to send to`);
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Send individually for tracking
+      for (let i = 0; i < missingEmails.length; i++) {
+        const email = missingEmails[i];
+        try {
+          const { data, error } = await resend.emails.send({
+            from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
+            reply_to: "andy@wellnessgenius.co.uk",
+            to: [email],
+            subject,
+            html,
+          });
+
+          if (error) {
+            console.error(`Email to ${email} failed:`, JSON.stringify(error));
+            errorCount++;
+          } else {
+            console.log(`Email to ${email} sent:`, data?.id);
+            successCount++;
+          }
+        } catch (sendError: any) {
+          console.error(`Email to ${email} error:`, sendError);
+          errorCount++;
+        }
+
+        // Rate limit: ~10 emails per second
+        if (i < missingEmails.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+
+      console.log(`Send to missing complete: ${successCount} sent, ${errorCount} failed`);
+
+      // Log the campaign send
+      await supabase.from("newsletter_sends").insert({
+        article_count: 0,
+        recipient_count: successCount,
+        status: errorCount === 0 ? "completed" : "partial",
+        email_html: html,
+      });
+
+      return json(200, {
+        success: true,
+        recipientCount: successCount,
+        errorCount,
+        mode: "send-to-missing",
+      });
+    }
+
     // Build query for active subscribers - EXCLUDE bounced and unsubscribed
     let query = supabase
       .from("newsletter_subscribers")
