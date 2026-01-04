@@ -1418,7 +1418,7 @@ serve(async (req) => {
           { role: "system", content: fullSystemPrompt },
           ...messages,
         ],
-        max_tokens: 1000,
+        max_tokens: strategicModes.includes(mode) ? 4000 : 1500,
         stream: true,
       }),
     });

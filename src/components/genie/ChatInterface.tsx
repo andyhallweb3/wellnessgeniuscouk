@@ -223,11 +223,26 @@ export default function ChatInterface({
     return assistantContent;
   }, [documentContext, memoryContext, setMessages]);
 
-  // Web research for relevant modes
-  const performWebResearch = useCallback(async (query: string): Promise<string> => {
+  // Web research for relevant modes - transform query for better results
+  const performWebResearch = useCallback(async (query: string, mode: string): Promise<string> => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session?.access_token) return "";
+
+      // Transform query based on mode for better search results
+      let searchQuery = query;
+      if (mode === "competitor_scan") {
+        // Extract key terms and create a better search query
+        const keyTerms = query
+          .replace(/^(analyze|analyse|find|show|list|get)\s+(my\s+)?competitors?\s+(in|for)?\s*/i, "")
+          .replace(/wellness\s+technology/i, "wellness technology companies apps platforms")
+          .replace(/wellness\s+tech/i, "wellness tech startups companies apps")
+          .replace(/fitness\s+tech/i, "fitness technology companies apps platforms");
+        
+        searchQuery = `${keyTerms} companies startups competitors 2024 2025`.trim();
+      } else if (mode === "market_research") {
+        searchQuery = `${query} market trends funding news 2024 2025`.trim();
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genie-web-search`,
@@ -237,7 +252,7 @@ export default function ChatInterface({
             "Content-Type": "application/json",
             Authorization: `Bearer ${sessionData.session.access_token}`,
           },
-          body: JSON.stringify({ query, searchType: "search" }),
+          body: JSON.stringify({ query: searchQuery, searchType: "search" }),
         }
       );
 
@@ -246,8 +261,10 @@ export default function ChatInterface({
       const data = await response.json();
       if (!data.success || !data.results?.length) return "";
 
+      // For competitor scan, include more content per result
+      const contentLimit = mode === "competitor_scan" ? 1500 : 800;
       const formatted = data.results.map((r: any, i: number) => 
-        `[Source ${i + 1}: ${r.title}]\nURL: ${r.url}\n${r.content?.slice(0, 800) || r.description || ""}`
+        `[Source ${i + 1}: ${r.title}]\nURL: ${r.url}\n${r.content?.slice(0, contentLimit) || r.description || ""}`
       ).join("\n\n");
 
       return `\n\n=== WEB RESEARCH RESULTS ===\n${formatted}\n=== END WEB RESEARCH ===`;
@@ -285,7 +302,7 @@ export default function ChatInterface({
       let webContext = "";
       if (WEB_RESEARCH_MODES.includes(selectedMode)) {
         toast.info("Searching the web...");
-        webContext = await performWebResearch(trimmedInput);
+        webContext = await performWebResearch(trimmedInput, selectedMode);
       }
 
       await streamChat(newMessages, selectedMode, webContext);
