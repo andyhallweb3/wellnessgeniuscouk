@@ -15,7 +15,10 @@ import {
   AlertCircle,
   Search,
   UserCheck,
-  X
+  X,
+  Save,
+  FolderOpen,
+  Trash2
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -29,6 +32,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface SendNewsletterProps {
   previewHtml: string | null;
@@ -54,6 +64,13 @@ interface Subscriber {
   is_active: boolean;
 }
 
+interface SubscriberGroup {
+  id: string;
+  name: string;
+  emails: string[];
+  created_at: string;
+}
+
 export const SendNewsletter = ({
   previewHtml,
   articles,
@@ -73,9 +90,16 @@ export const SendNewsletter = ({
   const [customTweet, setCustomTweet] = useState("");
   const [postingToTwitter, setPostingToTwitter] = useState(false);
   const [loadingSubscribers, setLoadingSubscribers] = useState(false);
+  
+  // Subscriber groups
+  const [groups, setGroups] = useState<SubscriberGroup[]>([]);
+  const [showSaveGroupModal, setShowSaveGroupModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [savingGroup, setSavingGroup] = useState(false);
 
   useEffect(() => {
     fetchSubscribers();
+    fetchGroups();
   }, []);
 
   const fetchSubscribers = async () => {
@@ -122,6 +146,97 @@ export const SendNewsletter = ({
   };
 
   const recipientCount = sendMode === "all" ? subscriberCount : selectedEmails.size;
+
+  // Subscriber group functions
+  const fetchGroups = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("subscriber_groups")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setGroups(data || []);
+    } catch (error) {
+      console.error("Failed to fetch groups:", error);
+    }
+  };
+
+  const saveGroup = async () => {
+    if (!newGroupName.trim() || selectedEmails.size === 0) return;
+    
+    setSavingGroup(true);
+    try {
+      const { error } = await supabase
+        .from("subscriber_groups")
+        .insert({
+          name: newGroupName.trim(),
+          emails: Array.from(selectedEmails),
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Group saved",
+        description: `"${newGroupName}" with ${selectedEmails.size} subscribers`,
+      });
+      
+      setShowSaveGroupModal(false);
+      setNewGroupName("");
+      fetchGroups();
+    } catch (error) {
+      toast({
+        title: "Save failed",
+        description: error instanceof Error ? error.message : "Failed to save group",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingGroup(false);
+    }
+  };
+
+  const loadGroup = (group: SubscriberGroup) => {
+    // Filter to only include emails that still exist in subscribers list
+    const validEmails = group.emails.filter(email => 
+      subscribers.some(s => s.email === email)
+    );
+    setSelectedEmails(new Set(validEmails));
+    setSendMode("selected");
+    
+    if (validEmails.length < group.emails.length) {
+      toast({
+        title: "Group loaded",
+        description: `${validEmails.length} of ${group.emails.length} subscribers still active`,
+      });
+    } else {
+      toast({
+        title: "Group loaded",
+        description: `${validEmails.length} subscribers selected`,
+      });
+    }
+  };
+
+  const deleteGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`Delete group "${groupName}"?`)) return;
+    
+    try {
+      const { error } = await supabase
+        .from("subscriber_groups")
+        .delete()
+        .eq("id", groupId);
+
+      if (error) throw error;
+      
+      toast({ title: "Group deleted" });
+      fetchGroups();
+    } catch (error) {
+      toast({
+        title: "Delete failed",
+        description: error instanceof Error ? error.message : "Failed to delete group",
+        variant: "destructive",
+      });
+    }
+  };
 
   const sendNewsletter = async () => {
     if (!previewHtml) {
@@ -414,23 +529,68 @@ AI-powered insights for wellness, fitness and hospitality operators.
             {/* Subscriber Selection Panel */}
             {sendMode === "selected" && (
               <div className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search subscribers..."
-                      value={subscriberSearch}
-                      onChange={(e) => setSubscriberSearch(e.target.value)}
-                      className="pl-9"
-                    />
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative flex-1 min-w-[200px]">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search subscribers..."
+                        value={subscriberSearch}
+                        onChange={(e) => setSubscriberSearch(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <Button variant="outline" size="sm" onClick={selectAll}>
+                      Select All
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={clearSelection}>
+                      Clear
+                    </Button>
+                    
+                    {/* Saved Groups */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-1">
+                          <FolderOpen className="h-3.5 w-3.5" />
+                          Groups
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        {groups.length === 0 ? (
+                          <DropdownMenuItem disabled>No saved groups</DropdownMenuItem>
+                        ) : (
+                          groups.map(group => (
+                            <DropdownMenuItem
+                              key={group.id}
+                              className="flex items-center justify-between"
+                            >
+                              <span 
+                                className="flex-1 cursor-pointer"
+                                onClick={() => loadGroup(group)}
+                              >
+                                {group.name} ({group.emails.length})
+                              </span>
+                              <Trash2 
+                                className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteGroup(group.id, group.name);
+                                }}
+                              />
+                            </DropdownMenuItem>
+                          ))
+                        )}
+                        {selectedEmails.size > 0 && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setShowSaveGroupModal(true)}>
+                              <Save className="h-3.5 w-3.5 mr-2" />
+                              Save current selection
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <Button variant="outline" size="sm" onClick={selectAll}>
-                    Select All
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={clearSelection}>
-                    Clear
-                  </Button>
-                </div>
 
                 {/* Selected chips */}
                 {selectedEmails.size > 0 && (
@@ -583,6 +743,45 @@ AI-powered insights for wellness, fitness and hospitality operators.
                 <Twitter className="h-4 w-4 mr-2" />
               )}
               Post
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Group Modal */}
+      <Dialog open={showSaveGroupModal} onOpenChange={setShowSaveGroupModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Subscriber Group</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Group Name</label>
+              <Input
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="e.g., VIP Subscribers, Beta Testers..."
+                className="mt-1"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This will save {selectedEmails.size} subscriber{selectedEmails.size !== 1 ? 's' : ''} to a reusable group.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveGroupModal(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={saveGroup} 
+              disabled={savingGroup || !newGroupName.trim()}
+            >
+              {savingGroup ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Group
             </Button>
           </DialogFooter>
         </DialogContent>
