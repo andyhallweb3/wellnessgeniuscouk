@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
 
 // Credit pack configuration with Stripe price IDs
 const CREDIT_PACKS: Record<string, { credits: number; priceId: string }> = {
@@ -29,8 +25,10 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 };
 
 serve(async (req) => {
+  const dynamicCorsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: dynamicCorsHeaders });
   }
 
   const supabaseClient = createClient(
@@ -98,14 +96,14 @@ serve(async (req) => {
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
     return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }

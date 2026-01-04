@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
 
 const BRIEF_SYSTEM_PROMPT = `You are the Wellness Genie generating a structured daily briefing for a wellness/fitness business operator.
 
@@ -38,8 +34,10 @@ GUIDELINES:
 - If data is limited, say so honestly in reasoning`;
 
 serve(async (req) => {
+  const dynamicCorsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: dynamicCorsHeaders });
   }
 
   try {
@@ -47,7 +45,7 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -69,7 +67,7 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -205,13 +203,13 @@ Remember: Return ONLY a valid JSON object matching the specified format. No mark
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
           status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Usage limit reached" }), {
           status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
         });
       }
       
@@ -282,13 +280,13 @@ Remember: Return ONLY a valid JSON object matching the specified format. No mark
     console.log("[DAILY-BRIEF] Successfully generated brief");
 
     return new Response(JSON.stringify(validatedBrief), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("[DAILY-BRIEF] Error:", error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
     });
   }
 });

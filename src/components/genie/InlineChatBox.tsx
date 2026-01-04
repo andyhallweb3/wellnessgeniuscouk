@@ -257,8 +257,14 @@ const InlineChatBox = ({
   // Generate dynamic questions based on brief content
   const suggestedQuestions = useMemo(() => generateBriefQuestions(briefData), [briefData]);
 
+  // Scroll to bottom of chat container only (not the whole page)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current && messages.length > 0) {
+      const container = messagesEndRef.current.parentElement;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
   }, [messages]);
 
   const streamChat = useCallback(async (userMessages: Message[], mode: string) => {

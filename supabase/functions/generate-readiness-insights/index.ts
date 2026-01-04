@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
 
 // Input validation schemas
 const BusinessProfileSchema = z.object({
@@ -76,8 +72,10 @@ Flag any mismatches between self-reported maturity and likely reality based on b
 `;
 
 serve(async (req) => {
+  const dynamicCorsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: dynamicCorsHeaders });
   }
 
   try {
@@ -97,7 +95,7 @@ serve(async (req) => {
       logStep("Validation error", { errors: validationResult.error.errors });
       return new Response(
         JSON.stringify({ error: 'Invalid request format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -520,7 +518,7 @@ All estimates must be conservative. No hype. British English.`;
 
     return new Response(
       JSON.stringify({ success: true, insights }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -529,7 +527,7 @@ All estimates must be conservative. No hype. British English.`;
     
     return new Response(
       JSON.stringify({ error: 'Failed to generate insights. Please try again.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -1,8 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { validateAdminAuth } from '../_shared/admin-auth.ts';
+import { getCorsHeaders, corsHeaders } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+const corsHeadersExtended = {
+  ...corsHeaders,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-force-refresh',
 };
 
@@ -229,8 +230,10 @@ async function fetchAllFeeds(): Promise<NewsItem[]> {
 }
 
 Deno.serve(async (req) => {
+  const dynamicCorsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: dynamicCorsHeaders });
   }
 
   try {
@@ -309,7 +312,7 @@ Deno.serve(async (req) => {
             cached: true,
             cache_age_minutes: Math.round(minutesSinceRefresh),
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -398,7 +401,7 @@ Deno.serve(async (req) => {
         cached: false,
         sources: RSS_FEEDS.length,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error in fetch-rss-news:', error);
@@ -407,7 +410,7 @@ Deno.serve(async (req) => {
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to fetch news' 
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
