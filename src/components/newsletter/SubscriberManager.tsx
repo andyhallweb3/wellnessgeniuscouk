@@ -28,7 +28,8 @@ import {
   AlertTriangle,
   Mail,
   RefreshCw,
-  Send
+  Send,
+  History
 } from "lucide-react";
 import {
   Select,
@@ -64,6 +65,17 @@ interface EmailTemplate {
   is_active: boolean;
 }
 
+interface SendHistoryItem {
+  id: string;
+  email: string;
+  status: string;
+  sent_at: string | null;
+  error_message: string | null;
+  send_id: string;
+  template_name?: string;
+  template_subject?: string;
+}
+
 interface SubscriberManagerProps {
   getAuthHeaders: () => Record<string, string>;
 }
@@ -90,6 +102,12 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [selectedSubscriber, setSelectedSubscriber] = useState<Subscriber | null>(null);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  
+  // Send history state
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historySubscriber, setHistorySubscriber] = useState<Subscriber | null>(null);
+  const [sendHistory, setSendHistory] = useState<SendHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     fetchSubscribers();
@@ -378,6 +396,32 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
     }
   };
 
+  const openSendHistory = async (sub: Subscriber) => {
+    setHistorySubscriber(sub);
+    setHistoryOpen(true);
+    setLoadingHistory(true);
+    setSendHistory([]);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-subscribers", {
+        body: { action: "get-send-history", email: sub.email },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      setSendHistory(data.history || []);
+    } catch (error) {
+      console.error("Failed to fetch send history:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load send history",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const exportSubscribers = () => {
     const csv = [
       ["Email", "Name", "Source", "Status", "Subscribed At", "Last Delivered", "Delivery Count", "Bounced", "Bounce Type"].join(","),
@@ -566,6 +610,14 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
                   <Button 
                     variant="ghost" 
                     size="sm" 
+                    onClick={() => openSendHistory(sub)}
+                    title="View send history"
+                  >
+                    <History className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
                     onClick={() => openSendEmail(sub)}
                     disabled={!!sub.bounced || !sub.is_active}
                     title="Send email to this subscriber"
@@ -714,6 +766,72 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
               {sendingEmail && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               <Send className="h-4 w-4 mr-2" />
               Send Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send History Modal */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Send History</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {historySubscriber && (
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">{historySubscriber.email}</p>
+                {historySubscriber.name && (
+                  <p className="text-sm text-muted-foreground">{historySubscriber.name}</p>
+                )}
+              </div>
+            )}
+            
+            {loadingHistory ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : sendHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No emails have been sent to this subscriber yet.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {sendHistory.map((item) => (
+                  <div key={item.id} className="p-3 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-sm truncate flex-1">
+                        {item.template_name || "Campaign Email"}
+                      </p>
+                      <Badge 
+                        variant={item.status === "sent" ? "default" : item.status === "failed" ? "destructive" : "secondary"}
+                        className="ml-2"
+                      >
+                        {item.status}
+                      </Badge>
+                    </div>
+                    {item.template_subject && (
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
+                        {item.template_subject}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {item.sent_at 
+                        ? new Date(item.sent_at).toLocaleString()
+                        : "Pending"
+                      }
+                    </p>
+                    {item.error_message && (
+                      <p className="text-xs text-red-500 mt-1">{item.error_message}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHistoryOpen(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
