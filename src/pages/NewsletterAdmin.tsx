@@ -352,6 +352,14 @@ const NewsletterAdmin = () => {
       <main className="pt-8 pb-20">
         <section className="section-padding">
           <div className="container-wide">
+            <div className="mb-6">
+              <Link to="/admin">
+                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Admin
+                </Button>
+              </Link>
+            </div>
             <div className="mb-8">
               <h1 className="text-3xl font-bold">Newsletter Admin</h1>
               <p className="text-muted-foreground">Manage your newsletter, subscribers, and content.</p>
