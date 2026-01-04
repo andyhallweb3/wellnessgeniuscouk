@@ -1099,6 +1099,42 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Search subscribers endpoint for campaign page
+    if (body.action === 'search-subscribers') {
+      const query = body.query || '';
+      console.log('Searching subscribers with query:', query);
+      
+      if (query.length < 2) {
+        return new Response(
+          JSON.stringify({ success: true, subscribers: [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: subscribers, error: searchError } = await supabase
+        .from('newsletter_subscribers')
+        .select('id, email, name, is_active')
+        .ilike('email', `%${query}%`)
+        .eq('is_active', true)
+        .eq('bounced', false)
+        .limit(10);
+
+      if (searchError) {
+        console.error('Error searching subscribers:', searchError);
+        return new Response(
+          JSON.stringify({ success: false, error: searchError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Found subscribers:', subscribers?.length || 0);
+
+      return new Response(
+        JSON.stringify({ success: true, subscribers: subscribers || [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // History endpoint to fetch recent sends
     if (body.action === 'history') {
       const limit = body.limit || 10;
