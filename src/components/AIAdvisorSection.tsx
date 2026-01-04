@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Brain, Sparkles, CheckCircle2, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS } from "@/components/advisor/AdvisorModes";
 
 const AIAdvisorSection = () => {
   const { user } = useAuth();
@@ -12,7 +13,7 @@ const AIAdvisorSection = () => {
     "Remembers your business context",
     "8 expert modes for every situation",
     "Voice mode for hands-free thinking",
-    "Pay only for what you use",
+    `${FREE_TRIAL_DAYS}-day free trial, ${FREE_TRIAL_CREDITS} credits`,
   ];
 
   const questions = [
@@ -95,7 +96,7 @@ const AIAdvisorSection = () => {
               <Button variant="accent" size="xl" asChild className="shadow-glow">
                 <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
                   <Sparkles size={18} />
-                  Try Free — 10 Credits
+                  Start {FREE_TRIAL_DAYS}-Day Free Trial
                   <ArrowRight size={18} />
                 </Link>
               </Button>
@@ -108,7 +109,7 @@ const AIAdvisorSection = () => {
             </div>
 
             <p className="text-sm text-muted-foreground mt-4">
-              No card required • Credits never expire
+              {FREE_TRIAL_CREDITS} free credits • No card required • 1 credit per message
             </p>
           </div>
         </div>
