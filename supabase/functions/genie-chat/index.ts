@@ -879,8 +879,11 @@ You're giving a morning briefing. Apply Pareto quickly:
 };
 
 serve(async (req) => {
+  // Use dynamic CORS headers that support the requesting origin
+  const dynamicCorsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: dynamicCorsHeaders });
   }
 
   try {
@@ -892,7 +895,7 @@ serve(async (req) => {
       console.error("[GENIE] Missing Supabase configuration");
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -914,7 +917,7 @@ serve(async (req) => {
         console.error("[GENIE] Missing authorization header");
         return new Response(
           JSON.stringify({ error: "Authentication required" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 401, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -930,7 +933,7 @@ serve(async (req) => {
         });
         return new Response(
           JSON.stringify({ error: "Invalid or expired authentication token" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 401, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -970,7 +973,7 @@ serve(async (req) => {
           error: "Invalid request format. Please check your input and try again.",
           details: validationResult.errors 
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -992,7 +995,7 @@ serve(async (req) => {
       // Return error to block the bot
       return new Response(
         JSON.stringify({ error: "Request could not be processed" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -1008,7 +1011,7 @@ serve(async (req) => {
         });
         return new Response(
           JSON.stringify({ error: "Your message could not be processed. Please rephrase and try again." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -1286,19 +1289,19 @@ serve(async (req) => {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again shortly." }), {
           status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Usage limit reached. Please add credits." }), {
           status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
         });
       }
       
       return new Response(JSON.stringify({ error: "Service temporarily unavailable" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -1347,13 +1350,13 @@ serve(async (req) => {
     })();
 
     return new Response(readable, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { ...dynamicCorsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
     console.error("[GENIE] Error:", error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
     });
   }
 });
