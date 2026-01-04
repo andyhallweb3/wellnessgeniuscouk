@@ -148,10 +148,10 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
   };
 
   const handleDelete = async (sub: Subscriber) => {
-    if (!confirm(`Are you sure you want to delete ${sub.email}?`)) return;
+    if (!confirm(`Are you sure you want to delete ${sub.email}? This will also remove them from Resend.`)) return;
 
     try {
-      const { error } = await supabase.functions.invoke("manage-subscribers", {
+      const { data, error } = await supabase.functions.invoke("manage-subscribers", {
         body: { action: "delete", subscriber: { id: sub.id } },
         headers: getAuthHeaders(),
       });
@@ -160,7 +160,7 @@ export const SubscriberManager = ({ getAuthHeaders }: SubscriberManagerProps) =>
 
       toast({
         title: "Subscriber Deleted",
-        description: `${sub.email} has been removed.`,
+        description: `${sub.email} has been removed.${data?.resendDeleted ? ' Also removed from Resend.' : ''}`,
       });
 
       fetchSubscribers();

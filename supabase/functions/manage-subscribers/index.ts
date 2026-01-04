@@ -231,6 +231,18 @@ Deno.serve(async (req) => {
           );
         }
 
+        // First get the subscriber email before deleting
+        const { data: subData, error: fetchError } = await supabase
+          .from('newsletter_subscribers')
+          .select('email')
+          .eq('id', subscriber.id)
+          .single();
+
+        if (fetchError) throw fetchError;
+        
+        const subscriberEmail = subData?.email;
+
+        // Delete from database
         const { error } = await supabase
           .from('newsletter_subscribers')
           .delete()
@@ -238,10 +250,63 @@ Deno.serve(async (req) => {
 
         if (error) throw error;
 
-        await logAudit('delete', 1, `id: ${subscriber.id}`);
+        // Also delete from Resend audience if we have the API key
+        const resendApiKey = Deno.env.get('RESEND_API_KEY');
+        let resendDeleted = false;
+        
+        if (resendApiKey && subscriberEmail) {
+          try {
+            // First, find the contact ID in Resend by listing contacts and filtering
+            const audienceId = 'f04e56ce-de81-43e9-aab3-fb0e10d1a1a0'; // Default audience
+            
+            // Search for the contact by email
+            const searchRes = await fetch(
+              `https://api.resend.com/audiences/${audienceId}/contacts?email=${encodeURIComponent(subscriberEmail)}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${resendApiKey}`,
+                },
+              }
+            );
+
+            if (searchRes.ok) {
+              const searchData = await searchRes.json();
+              const contact = searchData?.data?.find((c: any) => c.email.toLowerCase() === subscriberEmail.toLowerCase());
+              
+              if (contact?.id) {
+                // Delete the contact from Resend
+                const deleteRes = await fetch(
+                  `https://api.resend.com/audiences/${audienceId}/contacts/${contact.id}`,
+                  {
+                    method: 'DELETE',
+                    headers: {
+                      'Authorization': `Bearer ${resendApiKey}`,
+                    },
+                  }
+                );
+
+                if (deleteRes.ok) {
+                  resendDeleted = true;
+                  console.log('Deleted from Resend:', subscriberEmail);
+                } else {
+                  console.error('Failed to delete from Resend:', await deleteRes.text());
+                }
+              } else {
+                console.log('Contact not found in Resend audience:', subscriberEmail);
+              }
+            } else {
+              console.error('Failed to search Resend contacts:', await searchRes.text());
+            }
+          } catch (resendError) {
+            console.error('Resend deletion error:', resendError);
+            // Don't fail the whole operation if Resend fails
+          }
+        }
+
+        await logAudit('delete', 1, `id: ${subscriber.id}, email: ${subscriberEmail}, resend_deleted: ${resendDeleted}`);
 
         return new Response(
-          JSON.stringify({ success: true }),
+          JSON.stringify({ success: true, resendDeleted }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
