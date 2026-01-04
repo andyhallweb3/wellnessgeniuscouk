@@ -151,16 +151,14 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
     
     setSearchLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("newsletter_subscribers")
-        .select("id, email, name, is_active")
-        .ilike("email", `%${query}%`)
-        .eq("is_active", true)
-        .eq("bounced", false)
-        .limit(10);
+      // Use edge function to bypass RLS
+      const { data, error } = await supabase.functions.invoke("newsletter-run", {
+        body: { action: "search-subscribers", query },
+        headers: getAuthHeaders(),
+      });
 
       if (error) throw error;
-      setSearchResults(data || []);
+      setSearchResults(data?.subscribers || []);
     } catch (error) {
       console.error("Error searching subscribers:", error);
     } finally {
