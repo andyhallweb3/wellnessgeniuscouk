@@ -41,6 +41,7 @@ import KnowledgeBaseAdmin from "./pages/KnowledgeBaseAdmin";
 import CouponAnalyticsAdmin from "./pages/CouponAnalyticsAdmin";
 import Roadmap from "./pages/Roadmap";
 import Admin from "./pages/Admin";
+import AdminDocs from "./pages/AdminDocs";
 import Unsubscribe from "./pages/Unsubscribe";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -105,6 +106,7 @@ const App = () => (
             <Route path="/insights/:slug" element={<BlogPost />} />
             <Route path="/news" element={<LatestNews />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/docs" element={<AdminDocs />} />
             <Route path="/news/admin" element={<NewsletterAdmin />} />
             <Route path="/downloads/admin" element={<DownloadsAdmin />} />
             <Route path="/emails/admin" element={<EmailTemplatesAdmin />} />

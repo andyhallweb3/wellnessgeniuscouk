@@ -26,9 +26,18 @@ import {
   BookOpen,
   Gift,
   Home,
-  LayoutDashboard
+  LayoutDashboard,
+  FileText
 } from "lucide-react";
 const ADMIN_SECTIONS = [
+  { 
+    id: "docs", 
+    label: "Documentation", 
+    description: "Architecture, data models, and system overview",
+    icon: FileText,
+    path: "/admin/docs",
+    color: "bg-slate-500/10 text-slate-600"
+  },
   { 
     id: "newsletter", 
     label: "Newsletter", 
