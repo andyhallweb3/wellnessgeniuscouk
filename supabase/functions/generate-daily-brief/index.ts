@@ -126,12 +126,30 @@ serve(async (req) => {
       });
     }
 
-    // Recent activity (sessions)
+    // Recent conversations (sessions) - pull actual content for context
     if (sessions.length > 0) {
-      contextParts.push("\n## RECENT ACTIVITY");
+      contextParts.push("\n## RECENT CONVERSATIONS");
       sessions.forEach((s: any) => {
         const date = new Date(s.started_at).toLocaleDateString("en-GB");
-        contextParts.push(`- ${date}: ${s.mode} session${s.summary ? ` - ${s.summary}` : ""}`);
+        contextParts.push(`\n### ${date} - ${s.mode} session`);
+        if (s.summary) {
+          contextParts.push(`Summary: ${s.summary}`);
+        }
+        // Extract key topics from messages
+        if (s.messages && Array.isArray(s.messages)) {
+          const userMessages = s.messages
+            .filter((m: any) => m.role === "user")
+            .map((m: any) => m.content)
+            .slice(0, 3); // First 3 user questions
+          if (userMessages.length > 0) {
+            contextParts.push(`Topics discussed:`);
+            userMessages.forEach((msg: string) => {
+              // Truncate long messages
+              const truncated = msg.length > 150 ? msg.slice(0, 150) + "..." : msg;
+              contextParts.push(`- "${truncated}"`);
+            });
+          }
+        }
       });
     }
 
