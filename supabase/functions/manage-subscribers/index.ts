@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { validateAdminAuth, unauthorizedResponse } from '../_shared/admin-auth.ts';
-import { getCorsHeaders, corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 interface Subscriber {
   id: string;
@@ -12,8 +12,10 @@ interface Subscriber {
 }
 
 Deno.serve(async (req) => {
+  const dynamicCorsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: dynamicCorsHeaders });
   }
 
   try {
@@ -28,7 +30,7 @@ Deno.serve(async (req) => {
     
     if (!authResult.isAdmin) {
       console.log('Unauthorized access attempt to manage-subscribers');
-      return unauthorizedResponse(authResult.error || 'Unauthorized', corsHeaders);
+      return unauthorizedResponse(authResult.error || 'Unauthorized', dynamicCorsHeaders);
     }
 
     const supabase = createClient(
@@ -85,7 +87,7 @@ Deno.serve(async (req) => {
           },
           redemptions,
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -109,7 +111,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ subscribers: data }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -117,7 +119,7 @@ Deno.serve(async (req) => {
         if (!subscriber?.email) {
           return new Response(
             JSON.stringify({ error: 'Email is required' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -136,7 +138,7 @@ Deno.serve(async (req) => {
           if (error.code === '23505') {
             return new Response(
               JSON.stringify({ error: 'Email already exists' }),
-              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
             );
           }
           throw error;
@@ -146,7 +148,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ subscriber: data }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -154,7 +156,7 @@ Deno.serve(async (req) => {
         if (!emails || !Array.isArray(emails) || emails.length === 0) {
           return new Response(
             JSON.stringify({ error: 'Emails array is required' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -185,7 +187,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ added, skipped, total: emails.length }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -193,7 +195,7 @@ Deno.serve(async (req) => {
         if (!subscriber?.id) {
           return new Response(
             JSON.stringify({ error: 'Subscriber ID is required' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -215,7 +217,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ subscriber: data }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -223,7 +225,7 @@ Deno.serve(async (req) => {
         if (!subscriber?.id) {
           return new Response(
             JSON.stringify({ error: 'Subscriber ID is required' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -303,7 +305,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true, resendDeleted }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -311,7 +313,7 @@ Deno.serve(async (req) => {
         if (!email) {
           return new Response(
             JSON.stringify({ error: 'Email is required' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -403,7 +405,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ history }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -413,7 +415,7 @@ Deno.serve(async (req) => {
         if (!sendId || !targetEmail) {
           return new Response(
             JSON.stringify({ error: 'sendId and email are required' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -427,7 +429,7 @@ Deno.serve(async (req) => {
         if (sendError || !originalSend) {
           return new Response(
             JSON.stringify({ error: 'Original send not found' }),
-            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 404, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -452,7 +454,7 @@ Deno.serve(async (req) => {
         if (!htmlContent) {
           return new Response(
             JSON.stringify({ error: 'No email content found for this send' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -510,7 +512,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -522,7 +524,7 @@ Deno.serve(async (req) => {
         if (!sendId || !targetEmail) {
           return new Response(
             JSON.stringify({ error: 'sendId and email are required' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -536,14 +538,14 @@ Deno.serve(async (req) => {
         if (sendError || !newsletterSend) {
           return new Response(
             JSON.stringify({ error: 'Newsletter not found' }),
-            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 404, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
         if (!newsletterSend.email_html) {
           return new Response(
             JSON.stringify({ error: 'Newsletter content not available' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -593,14 +595,14 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       default:
         return new Response(
           JSON.stringify({ error: 'Invalid action' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
         );
     }
   } catch (error) {
@@ -608,7 +610,7 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...dynamicCorsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
