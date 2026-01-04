@@ -27,8 +27,8 @@ interface CoachProfile {
   onboarding_completed: boolean;
 }
 
-// Free trial credits for new users
-const FREE_TRIAL_CREDITS = 10;
+// Free trial configuration - imported from AdvisorModes for consistency
+import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS } from "@/components/advisor/AdvisorModes";
 
 export const useCoachCredits = () => {
   const { user } = useAuth();

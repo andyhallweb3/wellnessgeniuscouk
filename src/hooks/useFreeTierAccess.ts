@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS } from "@/components/advisor/AdvisorModes";
 
 interface FreeTierAccess {
   id: string;
@@ -21,7 +22,8 @@ export const useFreeTierAccess = (feature: string = "advisor") => {
       return;
     }
 
-    const fetchAccess = async () => {
+    const fetchOrCreateAccess = async () => {
+      // First, try to get existing access
       const { data, error } = await supabase
         .from("free_tier_access")
         .select("*")
@@ -31,18 +33,51 @@ export const useFreeTierAccess = (feature: string = "advisor") => {
 
       if (error) {
         console.error("Error fetching free tier access:", error);
+        setIsLoading(false);
+        return;
       }
       
-      setAccess(data);
+      if (data) {
+        setAccess(data);
+        setIsLoading(false);
+        return;
+      }
+
+      // No existing access - create new free trial with 15 days
+      const trialExpiresAt = new Date();
+      trialExpiresAt.setDate(trialExpiresAt.getDate() + FREE_TRIAL_DAYS);
+
+      const { data: newAccess, error: createError } = await supabase
+        .from("free_tier_access")
+        .insert({
+          user_id: user.id,
+          feature,
+          credits_remaining: FREE_TRIAL_CREDITS,
+          trial_expires_at: trialExpiresAt.toISOString(),
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("Error creating free tier access:", createError);
+      } else {
+        setAccess(newAccess);
+      }
+      
       setIsLoading(false);
     };
 
-    fetchAccess();
+    fetchOrCreateAccess();
   }, [user, feature]);
 
   const hasCredits = access && access.credits_remaining > 0;
   const isTrialActive = access && new Date(access.trial_expires_at) > new Date();
   const hasAccess = hasCredits && isTrialActive;
+
+  // Calculate days remaining
+  const daysRemaining = access 
+    ? Math.max(0, Math.ceil((new Date(access.trial_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
 
   const useCredit = async () => {
     if (!user || !access || access.credits_remaining <= 0) {
@@ -72,6 +107,7 @@ export const useFreeTierAccess = (feature: string = "advisor") => {
     isTrialActive,
     hasAccess,
     creditsRemaining: access?.credits_remaining ?? 0,
+    daysRemaining,
     trialExpiresAt: access?.trial_expires_at,
     useCredit,
   };
