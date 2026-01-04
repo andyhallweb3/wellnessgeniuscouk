@@ -3,7 +3,7 @@ import { ArrowRight, Play, Sparkles, Brain, MessageSquare, Mic } from "lucide-re
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
-
+import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS } from "@/components/advisor/AdvisorModes";
 // Import real client logos
 import nuformaLogo from "@/assets/logos/nuforma.png";
 import equesoulLogo from "@/assets/logos/equesoul.jpeg";
@@ -75,7 +75,7 @@ const HeroNew = () => {
             <div className="flex flex-col sm:flex-row items-start gap-4 mb-8 animate-fade-up animation-delay-200">
               <Button variant="accent" size="xl" asChild className="shadow-glow text-base px-8 w-full sm:w-auto">
                 <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
-                  Try Free — No Card Required
+                  Start {FREE_TRIAL_DAYS}-Day Free Trial
                   <ArrowRight size={18} />
                 </Link>
               </Button>
@@ -88,7 +88,7 @@ const HeroNew = () => {
             </div>
 
             <p className="text-sm text-muted-foreground animate-fade-up animation-delay-300">
-              10 free credits • Start in under 2 minutes • No commitment
+              {FREE_TRIAL_CREDITS} free credits • 1 credit per message • No card required
             </p>
           </div>
 
@@ -140,7 +140,7 @@ const HeroNew = () => {
                 {/* Typing indicator */}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  Response time: 47 seconds • 2 credits
+                  Response time: 47 seconds • 1 credit
                 </div>
               </div>
 

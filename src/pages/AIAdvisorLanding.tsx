@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { ADVISOR_MODES, CREDIT_PACKS, getModesByCategory } from "@/components/advisor/AdvisorModes";
+import { ADVISOR_MODES, CREDIT_PACKS, FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS, getModesByCategory } from "@/components/advisor/AdvisorModes";
 import { getAdvisorIcon } from "@/components/advisor/AdvisorIcons";
 import AnimatedConversation from "@/components/advisor/AnimatedConversation";
 import TryItNowSection from "@/components/advisor/TryItNowSection";
@@ -135,7 +135,7 @@ const AIAdvisorLanding = () => {
                 </div>
 
                 <p className="text-sm text-muted-foreground mt-4">
-                  5 free credits to start • No card required
+                  {FREE_TRIAL_DAYS}-day free trial • {FREE_TRIAL_CREDITS} credits • No card required
                 </p>
               </div>
             </div>
@@ -380,7 +380,7 @@ const AIAdvisorLanding = () => {
                 <div className="space-y-4">
                   <Button size="xl" variant="hero" asChild>
                     <Link to={user ? "/genie" : "/auth"}>
-                      Start with 5 Free Credits
+                      Start {FREE_TRIAL_DAYS}-Day Free Trial
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                   </Button>

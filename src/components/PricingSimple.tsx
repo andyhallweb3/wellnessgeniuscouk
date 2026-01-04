@@ -2,6 +2,7 @@ import { Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS, CREDIT_PACKS } from "@/components/advisor/AdvisorModes";
 
 const PricingSimple = () => {
   const { user } = useAuth();
@@ -14,21 +15,21 @@ const PricingSimple = () => {
             Simple, transparent pricing
           </h2>
           <p className="text-muted-foreground">
-            No subscriptions. No lock-in. Pay only when you use it.
+            {FREE_TRIAL_DAYS}-day free trial. Then pay per message. No subscriptions.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {/* Free */}
+          {/* Free Trial */}
           <div className="bg-card border border-border rounded-2xl p-8">
-            <h3 className="text-xl font-semibold mb-1">Free</h3>
-            <p className="text-sm text-muted-foreground mb-4">Try it risk-free</p>
+            <h3 className="text-xl font-semibold mb-1">Free Trial</h3>
+            <p className="text-sm text-muted-foreground mb-4">{FREE_TRIAL_DAYS} days to explore</p>
             <p className="text-4xl font-bold mb-6">£0</p>
             
             <ul className="space-y-3 mb-8">
               <li className="flex items-center gap-3 text-sm">
                 <Check size={16} className="text-green-500" />
-                10 free credits
+                {FREE_TRIAL_CREDITS} free credits
               </li>
               <li className="flex items-center gap-3 text-sm">
                 <Check size={16} className="text-green-500" />
@@ -36,7 +37,7 @@ const PricingSimple = () => {
               </li>
               <li className="flex items-center gap-3 text-sm">
                 <Check size={16} className="text-green-500" />
-                AI Readiness Assessment
+                Voice mode included
               </li>
               <li className="flex items-center gap-3 text-sm">
                 <Check size={16} className="text-green-500" />
@@ -46,7 +47,7 @@ const PricingSimple = () => {
 
             <Button variant="outline" className="w-full" asChild>
               <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
-                Start Free
+                Start Free Trial
                 <ArrowRight size={16} />
               </Link>
             </Button>
@@ -59,12 +60,12 @@ const PricingSimple = () => {
             </div>
             
             <h3 className="text-xl font-semibold mb-1">Pay As You Go</h3>
-            <p className="text-sm text-muted-foreground mb-4">Buy credits when needed</p>
+            <p className="text-sm text-muted-foreground mb-4">1 credit per message</p>
             <p className="text-4xl font-bold mb-1">
-              £0.36
-              <span className="text-base font-normal text-muted-foreground">/credit</span>
+              £{(CREDIT_PACKS[0].price / CREDIT_PACKS[0].credits).toFixed(2)}
+              <span className="text-base font-normal text-muted-foreground">/message</span>
             </p>
-            <p className="text-xs text-muted-foreground mb-6">From £9 for 25 credits</p>
+            <p className="text-xs text-muted-foreground mb-6">From £{CREDIT_PACKS[0].price} for {CREDIT_PACKS[0].credits} credits</p>
             
             <ul className="space-y-3 mb-8">
               <li className="flex items-center gap-3 text-sm">

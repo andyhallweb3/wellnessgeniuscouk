@@ -3,41 +3,41 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
+import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS, CREDIT_PACKS } from "@/components/advisor/AdvisorModes";
+
 const tiers = [
   {
-    name: "Free",
+    name: "Free Trial",
     price: "£0",
-    description: "Get started and explore",
+    description: `${FREE_TRIAL_DAYS} days to explore everything`,
     highlight: false,
-    cta: "Start Free",
+    cta: "Start Free Trial",
     ctaLink: "/auth?redirect=/genie",
     features: [
+      { name: `${FREE_TRIAL_CREDITS} free credits`, included: true },
+      { name: "All 8 expert modes", included: true },
+      { name: "Voice mode included", included: true },
+      { name: "Business memory", included: true },
       { name: "AI Readiness Assessment", included: true },
-      { name: "10 AI Advisor credits", included: true },
-      { name: "Basic business insights", included: true },
-      { name: "Email support", included: true },
-      { name: "Voice mode", included: false },
-      { name: "Business memory", included: false },
-      { name: "Priority responses", included: false },
-      { name: "Downloadable reports", included: false },
+      { name: "No card required", included: true },
     ],
   },
   {
     name: "Pay As You Go",
-    price: "From £9",
+    price: `From £${CREDIT_PACKS[0].price}`,
     description: "Buy credits when you need them",
     highlight: true,
     cta: "Get Credits",
     ctaLink: "/auth?redirect=/genie",
     features: [
-      { name: "AI Readiness Assessment", included: true },
-      { name: "25-200 AI Advisor credits", included: true },
+      { name: `${CREDIT_PACKS[0].credits}-${CREDIT_PACKS[2].credits} credits per pack`, included: true },
+      { name: "1 credit per message", included: true },
       { name: "All 8 expert modes", included: true },
       { name: "Voice mode", included: true },
       { name: "Business memory", included: true },
       { name: "Priority responses", included: true },
       { name: "Downloadable reports", included: true },
-      { name: "Email + chat support", included: true },
+      { name: "Credits never expire", included: true },
     ],
   },
   {
@@ -54,8 +54,6 @@ const tiers = [
       { name: "Team training workshops", included: true },
       { name: "Integration support", included: true },
       { name: "Dedicated account manager", included: true },
-      { name: "SLA guarantees", included: true },
-      { name: "White-label options", included: true },
     ],
   },
 ];
@@ -154,25 +152,18 @@ const PricingComparison = () => {
         <div className="mt-12 max-w-3xl mx-auto">
           <div className="bg-background rounded-xl border border-border p-6">
             <h3 className="font-semibold mb-4 text-center">Credit Pack Options</h3>
+            <p className="text-sm text-muted-foreground text-center mb-4">1 credit = 1 message • Credits never expire</p>
             <div className="grid sm:grid-cols-3 gap-4">
-              <div className="text-center p-4 rounded-lg bg-secondary/50">
-                <p className="text-2xl font-bold">25</p>
-                <p className="text-sm text-muted-foreground mb-1">credits</p>
-                <p className="font-semibold">£9</p>
-                <p className="text-xs text-muted-foreground">£0.36/credit</p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-accent/10 border border-accent/20">
-                <p className="text-2xl font-bold text-accent">75</p>
-                <p className="text-sm text-muted-foreground mb-1">credits</p>
-                <p className="font-semibold">£19</p>
-                <p className="text-xs text-accent">Save 24%</p>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-secondary/50">
-                <p className="text-2xl font-bold">200</p>
-                <p className="text-sm text-muted-foreground mb-1">credits</p>
-                <p className="font-semibold">£39</p>
-                <p className="text-xs text-green-500">Save 46%</p>
-              </div>
+              {CREDIT_PACKS.map((pack, i) => (
+                <div key={pack.credits} className={`text-center p-4 rounded-lg ${i === 1 ? 'bg-accent/10 border border-accent/20' : 'bg-secondary/50'}`}>
+                  <p className={`text-2xl font-bold ${i === 1 ? 'text-accent' : ''}`}>{pack.credits}</p>
+                  <p className="text-sm text-muted-foreground mb-1">credits</p>
+                  <p className="font-semibold">£{pack.price}</p>
+                  <p className={`text-xs ${pack.savings ? (i === 1 ? 'text-accent' : 'text-green-500') : 'text-muted-foreground'}`}>
+                    {pack.savings || `£${(pack.price / pack.credits).toFixed(2)}/credit`}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
