@@ -7,11 +7,7 @@ import {
   validateInput,
   CoachRequestSchema 
 } from "../_shared/prompt-guard.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
 
 // C.L.E.A.R Framework system prompt
 const CLEAR_SYSTEM_PROMPT = `You are the Wellness Genius AI Coach — a commercial advisor for wellness, fitness, and health-adjacent businesses.
