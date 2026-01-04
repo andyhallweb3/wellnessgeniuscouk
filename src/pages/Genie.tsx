@@ -139,9 +139,19 @@ const Genie = () => {
     }
   }, [searchParams]);
 
+  // Scroll within chat area only - not the whole page
+  const scrollToBottomOfChat = useCallback(() => {
+    if (messagesEndRef.current) {
+      const container = messagesEndRef.current.parentElement;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    scrollToBottomOfChat();
+  }, [messages, scrollToBottomOfChat]);
 
   const handleOnboardingComplete = async (data: GenieOnboardingData) => {
     const success = await saveMemory({

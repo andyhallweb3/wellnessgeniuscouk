@@ -6,7 +6,8 @@ import {
   TrendingUp, 
   Briefcase, 
   Calendar, 
-  Wrench 
+  Wrench,
+  Globe
 } from "lucide-react";
 
 // Map icon names to Lucide components for use across the app
@@ -19,6 +20,7 @@ export const ADVISOR_ICON_MAP: Record<string, React.ComponentType<{ size?: numbe
   Briefcase,
   Calendar,
   Wrench,
+  Globe,
 };
 
 export const getAdvisorIcon = (iconName: string, size: number = 20, className?: string) => {

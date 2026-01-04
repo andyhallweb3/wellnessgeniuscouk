@@ -101,6 +101,21 @@ export const ADVISOR_MODES: AdvisorMode[] = [
     ],
   },
 
+  {
+    id: "competitor_scan",
+    name: "Competitor Scan",
+    icon: "Globe",
+    tagline: "Who's winning and why?",
+    description: "Web research on competitors. Find gaps, risks, and differentiation opportunities.",
+    creditCost: 5,
+    category: "strategic",
+    examples: [
+      "Research my main competitors in [city/niche]",
+      "What are other wellness studios doing with AI?",
+      "Analyse [competitor name] - what are they doing well?",
+    ],
+  },
+
   // Planning & Building
   {
     id: "weekly_review",
@@ -130,6 +145,20 @@ export const ADVISOR_MODES: AdvisorMode[] = [
       "Prioritise my tech investment for next quarter",
     ],
   },
+  {
+    id: "market_research",
+    name: "Market Research",
+    icon: "Search",
+    tagline: "What's happening in wellness?",
+    description: "Web research on market trends, news, and industry developments.",
+    creditCost: 4,
+    category: "planning",
+    examples: [
+      "What's new in wellness tech this month?",
+      "Research trends in boutique fitness 2025",
+      "What are the latest wellness industry statistics?",
+    ],
+  },
 ];
 
 export const getModeById = (id: string): AdvisorMode => {
@@ -139,6 +168,9 @@ export const getModeById = (id: string): AdvisorMode => {
 export const getModesByCategory = (category: AdvisorMode["category"]): AdvisorMode[] => {
   return ADVISOR_MODES.filter((m) => m.category === category);
 };
+
+// Modes that use web research
+export const WEB_RESEARCH_MODES = ["competitor_scan", "market_research"];
 
 // Credit pack pricing for usage-based model
 export interface CreditPack {
