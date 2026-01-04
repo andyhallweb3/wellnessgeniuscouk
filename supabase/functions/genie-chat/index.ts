@@ -1114,6 +1114,18 @@ serve(async (req) => {
 
     const { messages, mode = "daily_operator", memoryContext: rawMemoryContext, documentContext, webContext, _hp_field, isTrialMode } = rawBody;
     
+    // Premium modes that require subscription (not available on free trial)
+    const PREMIUM_MODES = ["competitor_scan"];
+    
+    // Block premium modes for trial users at the backend level
+    if (isTrialMode && PREMIUM_MODES.includes(mode)) {
+      console.log("[GENIE] Trial user blocked from premium mode:", mode);
+      return new Response(
+        JSON.stringify({ error: "Competitor Scan requires a subscription. Please upgrade to access this feature." }),
+        { status: 403, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     // Normalize memoryContext to string (it may come as an object from the client)
     const memoryContext = typeof rawMemoryContext === 'string' 
       ? rawMemoryContext 
@@ -1404,7 +1416,14 @@ serve(async (req) => {
     const useProModel = strategicModes.includes(mode) && !isTrialMode;
     const selectedModel = useProModel ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
 
-    console.log("[GENIE] Using model:", selectedModel, "for mode:", mode);
+    // Competitor scan needs more tokens for full 8-section output
+    const getMaxTokens = (m: string): number => {
+      if (m === "competitor_scan") return 8000; // Full competitive analysis
+      if (strategicModes.includes(m)) return 4000;
+      return 1500;
+    };
+
+    console.log("[GENIE] Using model:", selectedModel, "for mode:", mode, "max_tokens:", getMaxTokens(mode));
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -1418,7 +1437,7 @@ serve(async (req) => {
           { role: "system", content: fullSystemPrompt },
           ...messages,
         ],
-        max_tokens: strategicModes.includes(mode) ? 4000 : 1500,
+        max_tokens: getMaxTokens(mode),
         stream: true,
       }),
     });

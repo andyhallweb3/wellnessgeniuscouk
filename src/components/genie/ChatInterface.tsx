@@ -15,9 +15,10 @@ import {
   Target,
   Search,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  Lock
 } from "lucide-react";
-import { ADVISOR_MODES, getModeById, WEB_RESEARCH_MODES, CREDIT_COST_PER_MESSAGE } from "@/components/advisor/AdvisorModes";
+import { ADVISOR_MODES, getModeById, WEB_RESEARCH_MODES, CREDIT_COST_PER_MESSAGE, PREMIUM_MODES } from "@/components/advisor/AdvisorModes";
 import { getAdvisorIcon } from "@/components/advisor/AdvisorIcons";
 import GenieMessage, { TrustMetadata } from "@/components/genie/GenieMessage";
 import { BriefData } from "@/components/genie/DailyBriefCard";
@@ -151,6 +152,7 @@ export default function ChatInterface({
         documentContext: documentContext || undefined,
         webContext: webContext || undefined,
         _hp_field: "",
+        isTrialMode: isFreeTrial || false,
       }),
     });
 
@@ -289,6 +291,12 @@ export default function ChatInterface({
       return;
     }
 
+    // Block premium modes for free trial users
+    if (isFreeTrial && PREMIUM_MODES.includes(selectedMode)) {
+      toast.error("Competitor Scan requires a subscription. Upgrade to access this feature.");
+      return;
+    }
+
     const userMessage: Message = { role: "user", content: trimmedInput };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
@@ -364,28 +372,39 @@ export default function ChatInterface({
               {quickModes.map((mode) => {
                 const isSelected = selectedMode === mode.id;
                 const isWeb = WEB_RESEARCH_MODES.includes(mode.id);
+                const isPremium = PREMIUM_MODES.includes(mode.id);
+                const isLocked = isPremium && isFreeTrial;
                 
                 return (
                   <Tooltip key={mode.id}>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={() => hasEnoughCredits && setSelectedMode(mode.id)}
+                        onClick={() => {
+                          if (isLocked) {
+                            toast.error("Competitor Scan requires a subscription. Upgrade to unlock.");
+                            return;
+                          }
+                          hasEnoughCredits && setSelectedMode(mode.id);
+                        }}
                         disabled={!hasEnoughCredits || isStreaming}
                         className={cn(
                           "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0",
                           isSelected
                             ? "bg-accent text-accent-foreground"
+                            : isLocked
+                            ? "bg-secondary/50 text-foreground/50 border border-dashed border-foreground/20"
                             : "bg-secondary/80 hover:bg-secondary text-foreground/80 hover:text-foreground",
                           !hasEnoughCredits && "opacity-40 cursor-not-allowed"
                         )}
                       >
-                        {getAdvisorIcon(mode.icon, 12)}
+                        {isLocked ? <Lock size={12} className="opacity-60" /> : getAdvisorIcon(mode.icon, 12)}
                         <span>{mode.name}</span>
-                        {isWeb && <Globe size={10} className="opacity-60" />}
+                        {isWeb && !isLocked && <Globe size={10} className="opacity-60" />}
+                        {isLocked && <span className="text-[10px] opacity-60">PRO</span>}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
-                      <p>{mode.tagline}</p>
+                      <p>{isLocked ? "Upgrade to access Competitor Scan" : mode.tagline}</p>
                     </TooltipContent>
                   </Tooltip>
                 );
@@ -394,28 +413,39 @@ export default function ChatInterface({
               {/* More modes */}
               {ADVISOR_MODES.filter(m => !quickModes.some(q => q.id === m.id)).map((mode) => {
                 const isWeb = WEB_RESEARCH_MODES.includes(mode.id);
+                const isPremium = PREMIUM_MODES.includes(mode.id);
+                const isLocked = isPremium && isFreeTrial;
                 
                 return (
                   <Tooltip key={mode.id}>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={() => hasEnoughCredits && setSelectedMode(mode.id)}
+                        onClick={() => {
+                          if (isLocked) {
+                            toast.error("This mode requires a subscription. Upgrade to unlock.");
+                            return;
+                          }
+                          hasEnoughCredits && setSelectedMode(mode.id);
+                        }}
                         disabled={!hasEnoughCredits || isStreaming}
                         className={cn(
                           "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0",
                           selectedMode === mode.id
                             ? "bg-accent text-accent-foreground"
+                            : isLocked
+                            ? "bg-secondary/30 text-foreground/40 border border-dashed border-foreground/10"
                             : "bg-secondary/50 hover:bg-secondary text-foreground/60 hover:text-foreground",
                           !hasEnoughCredits && "opacity-40 cursor-not-allowed"
                         )}
                       >
-                        {getAdvisorIcon(mode.icon, 12)}
+                        {isLocked ? <Lock size={12} className="opacity-50" /> : getAdvisorIcon(mode.icon, 12)}
                         <span>{mode.name}</span>
-                        {isWeb && <Globe size={10} className="opacity-60" />}
+                        {isWeb && !isLocked && <Globe size={10} className="opacity-60" />}
+                        {isLocked && <span className="text-[10px] opacity-50">PRO</span>}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
-                      <p>{mode.tagline}</p>
+                      <p>{isLocked ? "Upgrade to access this mode" : mode.tagline}</p>
                     </TooltipContent>
                   </Tooltip>
                 );

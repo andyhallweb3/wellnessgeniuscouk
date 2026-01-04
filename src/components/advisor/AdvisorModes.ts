@@ -175,6 +175,9 @@ export const getModesByCategory = (category: AdvisorMode["category"]): AdvisorMo
 // Modes that use web research
 export const WEB_RESEARCH_MODES = ["competitor_scan", "market_research"];
 
+// Premium modes that require subscription (not available on free trial)
+export const PREMIUM_MODES = ["competitor_scan"];
+
 // Credit pack pricing - better value with simpler pricing
 export interface CreditPack {
   id: string;
