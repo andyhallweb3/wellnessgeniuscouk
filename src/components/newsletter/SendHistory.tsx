@@ -13,11 +13,11 @@ import {
   Users,
   Mail,
   MousePointer,
-  TrendingUp,
   RotateCcw,
   ChevronDown,
   ChevronUp,
-  XCircle
+  XCircle,
+  UserPlus
 } from "lucide-react";
 import EmailDeliveryMetrics from "@/components/admin/EmailDeliveryMetrics";
 import {
@@ -60,6 +60,7 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
   const [recipientErrors, setRecipientErrors] = useState<Record<string, RecipientError[]>>({});
   const [loadingErrors, setLoadingErrors] = useState<Record<string, boolean>>({});
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [resending, setResending] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRecentSends();
@@ -129,6 +130,40 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
       });
     } finally {
       setRetrying(null);
+    }
+  };
+
+  const resendToNewSubscribers = async (sendId: string) => {
+    setResending(sendId);
+    try {
+      const { data, error } = await supabase.functions.invoke("newsletter-run", {
+        body: { action: "resend-to-new", sendId },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data.count === 0) {
+        toast({
+          title: "No new subscribers",
+          description: data.message || "All subscribers have already received this newsletter.",
+        });
+      } else {
+        toast({
+          title: "Sending to new subscribers",
+          description: `Sending to ${data.count} subscriber(s) who joined after this newsletter.`,
+        });
+        fetchRecentSends();
+      }
+    } catch (error) {
+      toast({
+        title: "Resend failed",
+        description: error instanceof Error ? error.message : "Failed to resend to new subscribers",
+        variant: "destructive",
+      });
+    } finally {
+      setResending(null);
     }
   };
 
@@ -333,6 +368,22 @@ export const SendHistory = ({ getAuthHeaders }: SendHistoryProps) => {
                       )}
                     </div>
                     <div className="flex gap-2 flex-wrap">
+                      {send.status === "sent" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => resendToNewSubscribers(send.id)}
+                          disabled={resending === send.id}
+                          className="gap-1"
+                        >
+                          {resending === send.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <UserPlus className="h-3 w-3" />
+                          )}
+                          Send to New
+                        </Button>
+                      )}
                       {(send.status === "failed" || send.status === "partial") && (
                         <Button
                           variant="outline"
