@@ -3175,35 +3175,50 @@ export const generateStructuredAIEbook = (): jsPDF => {
   const doc = new jsPDF();
   const totalPages = 12;
   
-  // Page 1 - Cover
+  // Page 1 - Cover (refined typography)
   addHeader(doc, 1, totalPages);
   
-  doc.setFontSize(14);
+  // Decorative line above title
+  doc.setDrawColor(...BRAND.teal);
+  doc.setLineWidth(0.5);
+  doc.line(70, 55, 140, 55);
+  
+  doc.setFontSize(11);
   doc.setTextColor(...BRAND.teal);
-  doc.text("EXECUTIVE BRIEF", 105, 70, { align: "center" });
+  doc.text("EXECUTIVE BRIEF", 105, 68, { align: "center" });
   
-  doc.setFontSize(36);
+  doc.setFontSize(32);
   doc.setTextColor(...BRAND.white);
-  doc.text("Structured AI for", 105, 100, { align: "center" });
-  doc.text("Wellness Operators", 105, 120, { align: "center" });
+  doc.text("Structured AI for", 105, 95, { align: "center" });
+  doc.setFontSize(34);
+  doc.text("Wellness Operators", 105, 115, { align: "center" });
   
-  doc.setFontSize(18);
+  // Decorative line below title
+  doc.line(70, 125, 140, 125);
+  
+  doc.setFontSize(16);
   doc.setTextColor(...BRAND.muted);
-  doc.text("From Chatbots to Decision Infrastructure", 105, 150, { align: "center" });
+  doc.text("From Chatbots to Decision Infrastructure", 105, 145, { align: "center" });
   
+  // Sources box with subtle border
   doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(50, 180, 110, 50, 5, 5, "F");
-  doc.setFontSize(10);
+  doc.setDrawColor(60, 60, 65);
+  doc.roundedRect(45, 170, 120, 55, 5, 5, "FD");
+  doc.setFontSize(9);
   doc.setTextColor(...BRAND.muted);
-  doc.text("Sources include:", 105, 195, { align: "center" });
-  doc.setTextColor(...BRAND.white);
-  doc.text("Global Wellness Institute • Leisure Database Company", 105, 210, { align: "center" });
-  doc.text("Health Club Management • MVP Index", 105, 222, { align: "center" });
-  
+  doc.text("Research sources:", 105, 185, { align: "center" });
   doc.setFontSize(10);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Global Wellness Institute", 105, 198, { align: "center" });
+  doc.text("Leisure Database Company", 105, 208, { align: "center" });
+  doc.text("Health Club Management", 105, 218, { align: "center" });
+  
+  doc.setFontSize(11);
   doc.setTextColor(...BRAND.teal);
-  doc.text("Wellness Genius", 105, 260, { align: "center" });
-  doc.text("wellnessgenius.co.uk", 105, 270, { align: "center" });
+  doc.text("Wellness Genius", 105, 250, { align: "center" });
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("wellnessgenius.co.uk", 105, 260, { align: "center" });
   
   // Page 2 - Why This Matters Now
   doc.addPage();
@@ -3526,18 +3541,21 @@ export const generateStructuredAIEbook = (): jsPDF => {
   doc.text("When you apply structure, AI becomes:", 20, 65);
   
   const outcomes = [
-    { icon: "🎯", label: "A decision-support system", desc: "Not just a content generator" },
-    { icon: "🔄", label: "A consistency layer across teams", desc: "Same quality, every time" },
-    { icon: "🛡️", label: "A safer use of AI", desc: "Guardrails baked in" }
+    { num: "01", label: "A decision-support system", desc: "Not just a content generator" },
+    { num: "02", label: "A consistency layer across teams", desc: "Same quality, every time" },
+    { num: "03", label: "A safer use of AI", desc: "Guardrails baked in" }
   ];
   
   yPos = 90;
   outcomes.forEach(o => {
     doc.setFillColor(...BRAND.cardBg);
     doc.roundedRect(25, yPos - 5, 160, 35, 3, 3, "F");
-    doc.setFontSize(14);
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.teal);
+    doc.text(o.num, 35, yPos + 10);
+    doc.setFontSize(13);
     doc.setTextColor(...BRAND.white);
-    doc.text(o.icon + " " + o.label, 35, yPos + 10);
+    doc.text(o.label, 50, yPos + 10);
     doc.setFontSize(11);
     doc.setTextColor(...BRAND.muted);
     doc.text(o.desc, 50, yPos + 24);
