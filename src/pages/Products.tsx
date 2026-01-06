@@ -59,6 +59,25 @@ interface Product {
 const products: Product[] = [
   // Free Products
   {
+    id: "structured-ai-ebook",
+    name: "How to Structure AI in Your Wellness Business",
+    description: "Free 30-page ebook covering data, process, risk, and people pillars for sustainable AI adoption in wellness operations.",
+    price: "Free",
+    type: "free",
+    icon: <BookOpen size={24} />,
+    features: [
+      "30-page comprehensive guide",
+      "4 critical AI pillars covered",
+      "Practical frameworks & checklists",
+      "Industry-specific examples",
+    ],
+    cta: "Get Free Ebook",
+    link: "/hub/structured-ai-ebook",
+    badge: "New",
+    upsellText: "Get scored insights: AI Readiness Score →",
+    upsellProduct: "readiness-score",
+  },
+  {
     id: "reality-checklist",
     name: "90-Day AI Reality Checklist",
     description: "Structured one-page checklist built on the C.L.E.A.R planning engine. Pin it to your wall, run it with your team.",
