@@ -14,6 +14,23 @@ export interface DownloadableResource {
 }
 
 export const DOWNLOADABLE_RESOURCES: DownloadableResource[] = [
+  // Executive Ebook
+  {
+    id: "structured-ai-ebook",
+    title: "Structured AI for Wellness Operators",
+    subtitle: "From Chatbots to Decision Infrastructure",
+    description: "A strategic framework for wellness leaders. Learn how structured AI improves decision quality, backed by GWI, Leisure DB, and industry research.",
+    pillar: "Executive Insights",
+    format: "guide",
+    isPremium: false,
+    previewPoints: [
+      "The Wellness AI Operating Framework",
+      "Intent, Context, Constraints, Output Contracts",
+      "Supplier & Partner value hooks",
+      "Industry sources and benchmarks",
+    ],
+    fullDescription: "12-page executive brief with the complete framework for using AI as decision infrastructure, not just automation.",
+  },
   // Transformation Readiness Resources
   {
     id: "transformation-audit",
