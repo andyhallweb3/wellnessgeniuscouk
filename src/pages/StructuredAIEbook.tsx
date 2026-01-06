@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { generateStructuredAIEbook } from "@/lib/pdf-generators";
+import { useDownloadTracking } from "@/hooks/useDownloadTracking";
 import { 
   Download, 
   Loader2, 
@@ -22,74 +23,103 @@ import {
   Building2,
   ExternalLink,
   BookOpen,
-  Sparkles
+  Sparkles,
+  ArrowLeft,
+  Lock
 } from "lucide-react";
 
 const StructuredAIEbook = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [company, setCompany] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { trackDownload } = useDownloadTracking();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [hasDownloaded, setHasDownloaded] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email.trim()) {
-      toast.error("Please enter your email address");
+  // Check if user has already downloaded this ebook
+  useEffect(() => {
+    const checkPreviousDownload = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from("product_downloads")
+          .select("id")
+          .eq("product_id", "structured-ai-ebook")
+          .eq("email", user.email)
+          .limit(1)
+          .maybeSingle();
+        
+        if (data) {
+          setHasDownloaded(true);
+        }
+      }
+    };
+    checkPreviousDownload();
+  }, [user]);
+
+  const handleDownload = async () => {
+    if (!user) {
+      // Redirect to auth with return URL
+      navigate("/auth?redirect=/hub/structured-ai-ebook&from=download");
       return;
     }
 
-    setIsSubmitting(true);
+    setIsDownloading(true);
 
     try {
-      // Save to newsletter_subscribers
-      await supabase
-        .from("newsletter_subscribers")
-        .insert({
-          email: email.trim().toLowerCase(),
-          name: name.trim() || null,
-          source: "ebook-structured-ai",
-        })
-        .select()
-        .maybeSingle();
+      // Log the download if first time
+      if (!hasDownloaded) {
+        await supabase
+          .from("product_downloads")
+          .insert({
+            email: user.email!,
+            name: user.user_metadata?.full_name || null,
+            product_id: "structured-ai-ebook",
+            product_name: "Structured AI for Wellness Operators",
+            product_type: "free",
+            download_type: "free",
+          });
+        
+        // Also add to newsletter subscribers if not already
+        await supabase
+          .from("newsletter_subscribers")
+          .upsert({
+            email: user.email!.toLowerCase(),
+            name: user.user_metadata?.full_name || null,
+            source: "ebook-structured-ai",
+          }, { onConflict: "email" });
+      }
 
-      // Log the download (company stored in name field for now since no company column)
-      await supabase
-        .from("product_downloads")
-        .insert({
-          email: email.trim().toLowerCase(),
-          name: company.trim() ? `${name.trim()} (${company.trim()})` : name.trim() || null,
-          product_id: "structured-ai-ebook",
-          product_name: "Structured AI for Wellness Operators",
-          product_type: "ebook",
-          download_type: "free",
-        });
+      // Track the download
+      await trackDownload({
+        productId: "structured-ai-ebook",
+        productName: "Structured AI for Wellness Operators",
+        downloadType: hasDownloaded ? "redownload" : "free",
+        productType: "free",
+      });
 
-      setIsSuccess(true);
-      toast.success("Check your downloads folder!");
-      
       // Generate and download PDF
-      setTimeout(() => {
-        const doc = generateStructuredAIEbook();
-        doc.save("Structured-AI-Wellness-Operators.pdf");
-      }, 500);
+      const doc = generateStructuredAIEbook();
+      doc.save("Structured-AI-Wellness-Operators.pdf");
+      
+      setHasDownloaded(true);
+      toast.success("Download started!");
 
-      // Trigger upsell email
-      supabase.functions.invoke("send-download-upsell", {
-        body: { 
-          email: email.trim().toLowerCase(), 
-          name: name.trim() || null,
-          productId: "structured-ai-ebook",
-          productName: "Structured AI for Wellness Operators",
-        },
-      }).catch(console.error);
+      // Trigger upsell email for first-time downloads
+      if (!hasDownloaded) {
+        supabase.functions.invoke("send-download-upsell", {
+          body: { 
+            email: user.email!.toLowerCase(), 
+            name: user.user_metadata?.full_name || null,
+            productId: "structured-ai-ebook",
+            productName: "Structured AI for Wellness Operators",
+          },
+        }).catch(console.error);
+      }
 
     } catch (error) {
       console.error("Error:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      setIsDownloading(false);
     }
   };
 
@@ -112,361 +142,324 @@ const StructuredAIEbook = () => {
     {
       icon: BarChart3,
       title: "Output Contracts",
-      description: "What 'good' looks like — clear prioritisation, practical next steps, decision-ready insight",
+      description: "Clear prioritisation, practical next steps, decision-ready insight",
     },
   ];
 
   const sources = [
-    { name: "Global Wellness Institute", url: "https://globalwellnessinstitute.org" },
-    { name: "Leisure Database Company", url: "https://www.leisuredatabase.com" },
-    { name: "Health Club Management", url: "https://www.healthclubmanagement.co.uk" },
-    { name: "MVP Index", url: "https://themvpindex.com" },
+    { name: "Global Wellness Institute", url: "https://globalwellnessinstitute.org/industry-research/" },
+    { name: "Leisure Database Company", url: "https://www.leisuredatabase.com/" },
+    { name: "Health Club Management", url: "https://www.healthclubmanagement.co.uk/" },
+    { name: "MVP Index", url: "https://themvpindex.com/" },
   ];
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <Helmet>
         <title>Structured AI for Wellness Operators | Free Executive Brief</title>
-        <meta name="description" content="From chatbots to decision infrastructure. Learn how structured AI improves decision quality for wellness businesses. Free executive brief with industry research." />
+        <meta 
+          name="description" 
+          content="Download the executive brief on structured AI for wellness operators. Learn the framework for turning AI from chatbots into decision infrastructure." 
+        />
         <meta property="og:title" content="Structured AI for Wellness Operators | Free Executive Brief" />
-        <meta property="og:description" content="From chatbots to decision infrastructure. A strategic framework for wellness leaders." />
-        <meta property="og:type" content="website" />
+        <meta property="og:description" content="From chatbots to decision infrastructure — the framework wellness leaders need." />
         <meta property="og:image" content="https://wellnessgenius.co.uk/images/wellness-genius-news-og.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:image" content="https://wellnessgenius.co.uk/images/wellness-genius-news-og.png" />
-        <link rel="canonical" href="https://wellnessgenius.co.uk/structured-ai" />
       </Helmet>
+      
+      <Header />
+      
+      <main className="pt-24 pb-16">
+        <div className="container-wide section-padding">
+          {/* Back link for logged in users */}
+          {user && (
+            <Button variant="ghost" size="sm" className="mb-6" asChild>
+              <Link to="/hub">
+                <ArrowLeft size={16} />
+                Back to Hub
+              </Link>
+            </Button>
+          )}
 
-      <div className="min-h-screen bg-background">
-        <Header />
-        
-        {/* Hero Section */}
-        <section className="relative pt-32 pb-20 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-background to-background" />
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-primary/5 rounded-full blur-2xl" />
-          
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="max-w-4xl mx-auto text-center mb-12">
-              <Badge variant="outline" className="mb-6 border-accent/30 text-accent">
-                <BookOpen size={14} className="mr-2" />
+          {/* Hero Section */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+            <div>
+              <Badge className="mb-4 bg-accent/10 text-accent border-accent/20">
+                <BookOpen size={14} className="mr-1" />
                 Free Executive Brief
               </Badge>
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-heading mb-4">
                 Structured AI for
-                <span className="block text-accent">Wellness Operators</span>
+                <span className="text-accent"> Wellness Operators</span>
               </h1>
               
-              <p className="text-xl md:text-2xl text-muted-foreground mb-4">
+              <p className="text-xl text-muted-foreground mb-6">
                 From Chatbots to Decision Infrastructure
               </p>
               
-              <p className="text-lg text-muted-foreground/80 max-w-2xl mx-auto">
-                A strategic framework for leaders who want AI that improves decision quality,
-                not just automates tasks. Backed by GWI, Leisure DB, and industry research.
+              <p className="text-muted-foreground mb-8">
+                Most wellness businesses don't have a technology gap — they have a decision-quality gap. 
+                This 12-page executive brief shows how structured AI becomes a strategic asset, 
+                backed by research from GWI, Leisure DB, and industry benchmarks.
               </p>
+
+              <div className="flex flex-wrap gap-3 mb-8 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <CheckCircle size={16} className="text-accent" />
+                  12 pages
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle size={16} className="text-accent" />
+                  Industry sources
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle size={16} className="text-accent" />
+                  Actionable framework
+                </span>
+              </div>
             </div>
 
-            {/* Download Form Card */}
-            <Card className="max-w-md mx-auto bg-card/80 backdrop-blur border-border/50 shadow-2xl">
+            {/* Download Card */}
+            <Card className="border-accent/20 bg-card/50 backdrop-blur">
               <CardContent className="p-8">
-                {isSuccess ? (
-                  <div className="text-center py-6">
-                    <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle size={32} className="text-green-500" />
+                {!user ? (
+                  // Not logged in - prompt to sign up
+                  <div className="text-center">
+                    <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                      <Lock size={28} className="text-accent" />
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">Download Complete!</h3>
+                    <h3 className="text-xl font-heading mb-2">Create a Free Account</h3>
                     <p className="text-muted-foreground mb-6">
-                      Check your downloads folder for the PDF.
+                      Sign up to download this executive brief and access your downloads anytime from your hub.
                     </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const doc = generateStructuredAIEbook();
-                        doc.save("Structured-AI-Wellness-Operators.pdf");
-                      }}
+                    <Button 
+                      variant="accent" 
+                      size="lg" 
+                      className="w-full"
+                      onClick={() => navigate("/auth?redirect=/hub/structured-ai-ebook&from=download")}
                     >
-                      <Download size={16} className="mr-2" />
-                      Download Again
+                      <Sparkles size={18} />
+                      Create Free Account
                     </Button>
+                    <p className="text-xs text-muted-foreground mt-4">
+                      Already have an account?{" "}
+                      <Link to="/auth?mode=login&redirect=/hub/structured-ai-ebook" className="text-accent hover:underline">
+                        Sign in
+                      </Link>
+                    </p>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="text-center mb-6">
-                      <Sparkles size={24} className="text-accent mx-auto mb-2" />
-                      <h3 className="font-semibold">Get the Free Executive Brief</h3>
-                      <p className="text-sm text-muted-foreground">12-page PDF with framework + sources</p>
+                  // Logged in - show download button
+                  <div className="text-center">
+                    <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                      {hasDownloaded ? (
+                        <CheckCircle size={28} className="text-accent" />
+                      ) : (
+                        <Download size={28} className="text-accent" />
+                      )}
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        placeholder="Your name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Work Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="you@company.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="company">Company (optional)</Label>
-                      <Input
-                        id="company"
-                        type="text"
-                        placeholder="Your organisation"
-                        value={company}
-                        onChange={(e) => setCompany(e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                    
-                    <Button
-                      type="submit"
-                      variant="accent"
+                    <h3 className="text-xl font-heading mb-2">
+                      {hasDownloaded ? "Download Again" : "Ready to Download"}
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      {hasDownloaded 
+                        ? "You've downloaded this brief before. Click below to get it again."
+                        : "Click below to download your free executive brief."}
+                    </p>
+                    <Button 
+                      variant="accent" 
+                      size="lg" 
                       className="w-full"
-                      size="lg"
-                      disabled={isSubmitting}
+                      onClick={handleDownload}
+                      disabled={isDownloading}
                     >
-                      {isSubmitting ? (
+                      {isDownloading ? (
                         <>
-                          <Loader2 size={18} className="animate-spin mr-2" />
-                          Processing...
+                          <Loader2 size={18} className="animate-spin" />
+                          Generating PDF...
                         </>
                       ) : (
                         <>
-                          <Download size={18} className="mr-2" />
-                          Download Free PDF
+                          <Download size={18} />
+                          {hasDownloaded ? "Re-download PDF" : "Download PDF"}
                         </>
                       )}
                     </Button>
-                    
-                    <p className="text-xs text-center text-muted-foreground">
-                      We respect your inbox. Occasional insights only.{" "}
-                      <a href="/privacy" className="underline hover:text-foreground">Privacy Policy</a>
+                    <p className="text-xs text-muted-foreground mt-4">
+                      This download is saved to your{" "}
+                      <Link to="/hub/downloads" className="text-accent hover:underline">
+                        Downloads Library
+                      </Link>
                     </p>
-                  </form>
+                  </div>
                 )}
               </CardContent>
             </Card>
           </div>
-        </section>
 
-        {/* Problem Statement */}
-        <section className="py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl font-bold mb-6 text-center">The Core Problem</h2>
-              
-              <Card className="bg-card border-border/50">
-                <CardContent className="p-8">
-                  <p className="text-xl text-center mb-6">
-                    Most wellness businesses don't have a technology gap.
-                    <span className="block font-semibold text-accent mt-2">
-                      They have a decision-quality gap.
-                    </span>
-                  </p>
-                  
-                  <div className="grid md:grid-cols-3 gap-4 text-center text-muted-foreground">
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="font-medium text-foreground">Data exists</p>
-                      <p className="text-sm">but insight does not</p>
-                    </div>
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="font-medium text-foreground">Tools exist</p>
-                      <p className="text-sm">but clarity does not</p>
-                    </div>
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <p className="font-medium text-foreground">AI outputs</p>
-                      <p className="text-sm">are generic and hard to trust</p>
-                    </div>
-                  </div>
+          {/* Problem Statement */}
+          <div className="max-w-3xl mx-auto text-center mb-20">
+            <h2 className="text-2xl md:text-3xl font-heading mb-4">The Core Problem</h2>
+            <p className="text-lg text-muted-foreground mb-6">
+              AI adoption is accelerating — but mostly as chatbots and content tools, 
+              not as systems that improve decision quality.
+            </p>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <Card className="bg-card/50 border-border/50">
+                <CardContent className="p-4 text-center">
+                  <p className="font-medium">Data exists</p>
+                  <p className="text-sm text-muted-foreground">but insight does not</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50 border-border/50">
+                <CardContent className="p-4 text-center">
+                  <p className="font-medium">Tools exist</p>
+                  <p className="text-sm text-muted-foreground">but clarity does not</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50 border-border/50">
+                <CardContent className="p-4 text-center">
+                  <p className="font-medium">AI outputs exist</p>
+                  <p className="text-sm text-muted-foreground">but they're generic</p>
                 </CardContent>
               </Card>
             </div>
           </div>
-        </section>
 
-        {/* Framework Preview */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold mb-4">The Wellness AI Operating Framework</h2>
-                <p className="text-lg text-muted-foreground">
-                  AI performance scales with structure. Here's how.
-                </p>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-6">
-                {frameworkPillars.map((pillar) => (
-                  <Card key={pillar.title} className="bg-card border-border/50 hover:border-accent/30 transition-colors">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                          <pillar.icon size={24} className="text-accent" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-lg mb-2">{pillar.title}</h3>
-                          <p className="text-muted-foreground">{pillar.description}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              
-              <div className="mt-12 text-center">
-                <Card className="bg-accent/5 border-accent/20 inline-block">
+          {/* Framework Preview */}
+          <div className="mb-20">
+            <div className="text-center mb-10">
+              <Badge className="mb-4 bg-accent/10 text-accent border-accent/20">
+                The Framework
+              </Badge>
+              <h2 className="text-2xl md:text-3xl font-heading mb-2">
+                Wellness AI Operating Framework
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                AI performance scales with structure. The brief covers these four pillars in detail.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {frameworkPillars.map((pillar, index) => (
+                <Card key={index} className="bg-card/50 border-border/50 hover:border-accent/30 transition-colors">
                   <CardContent className="p-6">
-                    <Lightbulb size={24} className="text-accent mx-auto mb-3" />
-                    <p className="text-lg font-medium">
-                      "Unstructured input → generic output.
-                      <span className="block text-accent">Structured input → decision-ready intelligence."</span>
-                    </p>
+                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                      <pillar.icon size={24} className="text-accent" />
+                    </div>
+                    <h3 className="font-heading text-lg mb-2">{pillar.title}</h3>
+                    <p className="text-sm text-muted-foreground">{pillar.description}</p>
                   </CardContent>
                 </Card>
-              </div>
+              ))}
             </div>
           </div>
-        </section>
 
-        {/* Supplier Value */}
-        <section className="py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
-                <Badge variant="outline" className="mb-4">
-                  <Building2 size={14} className="mr-2" />
-                  For Suppliers & Partners
-                </Badge>
-                <h2 className="text-3xl font-bold mb-4">
-                  Why Structured AI is a Growth Lever
-                </h2>
-                <p className="text-lg text-muted-foreground">
-                  Move from product delivery to intelligence delivery
-                </p>
+          {/* Supplier Value */}
+          <div className="max-w-3xl mx-auto mb-20">
+            <div className="text-center mb-10">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                <Building2 size={24} className="text-purple-500" />
               </div>
-              
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card className="bg-card border-border/50">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-2">Standardised Intelligence at Scale</h3>
-                    <p className="text-muted-foreground text-sm mb-3">
-                      One structured framework, consistent insight across all clients.
-                    </p>
-                    <p className="text-accent text-sm font-medium">
-                      "Deliver expert-level insight without scaling headcount."
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-card border-border/50">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-2">Faster Client Adoption</h3>
-                    <p className="text-muted-foreground text-sm mb-3">
-                      AI explains how and why your product delivers value.
-                    </p>
-                    <p className="text-accent text-sm font-medium">
-                      "Your product becomes easier to justify and harder to replace."
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-card border-border/50">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-2">Data → Insight → Story</h3>
-                    <p className="text-muted-foreground text-sm mb-3">
-                      Turn usage data into renewal conversations and upsell logic.
-                    </p>
-                    <p className="text-accent text-sm font-medium">
-                      "Stop selling features. Start selling outcomes."
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-card border-border/50">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-2">Partner Differentiation</h3>
-                    <p className="text-muted-foreground text-sm mb-3">
-                      Most suppliers say "AI-powered". Few can say...
-                    </p>
-                    <p className="text-accent text-sm font-medium">
-                      "We improve how our clients make decisions."
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
+              <h2 className="text-2xl md:text-3xl font-heading mb-2">
+                For Suppliers & Partners
+              </h2>
+              <p className="text-muted-foreground">
+                The brief includes a dedicated section on commercial opportunities for wellness suppliers.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Card className="bg-card/50 border-border/50">
+                <CardContent className="p-5">
+                  <Lightbulb size={20} className="text-accent mb-2" />
+                  <h4 className="font-medium mb-1">Standardised Intelligence at Scale</h4>
+                  <p className="text-sm text-muted-foreground">Deliver expert-level insight without scaling headcount.</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50 border-border/50">
+                <CardContent className="p-5">
+                  <Sparkles size={20} className="text-accent mb-2" />
+                  <h4 className="font-medium mb-1">Faster Client Adoption</h4>
+                  <p className="text-sm text-muted-foreground">Your product becomes easier to understand and justify.</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
-        </section>
 
-        {/* Sources */}
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <h3 className="text-lg font-semibold mb-6 text-muted-foreground">
-                Industry Research & Sources
-              </h3>
-              <div className="flex flex-wrap justify-center gap-4">
-                {sources.map((source) => (
-                  <a
-                    key={source.name}
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-sm"
-                  >
-                    {source.name}
-                    <ExternalLink size={12} className="text-muted-foreground" />
-                  </a>
-                ))}
-              </div>
+          {/* Sources */}
+          <div className="max-w-3xl mx-auto mb-20">
+            <div className="text-center mb-8">
+              <h2 className="text-xl font-heading mb-2">Research Sources</h2>
+              <p className="text-sm text-muted-foreground">
+                All insights backed by credible industry research
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4">
+              {sources.map((source, index) => (
+                <a 
+                  key={index}
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/50 border border-border/50 text-sm text-muted-foreground hover:text-accent hover:border-accent/30 transition-colors"
+                >
+                  {source.name}
+                  <ExternalLink size={12} />
+                </a>
+              ))}
             </div>
           </div>
-        </section>
 
-        {/* Final CTA */}
-        <section className="py-20 bg-gradient-to-b from-background to-accent/5">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">
-              Get the Complete Framework
+          {/* Final CTA */}
+          <div className="max-w-xl mx-auto text-center">
+            <h2 className="text-2xl font-heading mb-4">
+              Ready to structure your AI strategy?
             </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              12-page executive brief with the full Wellness AI Operating Framework,
-              supplier value hooks, and industry sources.
+            <p className="text-muted-foreground mb-6">
+              Download the full executive brief and start making AI work for your business.
             </p>
-            <Button
-              variant="accent"
-              size="lg"
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              <Download size={18} className="mr-2" />
-              Download Free PDF
-            </Button>
+            {!user ? (
+              <Button 
+                variant="accent" 
+                size="lg"
+                onClick={() => navigate("/auth?redirect=/hub/structured-ai-ebook&from=download")}
+              >
+                <Sparkles size={18} />
+                Create Free Account to Download
+              </Button>
+            ) : (
+              <Button 
+                variant="accent" 
+                size="lg"
+                onClick={handleDownload}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download size={18} />
+                    Download Executive Brief
+                  </>
+                )}
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground mt-4">
+              By downloading, you agree to our{" "}
+              <Link to="/privacy" className="text-accent hover:underline">Privacy Policy</Link>
+            </p>
           </div>
-        </section>
-
-        <Footer />
-      </div>
-    </>
+        </div>
+      </main>
+      
+      <Footer />
+    </div>
   );
 };
 

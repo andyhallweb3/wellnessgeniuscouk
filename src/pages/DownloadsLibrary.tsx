@@ -36,6 +36,7 @@ import {
   generateActivationPlaybook,
   generateEngagementPlaybook,
   generateGamificationPlaybook,
+  generateStructuredAIEbook,
 } from "@/lib/pdf-generators";
 import { useDownloadTracking } from "@/hooks/useDownloadTracking";
 import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
@@ -59,6 +60,7 @@ const PRODUCT_ICONS: Record<string, React.ReactNode> = {
   "readiness-score": <Sparkles size={20} />,
   "reality-checklist": <FileText size={20} />,
   "myths-deck": <FileText size={20} />,
+  "structured-ai-ebook": <BookOpen size={20} />,
 };
 
 const DownloadsLibrary = () => {
@@ -161,6 +163,10 @@ const DownloadsLibrary = () => {
         case "gamification-playbook":
           doc = generateGamificationPlaybook();
           filename = "gamification-rewards-incentives-playbook.pdf";
+          break;
+        case "structured-ai-ebook":
+          doc = generateStructuredAIEbook();
+          filename = "Structured-AI-Wellness-Operators.pdf";
           break;
         default:
           // For products without PDF generators, redirect to products page
