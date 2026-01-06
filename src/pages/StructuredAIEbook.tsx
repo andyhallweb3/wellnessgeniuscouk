@@ -54,12 +54,12 @@ const StructuredAIEbook = () => {
         .select()
         .maybeSingle();
 
-      // Log the download
+      // Log the download (company stored in name field for now since no company column)
       await supabase
         .from("product_downloads")
         .insert({
           email: email.trim().toLowerCase(),
-          name: name.trim() || null,
+          name: company.trim() ? `${name.trim()} (${company.trim()})` : name.trim() || null,
           product_id: "structured-ai-ebook",
           product_name: "Structured AI for Wellness Operators",
           product_type: "ebook",
@@ -131,6 +131,9 @@ const StructuredAIEbook = () => {
         <meta property="og:title" content="Structured AI for Wellness Operators | Free Executive Brief" />
         <meta property="og:description" content="From chatbots to decision infrastructure. A strategic framework for wellness leaders." />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://wellnessgenius.co.uk/images/wellness-genius-news-og.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://wellnessgenius.co.uk/images/wellness-genius-news-og.png" />
         <link rel="canonical" href="https://wellnessgenius.co.uk/structured-ai" />
       </Helmet>
 
@@ -254,7 +257,8 @@ const StructuredAIEbook = () => {
                     </Button>
                     
                     <p className="text-xs text-center text-muted-foreground">
-                      We respect your inbox. Occasional insights only.
+                      We respect your inbox. Occasional insights only.{" "}
+                      <a href="/privacy" className="underline hover:text-foreground">Privacy Policy</a>
                     </p>
                   </form>
                 )}
