@@ -62,6 +62,7 @@ import Partnerships from "./pages/founder/Partnerships";
 import DecisionsLog from "./pages/founder/DecisionsLog";
 import Guardrails from "./pages/founder/Guardrails";
 import CommandCentre from "./pages/founder/CommandCentre";
+import StructuredAIEbook from "./pages/StructuredAIEbook";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +117,7 @@ const App = () => (
             <Route path="/knowledge/admin" element={<KnowledgeBaseAdmin />} />
             <Route path="/coupons/admin" element={<CouponAnalyticsAdmin />} />
             <Route path="/roadmap" element={<Roadmap />} />
+            <Route path="/structured-ai" element={<StructuredAIEbook />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/subscribe" element={<NewsletterSignup />} />
             <Route path="/newsletter" element={<NewsletterSignup />} />

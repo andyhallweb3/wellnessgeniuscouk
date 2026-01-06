@@ -3169,3 +3169,502 @@ export const generateReadinessReport = (data: ReadinessReportData): jsPDF => {
 
   return doc;
 };
+
+// Structured AI for Wellness Operators - Executive Brief
+export const generateStructuredAIEbook = (): jsPDF => {
+  const doc = new jsPDF();
+  const totalPages = 12;
+  
+  // Page 1 - Cover
+  addHeader(doc, 1, totalPages);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("EXECUTIVE BRIEF", 105, 70, { align: "center" });
+  
+  doc.setFontSize(36);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Structured AI for", 105, 100, { align: "center" });
+  doc.text("Wellness Operators", 105, 120, { align: "center" });
+  
+  doc.setFontSize(18);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("From Chatbots to Decision Infrastructure", 105, 150, { align: "center" });
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(50, 180, 110, 50, 5, 5, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Sources include:", 105, 195, { align: "center" });
+  doc.setTextColor(...BRAND.white);
+  doc.text("Global Wellness Institute • Leisure Database Company", 105, 210, { align: "center" });
+  doc.text("Health Club Management • MVP Index", 105, 222, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("Wellness Genius", 105, 260, { align: "center" });
+  doc.text("wellnessgenius.co.uk", 105, 270, { align: "center" });
+  
+  // Page 2 - Why This Matters Now
+  doc.addPage();
+  addHeader(doc, 2, totalPages);
+  
+  doc.setFontSize(24);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Why This Matters Now", 20, 40);
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(20, 55, 170, 35, 3, 3, "F");
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("The global wellness economy is valued at $5.6 trillion", 105, 70, { align: "center" });
+  doc.text("and continues to outpace global GDP growth.", 105, 82, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Source: Global Wellness Institute — globalwellnessinstitute.org", 20, 100);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Yet despite rapid growth, operators face:", 20, 125);
+  
+  const challenges = [
+    "Rising operational complexity",
+    "Margin pressure from all directions",
+    "Increased demand for proof of impact"
+  ];
+  
+  let yPos = 145;
+  challenges.forEach(challenge => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(25, yPos - 8, 160, 20, 3, 3, "F");
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.white);
+    doc.text("• " + challenge, 35, yPos + 3);
+    yPos += 28;
+  });
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  const aiNote = doc.splitTextToSize(
+    "AI adoption is accelerating — but mostly as chatbots and content tools, not as systems that improve decision quality.",
+    160
+  );
+  doc.text(aiNote, 20, 240);
+  
+  // Page 3 - The Core Problem
+  doc.addPage();
+  addHeader(doc, 3, totalPages);
+  
+  doc.setFontSize(24);
+  doc.setTextColor(...BRAND.white);
+  doc.text("The Core Problem", 20, 40);
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(20, 55, 170, 50, 5, 5, "F");
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Most wellness businesses don't have", 105, 75, { align: "center" });
+  doc.text("a technology gap.", 105, 90, { align: "center" });
+  doc.setTextColor(...BRAND.teal);
+  doc.setFontSize(16);
+  doc.text("They have a decision-quality gap.", 105, 105, { align: "center" });
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Industry reporting consistently shows:", 20, 130);
+  
+  const gaps = [
+    { exists: "Data exists", missing: "but insight does not" },
+    { exists: "Tools exist", missing: "but clarity does not" },
+    { exists: "AI outputs are generated", missing: "but they're generic and hard to trust" }
+  ];
+  
+  yPos = 150;
+  gaps.forEach(gap => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(25, yPos - 5, 160, 22, 3, 3, "F");
+    doc.setFontSize(11);
+    doc.setTextColor(...BRAND.white);
+    doc.text(gap.exists, 35, yPos + 5);
+    doc.setTextColor(...BRAND.muted);
+    doc.text(" — " + gap.missing, 35 + doc.getTextWidth(gap.exists), yPos + 5);
+    yPos += 30;
+  });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Source: Health Club Management — healthclubmanagement.co.uk", 20, 250);
+  
+  // Page 4 - The Insight
+  doc.addPage();
+  addHeader(doc, 4, totalPages);
+  
+  doc.setFontSize(24);
+  doc.setTextColor(...BRAND.white);
+  doc.text("The Insight", 20, 40);
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(20, 55, 170, 30, 5, 5, "F");
+  doc.setFontSize(18);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("AI performance scales with structure.", 105, 75, { align: "center" });
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Unstructured input", 50, 110);
+  doc.text("→", 105, 110, { align: "center" });
+  doc.text("generic output", 160, 110, { align: "right" });
+  
+  doc.setTextColor(...BRAND.white);
+  doc.text("Structured input", 50, 135);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("→", 105, 135, { align: "center" });
+  doc.text("decision-ready intelligence", 160, 135, { align: "right" });
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  const gwiNote = doc.splitTextToSize(
+    "This mirrors GWI's systems-based approach to wellness innovation: clear intent, context awareness, guardrails, and measurable outcomes.",
+    160
+  );
+  doc.text(gwiNote, 20, 170);
+  
+  doc.setFontSize(10);
+  doc.text("Source: Global Wellness Institute — globalwellnessinstitute.org/industry-research", 20, 200);
+  
+  // Page 5 - Framework: Intent
+  doc.addPage();
+  addHeader(doc, 5, totalPages);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("WELLNESS AI OPERATING FRAMEWORK", 20, 35);
+  
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("1. Intent", 20, 60);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("What decision are we improving?", 20, 80);
+  
+  const intentAreas = ["Retention", "Yield per member", "Workforce stability", "Utilisation"];
+  yPos = 100;
+  intentAreas.forEach(area => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(25, yPos - 5, 80, 20, 3, 3, "F");
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.white);
+    doc.text(area, 35, yPos + 7);
+    yPos += 28;
+  });
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.setDrawColor(...BRAND.teal);
+  doc.roundedRect(20, 210, 170, 40, 3, 3, "F");
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.darkBg);
+  const mvpNote = doc.splitTextToSize(
+    "Research shows higher engagement = longer retention and higher lifetime value. Intent must be tied to measurable outcomes.",
+    160
+  );
+  doc.text(mvpNote, 30, 225);
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Source: MVP Index — themvpindex.com", 20, 265);
+  
+  // Page 6 - Framework: Context
+  doc.addPage();
+  addHeader(doc, 6, totalPages);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("WELLNESS AI OPERATING FRAMEWORK", 20, 35);
+  
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("2. Context", 20, 60);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("AI must understand:", 20, 80);
+  
+  const contextAreas = [
+    { label: "Business Model", desc: "How you make money" },
+    { label: "Market", desc: "Who you compete with" },
+    { label: "Demographics", desc: "Who your members are" },
+    { label: "Data Reality", desc: "What you can actually measure" }
+  ];
+  
+  yPos = 100;
+  contextAreas.forEach(area => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(25, yPos - 5, 160, 25, 3, 3, "F");
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.teal);
+    doc.text(area.label, 35, yPos + 5);
+    doc.setTextColor(...BRAND.muted);
+    doc.text(area.desc, 35, yPos + 16);
+    yPos += 32;
+  });
+  
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.muted);
+  const ldbNote = doc.splitTextToSize(
+    "Retention, penetration, and usage vary significantly by model and region. Generic AI advice fails without this context.",
+    160
+  );
+  doc.text(ldbNote, 20, 240);
+  
+  doc.setFontSize(10);
+  doc.text("Source: Leisure Database Company — leisuredatabase.com", 20, 265);
+  
+  // Page 7 - Framework: Constraints
+  doc.addPage();
+  addHeader(doc, 7, totalPages);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("WELLNESS AI OPERATING FRAMEWORK", 20, 35);
+  
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("3. Constraints", 20, 60);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("What must NOT happen:", 20, 80);
+  
+  const constraints = [
+    { label: "Unsafe health claims", risk: "Regulatory and reputational risk" },
+    { label: "Data misuse", risk: "Privacy violations and trust damage" },
+    { label: "Brand inconsistency", risk: "Diluted positioning and confusion" }
+  ];
+  
+  yPos = 105;
+  constraints.forEach(c => {
+    doc.setFillColor(80, 30, 30);
+    doc.roundedRect(25, yPos - 5, 160, 30, 3, 3, "F");
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.white);
+    doc.text("✕ " + c.label, 35, yPos + 7);
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.muted);
+    doc.text(c.risk, 45, yPos + 19);
+    yPos += 38;
+  });
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(20, 225, 170, 30, 3, 3, "F");
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("Trust is repeatedly identified as a critical driver of", 30, 238);
+  doc.text("wellness engagement. Constraints protect it.", 30, 248);
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Source: GWI — Trust & the Wellness Consumer", 20, 270);
+  
+  // Page 8 - Framework: Output Contracts
+  doc.addPage();
+  addHeader(doc, 8, totalPages);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("WELLNESS AI OPERATING FRAMEWORK", 20, 35);
+  
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("4. Output Contracts", 20, 60);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("What does 'good' look like?", 20, 80);
+  
+  const outputs = [
+    { label: "Clear prioritisation", desc: "Not everything at once — what matters most" },
+    { label: "Practical next steps", desc: "Actionable, not theoretical" },
+    { label: "Decision-ready insight", desc: "Ready to act on, not just interesting" }
+  ];
+  
+  yPos = 105;
+  outputs.forEach(o => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(25, yPos - 5, 160, 30, 3, 3, "F");
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.teal);
+    doc.text("✓ " + o.label, 35, yPos + 7);
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.muted);
+    doc.text(o.desc, 45, yPos + 19);
+    yPos += 38;
+  });
+  
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.muted);
+  const hcmNote = doc.splitTextToSize(
+    "Industry reporting highlights that operators struggle most with turning insight into action, not collecting data.",
+    160
+  );
+  doc.text(hcmNote, 20, 235);
+  
+  doc.setFontSize(10);
+  doc.text("Source: Health Club Management", 20, 260);
+  
+  // Page 9 - The Outcome
+  doc.addPage();
+  addHeader(doc, 9, totalPages);
+  
+  doc.setFontSize(24);
+  doc.setTextColor(...BRAND.white);
+  doc.text("The Outcome", 20, 40);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("When you apply structure, AI becomes:", 20, 65);
+  
+  const outcomes = [
+    { icon: "🎯", label: "A decision-support system", desc: "Not just a content generator" },
+    { icon: "🔄", label: "A consistency layer across teams", desc: "Same quality, every time" },
+    { icon: "🛡️", label: "A safer use of AI", desc: "Guardrails baked in" }
+  ];
+  
+  yPos = 90;
+  outcomes.forEach(o => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(25, yPos - 5, 160, 35, 3, 3, "F");
+    doc.setFontSize(14);
+    doc.setTextColor(...BRAND.white);
+    doc.text(o.icon + " " + o.label, 35, yPos + 10);
+    doc.setFontSize(11);
+    doc.setTextColor(...BRAND.muted);
+    doc.text(o.desc, 50, yPos + 24);
+    yPos += 45;
+  });
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(20, 230, 170, 40, 5, 5, "F");
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.darkBg);
+  const positioning = doc.splitTextToSize(
+    '"We turn AI from a chatbot into a structured thinking system for wellness businesses — so decisions get better, faster, and safer."',
+    155
+  );
+  doc.text(positioning, 28, 245);
+  
+  // Page 10 - Supplier Value
+  doc.addPage();
+  addHeader(doc, 10, totalPages);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("FOR SUPPLIERS & PARTNERS", 20, 35);
+  
+  doc.setFontSize(24);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Structured AI as a Growth Lever", 20, 55);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Move from product delivery → intelligence delivery", 20, 75);
+  
+  const supplierHooks = [
+    { title: "Standardised Intelligence at Scale", hook: "Deliver expert-level insight without scaling headcount." },
+    { title: "Faster Client Adoption", hook: "Your product becomes easier to justify and harder to replace." },
+    { title: "Data → Insight → Story", hook: "Stop selling features. Start selling outcomes." },
+    { title: "Partner Differentiation", hook: "We improve how our clients make decisions." }
+  ];
+  
+  yPos = 95;
+  supplierHooks.forEach(h => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(25, yPos - 5, 160, 35, 3, 3, "F");
+    doc.setFontSize(11);
+    doc.setTextColor(...BRAND.white);
+    doc.text(h.title, 35, yPos + 7);
+    doc.setFontSize(10);
+    doc.setTextColor(...BRAND.teal);
+    doc.text('"' + h.hook + '"', 35, yPos + 20);
+    yPos += 42;
+  });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Source: GWI — Wellness Ecosystems research", 20, 270);
+  
+  // Page 11 - Commercial Impact
+  doc.addPage();
+  addHeader(doc, 11, totalPages);
+  
+  doc.setFontSize(24);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Commercial Impact", 20, 40);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Structured AI enables:", 20, 65);
+  
+  const commercialBenefits = [
+    "Platform partnerships",
+    "Enterprise contracts",
+    "Multi-site deployments",
+    "Recurring intelligence subscriptions"
+  ];
+  
+  yPos = 90;
+  commercialBenefits.forEach(benefit => {
+    doc.setFillColor(...BRAND.cardBg);
+    doc.roundedRect(25, yPos - 5, 160, 22, 3, 3, "F");
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND.white);
+    doc.text("→ " + benefit, 35, yPos + 7);
+    yPos += 30;
+  });
+  
+  doc.setFillColor(...BRAND.teal);
+  doc.roundedRect(20, 210, 170, 35, 5, 5, "F");
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.darkBg);
+  doc.text("Because you're no longer selling tools —", 30, 225);
+  doc.text("you're selling operational clarity.", 30, 238);
+  
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Industry data sources: Leisure DB, Health Club Management", 20, 265);
+  
+  // Page 12 - Final Close
+  doc.addPage();
+  addHeader(doc, 12, totalPages);
+  
+  doc.setFontSize(28);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Final Thought", 105, 70, { align: "center" });
+  
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(30, 90, 150, 80, 5, 5, "F");
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.white);
+  doc.text("AI isn't replacing operators or suppliers.", 105, 115, { align: "center" });
+  doc.setTextColor(...BRAND.teal);
+  doc.setFontSize(16);
+  doc.text("It's replacing poor decision-making.", 105, 140, { align: "center" });
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.white);
+  doc.text("Structure is how we do that — together.", 105, 160, { align: "center" });
+  
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Ready to apply this framework?", 105, 200, { align: "center" });
+  
+  doc.setFontSize(14);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("wellnessgenius.co.uk/genie", 105, 220, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Wellness Genius — Practical AI for Wellness Leaders", 105, 250, { align: "center" });
+  
+  return doc;
+};

@@ -13,7 +13,7 @@ import {
 import { Download, Loader2, CheckCircle, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { generateAIMythsDeck, generate90DayChecklist, generateQuickCheck } from "@/lib/pdf-generators";
+import { generateAIMythsDeck, generate90DayChecklist, generateQuickCheck, generateStructuredAIEbook } from "@/lib/pdf-generators";
 
 interface EmailGateModalProps {
   isOpen: boolean;
@@ -49,6 +49,10 @@ const EmailGateModal = ({
     } else if (productId === "quick-check-lite") {
       const doc = generateQuickCheck();
       filename = "AI-Readiness-Quick-Check.pdf";
+      doc.save(filename);
+    } else if (productId === "structured-ai-ebook") {
+      const doc = generateStructuredAIEbook();
+      filename = "Structured-AI-Wellness-Operators.pdf";
       doc.save(filename);
     }
   };
