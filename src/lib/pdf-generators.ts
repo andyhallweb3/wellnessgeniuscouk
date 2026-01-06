@@ -3224,24 +3224,24 @@ export const generateStructuredAIEbook = (): jsPDF => {
   doc.addPage();
   addHeader(doc, 2, totalPages);
   
-  doc.setFontSize(24);
+  doc.setFontSize(22);
   doc.setTextColor(...BRAND.white);
-  doc.text("Why This Matters Now", 20, 40);
+  doc.text("Why This Matters Now", 20, 30);
   
   doc.setFillColor(...BRAND.teal);
-  doc.roundedRect(20, 55, 170, 35, 3, 3, "F");
-  doc.setFontSize(14);
+  doc.roundedRect(20, 42, 170, 32, 3, 3, "F");
+  doc.setFontSize(13);
   doc.setTextColor(...BRAND.darkBg);
-  doc.text("The global wellness economy is valued at $5.6 trillion", 105, 70, { align: "center" });
-  doc.text("and continues to outpace global GDP growth.", 105, 82, { align: "center" });
+  doc.text("The global wellness economy is valued at $5.6 trillion", 105, 55, { align: "center" });
+  doc.text("and continues to outpace global GDP growth.", 105, 66, { align: "center" });
   
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setTextColor(...BRAND.muted);
-  doc.text("Source: Global Wellness Institute — globalwellnessinstitute.org", 20, 100);
+  doc.text("Source: Global Wellness Institute — globalwellnessinstitute.org", 20, 85);
   
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(...BRAND.white);
-  doc.text("Yet despite rapid growth, operators face:", 20, 125);
+  doc.text("Yet despite rapid growth, operators face:", 20, 105);
   
   const challenges = [
     "Rising operational complexity",
@@ -3249,45 +3249,47 @@ export const generateStructuredAIEbook = (): jsPDF => {
     "Increased demand for proof of impact"
   ];
   
-  let yPos = 145;
+  let yPos = 120;
   challenges.forEach(challenge => {
     doc.setFillColor(...BRAND.cardBg);
-    doc.roundedRect(25, yPos - 8, 160, 20, 3, 3, "F");
-    doc.setFontSize(12);
+    doc.roundedRect(25, yPos - 6, 160, 18, 3, 3, "F");
+    doc.setFontSize(11);
     doc.setTextColor(...BRAND.white);
-    doc.text("• " + challenge, 35, yPos + 3);
-    yPos += 28;
+    doc.text("• " + challenge, 35, yPos + 5);
+    yPos += 24;
   });
   
-  doc.setFontSize(12);
+  doc.setFillColor(...BRAND.cardBg);
+  doc.roundedRect(20, 200, 170, 40, 3, 3, "F");
+  doc.setFontSize(11);
   doc.setTextColor(...BRAND.muted);
   const aiNote = doc.splitTextToSize(
     "AI adoption is accelerating — but mostly as chatbots and content tools, not as systems that improve decision quality.",
-    160
+    155
   );
-  doc.text(aiNote, 20, 240);
+  doc.text(aiNote, 30, 218);
   
   // Page 3 - The Core Problem
   doc.addPage();
   addHeader(doc, 3, totalPages);
   
-  doc.setFontSize(24);
+  doc.setFontSize(22);
   doc.setTextColor(...BRAND.white);
-  doc.text("The Core Problem", 20, 40);
+  doc.text("The Core Problem", 20, 30);
   
   doc.setFillColor(...BRAND.cardBg);
-  doc.roundedRect(20, 55, 170, 50, 5, 5, "F");
-  doc.setFontSize(14);
+  doc.roundedRect(20, 42, 170, 48, 5, 5, "F");
+  doc.setFontSize(13);
   doc.setTextColor(...BRAND.white);
-  doc.text("Most wellness businesses don't have", 105, 75, { align: "center" });
-  doc.text("a technology gap.", 105, 90, { align: "center" });
+  doc.text("Most wellness businesses don't have", 105, 58, { align: "center" });
+  doc.text("a technology gap.", 105, 72, { align: "center" });
   doc.setTextColor(...BRAND.teal);
-  doc.setFontSize(16);
-  doc.text("They have a decision-quality gap.", 105, 105, { align: "center" });
+  doc.setFontSize(14);
+  doc.text("They have a decision-quality gap.", 105, 86, { align: "center" });
   
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setTextColor(...BRAND.white);
-  doc.text("Industry reporting consistently shows:", 20, 130);
+  doc.text("Industry reporting consistently shows:", 20, 108);
   
   const gaps = [
     { exists: "Data exists", missing: "but insight does not" },
@@ -3295,58 +3297,58 @@ export const generateStructuredAIEbook = (): jsPDF => {
     { exists: "AI outputs are generated", missing: "but they're generic and hard to trust" }
   ];
   
-  yPos = 150;
+  yPos = 125;
   gaps.forEach(gap => {
     doc.setFillColor(...BRAND.cardBg);
-    doc.roundedRect(25, yPos - 5, 160, 22, 3, 3, "F");
-    doc.setFontSize(11);
+    doc.roundedRect(25, yPos - 5, 160, 20, 3, 3, "F");
+    doc.setFontSize(10);
     doc.setTextColor(...BRAND.white);
-    doc.text(gap.exists, 35, yPos + 5);
+    doc.text(gap.exists, 35, yPos + 6);
     doc.setTextColor(...BRAND.muted);
-    doc.text(" — " + gap.missing, 35 + doc.getTextWidth(gap.exists), yPos + 5);
-    yPos += 30;
+    doc.text(" — " + gap.missing, 35 + doc.getTextWidth(gap.exists), yPos + 6);
+    yPos += 26;
   });
   
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setTextColor(...BRAND.muted);
-  doc.text("Source: Health Club Management — healthclubmanagement.co.uk", 20, 250);
+  doc.text("Source: Health Club Management — healthclubmanagement.co.uk", 20, 220);
   
   // Page 4 - The Insight
   doc.addPage();
   addHeader(doc, 4, totalPages);
   
-  doc.setFontSize(24);
+  doc.setFontSize(22);
   doc.setTextColor(...BRAND.white);
-  doc.text("The Insight", 20, 40);
+  doc.text("The Insight", 20, 30);
   
   doc.setFillColor(...BRAND.teal);
-  doc.roundedRect(20, 55, 170, 30, 5, 5, "F");
-  doc.setFontSize(18);
+  doc.roundedRect(20, 42, 170, 28, 5, 5, "F");
+  doc.setFontSize(16);
   doc.setTextColor(...BRAND.darkBg);
-  doc.text("AI performance scales with structure.", 105, 75, { align: "center" });
-  
-  doc.setFontSize(14);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("Unstructured input", 50, 110);
-  doc.text("→", 105, 110, { align: "center" });
-  doc.text("generic output", 160, 110, { align: "right" });
-  
-  doc.setTextColor(...BRAND.white);
-  doc.text("Structured input", 50, 135);
-  doc.setTextColor(...BRAND.teal);
-  doc.text("→", 105, 135, { align: "center" });
-  doc.text("decision-ready intelligence", 160, 135, { align: "right" });
+  doc.text("AI performance scales with structure.", 105, 60, { align: "center" });
   
   doc.setFontSize(12);
+  doc.setTextColor(...BRAND.muted);
+  doc.text("Unstructured input", 50, 95);
+  doc.text("→", 105, 95, { align: "center" });
+  doc.text("generic output", 160, 95, { align: "right" });
+  
+  doc.setTextColor(...BRAND.white);
+  doc.text("Structured input", 50, 118);
+  doc.setTextColor(...BRAND.teal);
+  doc.text("→", 105, 118, { align: "center" });
+  doc.text("decision-ready intelligence", 160, 118, { align: "right" });
+  
+  doc.setFontSize(11);
   doc.setTextColor(...BRAND.muted);
   const gwiNote = doc.splitTextToSize(
     "This mirrors GWI's systems-based approach to wellness innovation: clear intent, context awareness, guardrails, and measurable outcomes.",
     160
   );
-  doc.text(gwiNote, 20, 170);
+  doc.text(gwiNote, 20, 150);
   
-  doc.setFontSize(10);
-  doc.text("Source: Global Wellness Institute — globalwellnessinstitute.org/industry-research", 20, 200);
+  doc.setFontSize(9);
+  doc.text("Source: Global Wellness Institute — globalwellnessinstitute.org/industry-research", 20, 185);
   
   // Page 5 - Framework: Intent
   doc.addPage();
