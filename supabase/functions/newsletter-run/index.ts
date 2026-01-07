@@ -246,6 +246,35 @@ function generateEmailHTML(
         </table>
       </td>
     </tr>
+    <!-- AI Advisor CTA -->
+    <tr>
+      <td class="content-bg" style="padding: 24px 32px 0; background-color: #ffffff;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="padding: 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: #2dd4bf; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                      🤖 Your AI Business Advisor
+                    </p>
+                    <p style="margin: 0 0 16px 0; color: #f1f5f9; font-size: 18px; font-weight: 600; line-height: 1.4;">
+                      Got questions about this story? Ask your AI Advisor.
+                    </p>
+                    <p style="margin: 0 0 20px 0; color: #94a3b8; font-size: 14px; line-height: 1.5;">
+                      Get instant, personalised insights on how to apply these trends to your wellness business.
+                    </p>
+                    <a href="${trackLink('https://www.wellnessgenius.co.uk/genie')}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                      Ask Your AI Advisor →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
   ` : '';
 
   // Generate remaining articles
