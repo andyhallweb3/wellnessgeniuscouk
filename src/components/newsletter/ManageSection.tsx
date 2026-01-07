@@ -9,12 +9,18 @@ import {
   Settings,
   LogOut,
   Sparkles,
-  Mail
+  Mail,
+  Newspaper,
+  Clock
 } from "lucide-react";
 import { SubscriberManager } from "./SubscriberManager";
 import { BlogPostManager } from "./BlogPostManager";
 import { AdminManager } from "./AdminManager";
 import { EmailCampaigns } from "./EmailCampaigns";
+import { ArticleSelector } from "./ArticleSelector";
+import { NewsletterPreview } from "./NewsletterPreview";
+import { SendNewsletter } from "./SendNewsletter";
+import { SendHistory } from "./SendHistory";
 import AIArticleGenerator from "@/components/admin/AIArticleGenerator";
 
 interface ManageSectionProps {
@@ -25,6 +31,27 @@ interface ManageSectionProps {
 
 export const ManageSection = ({ getAuthHeaders, onLogout, defaultTab = "campaigns" }: ManageSectionProps) => {
   const [showAIGenerator, setShowAIGenerator] = useState(false);
+  
+  // Newsletter builder state
+  const [builderStep, setBuilderStep] = useState<"articles" | "preview" | "send">("articles");
+  const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [articles, setArticles] = useState<any[]>([]);
+  const [customIntro, setCustomIntro] = useState("");
+
+  const handlePreviewGenerated = (html: string, loadedArticles: any[]) => {
+    setPreviewHtml(html);
+    setArticles(loadedArticles);
+  };
+
+  const handleSendComplete = () => {
+    // Reset the builder after successful send
+    setBuilderStep("articles");
+    setSelectedArticleIds([]);
+    setPreviewHtml(null);
+    setArticles([]);
+    setCustomIntro("");
+  };
 
   return (
     <div className="space-y-6">
@@ -42,8 +69,16 @@ export const ManageSection = ({ getAuthHeaders, onLogout, defaultTab = "campaign
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="campaigns">
+          <Tabs defaultValue={defaultTab}>
             <TabsList className="mb-6 flex-wrap">
+              <TabsTrigger value="builder" className="gap-2">
+                <Newspaper className="h-4 w-4" />
+                Newsletter Builder
+              </TabsTrigger>
+              <TabsTrigger value="history" className="gap-2">
+                <Clock className="h-4 w-4" />
+                Send History
+              </TabsTrigger>
               <TabsTrigger value="campaigns" className="gap-2">
                 <Mail className="h-4 w-4" />
                 Email Campaigns
@@ -65,6 +100,44 @@ export const ManageSection = ({ getAuthHeaders, onLogout, defaultTab = "campaign
                 Admins
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="builder">
+              {builderStep === "articles" && (
+                <ArticleSelector
+                  selectedArticleIds={selectedArticleIds}
+                  setSelectedArticleIds={setSelectedArticleIds}
+                  getAuthHeaders={getAuthHeaders}
+                  onContinue={() => setBuilderStep("preview")}
+                />
+              )}
+              {builderStep === "preview" && (
+                <NewsletterPreview
+                  selectedArticleIds={selectedArticleIds}
+                  previewHtml={previewHtml}
+                  articles={articles}
+                  customIntro={customIntro}
+                  onCustomIntroChange={setCustomIntro}
+                  getAuthHeaders={getAuthHeaders}
+                  onPreviewGenerated={handlePreviewGenerated}
+                  onBack={() => setBuilderStep("articles")}
+                  onContinue={() => setBuilderStep("send")}
+                />
+              )}
+              {builderStep === "send" && (
+                <SendNewsletter
+                  previewHtml={previewHtml}
+                  articles={articles}
+                  selectedArticleIds={selectedArticleIds}
+                  getAuthHeaders={getAuthHeaders}
+                  onSendComplete={handleSendComplete}
+                  onBack={() => setBuilderStep("preview")}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="history">
+              <SendHistory getAuthHeaders={getAuthHeaders} />
+            </TabsContent>
 
             <TabsContent value="campaigns">
               <EmailCampaigns getAuthHeaders={getAuthHeaders} />
