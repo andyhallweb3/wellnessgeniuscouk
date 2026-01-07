@@ -311,7 +311,7 @@ Deno.serve(async (req) => {
     // Build query for active subscribers - EXCLUDE bounced and unsubscribed
     let query = supabase
       .from("newsletter_subscribers")
-      .select("email, last_delivered_at")
+      .select("email, name, last_delivered_at")
       .eq("is_active", true)
       .eq("bounced", false);
 
@@ -336,23 +336,49 @@ Deno.serve(async (req) => {
       `Sending campaign to ${subscribers.length} subscribers (${filterMode}) using ${sendMode} mode`
     );
 
+    // Helper function to personalize HTML for a subscriber
+    const personalizeHtml = (htmlContent: string, subscriberEmail: string, subscriberName: string | null): string => {
+      // Extract first name from name or email
+      let firstName = "there";
+      if (subscriberName && subscriberName.trim()) {
+        // Get first word of name
+        firstName = subscriberName.trim().split(/\s+/)[0];
+      } else {
+        // Try to extract from email (before @ and before any dots/numbers)
+        const emailPrefix = subscriberEmail.split("@")[0];
+        const cleanPrefix = emailPrefix.replace(/[._0-9]/g, " ").split(" ")[0];
+        if (cleanPrefix.length >= 2) {
+          firstName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1).toLowerCase();
+        }
+      }
+
+      const siteUrl = "https://www.wellnessgenius.co.uk";
+      
+      return htmlContent
+        .replace(/\{\{contact\.firstname\}\}/gi, firstName)
+        .replace(/\{\{first_name\}\}/gi, firstName)
+        .replace(/\{\{firstname\}\}/gi, firstName)
+        .replace(/\{\{name\}\}/gi, subscriberName || firstName)
+        .replace(/\{\{email\}\}/gi, subscriberEmail)
+        .replace(/\{\{site_url\}\}/gi, siteUrl);
+    };
+
     // Normalize + basic validation to avoid Resend 422 due to stray whitespace/bad rows.
-    const rawEmails = subscribers.map((s) => s.email);
-    const normalizedEmails = rawEmails
-      .map((e) => normalizeEmail(e))
-      .filter((e): e is string => Boolean(e));
-
-    const invalidEmails = normalizedEmails.filter((e) => !isLikelyEmail(e));
-    const emails = normalizedEmails.filter((e) => isLikelyEmail(e));
-
-    if (invalidEmails.length > 0) {
-      console.warn(
-        `Found ${invalidEmails.length} invalid subscriber emails; excluding from send. Examples:`,
-        invalidEmails.slice(0, 5)
+    const validSubscribers = subscribers
+      .map((s) => ({
+        email: normalizeEmail(s.email),
+        name: s.name,
+      }))
+      .filter((s): s is { email: string; name: string | null } => 
+        s.email !== null && isLikelyEmail(s.email)
       );
+
+    const invalidCount = subscribers.length - validSubscribers.length;
+    if (invalidCount > 0) {
+      console.warn(`Found ${invalidCount} invalid subscriber emails; excluding from send.`);
     }
 
-    if (emails.length === 0) {
+    if (validSubscribers.length === 0) {
       return json(400, { error: "No valid subscriber emails to send to" });
     }
 
@@ -361,45 +387,58 @@ Deno.serve(async (req) => {
     const recipientResults: { email: string; messageId?: string; error?: string }[] = [];
 
     if (sendMode === "individual") {
-      // Individual mode: send one email per recipient for better tracking
-      console.log("Using individual sending mode for per-recipient tracking");
+      // Individual mode: send one email per recipient for better tracking + personalization
+      console.log("Using individual sending mode for per-recipient tracking with personalization");
 
-      for (let i = 0; i < emails.length; i++) {
-        const email = emails[i];
+      for (let i = 0; i < validSubscribers.length; i++) {
+        const subscriber = validSubscribers[i];
+        const personalizedHtml = personalizeHtml(html, subscriber.email, subscriber.name);
+        
         try {
           const { data, error } = await resend.emails.send({
             from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
             reply_to: "andy@wellnessgenius.co.uk",
-            to: [email],
+            to: [subscriber.email],
             subject,
-            html,
+            html: personalizedHtml,
           });
 
           if (error) {
             const e = error as ResendMaybeError;
-            console.error(`Email to ${email} failed:`, JSON.stringify(error));
+            console.error(`Email to ${subscriber.email} failed:`, JSON.stringify(error));
             errorCount++;
-            recipientResults.push({ email, error: e.message ?? "Resend error" });
+            recipientResults.push({ email: subscriber.email, error: e.message ?? "Resend error" });
           } else {
-            console.log(`Email to ${email} sent:`, data?.id);
+            console.log(`Email to ${subscriber.email} sent:`, data?.id);
             successCount++;
-            recipientResults.push({ email, messageId: data?.id });
+            recipientResults.push({ email: subscriber.email, messageId: data?.id });
           }
         } catch (sendError: any) {
-          console.error(`Email to ${email} error:`, sendError);
+          console.error(`Email to ${subscriber.email} error:`, sendError);
           errorCount++;
-          recipientResults.push({ email, error: sendError?.message ?? "Unknown send error" });
+          recipientResults.push({ email: subscriber.email, error: sendError?.message ?? "Unknown send error" });
         }
 
         // Rate limit: ~10 emails per second (100ms delay)
-        if (i < emails.length - 1) {
+        if (i < validSubscribers.length - 1) {
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       }
     } else {
-      // Batch mode: use BCC for efficiency (less tracking granularity)
-      console.log("Using batch BCC mode");
+      // Batch mode: use BCC for efficiency (no personalization possible)
+      console.log("Using batch BCC mode (personalization disabled - use individual mode for personalized emails)");
       const batchSize = 48;
+      
+      // For batch mode, replace placeholders with generic fallback
+      const genericHtml = html
+        .replace(/\{\{contact\.firstname\}\}/gi, "there")
+        .replace(/\{\{first_name\}\}/gi, "there")
+        .replace(/\{\{firstname\}\}/gi, "there")
+        .replace(/\{\{name\}\}/gi, "there")
+        .replace(/\{\{email\}\}/gi, "")
+        .replace(/\{\{site_url\}\}/gi, "https://www.wellnessgenius.co.uk");
+
+      const emails = validSubscribers.map(s => s.email);
 
       for (let i = 0; i < emails.length; i += batchSize) {
         const batch = emails.slice(i, i + batchSize);
@@ -411,7 +450,7 @@ Deno.serve(async (req) => {
             to: ["newsletter@news.wellnessgenius.co.uk"],
             bcc: batch,
             subject,
-            html,
+            html: genericHtml,
           });
 
           if (error) {
@@ -420,7 +459,6 @@ Deno.serve(async (req) => {
             errorCount += batch.length;
 
             // If Resend gives us a specific validation error, bubble it up.
-            // This makes it obvious whether it's FROM/domain, recipient list, etc.
             if (e.statusCode === 422) {
               return json(422, {
                 error: e.message ?? "Resend validation error",
@@ -456,7 +494,7 @@ Deno.serve(async (req) => {
       success: true,
       recipientCount: successCount,
       errorCount,
-      excludedInvalidEmails: invalidEmails.length,
+      excludedInvalidEmails: invalidCount,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
