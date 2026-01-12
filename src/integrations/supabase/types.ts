@@ -47,6 +47,78 @@ export type Database = {
         }
         Relationships: []
       }
+      advisor_feedback: {
+        Row: {
+          created_at: string | null
+          details: string | null
+          feedback_type: string | null
+          id: string
+          mode: string | null
+          rating: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: string | null
+          feedback_type?: string | null
+          id?: string
+          mode?: string | null
+          rating?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: string | null
+          feedback_type?: string | null
+          id?: string
+          mode?: string | null
+          rating?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      advisor_metrics: {
+        Row: {
+          created_at: string | null
+          decisions_saved: number | null
+          first_plan_at: string | null
+          id: string
+          last_session_at: string | null
+          onboarding_completed_at: string | null
+          total_sessions: number | null
+          updated_at: string | null
+          user_id: string
+          weekly_active: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          decisions_saved?: number | null
+          first_plan_at?: string | null
+          id?: string
+          last_session_at?: string | null
+          onboarding_completed_at?: string | null
+          total_sessions?: number | null
+          updated_at?: string | null
+          user_id: string
+          weekly_active?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          decisions_saved?: number | null
+          first_plan_at?: string | null
+          id?: string
+          last_session_at?: string | null
+          onboarding_completed_at?: string | null
+          total_sessions?: number | null
+          updated_at?: string | null
+          user_id?: string
+          weekly_active?: boolean | null
+        }
+        Relationships: []
+      }
       agent_sessions: {
         Row: {
           created_at: string
@@ -1248,6 +1320,96 @@ export type Database = {
         }
         Relationships: []
       }
+      kb_canon: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      kb_intel: {
+        Row: {
+          category: string | null
+          content_type: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          is_outdated: boolean | null
+          published_date: string | null
+          source_name: string | null
+          source_url: string | null
+          summary: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_outdated?: boolean | null
+          published_date?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          summary: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_outdated?: boolean | null
+          published_date?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          summary?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       knowledge_base: {
         Row: {
           category: string
@@ -2226,6 +2388,189 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workspace_constraints: {
+        Row: {
+          budget_range: string | null
+          compliance_sensitivity: string | null
+          created_at: string | null
+          data_access: string | null
+          id: string
+          integration_ability: string | null
+          team_capacity: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          budget_range?: string | null
+          compliance_sensitivity?: string | null
+          created_at?: string | null
+          data_access?: string | null
+          id?: string
+          integration_ability?: string | null
+          team_capacity?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          budget_range?: string | null
+          compliance_sensitivity?: string | null
+          created_at?: string | null
+          data_access?: string | null
+          id?: string
+          integration_ability?: string | null
+          team_capacity?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workspace_decisions: {
+        Row: {
+          context: string | null
+          created_at: string | null
+          decision_type: string
+          id: string
+          mode: string | null
+          outcomes: string | null
+          status: string | null
+          summary: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string | null
+          decision_type: string
+          id?: string
+          mode?: string | null
+          outcomes?: string | null
+          status?: string | null
+          summary: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string | null
+          decision_type?: string
+          id?: string
+          mode?: string | null
+          outcomes?: string | null
+          status?: string | null
+          summary?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workspace_goals: {
+        Row: {
+          created_at: string | null
+          goals: string[] | null
+          id: string
+          priority_order: string[] | null
+          timeframe: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          goals?: string[] | null
+          id?: string
+          priority_order?: string[] | null
+          timeframe?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          goals?: string[] | null
+          id?: string
+          priority_order?: string[] | null
+          timeframe?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workspace_metrics: {
+        Row: {
+          created_at: string | null
+          current_values: Json | null
+          id: string
+          kpis: Json | null
+          last_updated: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_values?: Json | null
+          id?: string
+          kpis?: Json | null
+          last_updated?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_values?: Json | null
+          id?: string
+          kpis?: Json | null
+          last_updated?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workspace_profile: {
+        Row: {
+          ai_readiness_band: string | null
+          ai_readiness_score: number | null
+          business_name: string | null
+          business_size: string | null
+          created_at: string | null
+          current_stack: string[] | null
+          geography: string | null
+          id: string
+          onboarding_completed: boolean | null
+          primary_offer: string | null
+          sector: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_readiness_band?: string | null
+          ai_readiness_score?: number | null
+          business_name?: string | null
+          business_size?: string | null
+          created_at?: string | null
+          current_stack?: string[] | null
+          geography?: string | null
+          id?: string
+          onboarding_completed?: boolean | null
+          primary_offer?: string | null
+          sector?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_readiness_band?: string | null
+          ai_readiness_score?: number | null
+          business_name?: string | null
+          business_size?: string | null
+          created_at?: string | null
+          current_stack?: string[] | null
+          geography?: string | null
+          id?: string
+          onboarding_completed?: boolean | null
+          primary_offer?: string | null
+          sector?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
