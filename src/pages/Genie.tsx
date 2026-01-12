@@ -5,13 +5,13 @@ import { Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import GenieOnboarding from "@/components/genie/GenieOnboarding";
+import AdvisorOnboarding from "@/components/advisor/AdvisorOnboarding";
 import ChatSidebar from "@/components/genie/ChatSidebar";
 import ChatInterface from "@/components/genie/ChatInterface";
 import DocumentManager from "@/components/genie/DocumentManager";
 import TrustSettingsToggle from "@/components/genie/TrustSettingsToggle";
-import { ADVISOR_MODES, CREDIT_COST_PER_MESSAGE } from "@/components/advisor/AdvisorModes";
-import { useBusinessMemory } from "@/hooks/useBusinessMemory";
+import { ADVISOR_MODES, CREDIT_COST_PER_MESSAGE, getPrimaryModes } from "@/components/advisor/AdvisorModes";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 import { useGenieSessions } from "@/hooks/useGenieSessions";
@@ -58,7 +58,7 @@ const Genie = () => {
   const [showDocuments, setShowDocuments] = useState(false);
 
   const { brief: briefData, isLoading: isBriefLoading, generateBrief } = useDailyBrief();
-  const { getMemoryContext, memory, loading: memoryLoading, saveMemory, refetch: refetchMemory } = useBusinessMemory();
+  const { profile, goals, constraints, isLoading: workspaceLoading, needsOnboarding, saveProfile, saveGoals, saveConstraints, addDecision, getContextString } = useWorkspace();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { documents, uploading: uploadingDocument, uploadDocument, deleteDocument, updateDocumentCategory, updateDocumentDescription } = useCoachDocuments();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession } = useGenieSessions();
@@ -72,10 +72,10 @@ const Genie = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (!memoryLoading && !memory && user) {
+    if (!workspaceLoading && needsOnboarding && user) {
       setShowOnboarding(true);
     }
-  }, [memoryLoading, memory, user]);
+  }, [workspaceLoading, needsOnboarding, user]);
 
   useEffect(() => {
     const modeFromUrl = searchParams.get("mode");
@@ -84,25 +84,25 @@ const Genie = () => {
     }
   }, [searchParams]);
 
-  const handleOnboardingComplete = async (data: GenieOnboardingData) => {
-    const success = await saveMemory({
+  const handleOnboardingComplete = async (data: { business_name: string; sector: string; business_size: string; goals: string[]; biggest_challenge: string; current_stack: string[] }) => {
+    const profileSuccess = await saveProfile({
       business_name: data.business_name,
-      business_type: data.business_type,
-      revenue_model: data.revenue_model,
-      annual_revenue_band: data.annual_revenue_band,
-      team_size: data.team_size,
-      primary_goal: data.primary_goal,
-      biggest_challenge: data.biggest_challenge,
-      known_weak_spots: data.known_weak_spots,
-      key_metrics: data.key_metrics,
-      communication_style: data.communication_style,
-      decision_style: data.decision_style,
+      sector: data.sector,
+      business_size: data.business_size,
+      onboarding_completed: true,
     });
     
-    if (success) {
+    if (data.goals.length > 0) {
+      await saveGoals({ goals: data.goals });
+    }
+    
+    if (data.biggest_challenge) {
+      await saveConstraints({ budget_range: data.biggest_challenge });
+    }
+    
+    if (profileSuccess) {
       toast.success("Business profile saved!");
       setShowOnboarding(false);
-      await refetchMemory();
     } else {
       toast.error("Failed to save profile.");
     }
@@ -137,7 +137,7 @@ const Genie = () => {
     await generateBrief();
   };
 
-  if (authLoading || creditsLoading || memoryLoading) {
+  if (authLoading || creditsLoading || workspaceLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -154,9 +154,8 @@ const Genie = () => {
         <Header />
         <main className="pt-24 pb-16 flex-1">
           <div className="container-narrow section-padding">
-            <GenieOnboarding 
+            <AdvisorOnboarding 
               onComplete={handleOnboardingComplete} 
-              onSkip={() => setShowOnboarding(false)}
             />
           </div>
         </main>
@@ -195,7 +194,7 @@ const Genie = () => {
           setSelectedMode={setSelectedMode}
           credits={credits.balance}
           onDeductCredits={deductCredits}
-          memoryContext={memory}
+          memoryContext={profile ? { business_name: profile.business_name, primary_goal: goals?.goals?.[0] } : null}
           trustDisplayMode={trustDisplayMode}
           onSaveSession={handleSaveSession}
           briefData={briefData}
@@ -204,7 +203,7 @@ const Genie = () => {
           documents={documents}
           onUploadDocument={uploadDocument}
           uploadingDocument={uploadingDocument}
-          businessName={memory?.business_name || undefined}
+          businessName={profile?.business_name || undefined}
           isFreeTrial={credits.isFreeTrial}
           daysRemaining={credits.isFreeTrial ? Math.max(0, Math.ceil((new Date(credits.freeTrialExpiresAt || "").getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : undefined}
         />
