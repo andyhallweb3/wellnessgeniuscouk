@@ -72,6 +72,8 @@ const Insights = () => {
     });
   };
 
+  const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+
   const getImage = (post: BlogPost) => post.image_url || fallbackImages[post.category] || aiComplianceImg;
 
   return (
@@ -150,7 +152,7 @@ const Insights = () => {
                       Featured
                     </span>
                     <h2 className="text-2xl lg:text-3xl mb-4 group-hover:text-accent transition-colors">{featuredPost.title}</h2>
-                    <p className="text-muted-foreground mb-6">{featuredPost.excerpt}</p>
+                    <p className="text-muted-foreground mb-6">{stripHtml(featuredPost.excerpt)}</p>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={14} />
@@ -207,7 +209,7 @@ const Insights = () => {
                       {post.category}
                     </span>
                     <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">{post.title}</h3>
-                    <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">{post.excerpt}</p>
+                    <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">{stripHtml(post.excerpt)}</p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={12} />
