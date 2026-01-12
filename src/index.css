@@ -290,9 +290,14 @@
   
   /* Paragraphs */
   .blog-content p {
-    @apply mb-6 text-muted-foreground;
+    @apply text-muted-foreground;
     font-size: 1.125rem;
-    line-height: 1.8;
+    line-height: 1.85;
+    margin-bottom: 1.75rem;
+  }
+  
+  .blog-content p + p {
+    margin-top: 0.5rem;
   }
   
   .blog-content p:last-child {
@@ -302,7 +307,8 @@
   /* Lead paragraph (first paragraph) */
   .blog-content > p:first-of-type {
     @apply text-lg md:text-xl text-foreground/80 font-medium;
-    line-height: 1.7;
+    line-height: 1.75;
+    margin-bottom: 2rem;
   }
   
   /* Links */
