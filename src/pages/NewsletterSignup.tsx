@@ -22,9 +22,22 @@ const NewsletterSignup = () => {
           name="description" 
           content="Weekly AI insights for wellness industry leaders. Strategic automation guidance, industry intelligence, and transformation strategies for CEOs, founders, and senior operators." 
         />
-        <meta property="og:title" content="Subscribe to Wellness Genius Newsletter" />
-        <meta property="og:description" content="AI strategy insights for wellness industry executives" />
-        <meta property="og:image" content="/images/wellness-genius-news-og.png" />
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.wellnessgenius.co.uk/newsletter" />
+        <meta property="og:title" content="Subscribe to Wellness Genius | AI Strategy Newsletter" />
+        <meta property="og:description" content="Join 2,600+ wellness executives getting weekly AI strategy insights. Strategic automation guidance, industry intelligence, and transformation playbooks." />
+        <meta property="og:image" content="https://www.wellnessgenius.co.uk/images/wellness-genius-news-og.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Wellness Genius" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content="https://www.wellnessgenius.co.uk/newsletter" />
+        <meta name="twitter:title" content="Subscribe to Wellness Genius | AI Strategy Newsletter" />
+        <meta name="twitter:description" content="Join 2,600+ wellness executives getting weekly AI strategy insights. No fluff—just actionable intelligence." />
+        <meta name="twitter:image" content="https://www.wellnessgenius.co.uk/images/wellness-genius-news-og.png" />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
