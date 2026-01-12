@@ -91,7 +91,7 @@ Return the polished HTML content only.`;
 
     // Generate all SEO fields in parallel
     const [excerptResponse, metaResponse, keywordsResponse, metaTitleResponse] = await Promise.all([
-      // Improved excerpt/summary
+      // Improved excerpt/summary - PLAIN TEXT ONLY
       fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -103,7 +103,14 @@ Return the polished HTML content only.`;
           messages: [
             { 
               role: 'system', 
-              content: 'Generate a compelling 1-2 sentence excerpt/summary for this blog post. It should entice readers to click and read more. Keep it under 160 characters. Return ONLY the excerpt text, no quotes or explanations.' 
+              content: `Generate a compelling 1-2 sentence excerpt/summary for this blog post that entices readers to click and read more.
+
+CRITICAL RULES:
+- Return PLAIN TEXT ONLY - NO HTML tags, NO <p>, NO <strong>, NO formatting
+- Keep it under 160 characters
+- Make it engaging and action-oriented
+- Do not include quotes around the text
+- Do not include any explanation, just the excerpt itself` 
             },
             { role: 'user', content: `Title: ${title}\n\nContent: ${polishedContent.substring(0, 1500)}` },
           ],
@@ -112,7 +119,7 @@ Return the polished HTML content only.`;
         }),
       }),
       
-      // Meta description
+      // Meta description - PLAIN TEXT ONLY
       fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -124,7 +131,14 @@ Return the polished HTML content only.`;
           messages: [
             { 
               role: 'system', 
-              content: 'Generate an SEO-optimized meta description (max 155 characters) for this blog post. Focus on the main benefit/insight for wellness business owners. Return ONLY the meta description text, no quotes.' 
+              content: `Generate an SEO-optimized meta description for this blog post.
+
+CRITICAL RULES:
+- Return PLAIN TEXT ONLY - NO HTML tags whatsoever
+- Maximum 155 characters
+- Focus on the main benefit/insight for wellness business owners
+- Do not include quotes around the text
+- Do not include any explanation, just the meta description itself` 
             },
             { role: 'user', content: `Title: ${title}\n\nContent: ${polishedContent.substring(0, 1000)}` },
           ],
@@ -133,7 +147,7 @@ Return the polished HTML content only.`;
         }),
       }),
       
-      // Keywords
+      // Keywords - comma-separated list
       fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -145,7 +159,14 @@ Return the polished HTML content only.`;
           messages: [
             { 
               role: 'system', 
-              content: 'Generate 5-8 SEO keywords for this wellness/AI blog post. Return ONLY a comma-separated list of keywords, no explanations. Focus on: AI, wellness, fitness, health tech, automation, business terms.' 
+              content: `Generate 5-8 SEO keywords for this wellness/AI blog post.
+
+CRITICAL RULES:
+- Return ONLY a comma-separated list of keywords
+- NO HTML tags, NO formatting
+- Focus on: AI, wellness, fitness, health tech, automation, business terms
+- Example format: AI wellness, fitness technology, health automation
+- Do not include any explanation, just the keywords` 
             },
             { role: 'user', content: `Title: ${title}\n\nContent: ${polishedContent.substring(0, 1000)}` },
           ],
@@ -154,7 +175,7 @@ Return the polished HTML content only.`;
         }),
       }),
       
-      // Meta title
+      // Meta title - PLAIN TEXT ONLY
       fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -166,7 +187,15 @@ Return the polished HTML content only.`;
           messages: [
             { 
               role: 'system', 
-              content: 'Generate an SEO-optimized meta title (max 60 characters) for this blog post. Include primary keyword near the start. Add "| Wellness Genius" at the end if space permits. Return ONLY the title text.' 
+              content: `Generate an SEO-optimized meta title for this blog post.
+
+CRITICAL RULES:
+- Return PLAIN TEXT ONLY - NO HTML tags
+- Maximum 60 characters
+- Include primary keyword near the start
+- Add "| Wellness Genius" at the end if space permits
+- Do not include quotes around the text
+- Do not include any explanation, just the title itself` 
             },
             { role: 'user', content: `Original Title: ${title}\n\nContent summary: ${polishedContent.substring(0, 500)}` },
           ],
@@ -176,7 +205,21 @@ Return the polished HTML content only.`;
       }),
     ]);
 
-    // Extract results
+    // Helper to strip any HTML tags and clean up text
+    const stripHtml = (text: string): string => {
+      return text
+        .replace(/<[^>]*>/g, '')  // Remove HTML tags
+        .replace(/&nbsp;/g, ' ')  // Replace nbsp
+        .replace(/&amp;/g, '&')   // Replace amp
+        .replace(/&lt;/g, '<')    // Replace lt
+        .replace(/&gt;/g, '>')    // Replace gt
+        .replace(/&quot;/g, '"')  // Replace quot
+        .replace(/&#39;/g, "'")   // Replace single quote
+        .replace(/\s+/g, ' ')     // Normalize whitespace
+        .trim();
+    };
+
+    // Extract results - ensure all are plain text
     let improvedExcerpt = excerpt;
     let metaDescription = '';
     let keywords = '';
@@ -184,22 +227,26 @@ Return the polished HTML content only.`;
 
     if (excerptResponse.ok) {
       const data = await excerptResponse.json();
-      improvedExcerpt = data.choices?.[0]?.message?.content?.trim() || excerpt;
+      const raw = data.choices?.[0]?.message?.content?.trim() || '';
+      improvedExcerpt = stripHtml(raw) || excerpt;
     }
 
     if (metaResponse.ok) {
       const data = await metaResponse.json();
-      metaDescription = data.choices?.[0]?.message?.content?.trim() || '';
+      const raw = data.choices?.[0]?.message?.content?.trim() || '';
+      metaDescription = stripHtml(raw);
     }
 
     if (keywordsResponse.ok) {
       const data = await keywordsResponse.json();
-      keywords = data.choices?.[0]?.message?.content?.trim() || '';
+      const raw = data.choices?.[0]?.message?.content?.trim() || '';
+      keywords = stripHtml(raw);
     }
 
     if (metaTitleResponse.ok) {
       const data = await metaTitleResponse.json();
-      metaTitle = data.choices?.[0]?.message?.content?.trim() || title;
+      const raw = data.choices?.[0]?.message?.content?.trim() || '';
+      metaTitle = stripHtml(raw) || title;
     }
 
     return new Response(
