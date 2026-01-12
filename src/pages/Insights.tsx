@@ -32,6 +32,7 @@ interface BlogPost {
   created_at: string;
   read_time: string | null;
   featured: boolean;
+  image_url: string | null;
 }
 
 const Insights = () => {
@@ -44,7 +45,7 @@ const Insights = () => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from("blog_posts")
-        .select("id, slug, title, excerpt, category, created_at, read_time, featured")
+        .select("id, slug, title, excerpt, category, created_at, read_time, featured, image_url")
         .eq("published", true)
         .order("created_at", { ascending: false });
 
@@ -71,7 +72,7 @@ const Insights = () => {
     });
   };
 
-  const getImage = (category: string) => fallbackImages[category] || aiComplianceImg;
+  const getImage = (post: BlogPost) => post.image_url || fallbackImages[post.category] || aiComplianceImg;
 
   return (
     <div className="min-h-screen bg-background dark">
@@ -167,7 +168,7 @@ const Insights = () => {
                   </div>
                   <div className="lg:w-80 h-48 lg:h-64 rounded-xl overflow-hidden">
                     <img 
-                      src={getImage(featuredPost.category)} 
+                      src={getImage(featuredPost)} 
                       alt={featuredPost.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -196,7 +197,7 @@ const Insights = () => {
                 >
                   <div className="h-40 overflow-hidden">
                     <img 
-                      src={getImage(post.category)} 
+                      src={getImage(post)} 
                       alt={post.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
