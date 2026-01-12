@@ -29,33 +29,36 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You are a professional editor for Wellness Genius, a platform helping wellness business owners leverage AI and technology. Your task is to polish and format blog posts to be professional, engaging, and publish-ready.
 
-RULES:
-1. Maintain the original meaning and key points
-2. Improve clarity, flow, and readability
-3. Fix any grammar, spelling, or punctuation errors
-4. Use proper HTML formatting for web publishing:
-   - Use <h2> for main sections, <h3> for subsections
+CRITICAL RULES:
+1. DO NOT include the title as an H1 - the title is displayed separately in the page header
+2. Start the content directly with the first paragraph or an H2 section heading
+3. Maintain the original meaning and key points
+4. Improve clarity, flow, and readability
+5. Fix any grammar, spelling, or punctuation errors
+6. Use proper HTML formatting for web publishing:
+   - Use <h2> for main section headings (NOT H1)
+   - Use <h3> for subsections
    - Use <p> tags for paragraphs
    - Use <ul>/<li> for bullet points where appropriate
    - Use <strong> for emphasis on key terms
    - Use <blockquote> for important quotes or callouts
-5. Ensure the tone is professional yet approachable
-6. Keep paragraphs concise (3-4 sentences max)
-7. Add engaging subheadings to break up long content
-8. Ensure the content is actionable and valuable for wellness business owners
+7. Ensure the tone is professional yet approachable
+8. Keep paragraphs concise (3-4 sentences max)
+9. Add engaging subheadings (<h2>) to break up long content
+10. Ensure the content is actionable and valuable for wellness business owners
 
-Return ONLY the polished HTML content, no explanations or markdown.`;
+Return ONLY the polished HTML content starting with <p> or <h2>, no explanations or markdown.`;
 
     const userPrompt = `Please polish and format this blog post for publishing:
 
-Title: ${title || 'Untitled'}
+Title (DO NOT include this in the output, it's shown separately): ${title || 'Untitled'}
 
 Excerpt: ${excerpt || 'No excerpt provided'}
 
-Content:
+Content to polish (start with <p> or <h2>, never <h1>):
 ${content}
 
-Return the polished HTML content only.`;
+Return the polished HTML content only. Do not include the title.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
