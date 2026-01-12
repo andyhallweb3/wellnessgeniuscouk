@@ -757,6 +757,135 @@ Keep responses tight. No waffle. Every sentence must add value.`;
 
 // Mode-specific prompts that change behavior
 const MODE_CONFIGS: Record<string, { prompt: string; responseFormat: string }> = {
+  // PRIMARY MODES (New Spec - Structured Outputs)
+  diagnose: {
+    prompt: `MODE: Diagnose
+
+You are diagnosing the user's business readiness and gaps.
+
+**OUTPUT STRUCTURE (REQUIRED):**
+
+## 1. Current Situation Summary
+Based on the workspace context, summarise where this business is today.
+
+## 2. AI Readiness Band + Implications
+What their current state means for AI adoption and digital transformation.
+
+## 3. Top 3 Bottlenecks
+Specific, actionable issues holding them back. Be direct.
+
+## 4. Risks if Unchanged
+What happens if they do nothing for 6-12 months.
+
+## 5. 30/60/90 Fixes
+Sequenced recommendations:
+- **30 Days:** Quick wins, immediate actions
+- **60 Days:** Foundation building
+- **90 Days:** Strategic changes
+
+End with: "Would you like to save this diagnosis as a decision?"`,
+    responseFormat: "structured",
+  },
+  plan: {
+    prompt: `MODE: Plan
+
+You are helping create a strategic execution plan.
+
+**OUTPUT STRUCTURE (REQUIRED):**
+
+## 1. Three Approaches
+Present 3 distinct approaches with:
+- Trade-offs for each
+- Confidence level (High/Medium/Low)
+- Time and resource requirements
+
+## 2. Recommended Approach
+State your recommendation with clear rationale.
+
+## 3. Execution Plan
+
+### 30 Days
+- Specific actions (not vague goals)
+- Success metrics
+
+### 60 Days
+- Build on 30-day wins
+- Specific milestones
+
+### 90 Days
+- Strategic changes
+- Expected outcomes
+
+## 4. Metrics to Track
+Specific KPIs to monitor progress.
+
+## 5. What NOT to Do
+Common mistakes and distractions to avoid.
+
+End with: "Would you like to save this plan as a decision?"`,
+    responseFormat: "structured",
+  },
+  compare: {
+    prompt: `MODE: Compare
+
+You are comparing options, competitors, or tools.
+
+You may have access to WEB RESEARCH RESULTS. Use this data when available.
+
+**OUTPUT STRUCTURE (REQUIRED):**
+
+## 1. Snapshot Table
+| Option | Type | Key Strength | Key Weakness | Website |
+|--------|------|--------------|--------------|---------|
+
+## 2. Functional Comparison Matrix
+| Capability | Option 1 | Option 2 | Option 3 |
+|------------|----------|----------|----------|
+(Use Strong/Moderate/Weak/Not present)
+
+## 3. Strengths & Weaknesses
+For each option:
+- 3 key strengths
+- 3 key weaknesses
+
+## 4. Recommendation by Constraints
+Based on the user's situation (budget, team capacity, timeline), recommend the best fit.
+
+## 5. Procurement / Pilot Checklist
+- Questions to ask vendors
+- Red flags to watch for
+- Next steps to evaluate
+
+End with: "Would you like to save this comparison as a decision?"`,
+    responseFormat: "structured",
+  },
+  operate: {
+    prompt: `MODE: Operate (Weekly Co-Pilot)
+
+You are acting as a weekly operator co-pilot.
+
+**OUTPUT STRUCTURE (REQUIRED):**
+
+## This Week's Focus
+1-3 priority actions for this week. Be specific.
+
+## Risks Spotted
+Issues worth watching. Flag anything concerning.
+
+## Experiment to Run
+One small test to run this week. Low effort, quick feedback.
+
+## KPI Updates Requested
+What metrics should they check this week?
+
+## Operator Insight
+One intelligence nugget from industry trends or best practices.
+
+End with: "Would you like to save any of these as goals or decisions?"`,
+    responseFormat: "structured",
+  },
+
+  // DAILY OPERATIONS
   daily_briefing: {
     prompt: `MODE: Daily Briefing
     
@@ -779,6 +908,8 @@ Simple, direct answer. Apply First Principles thinking but keep output minimal.
 - No structured output needed`,
     responseFormat: "brief",
   },
+
+  // STRATEGIC THINKING
   decision_support: {
     prompt: `MODE: Decision Support
 
@@ -928,6 +1059,8 @@ For each competitor:
 **TONE:** Professional, analytical, neutral, insight-led, no hype.`,
     responseFormat: "structured",
   },
+
+  // PLANNING & BUILDING
   market_research: {
     prompt: `MODE: Market Research (Web Research)
 
@@ -949,23 +1082,6 @@ End with:
 - What to safely ignore
 
 IMPORTANT: Base insights on the actual web research provided. Cite sources where possible.`,
-    responseFormat: "structured",
-  },
-  weekly_briefing: {
-    prompt: `MODE: Weekly Market Intelligence Brief
-
-Apply Pareto to market intelligence:
-- Focus on the 20% of news that actually matters
-- Skip the noise
-
-For each development:
-- **What happened** — Factual summary
-- **Why it matters** — Commercial implication (the real impact)
-
-End with:
-- 3 high-leverage opportunities
-- 3 risks worth monitoring
-- What to ignore this week`,
     responseFormat: "structured",
   },
   weekly_review: {
