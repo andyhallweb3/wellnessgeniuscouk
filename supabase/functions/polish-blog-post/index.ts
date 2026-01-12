@@ -60,11 +60,14 @@ ${content}
 
 Return the polished HTML content only. Do not include the title.`;
 
+    const apiKey = Deno.env.get('LOVABLE_API_KEY');
+    console.log('[POLISH] Starting polish request, API key present:', !!apiKey);
+    
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
@@ -77,10 +80,12 @@ Return the polished HTML content only. Do not include the title.`;
       }),
     });
 
+    console.log('[POLISH] AI response status:', response.status);
+    
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI API error:', errorText);
-      throw new Error('Failed to polish content');
+      console.error('[POLISH] AI API error:', response.status, errorText);
+      throw new Error(`AI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
