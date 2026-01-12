@@ -25,7 +25,8 @@ import {
   Image as ImageIcon,
   ExternalLink,
   Upload,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 
 interface BlogPost {
@@ -58,6 +59,7 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [polishing, setPolishing] = useState(false);
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -152,6 +154,53 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handlePolish = async () => {
+    if (!form.content || form.content.length < 50) {
+      toast({
+        title: "Content required",
+        description: "Please add some content before polishing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPolishing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("polish-blog-post", {
+        body: {
+          title: form.title,
+          excerpt: form.excerpt,
+          content: form.content,
+        },
+        headers: getAuthHeaders(),
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      setForm({
+        ...form,
+        content: data.polishedContent || form.content,
+        excerpt: data.improvedExcerpt || form.excerpt,
+        meta_description: data.metaDescription || form.meta_description,
+      });
+
+      toast({
+        title: "Content polished!",
+        description: "Your blog post has been formatted and improved",
+      });
+    } catch (error) {
+      console.error("Polish error:", error);
+      toast({
+        title: "Polish failed",
+        description: error instanceof Error ? error.message : "Failed to polish content",
+        variant: "destructive",
+      });
+    } finally {
+      setPolishing(false);
     }
   };
 
@@ -414,11 +463,36 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
               rows={2}
             />
             <div>
-              <label className="text-sm font-medium mb-2 block">Content</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Content</label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePolish}
+                  disabled={polishing || !form.content}
+                  className="gap-1"
+                >
+                  {polishing ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Polishing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3 w-3" />
+                      AI Polish
+                    </>
+                  )}
+                </Button>
+              </div>
               <RichTextEditor
                 content={form.content}
                 onChange={(content) => setForm({ ...form, content })}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Click "AI Polish" to format and improve your content for publishing
+              </p>
             </div>
             {/* Image URL with Preview and Upload */}
             <div className="space-y-3">
