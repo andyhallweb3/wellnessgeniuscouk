@@ -61,6 +61,7 @@ const Header = () => {
   const resourcesLinks = [
     { href: "/news", label: "Industry News", isRoute: true },
     { href: "/insights", label: "Insights", isRoute: true },
+    { href: "/newsletter", label: "Subscribe", isRoute: true, icon: Mail },
   ];
 
   const productLinks = [
@@ -75,7 +76,6 @@ const Header = () => {
 
   const aboutLinks = [
     { href: "/speaker-kit", label: "Speaking", isRoute: true },
-    { href: "/newsletter", label: "Subscribe", isRoute: true, icon: Mail },
   ];
 
   const hubLinks = [
@@ -174,7 +174,6 @@ const Header = () => {
                 {aboutLinks.map((link) => (
                   <DropdownMenuItem key={link.href} asChild>
                     <Link to={link.href} className={`w-full flex items-center gap-2 ${isActive(link.href) ? "text-accent font-medium" : ""}`}>
-                      {link.icon && <link.icon size={16} />}
                       {link.label}
                     </Link>
                   </DropdownMenuItem>
