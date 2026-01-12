@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeHtmlString, toPlainText } from "@/lib/html";
 
 // Fallback blog images
 import aiComplianceImg from "@/assets/blog/ai-compliance.jpeg";
@@ -13,13 +14,13 @@ import aiWellnessDataImg from "@/assets/blog/ai-wellness-data.webp";
 import aiPersonalisationImg from "@/assets/blog/ai-personalisation.jpeg";
 
 const fallbackImages: Record<string, string> = {
-  "AI": aiComplianceImg,
+  AI: aiComplianceImg,
   "AI Agents": aiComplianceImg,
-  "Data": aiWellnessDataImg,
-  "Wellness": aiPersonalisationImg,
-  "Technology": aiComplianceImg,
-  "Industry": aiWellnessDataImg,
-  "Strategy": aiPersonalisationImg,
+  Data: aiWellnessDataImg,
+  Wellness: aiPersonalisationImg,
+  Technology: aiComplianceImg,
+  Industry: aiWellnessDataImg,
+  Strategy: aiPersonalisationImg,
 };
 
 interface BlogPostData {
@@ -61,7 +62,7 @@ const BlogPost = () => {
           .select("*")
           .eq("slug", slug)
           .eq("published", true)
-          .single();
+          .maybeSingle();
 
         if (!isMounted) return;
 
@@ -160,21 +161,18 @@ const BlogPost = () => {
     <div className="min-h-screen bg-background dark">
       <Helmet>
         <title>{post.meta_title || `${post.title} | Wellness Genius`}</title>
-        <meta 
-          name="description" 
-          content={post.meta_description || post.excerpt} 
-        />
+        <meta name="description" content={post.meta_description || toPlainText(post.excerpt)} />
         {post.keywords && post.keywords.length > 0 && (
           <meta name="keywords" content={post.keywords.join(", ")} />
         )}
         <meta property="og:type" content="article" />
         <meta property="og:url" content={`https://www.wellnessgenius.co.uk/insights/${post.slug}`} />
         <meta property="og:title" content={post.meta_title || post.title} />
-        <meta property="og:description" content={post.meta_description || post.excerpt} />
+        <meta property="og:description" content={post.meta_description || toPlainText(post.excerpt)} />
         <meta property="og:image" content={getImage(post)} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={post.meta_title || post.title} />
-        <meta name="twitter:description" content={post.meta_description || post.excerpt} />
+        <meta name="twitter:description" content={post.meta_description || toPlainText(post.excerpt)} />
         <meta name="twitter:image" content={getImage(post)} />
       </Helmet>
 
@@ -241,7 +239,7 @@ const BlogPost = () => {
                 prose-code:bg-secondary prose-code:px-2 prose-code:py-1 prose-code:rounded
                 prose-img:rounded-xl"
               style={{ animationDelay: "100ms" }}
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: normalizeHtmlString(post.content) }}
             />
 
             {/* CTA */}

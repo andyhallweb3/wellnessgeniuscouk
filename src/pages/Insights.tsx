@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Clock, Mail } from "lucide-react";
 import { useNewsletter } from "@/hooks/useNewsletter";
 import { supabase } from "@/integrations/supabase/client";
+import { toPlainText } from "@/lib/html";
 
 // Fallback blog images
 import aiComplianceImg from "@/assets/blog/ai-compliance.jpeg";
@@ -19,8 +20,8 @@ const categories = ["All", "AI Agents", "Wellness", "Data"];
 // Fallback image mapping for posts without images
 const fallbackImages: Record<string, string> = {
   "AI Agents": aiComplianceImg,
-  "Data": aiWellnessDataImg,
-  "Wellness": aiPersonalisationImg,
+  Data: aiWellnessDataImg,
+  Wellness: aiPersonalisationImg,
 };
 
 interface BlogPost {
@@ -57,24 +58,22 @@ const Insights = () => {
     fetchPosts();
   }, []);
 
-  const filteredPosts = activeCategory === "All" 
-    ? posts 
-    : posts.filter(post => post.category === activeCategory);
+  const filteredPosts =
+    activeCategory === "All" ? posts : posts.filter((post) => post.category === activeCategory);
 
-  const featuredPost = posts.find(post => post.featured);
-  const regularPosts = filteredPosts.filter(post => !post.featured || activeCategory !== "All");
+  const featuredPost = posts.find((post) => post.featured);
+  const regularPosts = filteredPosts.filter((post) => !post.featured || activeCategory !== "All");
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-GB", { 
-      month: "short", 
-      day: "numeric", 
-      year: "numeric" 
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
-  const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-
   const getImage = (post: BlogPost) => post.image_url || fallbackImages[post.category] || aiComplianceImg;
+
 
   return (
     <div className="min-h-screen bg-background dark">
@@ -152,7 +151,7 @@ const Insights = () => {
                       Featured
                     </span>
                     <h2 className="text-2xl lg:text-3xl mb-4 group-hover:text-accent transition-colors">{featuredPost.title}</h2>
-                    <p className="text-muted-foreground mb-6">{stripHtml(featuredPost.excerpt)}</p>
+                    <p className="text-muted-foreground mb-6">{toPlainText(featuredPost.excerpt)}</p>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={14} />
@@ -172,6 +171,7 @@ const Insights = () => {
                     <img 
                       src={getImage(featuredPost)} 
                       alt={featuredPost.title}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
@@ -201,6 +201,7 @@ const Insights = () => {
                     <img 
                       src={getImage(post)} 
                       alt={post.title}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
@@ -209,7 +210,7 @@ const Insights = () => {
                       {post.category}
                     </span>
                     <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">{post.title}</h3>
-                    <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">{stripHtml(post.excerpt)}</p>
+                    <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">{toPlainText(post.excerpt)}</p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={12} />
