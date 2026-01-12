@@ -45,46 +45,66 @@ const BlogPost = () => {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchPost = async () => {
-      if (!slug) {
+      try {
+        if (!slug) {
+          if (!isMounted) return;
+          setNotFound(true);
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("blog_posts")
+          .select("*")
+          .eq("slug", slug)
+          .eq("published", true)
+          .single();
+
+        if (!isMounted) return;
+
+        if (error || !data) {
+          console.error("Error fetching blog post:", error);
+          setNotFound(true);
+          setLoading(false);
+          return;
+        }
+
+        setPost(data);
+
+        // Fetch related posts
+        const { data: related, error: relatedError } = await supabase
+          .from("blog_posts")
+          .select("id, slug, title, excerpt, category, created_at, read_time, image_url")
+          .eq("published", true)
+          .neq("id", data.id)
+          .order("created_at", { ascending: false })
+          .limit(2);
+
+        if (relatedError) {
+          console.warn("Error fetching related posts:", relatedError);
+        }
+
+        if (related) {
+          setRelatedPosts(related as BlogPostData[]);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching blog post:", err);
+        if (!isMounted) return;
         setNotFound(true);
+      } finally {
+        if (!isMounted) return;
         setLoading(false);
-        return;
       }
-
-      const { data, error } = await supabase
-        .from("blog_posts")
-        .select("*")
-        .eq("slug", slug)
-        .eq("published", true)
-        .single();
-
-      if (error || !data) {
-        console.error("Error fetching blog post:", error);
-        setNotFound(true);
-        setLoading(false);
-        return;
-      }
-
-      setPost(data);
-
-      // Fetch related posts
-      const { data: related } = await supabase
-        .from("blog_posts")
-        .select("id, slug, title, excerpt, category, created_at, read_time, image_url")
-        .eq("published", true)
-        .neq("id", data.id)
-        .order("created_at", { ascending: false })
-        .limit(2);
-
-      if (related) {
-        setRelatedPosts(related as BlogPostData[]);
-      }
-
-      setLoading(false);
     };
 
     fetchPost();
+
+    return () => {
+      isMounted = false;
+    };
   }, [slug]);
 
   // Update document metadata

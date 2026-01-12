@@ -58,9 +58,9 @@ const Header = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const mainNavLinks = [
-    { href: "/ai-readiness", label: "AI Assessment", isRoute: true },
+  const resourcesLinks = [
     { href: "/news", label: "Industry News", isRoute: true },
+    { href: "/insights", label: "Insights", isRoute: true },
   ];
 
   const productLinks = [
@@ -74,7 +74,6 @@ const Header = () => {
   ];
 
   const aboutLinks = [
-    { href: "/news", label: "Industry News", isRoute: true },
     { href: "/speaker-kit", label: "Speaking", isRoute: true },
     { href: "/newsletter", label: "Subscribe", isRoute: true, icon: Mail },
   ];
@@ -134,22 +133,37 @@ const Header = () => {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* AI Assessment */}
+            <Link
+              to="/ai-readiness"
+              className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+                isActive("/ai-readiness")
+                  ? "text-accent bg-accent/5"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/5"
+              }`}
+            >
+              AI Assessment
+            </Link>
 
-            {/* Main Nav Links */}
-            {mainNavLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
-                  isActive(link.href) 
-                    ? "text-accent bg-accent/5" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/5"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-
+            {/* Resources Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent/5">
+                Resources
+                <ChevronDown size={14} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-popover border border-border shadow-lg z-50">
+                {resourcesLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <Link
+                      to={link.href}
+                      className={`w-full ${isActive(link.href) ? "text-accent font-medium" : ""}`}
+                    >
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             {/* About Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent/5">
@@ -305,9 +319,18 @@ const Header = () => {
                 </Link>
               ))}
 
-              {/* Main Nav */}
+              {/* Resources */}
               <p className="text-xs font-medium text-muted-foreground px-2 pt-4 pb-1">Resources</p>
-              {mainNavLinks.map((link) => (
+              <Link
+                to="/ai-readiness"
+                className={`px-3 py-2 text-base font-medium transition-colors rounded-md ${
+                  isActive("/ai-readiness") ? "text-accent bg-accent/5" : "text-foreground hover:bg-accent/5"
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                AI Assessment
+              </Link>
+              {resourcesLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
@@ -319,7 +342,6 @@ const Header = () => {
                   {link.label}
                 </Link>
               ))}
-
               {/* About Section */}
               <p className="text-xs font-medium text-muted-foreground px-2 pt-4 pb-1">About</p>
               {aboutLinks.map((link) => (
