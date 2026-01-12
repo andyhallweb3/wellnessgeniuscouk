@@ -79,9 +79,23 @@ const Insights = () => {
         <title>AI & Wellness Insights | Wellness Genius Blog</title>
         <meta name="description" content="Practical thinking on AI, automation, and growth in wellness. Honest perspectives on AI deployment, wellness tech, and building things that actually ship." />
         <meta name="keywords" content="AI wellness, wellness technology, fitness AI, health tech insights, AI automation, wellness industry trends, AI agents, data analytics wellness, personalisation, wellness operators, gym technology, fitness innovation, wellness business, AI deployment" />
-        <meta property="og:title" content="AI & Wellness Insights | Wellness Genius Blog" />
-        <meta property="og:description" content="Practical thinking on AI, automation, and growth in wellness. No fluff, just honest perspectives." />
+        
+        {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.wellnessgenius.co.uk/insights" />
+        <meta property="og:title" content="AI & Wellness Insights | Wellness Genius" />
+        <meta property="og:description" content="Practical thinking on AI, automation, and growth in wellness. No fluff—just honest perspectives on what's working in AI deployment and wellness tech." />
+        <meta property="og:image" content="https://www.wellnessgenius.co.uk/images/wellness-genius-news-og.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Wellness Genius" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content="https://www.wellnessgenius.co.uk/insights" />
+        <meta name="twitter:title" content="AI & Wellness Insights | Wellness Genius" />
+        <meta name="twitter:description" content="Practical thinking on AI, automation, and growth in wellness. No fluff—just honest perspectives." />
+        <meta name="twitter:image" content="https://www.wellnessgenius.co.uk/images/wellness-genius-news-og.png" />
       </Helmet>
       <Header />
       
