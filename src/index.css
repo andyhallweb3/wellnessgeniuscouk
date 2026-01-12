@@ -292,12 +292,8 @@
   .blog-content p {
     @apply text-muted-foreground;
     font-size: 1.125rem;
-    line-height: 1.85;
-    margin-bottom: 1.75rem;
-  }
-  
-  .blog-content p + p {
-    margin-top: 0.5rem;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
   }
   
   .blog-content p:last-child {
@@ -308,7 +304,7 @@
   .blog-content > p:first-of-type {
     @apply text-lg md:text-xl text-foreground/80 font-medium;
     line-height: 1.75;
-    margin-bottom: 2rem;
+    margin-bottom: 1.75rem;
   }
   
   /* Links */
