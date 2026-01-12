@@ -224,20 +224,9 @@ const BlogPost = () => {
               />
             </div>
 
-            {/* Content - Render HTML */}
+            {/* Content - Using blog-content template from index.css */}
             <div 
-              className="prose prose-invert prose-lg max-w-none animate-fade-up
-                prose-headings:font-heading prose-headings:text-foreground
-                prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6
-                prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
-                prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-6
-                prose-a:text-accent prose-a:no-underline hover:prose-a:underline
-                prose-strong:text-foreground prose-strong:font-semibold
-                prose-ul:my-6 prose-ul:space-y-2
-                prose-li:text-muted-foreground
-                prose-blockquote:border-l-accent prose-blockquote:bg-secondary/50 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-lg
-                prose-code:bg-secondary prose-code:px-2 prose-code:py-1 prose-code:rounded
-                prose-img:rounded-xl"
+              className="blog-content animate-fade-up"
               style={{ animationDelay: "100ms" }}
               dangerouslySetInnerHTML={{ __html: normalizeHtmlString(post.content) }}
             />
