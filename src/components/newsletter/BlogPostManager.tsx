@@ -20,7 +20,10 @@ import {
   Pencil,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  Link,
+  Image as ImageIcon,
+  ExternalLink
 } from "lucide-react";
 
 interface BlogPost {
@@ -51,6 +54,7 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<BlogPost | null>(null);
+  const [imagePreviewError, setImagePreviewError] = useState(false);
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -64,6 +68,7 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
     keywords: "",
     read_time: "5 min read",
     image_url: "",
+    source_url: "",
   });
 
   useEffect(() => {
@@ -89,6 +94,7 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
 
   const openCreate = () => {
     setEditing(null);
+    setImagePreviewError(false);
     setForm({
       title: "",
       slug: "",
@@ -102,12 +108,14 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
       keywords: "",
       read_time: "5 min read",
       image_url: "",
+      source_url: "",
     });
     setShowModal(true);
   };
 
   const openEdit = (post: BlogPost) => {
     setEditing(post);
+    setImagePreviewError(false);
     setForm({
       title: post.title,
       slug: post.slug,
@@ -121,6 +129,7 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
       keywords: post.keywords?.join(", ") || "",
       read_time: post.read_time || "5 min read",
       image_url: post.image_url || "",
+      source_url: "",
     });
     setShowModal(true);
   };
@@ -348,11 +357,67 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
                 onChange={(content) => setForm({ ...form, content })}
               />
             </div>
-            <Input
-              placeholder="Image URL"
-              value={form.image_url}
-              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-            />
+            {/* Image URL with Preview */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Featured Image
+              </label>
+              <Input
+                placeholder="Image URL (paste any image URL)"
+                value={form.image_url}
+                onChange={(e) => {
+                  setForm({ ...form, image_url: e.target.value });
+                  setImagePreviewError(false);
+                }}
+              />
+              {form.image_url && (
+                <div className="relative">
+                  {!imagePreviewError ? (
+                    <img
+                      src={form.image_url}
+                      alt="Preview"
+                      className="w-full max-h-48 object-cover rounded-lg border"
+                      onError={() => setImagePreviewError(true)}
+                    />
+                  ) : (
+                    <div className="w-full h-32 bg-secondary rounded-lg border flex items-center justify-center text-muted-foreground text-sm">
+                      Image failed to load - check URL
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Source URL for reference */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Link className="h-4 w-4" />
+                Source URL (optional)
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Original article URL for reference"
+                  value={form.source_url}
+                  onChange={(e) => setForm({ ...form, source_url: e.target.value })}
+                  className="flex-1"
+                />
+                {form.source_url && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.open(form.source_url, '_blank')}
+                    title="Open source URL"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Add a link to the original news article you're referencing (for your records only)
+              </p>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
               <Input
                 placeholder="Meta title"
