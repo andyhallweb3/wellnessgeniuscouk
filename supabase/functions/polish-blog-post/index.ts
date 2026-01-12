@@ -89,10 +89,10 @@ Return the polished HTML content only.`;
       .replace(/\n?```$/i, '')
       .trim();
 
-    // Also generate an improved excerpt if needed
-    let improvedExcerpt = excerpt;
-    if (!excerpt || excerpt.length < 50) {
-      const excerptResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Generate all SEO fields in parallel
+    const [excerptResponse, metaResponse, keywordsResponse, metaTitleResponse] = await Promise.all([
+      // Improved excerpt/summary
+      fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,46 +103,103 @@ Return the polished HTML content only.`;
           messages: [
             { 
               role: 'system', 
-              content: 'Generate a compelling 1-2 sentence excerpt/summary for this blog post. It should entice readers to click and read more. Return ONLY the excerpt text, no quotes or explanations.' 
+              content: 'Generate a compelling 1-2 sentence excerpt/summary for this blog post. It should entice readers to click and read more. Keep it under 160 characters. Return ONLY the excerpt text, no quotes or explanations.' 
+            },
+            { role: 'user', content: `Title: ${title}\n\nContent: ${polishedContent.substring(0, 1500)}` },
+          ],
+          temperature: 0.5,
+          max_tokens: 100,
+        }),
+      }),
+      
+      // Meta description
+      fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Generate an SEO-optimized meta description (max 155 characters) for this blog post. Focus on the main benefit/insight for wellness business owners. Return ONLY the meta description text, no quotes.' 
             },
             { role: 'user', content: `Title: ${title}\n\nContent: ${polishedContent.substring(0, 1000)}` },
           ],
-          temperature: 0.5,
-          max_tokens: 150,
+          temperature: 0.3,
+          max_tokens: 60,
         }),
-      });
+      }),
+      
+      // Keywords
+      fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Generate 5-8 SEO keywords for this wellness/AI blog post. Return ONLY a comma-separated list of keywords, no explanations. Focus on: AI, wellness, fitness, health tech, automation, business terms.' 
+            },
+            { role: 'user', content: `Title: ${title}\n\nContent: ${polishedContent.substring(0, 1000)}` },
+          ],
+          temperature: 0.3,
+          max_tokens: 80,
+        }),
+      }),
+      
+      // Meta title
+      fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Generate an SEO-optimized meta title (max 60 characters) for this blog post. Include primary keyword near the start. Add "| Wellness Genius" at the end if space permits. Return ONLY the title text.' 
+            },
+            { role: 'user', content: `Original Title: ${title}\n\nContent summary: ${polishedContent.substring(0, 500)}` },
+          ],
+          temperature: 0.3,
+          max_tokens: 30,
+        }),
+      }),
+    ]);
 
-      if (excerptResponse.ok) {
-        const excerptData = await excerptResponse.json();
-        improvedExcerpt = excerptData.choices?.[0]?.message?.content?.trim() || excerpt;
-      }
+    // Extract results
+    let improvedExcerpt = excerpt;
+    let metaDescription = '';
+    let keywords = '';
+    let metaTitle = title;
+
+    if (excerptResponse.ok) {
+      const data = await excerptResponse.json();
+      improvedExcerpt = data.choices?.[0]?.message?.content?.trim() || excerpt;
     }
 
-    // Generate meta description if not present
-    const metaResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'Generate an SEO-optimized meta description (max 155 characters) for this blog post. Return ONLY the meta description text.' 
-          },
-          { role: 'user', content: `Title: ${title}\n\nContent: ${polishedContent.substring(0, 500)}` },
-        ],
-        temperature: 0.3,
-        max_tokens: 50,
-      }),
-    });
-
-    let metaDescription = '';
     if (metaResponse.ok) {
-      const metaData = await metaResponse.json();
-      metaDescription = metaData.choices?.[0]?.message?.content?.trim() || '';
+      const data = await metaResponse.json();
+      metaDescription = data.choices?.[0]?.message?.content?.trim() || '';
+    }
+
+    if (keywordsResponse.ok) {
+      const data = await keywordsResponse.json();
+      keywords = data.choices?.[0]?.message?.content?.trim() || '';
+    }
+
+    if (metaTitleResponse.ok) {
+      const data = await metaTitleResponse.json();
+      metaTitle = data.choices?.[0]?.message?.content?.trim() || title;
     }
 
     return new Response(
@@ -150,6 +207,8 @@ Return the polished HTML content only.`;
         polishedContent,
         improvedExcerpt,
         metaDescription,
+        metaTitle,
+        keywords,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

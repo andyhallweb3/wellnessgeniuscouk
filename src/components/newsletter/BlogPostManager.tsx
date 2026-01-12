@@ -186,11 +186,13 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
         content: data.polishedContent || form.content,
         excerpt: data.improvedExcerpt || form.excerpt,
         meta_description: data.metaDescription || form.meta_description,
+        meta_title: data.metaTitle || form.meta_title,
+        keywords: data.keywords || form.keywords,
       });
 
       toast({
         title: "Content polished!",
-        description: "Your blog post has been formatted and improved",
+        description: "Content, excerpt, meta tags, and keywords have been optimized",
       });
     } catch (error) {
       console.error("Polish error:", error);
