@@ -23,7 +23,9 @@ import {
   EyeOff,
   Link,
   Image as ImageIcon,
-  ExternalLink
+  ExternalLink,
+  Upload,
+  X
 } from "lucide-react";
 
 interface BlogPost {
@@ -55,6 +57,7 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -89,6 +92,66 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
       console.error("Failed to fetch blog posts:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JPEG, PNG, WebP, or GIF image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `blog/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(filePath);
+
+      setForm({ ...form, image_url: publicUrl });
+      setImagePreviewError(false);
+      
+      toast({
+        title: "Image uploaded",
+        description: "Your image has been uploaded successfully",
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -357,20 +420,69 @@ export const BlogPostManager = ({ getAuthHeaders }: BlogPostManagerProps) => {
                 onChange={(content) => setForm({ ...form, content })}
               />
             </div>
-            {/* Image URL with Preview */}
-            <div className="space-y-2">
+            {/* Image URL with Preview and Upload */}
+            <div className="space-y-3">
               <label className="text-sm font-medium flex items-center gap-2">
                 <ImageIcon className="h-4 w-4" />
                 Featured Image
               </label>
-              <Input
-                placeholder="Image URL (paste any image URL)"
-                value={form.image_url}
-                onChange={(e) => {
-                  setForm({ ...form, image_url: e.target.value });
-                  setImagePreviewError(false);
-                }}
-              />
+              
+              {/* Upload or URL options */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    placeholder="Paste image URL or upload below"
+                    value={form.image_url}
+                    onChange={(e) => {
+                      setForm({ ...form, image_url: e.target.value });
+                      setImagePreviewError(false);
+                    }}
+                  />
+                  {form.image_url && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+                      onClick={() => setForm({ ...form, image_url: "" })}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={uploading}
+                    asChild
+                  >
+                    <span>
+                      {uploading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-1" />
+                          Upload
+                        </>
+                      )}
+                    </span>
+                  </Button>
+                </label>
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                Upload an image (max 5MB) or paste a URL. Supports JPEG, PNG, WebP, GIF.
+              </p>
+
+              {/* Image Preview */}
               {form.image_url && (
                 <div className="relative">
                   {!imagePreviewError ? (
