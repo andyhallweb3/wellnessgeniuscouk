@@ -300,11 +300,26 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
   };
 
   const sendTestEmail = async () => {
-    if (!selectedTemplate || !testEmail) return;
+    console.log("sendTestEmail called", { selectedTemplate, testEmail });
+    
+    if (!selectedTemplate || !testEmail) {
+      console.log("Early return - missing template or email", { hasTemplate: !!selectedTemplate, hasEmail: !!testEmail });
+      toast({
+        title: "Missing information",
+        description: !testEmail ? "Please enter an email address" : "No template selected",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setSendingTest(true);
     try {
-      const { error } = await supabase.functions.invoke("send-test-email", {
+      console.log("Invoking send-test-email with:", {
+        to: testEmail,
+        subject: selectedTemplate.subject,
+      });
+      
+      const { data, error } = await supabase.functions.invoke("send-test-email", {
         body: {
           to: testEmail,
           subject: selectedTemplate.subject,
@@ -312,6 +327,8 @@ export const EmailCampaigns = ({ getAuthHeaders }: EmailCampaignsProps) => {
           previewText: selectedTemplate.preview_text,
         },
       });
+
+      console.log("send-test-email response:", { data, error });
 
       if (error) throw error;
 
