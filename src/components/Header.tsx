@@ -82,7 +82,6 @@ const Header = () => {
   const hubLinks = [
     { href: "/hub", label: "Dashboard", icon: LayoutDashboard },
     { href: "/genie", label: "AI Advisor", icon: Sparkles },
-    { href: "/hub/insights", label: "Saved Insights", icon: Bookmark },
   ];
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/30">
