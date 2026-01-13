@@ -236,9 +236,9 @@ const Header = () => {
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to="/hub" className="w-full flex items-center gap-2">
+                      <Link to="/ai-readiness-results" className="w-full flex items-center gap-2">
                         <LayoutDashboard size={16} />
-                        Go to Hub
+                        AI Readiness Results
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
