@@ -381,7 +381,7 @@ export const generatePromptPackEmailHTML = (unsubscribeUrl?: string): string => 
         
         <!-- Signature -->
         <div class="signature">
-          <p class="name">Wellness Genius</p>
+          <p class="name">The Wellness Genius Team</p>
         </div>
       </div>
       

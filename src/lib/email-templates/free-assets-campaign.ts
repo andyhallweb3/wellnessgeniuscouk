@@ -389,7 +389,7 @@ export const generateAIAdvisorTrialEmail = (unsubscribeUrl?: string): string => 
         </div>
         
         <div class="signature">
-          <p class="name">Wellness Genius</p>
+          <p class="name">The Wellness Genius Team</p>
         </div>
       </div>
       
@@ -522,7 +522,7 @@ export const generateEbookDownloadEmail = (unsubscribeUrl?: string): string => {
         </div>
         
         <div class="signature">
-          <p class="name">Wellness Genius</p>
+          <p class="name">The Wellness Genius Team</p>
         </div>
       </div>
       
@@ -653,7 +653,7 @@ export const generateReadinessScoreEmail = (unsubscribeUrl?: string): string => 
         </div>
         
         <div class="signature">
-          <p class="name">Wellness Genius</p>
+          <p class="name">The Wellness Genius Team</p>
         </div>
       </div>
       
