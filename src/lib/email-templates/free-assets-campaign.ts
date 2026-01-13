@@ -389,11 +389,7 @@ export const generateAIAdvisorTrialEmail = (unsubscribeUrl?: string): string => 
         </div>
         
         <div class="signature">
-          <p class="name">Andy Sherwin</p>
-          <p>Founder, Wellness Genius</p>
-          <p style="color: #6b7280; font-size: 14px;">
-            <a href="https://www.linkedin.com/in/andy-sherwin-wellness-genius/" style="color: #7c3aed;">Connect on LinkedIn</a>
-          </p>
+          <p class="name">Wellness Genius</p>
         </div>
       </div>
       
@@ -526,11 +522,7 @@ export const generateEbookDownloadEmail = (unsubscribeUrl?: string): string => {
         </div>
         
         <div class="signature">
-          <p class="name">Andy Sherwin</p>
-          <p>Founder, Wellness Genius</p>
-          <p style="color: #6b7280; font-size: 14px;">
-            <a href="https://www.linkedin.com/in/andy-sherwin-wellness-genius/" style="color: #0d9488;">Connect on LinkedIn</a>
-          </p>
+          <p class="name">Wellness Genius</p>
         </div>
       </div>
       
@@ -661,11 +653,7 @@ export const generateReadinessScoreEmail = (unsubscribeUrl?: string): string => 
         </div>
         
         <div class="signature">
-          <p class="name">Andy Sherwin</p>
-          <p>Founder, Wellness Genius</p>
-          <p style="color: #6b7280; font-size: 14px;">
-            <a href="https://www.linkedin.com/in/andy-sherwin-wellness-genius/" style="color: #ea580c;">Connect on LinkedIn</a>
-          </p>
+          <p class="name">Wellness Genius</p>
         </div>
       </div>
       
