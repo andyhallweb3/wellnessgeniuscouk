@@ -317,7 +317,7 @@ export const generateAIAdvisorTrialEmail = (unsubscribeUrl?: string): string => 
   <div class="email-wrapper">
     <div class="email-container">
       <div class="header header-accent">
-        <img src="https://wellnessgenius.co.uk/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
+        <img src="https://wellness-genius.lovable.app/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
         <span class="badge">Free Trial</span>
         <h1>Your Personal AI Advisor is Ready</h1>
         <p class="subhead">5 free questions. Zero commitment. Real answers.</p>
@@ -430,7 +430,7 @@ export const generateEbookDownloadEmail = (unsubscribeUrl?: string): string => {
   <div class="email-wrapper">
     <div class="email-container">
       <div class="header">
-        <img src="https://wellnessgenius.co.uk/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
+        <img src="https://wellness-genius.lovable.app/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
         <span class="badge">Free Download</span>
         <h1>Stop Guessing. Start Structuring.</h1>
         <p class="subhead">The 30-page guide to AI that actually works for wellness</p>
@@ -563,7 +563,7 @@ export const generateReadinessScoreEmail = (unsubscribeUrl?: string): string => 
   <div class="email-wrapper">
     <div class="email-container">
       <div class="header header-warm">
-        <img src="https://wellnessgenius.co.uk/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
+        <img src="https://wellness-genius.lovable.app/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
         <span class="badge">Free Assessment</span>
         <h1>What's Your AI Readiness Score?</h1>
         <p class="subhead">5 minutes. Brutal honesty. A clear path forward.</p>
