@@ -61,6 +61,7 @@ const Header = () => {
   const resourcesLinks = [
     { href: "/news", label: "Industry News", isRoute: true },
     { href: "/insights", label: "Insights", isRoute: true },
+    { href: "/hub/structured-ai-ebook", label: "Free AI Ebook", isRoute: true },
     { href: "/newsletter", label: "Subscribe", isRoute: true, icon: Mail },
   ];
 
