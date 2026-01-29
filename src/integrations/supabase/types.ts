@@ -1960,6 +1960,171 @@ export type Database = {
         }
         Relationships: []
       }
+      research_findings: {
+        Row: {
+          change: string | null
+          confidence: string | null
+          created_at: string
+          data: string
+          id: string
+          report_id: string
+          source: string | null
+          supporting_evidence: string[] | null
+          title: string
+        }
+        Insert: {
+          change?: string | null
+          confidence?: string | null
+          created_at?: string
+          data: string
+          id?: string
+          report_id: string
+          source?: string | null
+          supporting_evidence?: string[] | null
+          title: string
+        }
+        Update: {
+          change?: string | null
+          confidence?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          report_id?: string
+          source?: string | null
+          supporting_evidence?: string[] | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_findings_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "research_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_insights: {
+        Row: {
+          created_at: string
+          id: string
+          impact: string | null
+          insight_type: string
+          recommended_actions: string[] | null
+          report_id: string
+          text: string
+          timeframe: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          impact?: string | null
+          insight_type: string
+          recommended_actions?: string[] | null
+          report_id: string
+          text: string
+          timeframe?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          impact?: string | null
+          insight_type?: string
+          recommended_actions?: string[] | null
+          report_id?: string
+          text?: string
+          timeframe?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_insights_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "research_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_reports: {
+        Row: {
+          category: string
+          confidence_score: number | null
+          created_at: string
+          executive_summary: string | null
+          id: string
+          query: string
+          research_plan: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          confidence_score?: number | null
+          created_at?: string
+          executive_summary?: string | null
+          id?: string
+          query: string
+          research_plan?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          confidence_score?: number | null
+          created_at?: string
+          executive_summary?: string | null
+          id?: string
+          query?: string
+          research_plan?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      research_sources: {
+        Row: {
+          created_at: string
+          credibility_score: number | null
+          id: string
+          report_id: string
+          source_date: string | null
+          source_type: string | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          credibility_score?: number | null
+          id?: string
+          report_id: string
+          source_date?: string | null
+          source_type?: string | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          credibility_score?: number | null
+          id?: string
+          report_id?: string
+          source_date?: string | null
+          source_type?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_sources_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "research_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_bands: {
         Row: {
           id: string

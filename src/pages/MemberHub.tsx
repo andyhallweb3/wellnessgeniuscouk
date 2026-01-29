@@ -27,7 +27,8 @@ import {
   Trophy,
   Home,
   Flame,
-  Shield
+  Shield,
+  Search
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -50,6 +51,7 @@ import DownloadHistory from "@/components/hub/DownloadHistory";
 import ReadinessScoreHistory from "@/components/hub/ReadinessScoreHistory";
 import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
 import { ProfessionalFeed } from "@/components/feed";
+import ResearchAssistant from "@/components/research/ResearchAssistant";
 import WelcomeModal from "@/components/hub/WelcomeModal";
 import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -338,6 +340,10 @@ const MemberHub = () => {
                 <TabsTrigger value="community" className="flex items-center gap-2">
                   <Trophy size={16} />
                   Community
+                </TabsTrigger>
+                <TabsTrigger value="research" className="flex items-center gap-2">
+                  <Search size={16} />
+                  Research
                 </TabsTrigger>
                 <TabsTrigger value="resources" className="flex items-center gap-2">
                   <BookOpen size={16} />
@@ -778,6 +784,11 @@ const MemberHub = () => {
                     </div>
                   </div>
                 </div>
+              </TabsContent>
+
+              {/* RESEARCH TAB */}
+              <TabsContent value="research">
+                <ResearchAssistant />
               </TabsContent>
 
               {/* RESOURCES TAB */}
