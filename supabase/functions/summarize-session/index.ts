@@ -16,40 +16,39 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
     const conversationText = messages
       .map((m: { role: string; content: string }) => `${m.role}: ${m.content}`)
       .join('\n');
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a concise summarizer for business conversations. Create a brief, actionable summary (2-3 sentences max) that captures:
+    const systemPrompt = `You are a concise summarizer for business conversations. Create a brief, actionable summary (2-3 sentences max) that captures:
 1. The main topic or question discussed
 2. Key insights or decisions made
 3. Any action items or next steps
 
-Keep it professional and focused on business value. Do not use bullet points, just flowing sentences.`
-          },
+Keep it professional and focused on business value. Do not use bullet points, just flowing sentences.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-haiku-20241022',
+        system: systemPrompt,
+        messages: [
           {
             role: 'user',
             content: `Summarize this ${mode || 'general'} conversation:\n\n${conversationText}`
           }
         ],
         max_tokens: 1000,
-        temperature: 0.3,
       }),
     });
 
@@ -60,7 +59,7 @@ Keep it professional and focused on business value. Do not use bullet points, ju
     }
 
     const data = await response.json();
-    const summary = data.choices?.[0]?.message?.content?.trim();
+    const summary = data.content?.[0]?.text?.trim();
 
     return new Response(
       JSON.stringify({ summary }),
