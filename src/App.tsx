@@ -66,7 +66,8 @@ import DecisionsLog from "./pages/founder/DecisionsLog";
 import Guardrails from "./pages/founder/Guardrails";
 import CommandCentre from "./pages/founder/CommandCentre";
 import StructuredAIEbook from "./pages/StructuredAIEbook";
-
+import WellnessAssessment from "./pages/WellnessAssessment";
+import WellnessDashboard from "./pages/WellnessDashboard";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -134,6 +135,9 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/cookies" element={<CookiePolicy />} />
+            {/* Consumer Wellness Product */}
+            <Route path="/wellness" element={<WellnessAssessment />} />
+            <Route path="/wellness/dashboard" element={<WellnessDashboard />} />
             {/* Founder Command Centre (admin only) */}
             <Route path="/founder" element={<FounderToday />} />
             <Route path="/founder/health" element={<BusinessHealth />} />
