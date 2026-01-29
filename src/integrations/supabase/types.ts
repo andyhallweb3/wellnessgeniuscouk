@@ -2389,6 +2389,197 @@ export type Database = {
           },
         ]
       }
+      wellness_feedback: {
+        Row: {
+          adjustments_made: Json | null
+          created_at: string
+          feedback_content: Json
+          feedback_type: string
+          goal_id: string | null
+          id: string
+          plan_id: string | null
+          user_id: string
+        }
+        Insert: {
+          adjustments_made?: Json | null
+          created_at?: string
+          feedback_content?: Json
+          feedback_type: string
+          goal_id?: string | null
+          id?: string
+          plan_id?: string | null
+          user_id: string
+        }
+        Update: {
+          adjustments_made?: Json | null
+          created_at?: string
+          feedback_content?: Json
+          feedback_type?: string
+          goal_id?: string | null
+          id?: string
+          plan_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wellness_feedback_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "wellness_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wellness_feedback_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "wellness_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wellness_goals: {
+        Row: {
+          created_at: string
+          current_progress: number | null
+          description: string
+          domain: string
+          id: string
+          milestones: Json | null
+          phase: string | null
+          priority: string | null
+          status: string
+          success_criteria: Json | null
+          target_date: string | null
+          target_value: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_progress?: number | null
+          description: string
+          domain: string
+          id?: string
+          milestones?: Json | null
+          phase?: string | null
+          priority?: string | null
+          status?: string
+          success_criteria?: Json | null
+          target_date?: string | null
+          target_value?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_progress?: number | null
+          description?: string
+          domain?: string
+          id?: string
+          milestones?: Json | null
+          phase?: string | null
+          priority?: string | null
+          status?: string
+          success_criteria?: Json | null
+          target_date?: string | null
+          target_value?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wellness_plans: {
+        Row: {
+          assessment_snapshot: Json | null
+          created_at: string
+          duration_weeks: number | null
+          id: string
+          milestones: Json | null
+          phases: Json | null
+          plan_name: string | null
+          reflection_feedback: Json | null
+          reflection_score: number | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessment_snapshot?: Json | null
+          created_at?: string
+          duration_weeks?: number | null
+          id?: string
+          milestones?: Json | null
+          phases?: Json | null
+          plan_name?: string | null
+          reflection_feedback?: Json | null
+          reflection_score?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessment_snapshot?: Json | null
+          created_at?: string
+          duration_weeks?: number | null
+          id?: string
+          milestones?: Json | null
+          phases?: Json | null
+          plan_name?: string | null
+          reflection_feedback?: Json | null
+          reflection_score?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wellness_progress: {
+        Row: {
+          data_snapshot: Json | null
+          domain: string
+          goal_id: string | null
+          id: string
+          insights: Json | null
+          progress_percentage: number | null
+          recommendations: Json | null
+          recorded_at: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          data_snapshot?: Json | null
+          domain: string
+          goal_id?: string | null
+          id?: string
+          insights?: Json | null
+          progress_percentage?: number | null
+          recommendations?: Json | null
+          recorded_at?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          data_snapshot?: Json | null
+          domain?: string
+          goal_id?: string | null
+          id?: string
+          insights?: Json | null
+          progress_percentage?: number | null
+          recommendations?: Json | null
+          recorded_at?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wellness_progress_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "wellness_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_constraints: {
         Row: {
           budget_range: string | null

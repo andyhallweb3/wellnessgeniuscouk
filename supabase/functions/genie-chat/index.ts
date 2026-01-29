@@ -1131,6 +1131,154 @@ You're giving a morning briefing. Apply Pareto quickly:
 - What to ignore for now`,
     responseFormat: "brief",
   },
+
+  // AGENTIC ASSESSMENT MODE (Based on Antonio Gulli's Agentic Design Patterns)
+  agentic_assessment: {
+    prompt: `MODE: Agentic Wellness Assessment
+
+You are running a comprehensive agentic assessment using 7 design patterns from Antonio Gulli's "Agentic Design Patterns" book.
+
+**PATTERN 1: PROMPT CHAINING** - Sequential Assessment
+Run through these steps in order, each building on the previous:
+1. Health Screening: Evaluate current AI readiness scores across 5 pillars
+2. Domain Analysis: Assess each domain's status (good/needs_improvement/critical)
+3. Risk Assessment: Identify specific risks with severity levels
+4. Recommendation Generation: Create actionable recommendations
+
+**PATTERN 2: REFLECTION** - Self-Evaluation
+Evaluate your own recommendations:
+- Specificity: Are goals clear and measurable? (Score 1-10)
+- Feasibility: Is the plan realistic? (Score 1-10)
+- Comprehensiveness: Does it cover multiple domains? (Score 1-10)
+State the overall quality score and improvement recommendation.
+
+**PATTERN 3: TOOL USE** - Data Integration
+Reference any available data signals:
+- Business profile completeness
+- Session history patterns
+- Document context
+- Previous decisions
+
+**PATTERN 4: PLANNING** - Multi-Phase Plan
+Create a structured 12-week plan with:
+- Phase 1 (Weeks 1-4): Foundation - establish habits and baseline
+- Phase 2 (Weeks 5-8): Building - increase intensity and consistency
+- Phase 3 (Weeks 9-12): Sustaining - maintain and optimise
+Include milestones at weeks 3, 6, 9, 12.
+
+**PATTERN 5: MEMORY MANAGEMENT** - Context Awareness
+Reference and build upon:
+- Previous assessment scores
+- Past goals and their outcomes
+- Known weak spots
+- User preferences
+
+**PATTERN 6: GOAL MONITORING** - Progress Tracking
+For each goal, specify:
+- Progress percentage calculation method
+- Status indicators (excellent/on_track/needs_attention/at_risk)
+- Specific insights based on current data
+- Actionable recommendations if off-track
+
+**PATTERN 7: HUMAN-IN-THE-LOOP** - Feedback Integration
+End with adjustment options:
+"How would you like to proceed?
+1. Plan looks great, let's start
+2. Make it more challenging
+3. Make it more manageable  
+4. Focus on different areas"
+
+**OUTPUT FORMAT:**
+Use clear section headers. Be specific. No waffle. Every recommendation must be actionable.`,
+    responseFormat: "structured",
+  },
+
+  // WELLNESS PLAN GENERATOR
+  wellness_plan: {
+    prompt: `MODE: Wellness Plan Generator
+
+You are creating a personalised AI Readiness improvement plan based on assessment data.
+
+**REQUIRED OUTPUT:**
+
+## Assessment Summary
+- Overall Score: [X/100]
+- Score Band: [AI-Exposed / AI-Curious / AI-Ready / AI-Native]
+- Top 3 Gaps: [List with severity]
+
+## 12-Week Transformation Plan
+
+### Phase 1: Foundation (Weeks 1-4)
+Focus: Establish habits and baseline
+- Goal 1: [Domain] - [Specific action] - Success criteria: [Measurable outcome]
+- Goal 2: [Domain] - [Specific action] - Success criteria: [Measurable outcome]
+- Milestone (Week 4): [What should be true]
+
+### Phase 2: Building (Weeks 5-8)
+Focus: Increase intensity and consistency
+- Goal 1: [Domain] - [Specific action] - Success criteria: [Measurable outcome]
+- Goal 2: [Domain] - [Specific action] - Success criteria: [Measurable outcome]
+- Milestone (Week 8): [What should be true]
+
+### Phase 3: Sustaining (Weeks 9-12)
+Focus: Maintain progress and optimise
+- Goal 1: [Domain] - [Specific action] - Success criteria: [Measurable outcome]
+- Goal 2: [Domain] - [Specific action] - Success criteria: [Measurable outcome]
+- Milestone (Week 12): [What should be true]
+
+## Progress Tracking
+How to measure success:
+- Weekly check-in questions
+- Key metrics to monitor
+- Warning signs to watch for
+
+## What NOT to Do
+- Common mistakes to avoid
+- Low-value activities to skip
+- Distractions that derail progress
+
+End with: "Would you like to save this plan and start tracking progress?"`,
+    responseFormat: "structured",
+  },
+
+  // PROGRESS REVIEW MODE
+  progress_review: {
+    prompt: `MODE: Progress Review
+
+You are reviewing progress against an existing plan.
+
+**REQUIRED OUTPUT:**
+
+## Progress Summary
+For each active goal:
+- Current Progress: [X%]
+- Status: [excellent/on_track/needs_attention/at_risk]
+- Key Insight: [What the data shows]
+
+## What's Working
+- Wins to celebrate
+- Patterns of success
+- Behaviours to reinforce
+
+## What Needs Attention
+- Goals falling behind
+- Specific blockers identified
+- Recommended adjustments
+
+## Adjusted Plan (if needed)
+Only if goals need revision:
+- Modified targets
+- Timeline adjustments
+- Alternative approaches
+
+## Next Week's Focus
+- Top 3 priorities
+- One experiment to try
+- What to measure
+
+End with: "Would you like to adjust any goals based on this review?"`,
+    responseFormat: "structured",
+  },
 };
 
 serve(async (req) => {
