@@ -1,50 +1,36 @@
 import { Link } from "react-router-dom";
-import { Home } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { ChevronRight } from "lucide-react";
 
 interface AdminBreadcrumbProps {
   currentPage: string;
+  parentPage?: { label: string; href: string };
 }
 
-const AdminBreadcrumb = ({ currentPage }: AdminBreadcrumbProps) => {
+const AdminBreadcrumb = ({ currentPage, parentPage }: AdminBreadcrumbProps) => {
   return (
-    <div className="container-wide px-6 py-3 border-b border-border/50 bg-muted/30">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/" className="flex items-center gap-1">
-                <Home size={14} />
-                Home
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/hub">My Hub</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/admin">Admin</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{currentPage}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    </div>
+    <nav className="flex items-center gap-1.5 text-sm text-muted-foreground py-3 px-6 border-b border-border/50 bg-muted/30" aria-label="Breadcrumb">
+      <Link to="/" className="hover:text-foreground transition-colors">
+        Home
+      </Link>
+      <ChevronRight size={14} className="text-border" />
+      <Link to="/hub" className="hover:text-foreground transition-colors">
+        Hub
+      </Link>
+      <ChevronRight size={14} className="text-border" />
+      <Link to="/admin" className="hover:text-foreground transition-colors">
+        Admin
+      </Link>
+      {parentPage && (
+        <>
+          <ChevronRight size={14} className="text-border" />
+          <Link to={parentPage.href} className="hover:text-foreground transition-colors">
+            {parentPage.label}
+          </Link>
+        </>
+      )}
+      <ChevronRight size={14} className="text-border" />
+      <span className="text-foreground">{currentPage}</span>
+    </nav>
   );
 };
 
