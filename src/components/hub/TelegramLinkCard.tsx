@@ -177,15 +177,21 @@ export default function TelegramLinkCard() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-3">
+            <a 
+              href="https://t.me/WellnessGeniusAI_bot" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+            >
+              <MessageCircle size={18} className="text-blue-500" />
+              <span className="text-sm font-medium">Open @WellnessGeniusAI_bot in Telegram</span>
+            </a>
             <p className="text-sm text-muted-foreground">
-              1. Open <a href="https://t.me/Wellnessgenius_bot" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">@Wellnessgenius_bot</a> on Telegram
+              1. Click above to open the bot, then send <code className="bg-muted px-1.5 py-0.5 rounded">/link</code>
             </p>
             <p className="text-sm text-muted-foreground">
-              2. Send <code>/link</code> to get your code
-            </p>
-            <p className="text-sm text-muted-foreground">
-              3. Enter the code below:
+              2. Enter the 6-character code below:
             </p>
           </div>
 
