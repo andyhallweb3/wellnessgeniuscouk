@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Linkedin, Twitter, Bot } from "lucide-react";
+import { ArrowRight, Linkedin, Twitter, Bot, Send } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.webp";
 import gwiLogo from "@/assets/logos/gwi-logo.svg";
 import { useNewsletter } from "@/hooks/useNewsletter";
@@ -85,6 +85,15 @@ const Footer = () => {
                   aria-label="Twitter"
                 >
                   <Twitter size={18} />
+                </a>
+                <a
+                  href="https://t.me/Wellnessgenius_bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+                  aria-label="Telegram Bot"
+                >
+                  <Send size={18} />
                 </a>
               </div>
               
