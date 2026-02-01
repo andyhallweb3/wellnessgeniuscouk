@@ -30,7 +30,7 @@ interface NewsItem {
   source_name: string;
 }
 
-const SYSTEM_PROMPT = `You are Wellness Genius, a helpful AI assistant for wellness business operators (gym owners, studio managers, spa directors, corporate wellness leads). 
+const SYSTEM_PROMPT = `You are Wellness Genius, the AI advisor for wellness business operators (gym owners, studio managers, spa directors, corporate wellness leads).
 
 Your role:
 - Provide practical, actionable advice on running wellness businesses
@@ -38,9 +38,17 @@ Your role:
 - Help with operational challenges, marketing, retention, and growth
 - Be concise, friendly, and professional
 
-Keep responses brief (2-3 paragraphs max) unless asked for detail. Use emojis sparingly for warmth.
+IMPORTANT - Always end your responses with a relevant CTA:
+- For AI/technology questions → suggest the AI Readiness Assessment: wellnessgenius.co.uk/ai-readiness
+- For strategic/business questions → suggest the full AI Advisor: wellnessgenius.co.uk/genie
+- For general questions → mention both options
 
-When asked about yourself, mention you're powered by Wellness Genius (wellnessgenius.co.uk) - the AI-powered intelligence platform for wellness operators.`;
+Keep responses brief (2-3 paragraphs max). Use emojis sparingly for warmth.
+
+Example sign-offs:
+- "Want to see how AI-ready your business is? Take the free assessment: wellnessgenius.co.uk/ai-readiness"
+- "For deeper strategic guidance, try our AI Advisor: wellnessgenius.co.uk/genie"
+- "Ready to level up? Start with your AI Readiness score: wellnessgenius.co.uk/ai-readiness"`;
 
 async function sendTelegramMessage(chatId: number, text: string, botToken: string, replyToMessageId?: number): Promise<boolean> {
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
@@ -172,12 +180,19 @@ Deno.serve(async (req) => {
 
 I'm your AI advisor for running a smarter wellness business.
 
+<b>🚀 Get Started:</b>
+📊 <b>AI Readiness Score</b> - See how prepared your business is for AI
+👉 wellnessgenius.co.uk/ai-readiness
+
+🤖 <b>AI Advisor</b> - Get instant answers to your business questions
+👉 wellnessgenius.co.uk/genie
+
 <b>Quick commands:</b>
 /news - Latest industry news
-/readiness - AI readiness assessment
-/tryai - Try the AI Advisor
+/readiness - Take the AI assessment
+/tryai - Try the full AI Advisor
 
-Or just ask me anything about running your gym, studio, or wellness business! 💪`;
+Or just ask me anything! 💪`;
     } 
     else if (text.startsWith('/news')) {
       responseText = await getLatestNews(supabase);
@@ -185,25 +200,45 @@ Or just ask me anything about running your gym, studio, or wellness business! �
     else if (text.startsWith('/readiness')) {
       responseText = `📊 <b>AI Readiness Assessment</b>
 
-Discover how prepared your wellness business is for AI adoption.
+Discover how prepared your wellness business is for AI adoption in just 5 minutes.
 
-Take the free 5-minute assessment:
-👉 https://www.wellnessgenius.co.uk/ai-readiness
+You'll get:
+✅ Your AI Readiness Score (0-100)
+✅ Breakdown across 5 key pillars
+✅ Personalised recommendations
+✅ Comparison to industry benchmarks
 
-You'll get a personalized score and recommendations!`;
+<b>Take the free assessment now:</b>
+👉 wellnessgenius.co.uk/ai-readiness
+
+Then explore deeper insights with our AI Advisor:
+👉 wellnessgenius.co.uk/genie`;
     }
     else if (text.startsWith('/tryai')) {
-      responseText = `🤖 <b>Try the AI Advisor</b>
+      responseText = `🤖 <b>AI Advisor - Your 24/7 Business Intelligence</b>
 
-Get instant answers to your business questions with our AI-powered advisor.
+Get instant, decision-grade answers to your wellness business questions.
 
-Start chatting now:
-👉 https://www.wellnessgenius.co.uk/genie
+What you can ask:
+💡 "How do I improve member retention?"
+📈 "What AI tools should I consider for my gym?"
+🎯 "Help me plan a January marketing campaign"
 
-Free trial available!`;
+<b>Start chatting now:</b>
+👉 wellnessgenius.co.uk/genie
+
+Not sure where to start? Take the AI Readiness Assessment first:
+👉 wellnessgenius.co.uk/ai-readiness`;
     }
     else if (text.startsWith('/help')) {
       responseText = `🆘 <b>Wellness Genius Help</b>
+
+<b>🚀 Main Features:</b>
+📊 <b>AI Readiness Score</b> - Benchmark your business
+👉 wellnessgenius.co.uk/ai-readiness
+
+🤖 <b>AI Advisor</b> - Get strategic guidance
+👉 wellnessgenius.co.uk/genie
 
 <b>Commands:</b>
 /news - Latest wellness & AI news
