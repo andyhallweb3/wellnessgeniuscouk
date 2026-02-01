@@ -39,6 +39,21 @@ interface TelegramUser {
   daily_messages_reset_at: string;
 }
 
+interface WebSearchResult {
+  url: string;
+  title: string;
+  description: string;
+  content: string;
+}
+
+interface WebSearchResponse {
+  success: boolean;
+  type: string;
+  results?: WebSearchResult[];
+  content?: string;
+  error?: string;
+}
+
 const FREE_DAILY_LIMIT = 3;
 
 // System prompt for FREE users - push to CTAs
@@ -68,7 +83,7 @@ Your role:
 
 The user is a premium subscriber with full access to all commands:
 - /strategy [question] - for deep strategic analysis
-- /research [topic] - for market intelligence
+- /research [topic] - for market intelligence with live web research
 - /benchmark - for industry benchmarks
 
 When relevant, remind them of the FREE AI Readiness Assessment at wellnessgenius.co.uk/ai-readiness - this helps personalise your future responses.
@@ -87,6 +102,17 @@ Your role:
 Be thorough but structured. Use bullet points and clear sections.
 
 When relevant, mention that the FREE AI Readiness Assessment at wellnessgenius.co.uk/ai-readiness can help personalise future advice.`;
+
+// Premium research prompt with live data
+const PREMIUM_RESEARCH_PROMPT = `You are Wellness Genius Premium Research Assistant, providing deep market intelligence with live web data.
+
+You have access to LIVE WEB RESEARCH DATA provided below. Use this real-time information to:
+- Provide current, accurate market insights
+- Reference specific companies, products, and trends found in the research
+- Give actionable recommendations based on actual market conditions
+- Cite sources when referencing specific data points
+
+Be thorough but structured. Use bullet points and clear sections. Always indicate when information comes from live research vs general knowledge.`;
 
 // Use any type since telegram_users table is new and not in generated types yet
 type SupabaseClientAny = SupabaseClient<any, any, any>;
@@ -255,23 +281,160 @@ async function getLatestNews(supabase: SupabaseClientAny): Promise<string> {
   return header + newsItems + footer;
 }
 
-async function getAIResponse(message: string, userName: string, anthropic: Anthropic, isPremiumCommand: boolean = false, isPremiumUser: boolean = false): Promise<string> {
+// Web search using Firecrawl
+async function performWebSearch(query: string): Promise<WebSearchResponse> {
+  const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
+  if (!apiKey) {
+    console.log('[TELEGRAM] FIRECRAWL_API_KEY not configured');
+    return { success: false, type: 'error', error: 'Web search not configured' };
+  }
+
+  try {
+    console.log(`[TELEGRAM] Web search: ${query}`);
+    const response = await fetch('https://api.firecrawl.dev/v1/search', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query,
+        limit: 5,
+        scrapeOptions: {
+          formats: ['markdown'],
+          onlyMainContent: true,
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('[TELEGRAM] Web search error:', data);
+      return { success: false, type: 'error', error: data.error || 'Search failed' };
+    }
+
+    const results = (data.data || []).map((item: any) => ({
+      url: item.url,
+      title: item.title || item.metadata?.title || 'Untitled',
+      description: item.description || item.metadata?.description || '',
+      content: item.markdown?.slice(0, 2000) || '',
+    }));
+
+    console.log(`[TELEGRAM] Web search returned ${results.length} results`);
+    return { success: true, type: 'search', results };
+  } catch (error) {
+    console.error('[TELEGRAM] Web search exception:', error);
+    return { success: false, type: 'error', error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+// Scrape a specific URL
+async function scrapeUrl(url: string): Promise<WebSearchResponse> {
+  const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
+  if (!apiKey) {
+    return { success: false, type: 'error', error: 'Web scraping not configured' };
+  }
+
+  try {
+    let formattedUrl = url.trim();
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
+    console.log(`[TELEGRAM] Scraping URL: ${formattedUrl}`);
+    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: formattedUrl,
+        formats: ['markdown'],
+        onlyMainContent: true,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('[TELEGRAM] Scrape error:', data);
+      return { success: false, type: 'error', error: data.error || 'Scrape failed' };
+    }
+
+    console.log('[TELEGRAM] Scrape successful');
+    return {
+      success: true,
+      type: 'scrape',
+      content: data.data?.markdown || data.markdown || '',
+    };
+  } catch (error) {
+    console.error('[TELEGRAM] Scrape exception:', error);
+    return { success: false, type: 'error', error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+// Detect if message needs web research
+function needsWebResearch(message: string): { needsSearch: boolean; needsScrape: boolean; url?: string; searchQuery?: string } {
+  const lowerMessage = message.toLowerCase();
+  
+  // Check for URL patterns
+  const urlMatch = message.match(/https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.(com|co\.uk|org|net|io)[^\s]*/i);
+  if (urlMatch) {
+    return { needsSearch: false, needsScrape: true, url: urlMatch[0] };
+  }
+
+  // Keywords that suggest need for live data
+  const liveDataKeywords = [
+    'latest', 'current', 'recent', 'today', 'now', '2026', '2025',
+    'news', 'trends', 'what is', 'who is', 'where is',
+    'competitor', 'company', 'business', 'brand',
+    'google maps', 'reviews', 'ratings', 'location',
+    'pricing', 'cost', 'price',
+    'research', 'find', 'search', 'look up', 'check'
+  ];
+
+  for (const keyword of liveDataKeywords) {
+    if (lowerMessage.includes(keyword)) {
+      return { needsSearch: true, needsScrape: false, searchQuery: message };
+    }
+  }
+
+  return { needsSearch: false, needsScrape: false };
+}
+
+async function getAIResponse(
+  message: string, 
+  userName: string, 
+  anthropic: Anthropic, 
+  isPremiumCommand: boolean = false, 
+  isPremiumUser: boolean = false,
+  webContext?: string
+): Promise<string> {
   try {
     // Use strategy prompt for premium commands, chat prompts for general chat
     let systemPrompt = FREE_SYSTEM_PROMPT;
-    if (isPremiumCommand) {
+    if (webContext) {
+      systemPrompt = PREMIUM_RESEARCH_PROMPT;
+    } else if (isPremiumCommand) {
       systemPrompt = PREMIUM_STRATEGY_PROMPT;
     } else if (isPremiumUser) {
       systemPrompt = PREMIUM_CHAT_PROMPT;
     }
 
+    let userContent = `[From: ${userName}]\n${message}`;
+    if (webContext) {
+      userContent = `[From: ${userName}]\n\n## LIVE WEB RESEARCH DATA\n${webContext}\n\n## USER QUERY\n${message}`;
+    }
+
     const response = await anthropic.messages.create({
       model: isPremiumCommand ? 'claude-3-opus-20240229' : 'claude-sonnet-4-20250514',
-      max_tokens: isPremiumCommand ? 1500 : 500,
+      max_tokens: isPremiumCommand || webContext ? 1500 : 500,
       system: systemPrompt,
       messages: [{
         role: 'user',
-        content: `[From: ${userName}]\n${message}`
+        content: userContent
       }]
     });
 
@@ -486,7 +649,7 @@ Examples:
       if (!isSubscribed) {
         responseText = `🔒 <b>/research is a Premium Command</b>
 
-This command provides deep market and competitor research.
+This command provides deep market and competitor research with <b>live web data</b>.
 
 To unlock:
 1. Subscribe at wellnessgenius.co.uk/genie
@@ -498,16 +661,44 @@ To unlock:
       } else {
         const topic = text.replace('/research', '').trim();
         if (!topic) {
-          responseText = `🔍 <b>/research - Market Intelligence</b>
+          responseText = `🔍 <b>/research - Live Market Intelligence</b>
 
-Usage: /research [topic]
+Usage: /research [topic or URL]
 
-Examples:
+<b>Web Search Examples:</b>
 • /research AI personal training trends 2026
 • /research boutique fitness market UK
-• /research wellness app competitors`;
+• /research Les Mills competitor analysis
+
+<b>URL Analysis:</b>
+• /research https://competitor-gym.com
+• /research puregym.com pricing
+
+🌐 This command uses <b>live web research</b> to provide current data!`;
         } else if (anthropicKey) {
           const anthropic = new Anthropic({ apiKey: anthropicKey });
+          
+          // Check if it's a URL or search query
+          const { needsScrape, url } = needsWebResearch(topic);
+          let webContext = '';
+          
+          if (needsScrape && url) {
+            // Scrape specific URL
+            const scrapeResult = await scrapeUrl(url);
+            if (scrapeResult.success && scrapeResult.content) {
+              webContext = `### Content from ${url}\n${scrapeResult.content.slice(0, 4000)}`;
+            }
+          } else {
+            // Web search for the topic
+            const searchQuery = `wellness fitness gym ${topic}`;
+            const searchResult = await performWebSearch(searchQuery);
+            if (searchResult.success && searchResult.results && searchResult.results.length > 0) {
+              webContext = searchResult.results.map(r => 
+                `### ${r.title}\nSource: ${r.url}\n${r.description}\n${r.content.slice(0, 1000)}`
+              ).join('\n\n---\n\n');
+            }
+          }
+
           const researchPrompt = `Provide comprehensive market research on: ${topic}
 
 Include:
@@ -516,7 +707,13 @@ Include:
 - Emerging trends and opportunities
 - Potential risks and challenges
 - Strategic recommendations for a wellness business operator`;
-          responseText = await getAIResponse(researchPrompt, userName, anthropic, true, true);
+
+          if (webContext) {
+            responseText = await getAIResponse(researchPrompt, userName, anthropic, true, true, webContext);
+            responseText = '🌐 <i>Live research data included</i>\n\n' + responseText;
+          } else {
+            responseText = await getAIResponse(researchPrompt, userName, anthropic, true, true);
+          }
         } else {
           responseText = "Premium AI features are temporarily unavailable. Please try again later.";
         }
@@ -611,13 +808,37 @@ ${isLinked ? (isSubscribed ? '🌟 Premium active!' : '⚠️ Link active, subsc
           }
         }
       } else {
-        // Subscriber - unlimited chat
+        // Subscriber - unlimited chat with optional web research
         if (!anthropicKey) {
           responseText = "I'm currently in limited mode. Please try again later or visit wellnessgenius.co.uk/genie";
         } else {
           const anthropic = new Anthropic({ apiKey: anthropicKey });
           const cleanedMessage = text.replace(/@wellnessgenius_bot/gi, '').trim();
-          responseText = await getAIResponse(cleanedMessage, userName, anthropic, false, true);
+          
+          // Check if message needs web research for premium users
+          const { needsSearch, needsScrape, url, searchQuery } = needsWebResearch(cleanedMessage);
+          let webContext = '';
+          
+          if (needsScrape && url) {
+            const scrapeResult = await scrapeUrl(url);
+            if (scrapeResult.success && scrapeResult.content) {
+              webContext = `### Content from ${url}\n${scrapeResult.content.slice(0, 4000)}`;
+            }
+          } else if (needsSearch && searchQuery) {
+            const searchResult = await performWebSearch(searchQuery);
+            if (searchResult.success && searchResult.results && searchResult.results.length > 0) {
+              webContext = searchResult.results.slice(0, 3).map(r => 
+                `### ${r.title}\nSource: ${r.url}\n${r.content.slice(0, 800)}`
+              ).join('\n\n---\n\n');
+            }
+          }
+          
+          if (webContext) {
+            responseText = await getAIResponse(cleanedMessage, userName, anthropic, false, true, webContext);
+            responseText = '🌐 <i>Live data</i>\n\n' + responseText;
+          } else {
+            responseText = await getAIResponse(cleanedMessage, userName, anthropic, false, true);
+          }
         }
       }
     }
