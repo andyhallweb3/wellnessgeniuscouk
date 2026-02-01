@@ -282,7 +282,7 @@ export const generateTelegramBotEmailHTML = (unsubscribeUrl?: string): string =>
     <div class="email-container">
       <!-- Header -->
       <div class="header">
-        <img src="https://wellness-genius.lovable.app/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
+        <img src="https://wellnessgenius.co.uk/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
         <h1>Your AI Advisor is Now on Telegram</h1>
         <p>24/7 intelligence at your fingertips</p>
       </div>

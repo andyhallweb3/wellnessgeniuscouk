@@ -148,7 +148,7 @@ serve(async (req) => {
               </table>
               
               <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb; text-align: center;">
-                <a href="https://wellness-genius.lovable.app/validation/admin" style="display: inline-block; background: #f97316; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                <a href="https://wellnessgenius.co.uk/validation/admin" style="display: inline-block; background: #f97316; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                   View Full Dashboard →
                 </a>
               </div>

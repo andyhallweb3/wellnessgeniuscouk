@@ -605,7 +605,7 @@ export const generateAIReadinessEmailHTML = (unsubscribeUrl?: string): string =>
     <div class="email-container">
       <!-- Header -->
       <div class="header">
-        <img src="https://wellness-genius.lovable.app/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
+        <img src="https://wellnessgenius.co.uk/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
         <h1>Is Your Business AI-Ready?</h1>
         <p>Find out in 5 minutes — free assessment inside</p>
       </div>

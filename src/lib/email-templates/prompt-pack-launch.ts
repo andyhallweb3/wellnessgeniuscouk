@@ -287,7 +287,7 @@ export const generatePromptPackEmailHTML = (unsubscribeUrl?: string): string => 
     <div class="email-container">
       <!-- Header -->
       <div class="header">
-        <img src="https://wellness-genius.lovable.app/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
+        <img src="https://wellnessgenius.co.uk/images/wellness-genius-logo-teal.png" alt="Wellness Genius" class="logo" />
         <h1>Happy New Year! 🎉</h1>
         <p>A gift to kickstart your 2025 AI journey</p>
       </div>
