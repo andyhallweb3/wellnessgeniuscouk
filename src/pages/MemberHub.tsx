@@ -546,8 +546,11 @@ const MemberHub = () => {
                       </div>
                     </div>
 
-                    {/* Right: Account + Help */}
+                    {/* Right: Account + Telegram + Help */}
                     <div className="space-y-6">
+                      {/* Telegram Bot - Prominent Position */}
+                      <TelegramLinkCard />
+
                       {/* Account Card */}
                       <div className="rounded-xl border border-border bg-card p-6">
                         <div className="flex items-center gap-3 mb-4">
