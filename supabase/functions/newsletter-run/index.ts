@@ -490,7 +490,7 @@ function generateEmailHTML(
                   Unsubscribe
                 </a>
                 <span class="muted-text" style="color: #94a3b8; font-size: 11px;"> • </span>
-                <a class="link-color" href="${trackLink('https://wellnessgenius.co.uk/privacy-policy')}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
+                <a class="link-color" href="${trackLink('https://www.wellnessgenius.co.uk/privacy-policy')}" style="color: #64748b; font-size: 11px; text-decoration: underline;">
                   Privacy Policy
                 </a>
               </p>
