@@ -66,7 +66,7 @@ Your role:
 - Be concise, friendly, and professional
 
 IMPORTANT - Always end your responses with a relevant CTA:
-- For AI/technology questions → suggest the AI Readiness Assessment: wellnessgenius.co.uk/ai-readiness
+- For AI/technology questions → suggest the AI Readiness Assessment: https://wellnessgenius.co.uk/ai-readiness
 - For strategic/business questions → suggest subscribing for premium commands
 - For general questions → mention both options
 
@@ -86,7 +86,7 @@ The user is a premium subscriber with full access to all commands:
 - /research [topic] - for market intelligence with live web research
 - /benchmark - for industry benchmarks
 
-When relevant, remind them of the FREE AI Readiness Assessment at wellnessgenius.co.uk/ai-readiness - this helps personalise your future responses.
+When relevant, remind them of the FREE AI Readiness Assessment at https://wellnessgenius.co.uk/ai-readiness - this helps personalise your future responses.
 
 Keep responses helpful and complete. No need to push to the website - you can handle their needs right here in Telegram.`;
 
@@ -101,7 +101,7 @@ Your role:
 
 Be thorough but structured. Use bullet points and clear sections.
 
-When relevant, mention that the FREE AI Readiness Assessment at wellnessgenius.co.uk/ai-readiness can help personalise future advice.`;
+When relevant, mention that the FREE AI Readiness Assessment at https://wellnessgenius.co.uk/ai-readiness can help personalise future advice.`;
 
 // Premium research prompt with live data
 const PREMIUM_RESEARCH_PROMPT = `You are Wellness Genius Premium Research Assistant, providing deep market intelligence with live web data.
@@ -275,8 +275,8 @@ async function getLatestNews(supabase: SupabaseClientAny): Promise<string> {
   ).join('\n\n');
   
   const footer = `\n\n━━━━━━━━━━━━━━━━━━━━━
-📊 AI Readiness: wellnessgenius.co.uk/ai-readiness
-🤖 AI Advisor: wellnessgenius.co.uk/genie`;
+📊 AI Readiness: https://wellnessgenius.co.uk/ai-readiness
+🤖 AI Advisor: https://wellnessgenius.co.uk/genie`;
   
   return header + newsItems + footer;
 }
@@ -536,10 +536,10 @@ I'm your AI advisor for running a smarter wellness business.
 
 <b>🚀 Get Started:</b>
 📊 <b>AI Readiness Score</b> - See how prepared your business is for AI
-👉 wellnessgenius.co.uk/ai-readiness
+👉 https://wellnessgenius.co.uk/ai-readiness
 
 🤖 <b>AI Advisor</b> - Get instant answers to your business questions
-👉 wellnessgenius.co.uk/genie
+👉 https://wellnessgenius.co.uk/genie
 
 <b>Free commands:</b>
 /news - Latest industry news
@@ -560,21 +560,21 @@ Or just ask me anything! 💪`;
       if (isLinked) {
         responseText = `✅ Your Telegram is already linked to your Wellness Genius account!
 
-${isSubscribed ? '🌟 You have an active subscription - all premium commands unlocked!' : '⚠️ No active subscription found. Subscribe at wellnessgenius.co.uk/genie for premium commands.'}`;
+${isSubscribed ? '🌟 You have an active subscription - all premium commands unlocked!' : '⚠️ No active subscription found. Subscribe at https://wellnessgenius.co.uk/genie for premium commands.'}`;
       } else {
         const linkCode = await generateLinkCode(supabase, telegramUserId);
         responseText = `🔗 <b>Link Your Account</b>
 
 To connect your Telegram to your Wellness Genius account:
 
-1. Go to wellnessgenius.co.uk/hub
+1. Go to https://wellnessgenius.co.uk/hub
 2. Navigate to Settings → Telegram
 3. Enter this code: <code>${linkCode}</code>
 
 ⏰ This code expires in 10 minutes.
 
 Don't have an account yet?
-👉 wellnessgenius.co.uk/auth to sign up!`;
+👉 https://wellnessgenius.co.uk/auth to sign up!`;
       }
     }
     else if (text.startsWith('/news')) {
@@ -592,10 +592,10 @@ You'll get:
 ✅ Comparison to industry benchmarks
 
 <b>Take the free assessment now:</b>
-👉 wellnessgenius.co.uk/ai-readiness
+👉 https://wellnessgenius.co.uk/ai-readiness
 
 Then explore deeper insights with our AI Advisor:
-👉 wellnessgenius.co.uk/genie`;
+👉 https://wellnessgenius.co.uk/genie`;
     }
     else if (text.startsWith('/tryai')) {
       responseText = `🤖 <b>AI Advisor - Your 24/7 Business Intelligence</b>
@@ -608,10 +608,10 @@ What you can ask:
 🎯 "Help me plan a January marketing campaign"
 
 <b>Start chatting now:</b>
-👉 wellnessgenius.co.uk/genie
+👉 https://wellnessgenius.co.uk/genie
 
 Not sure where to start? Take the AI Readiness Assessment first:
-👉 wellnessgenius.co.uk/ai-readiness`;
+👉 https://wellnessgenius.co.uk/ai-readiness`;
     }
     else if (text.startsWith('/strategy')) {
       if (!isSubscribed) {
@@ -620,7 +620,7 @@ Not sure where to start? Take the AI Readiness Assessment first:
 This command provides deep strategic analysis using our most powerful AI model.
 
 To unlock:
-1. Subscribe at wellnessgenius.co.uk/genie
+1. Subscribe at https://wellnessgenius.co.uk/genie
 2. Link your account with /link
 
 <b>Or try our free options:</b>
@@ -652,7 +652,7 @@ Examples:
 This command provides deep market and competitor research with <b>live web data</b>.
 
 To unlock:
-1. Subscribe at wellnessgenius.co.uk/genie
+1. Subscribe at https://wellnessgenius.co.uk/genie
 2. Link your account with /link
 
 <b>Or try our free options:</b>
@@ -726,7 +726,7 @@ Include:
 This command provides industry benchmark comparisons for your business.
 
 To unlock:
-1. Subscribe at wellnessgenius.co.uk/genie
+1. Subscribe at https://wellnessgenius.co.uk/genie
 2. Link your account with /link
 
 <b>Or try our free options:</b>
@@ -754,10 +754,10 @@ Reference IHRSA, Les Mills, and ABC Fitness data where applicable. Format as a c
 
 <b>🚀 Main Features:</b>
 📊 <b>AI Readiness Score</b> - Benchmark your business
-👉 wellnessgenius.co.uk/ai-readiness
+👉 https://wellnessgenius.co.uk/ai-readiness
 
 🤖 <b>AI Advisor</b> - Get strategic guidance
-👉 wellnessgenius.co.uk/genie
+👉 https://wellnessgenius.co.uk/genie
 
 <b>Free Commands:</b>
 /news - Latest wellness & AI news
@@ -790,7 +790,7 @@ ${isLinked ? (isSubscribed ? '🌟 Premium active!' : '⚠️ Link active, subsc
         } else {
           // AI response for general messages
           if (!anthropicKey) {
-            responseText = "I'm currently in limited mode. Please try the commands (/news, /readiness, /tryai) or visit wellnessgenius.co.uk for full AI chat!";
+            responseText = "I'm currently in limited mode. Please try the commands (/news, /readiness, /tryai) or visit https://wellnessgenius.co.uk for full AI chat!";
           } else {
             const anthropic = new Anthropic({ apiKey: anthropicKey });
             // Clean the message of bot mentions for cleaner AI input
@@ -810,7 +810,7 @@ ${isLinked ? (isSubscribed ? '🌟 Premium active!' : '⚠️ Link active, subsc
       } else {
         // Subscriber - unlimited chat with optional web research
         if (!anthropicKey) {
-          responseText = "I'm currently in limited mode. Please try again later or visit wellnessgenius.co.uk/genie";
+          responseText = "I'm currently in limited mode. Please try again later or visit https://wellnessgenius.co.uk/genie";
         } else {
           const anthropic = new Anthropic({ apiKey: anthropicKey });
           const cleanedMessage = text.replace(/@wellnessgenius_bot/gi, '').trim();
