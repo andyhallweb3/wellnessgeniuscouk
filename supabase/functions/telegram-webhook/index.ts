@@ -41,7 +41,8 @@ interface TelegramUser {
 
 const FREE_DAILY_LIMIT = 3;
 
-const SYSTEM_PROMPT = `You are Wellness Genius, the AI advisor for wellness business operators (gym owners, studio managers, spa directors, corporate wellness leads).
+// System prompt for FREE users - push to CTAs
+const FREE_SYSTEM_PROMPT = `You are Wellness Genius, the AI advisor for wellness business operators (gym owners, studio managers, spa directors, corporate wellness leads).
 
 Your role:
 - Provide practical, actionable advice on running wellness businesses
@@ -51,17 +52,31 @@ Your role:
 
 IMPORTANT - Always end your responses with a relevant CTA:
 - For AI/technology questions → suggest the AI Readiness Assessment: wellnessgenius.co.uk/ai-readiness
-- For strategic/business questions → suggest the full AI Advisor: wellnessgenius.co.uk/genie
+- For strategic/business questions → suggest subscribing for premium commands
 - For general questions → mention both options
 
-Keep responses brief (2-3 paragraphs max). Use emojis sparingly for warmth.
+Keep responses brief (2-3 paragraphs max). Use emojis sparingly for warmth.`;
 
-Example sign-offs:
-- "Want to see how AI-ready your business is? Take the free assessment: wellnessgenius.co.uk/ai-readiness"
-- "For deeper strategic guidance, try our AI Advisor: wellnessgenius.co.uk/genie"
-- "Ready to level up? Start with your AI Readiness score: wellnessgenius.co.uk/ai-readiness"`;
+// System prompt for PREMIUM users - self-sufficient, no website pushes except readiness
+const PREMIUM_CHAT_PROMPT = `You are Wellness Genius Premium, the AI advisor for wellness business operators.
 
-const PREMIUM_SYSTEM_PROMPT = `You are Wellness Genius Premium, providing deep strategic intelligence for wellness business operators.
+Your role:
+- Provide practical, actionable advice on running wellness businesses
+- Share insights on AI adoption, technology, and industry trends  
+- Help with operational challenges, marketing, retention, and growth
+- Be thorough but focused
+
+The user is a premium subscriber with full access to all commands:
+- /strategy [question] - for deep strategic analysis
+- /research [topic] - for market intelligence
+- /benchmark - for industry benchmarks
+
+When relevant, remind them of the FREE AI Readiness Assessment at wellnessgenius.co.uk/ai-readiness - this helps personalise your future responses.
+
+Keep responses helpful and complete. No need to push to the website - you can handle their needs right here in Telegram.`;
+
+// Premium deep analysis prompt for /strategy, /research, /benchmark
+const PREMIUM_STRATEGY_PROMPT = `You are Wellness Genius Premium, providing deep strategic intelligence for wellness business operators.
 
 Your role:
 - Provide comprehensive, strategic analysis
@@ -69,7 +84,9 @@ Your role:
 - Give actionable, specific recommendations
 - Think like a board advisor, not a chatbot
 
-Be thorough but structured. Use bullet points and clear sections.`;
+Be thorough but structured. Use bullet points and clear sections.
+
+When relevant, mention that the FREE AI Readiness Assessment at wellnessgenius.co.uk/ai-readiness can help personalise future advice.`;
 
 // Use any type since telegram_users table is new and not in generated types yet
 type SupabaseClientAny = SupabaseClient<any, any, any>;
@@ -238,12 +255,20 @@ async function getLatestNews(supabase: SupabaseClientAny): Promise<string> {
   return header + newsItems + footer;
 }
 
-async function getAIResponse(message: string, userName: string, anthropic: Anthropic, isPremium: boolean = false): Promise<string> {
+async function getAIResponse(message: string, userName: string, anthropic: Anthropic, isPremiumCommand: boolean = false, isPremiumUser: boolean = false): Promise<string> {
   try {
+    // Use strategy prompt for premium commands, chat prompts for general chat
+    let systemPrompt = FREE_SYSTEM_PROMPT;
+    if (isPremiumCommand) {
+      systemPrompt = PREMIUM_STRATEGY_PROMPT;
+    } else if (isPremiumUser) {
+      systemPrompt = PREMIUM_CHAT_PROMPT;
+    }
+
     const response = await anthropic.messages.create({
-      model: isPremium ? 'claude-3-opus-20240229' : 'claude-sonnet-4-20250514',
-      max_tokens: isPremium ? 1500 : 500,
-      system: isPremium ? PREMIUM_SYSTEM_PROMPT : SYSTEM_PROMPT,
+      model: isPremiumCommand ? 'claude-3-opus-20240229' : 'claude-sonnet-4-20250514',
+      max_tokens: isPremiumCommand ? 1500 : 500,
+      system: systemPrompt,
       messages: [{
         role: 'user',
         content: `[From: ${userName}]\n${message}`
@@ -451,7 +476,7 @@ Examples:
 • /strategy Should I invest in AI-powered equipment?`;
         } else if (anthropicKey) {
           const anthropic = new Anthropic({ apiKey: anthropicKey });
-          responseText = await getAIResponse(query, userName, anthropic, true);
+          responseText = await getAIResponse(query, userName, anthropic, true, true);
         } else {
           responseText = "Premium AI features are temporarily unavailable. Please try again later.";
         }
@@ -491,7 +516,7 @@ Include:
 - Emerging trends and opportunities
 - Potential risks and challenges
 - Strategic recommendations for a wellness business operator`;
-          responseText = await getAIResponse(researchPrompt, userName, anthropic, true);
+          responseText = await getAIResponse(researchPrompt, userName, anthropic, true, true);
         } else {
           responseText = "Premium AI features are temporarily unavailable. Please try again later.";
         }
@@ -522,7 +547,7 @@ To unlock:
 6. AI adoption rates in the industry
 
 Reference IHRSA, Les Mills, and ABC Fitness data where applicable. Format as a clear, actionable benchmark report.`;
-        responseText = await getAIResponse(benchmarkPrompt, userName, anthropic, true);
+        responseText = await getAIResponse(benchmarkPrompt, userName, anthropic, true, true);
       } else {
         responseText = "Premium AI features are temporarily unavailable. Please try again later.";
       }
@@ -573,7 +598,7 @@ ${isLinked ? (isSubscribed ? '🌟 Premium active!' : '⚠️ Link active, subsc
             const anthropic = new Anthropic({ apiKey: anthropicKey });
             // Clean the message of bot mentions for cleaner AI input
             const cleanedMessage = text.replace(/@wellnessgenius_bot/gi, '').trim();
-            responseText = await getAIResponse(cleanedMessage, userName, anthropic);
+            responseText = await getAIResponse(cleanedMessage, userName, anthropic, false, false);
             
             // Increment message count
             await incrementMessageCount(supabase, telegramUserId);
@@ -592,7 +617,7 @@ ${isLinked ? (isSubscribed ? '🌟 Premium active!' : '⚠️ Link active, subsc
         } else {
           const anthropic = new Anthropic({ apiKey: anthropicKey });
           const cleanedMessage = text.replace(/@wellnessgenius_bot/gi, '').trim();
-          responseText = await getAIResponse(cleanedMessage, userName, anthropic);
+          responseText = await getAIResponse(cleanedMessage, userName, anthropic, false, true);
         }
       }
     }
