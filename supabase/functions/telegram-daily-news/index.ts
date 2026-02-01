@@ -13,24 +13,26 @@ interface NewsItem {
   category: string;
 }
 
-function escapeMarkdown(text: string): string {
-  // Escape special characters for Telegram MarkdownV2
-  return text.replace(/[_*\[\]()~`>#+=|{}.!-]/g, '\\$&');
+function formatDate(): string {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const now = new Date();
+  const day = days[now.getUTCDay()];
+  const date = now.getUTCDate().toString().padStart(2, '0');
+  const month = months[now.getUTCMonth()];
+  const year = now.getUTCFullYear();
+  return `${day}, ${date} ${month} ${year}`;
 }
 
 function formatNewsMessage(items: NewsItem[]): string {
-  const header = `🌟 *Wellness Genius Daily*\n_Your morning intelligence briefing_\n\n`;
+  const header = `📰 Daily Wellness & AI Briefing\n${formatDate()}\n\n`;
   
   const newsItems = items.slice(0, 5).map((item, index) => {
-    const emoji = ['📊', '💡', '🏋️', '🧘', '📈'][index % 5];
-    const title = escapeMarkdown(item.title);
-    const source = escapeMarkdown(item.source_name);
-    const category = escapeMarkdown(item.category);
-    
-    return `${emoji} *${title}*\n_${source} \\| ${category}_\n[Read more](${item.source_url})\n`;
-  }).join('\n');
+    const num = index + 1;
+    return `${num}. ${item.title} (${item.source_name})\n🔗 ${item.source_url}`;
+  }).join('\n\n');
 
-  const footer = `\n━━━━━━━━━━━━━━━━━━━━\n🔗 [View all news](https://www.wellnessgenius.co.uk/news)\n💬 [Chat with AI Advisor](https://t.me/Wellnessgenius_bot)`;
+  const footer = `\n\n━━━━━━━━━━━━━━━━━━━━━\n💬 Questions? Tag @Wellnessgenius_bot\n📊 AI Readiness: /readiness\n🤖 Try AI Advisor: wellnessgenius.co.uk/genie`;
 
   return header + newsItems + footer;
 }
@@ -44,11 +46,7 @@ async function sendTelegramMessage(chatId: string, text: string, botToken: strin
     body: JSON.stringify({
       chat_id: chatId,
       text: text,
-      parse_mode: 'MarkdownV2',
-      disable_web_page_preview: false,
-      link_preview_options: {
-        is_disabled: true
-      }
+      disable_web_page_preview: true,
     }),
   });
 
