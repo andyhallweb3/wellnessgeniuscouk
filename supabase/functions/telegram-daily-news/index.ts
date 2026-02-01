@@ -32,7 +32,7 @@ function formatNewsMessage(items: NewsItem[]): string {
     return `${num}. ${item.title} (${item.source_name})\n🔗 ${item.source_url}`;
   }).join('\n\n');
 
-  const footer = `\n\n━━━━━━━━━━━━━━━━━━━━━\n💬 Questions? Tag @Wellnessgenius_bot\n📊 AI Readiness: /readiness\n🤖 Try AI Advisor: wellnessgenius.co.uk/genie`;
+  const footer = `\n\n━━━━━━━━━━━━━━━━━━━━━\n💬 Questions? Tag @Wellnessgenius_bot\n📊 AI Readiness: /readiness\n🤖 Try AI Advisor: https://wellnessgenius.co.uk/genie`;
 
   return header + newsItems + footer;
 }
