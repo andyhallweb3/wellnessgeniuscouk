@@ -53,6 +53,7 @@ import GenieLeaderboard from "@/components/genie/GenieLeaderboard";
 import { ProfessionalFeed } from "@/components/feed";
 import ResearchAssistant from "@/components/research/ResearchAssistant";
 import WelcomeModal from "@/components/hub/WelcomeModal";
+import TelegramLinkCard from "@/components/hub/TelegramLinkCard";
 import { ReportProblemButton } from "@/components/feedback/ReportProblemButton";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useDownloadTracking } from "@/hooks/useDownloadTracking";
@@ -348,6 +349,10 @@ const MemberHub = () => {
                 <TabsTrigger value="resources" className="flex items-center gap-2">
                   <BookOpen size={16} />
                   Resources
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="flex items-center gap-2">
+                  <User size={16} />
+                  Settings
                 </TabsTrigger>
                 {isAdmin && (
                   <TabsTrigger value="admin" className="flex items-center gap-2 text-accent">
@@ -811,6 +816,52 @@ const MemberHub = () => {
                       <h2 className="text-xl font-heading">Saved Insights</h2>
                     </div>
                     <SavedInsights />
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* SETTINGS TAB */}
+              <TabsContent value="settings">
+                <div className="max-w-2xl">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 rounded-lg bg-accent/10">
+                      <User size={20} className="text-accent" />
+                    </div>
+                    <h2 className="text-xl font-heading">Account Settings</h2>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    {/* Account Info */}
+                    <div className="rounded-xl border border-border bg-card p-6">
+                      <h3 className="font-heading mb-4">Account</h3>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Email</span>
+                          <span>{user?.email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Member since</span>
+                          <span>{user?.created_at ? formatDate(user.created_at) : 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Telegram Link */}
+                    <TelegramLinkCard />
+
+                    {/* Onboarding Reset */}
+                    {hasCompletedOnboarding && (
+                      <div className="rounded-xl border border-border bg-card p-6">
+                        <h3 className="font-heading mb-2">Onboarding</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Restart the guided tour to rediscover features.
+                        </p>
+                        <Button variant="outline" size="sm" onClick={restartOnboarding}>
+                          <RotateCcw size={16} />
+                          Restart Onboarding
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </TabsContent>
