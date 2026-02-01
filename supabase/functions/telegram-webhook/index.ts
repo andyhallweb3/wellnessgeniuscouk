@@ -1,5 +1,6 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Anthropic from 'https://esm.sh/@anthropic-ai/sdk@0.39.0';
+import Stripe from 'https://esm.sh/stripe@18.5.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,6 +31,16 @@ interface NewsItem {
   source_name: string;
 }
 
+interface TelegramUser {
+  id: string;
+  telegram_user_id: number;
+  user_id: string | null;
+  daily_messages_used: number;
+  daily_messages_reset_at: string;
+}
+
+const FREE_DAILY_LIMIT = 3;
+
 const SYSTEM_PROMPT = `You are Wellness Genius, the AI advisor for wellness business operators (gym owners, studio managers, spa directors, corporate wellness leads).
 
 Your role:
@@ -49,6 +60,19 @@ Example sign-offs:
 - "Want to see how AI-ready your business is? Take the free assessment: wellnessgenius.co.uk/ai-readiness"
 - "For deeper strategic guidance, try our AI Advisor: wellnessgenius.co.uk/genie"
 - "Ready to level up? Start with your AI Readiness score: wellnessgenius.co.uk/ai-readiness"`;
+
+const PREMIUM_SYSTEM_PROMPT = `You are Wellness Genius Premium, providing deep strategic intelligence for wellness business operators.
+
+Your role:
+- Provide comprehensive, strategic analysis
+- Reference industry benchmarks (IHRSA, Les Mills, ABC Fitness data where relevant)
+- Give actionable, specific recommendations
+- Think like a board advisor, not a chatbot
+
+Be thorough but structured. Use bullet points and clear sections.`;
+
+// Use any type since telegram_users table is new and not in generated types yet
+type SupabaseClientAny = SupabaseClient<any, any, any>;
 
 async function sendTelegramMessage(chatId: number, text: string, botToken: string, replyToMessageId?: number): Promise<boolean> {
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
@@ -76,7 +100,122 @@ async function sendTelegramMessage(chatId: number, text: string, botToken: strin
   return result.ok;
 }
 
-async function getLatestNews(supabase: any): Promise<string> {
+async function getOrCreateTelegramUser(supabase: SupabaseClientAny, telegramUserId: number, firstName: string, username?: string): Promise<TelegramUser> {
+  // Check if user exists
+  const { data: existing } = await supabase
+    .from('telegram_users')
+    .select('*')
+    .eq('telegram_user_id', telegramUserId)
+    .single();
+
+  if (existing) {
+    // Check if we need to reset daily messages (new day)
+    const resetAt = new Date(existing.daily_messages_reset_at);
+    const now = new Date();
+    if (now.toDateString() !== resetAt.toDateString()) {
+      const { data: updated } = await supabase
+        .from('telegram_users')
+        .update({ 
+          daily_messages_used: 0, 
+          daily_messages_reset_at: now.toISOString() 
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      return updated || existing;
+    }
+    return existing;
+  }
+
+  // Create new user
+  const { data: newUser } = await supabase
+    .from('telegram_users')
+    .insert({
+      telegram_user_id: telegramUserId,
+      telegram_first_name: firstName,
+      telegram_username: username,
+      daily_messages_used: 0,
+      daily_messages_reset_at: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  return newUser!;
+}
+
+async function incrementMessageCount(supabase: SupabaseClientAny, telegramUserId: number): Promise<void> {
+  const { data } = await supabase
+    .from('telegram_users')
+    .select('daily_messages_used')
+    .eq('telegram_user_id', telegramUserId)
+    .single();
+  
+  if (data) {
+    await supabase
+      .from('telegram_users')
+      .update({ daily_messages_used: data.daily_messages_used + 1 })
+      .eq('telegram_user_id', telegramUserId);
+  }
+}
+
+async function checkUserSubscription(supabase: SupabaseClientAny, userId: string): Promise<boolean> {
+  // Check subscriptions table
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('status')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .single();
+
+  if (sub) return true;
+
+  // Also check via Stripe directly for coach subscription
+  const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+  if (!stripeKey) return false;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', userId)
+    .single();
+
+  if (!profile?.email) return false;
+
+  try {
+    const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
+    const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
+    
+    if (customers.data.length === 0) return false;
+
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customers.data[0].id,
+      status: 'active',
+      limit: 1
+    });
+
+    return subscriptions.data.length > 0;
+  } catch (e) {
+    console.error('Stripe check error:', e);
+    return false;
+  }
+}
+
+async function generateLinkCode(supabase: SupabaseClientAny, telegramUserId: number): Promise<string> {
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  await supabase
+    .from('telegram_users')
+    .update({ 
+      link_code: code, 
+      link_code_expires_at: expiresAt.toISOString() 
+    })
+    .eq('telegram_user_id', telegramUserId);
+
+  return code;
+}
+
+async function getLatestNews(supabase: SupabaseClientAny): Promise<string> {
   const { data: items } = await supabase
     .from('rss_news_cache')
     .select('title, source_url, source_name')
@@ -89,18 +228,22 @@ async function getLatestNews(supabase: any): Promise<string> {
 
   const header = "📰 <b>Latest Wellness & AI News</b>\n\n";
   const newsItems = items.map((item: NewsItem, i: number) => 
-    `${i + 1}. ${item.title}\n<i>${item.source_name}</i>\n${item.source_url}`
+    `${i + 1}. ${item.title}\n<i>${item.source_name}</i>\n🔗 ${item.source_url}`
   ).join('\n\n');
   
-  return header + newsItems;
+  const footer = `\n\n━━━━━━━━━━━━━━━━━━━━━
+📊 AI Readiness: wellnessgenius.co.uk/ai-readiness
+🤖 AI Advisor: wellnessgenius.co.uk/genie`;
+  
+  return header + newsItems + footer;
 }
 
-async function getAIResponse(message: string, userName: string, anthropic: Anthropic): Promise<string> {
+async function getAIResponse(message: string, userName: string, anthropic: Anthropic, isPremium: boolean = false): Promise<string> {
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 500,
-      system: SYSTEM_PROMPT,
+      model: isPremium ? 'claude-3-opus-20240229' : 'claude-sonnet-4-20250514',
+      max_tokens: isPremium ? 1500 : 500,
+      system: isPremium ? PREMIUM_SYSTEM_PROMPT : SYSTEM_PROMPT,
       messages: [{
         role: 'user',
         content: `[From: ${userName}]\n${message}`
@@ -130,6 +273,17 @@ function shouldRespond(update: TelegramUpdate): boolean {
   if (text.startsWith('/')) return true;
   
   return false;
+}
+
+function getDailyLimitMessage(used: number): string {
+  return `⚠️ You've used ${used}/${FREE_DAILY_LIMIT} free messages today.
+
+<b>Want more?</b>
+🔗 /link - Connect your Wellness Genius account
+📊 /readiness - Take the AI Readiness Assessment
+🤖 /tryai - Try the full AI Advisor
+
+Subscribers get unlimited Telegram access + premium commands!`;
 }
 
 Deno.serve(async (req) => {
@@ -166,11 +320,23 @@ Deno.serve(async (req) => {
     const text = message.text.trim();
     const userName = message.from.first_name || 'there';
     const messageId = message.message_id;
+    const telegramUserId = message.from.id;
 
     // Initialize Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get or create telegram user record
+    const telegramUser = await getOrCreateTelegramUser(
+      supabase, 
+      telegramUserId, 
+      userName, 
+      message.from.username
+    );
+
+    const isLinked = !!telegramUser.user_id;
+    const isSubscribed = isLinked ? await checkUserSubscription(supabase, telegramUser.user_id!) : false;
 
     let responseText: string;
 
@@ -187,13 +353,42 @@ I'm your AI advisor for running a smarter wellness business.
 🤖 <b>AI Advisor</b> - Get instant answers to your business questions
 👉 wellnessgenius.co.uk/genie
 
-<b>Quick commands:</b>
+<b>Free commands:</b>
 /news - Latest industry news
 /readiness - Take the AI assessment
 /tryai - Try the full AI Advisor
+/link - Connect your account for premium access
+
+<b>Premium commands</b> (subscribers only):
+/strategy [question] - Deep strategic analysis
+/research [topic] - Market & competitor research
+/benchmark - Industry benchmarks for your business
+
+${isLinked ? '✅ Account linked!' : '🔗 Link your account with /link for premium features'}
 
 Or just ask me anything! 💪`;
     } 
+    else if (text.startsWith('/link')) {
+      if (isLinked) {
+        responseText = `✅ Your Telegram is already linked to your Wellness Genius account!
+
+${isSubscribed ? '🌟 You have an active subscription - all premium commands unlocked!' : '⚠️ No active subscription found. Subscribe at wellnessgenius.co.uk/genie for premium commands.'}`;
+      } else {
+        const linkCode = await generateLinkCode(supabase, telegramUserId);
+        responseText = `🔗 <b>Link Your Account</b>
+
+To connect your Telegram to your Wellness Genius account:
+
+1. Go to wellnessgenius.co.uk/hub
+2. Navigate to Settings → Telegram
+3. Enter this code: <code>${linkCode}</code>
+
+⏰ This code expires in 10 minutes.
+
+Don't have an account yet?
+👉 wellnessgenius.co.uk/auth to sign up!`;
+      }
+    }
     else if (text.startsWith('/news')) {
       responseText = await getLatestNews(supabase);
     }
@@ -230,6 +425,108 @@ What you can ask:
 Not sure where to start? Take the AI Readiness Assessment first:
 👉 wellnessgenius.co.uk/ai-readiness`;
     }
+    else if (text.startsWith('/strategy')) {
+      if (!isSubscribed) {
+        responseText = `🔒 <b>/strategy is a Premium Command</b>
+
+This command provides deep strategic analysis using our most powerful AI model.
+
+To unlock:
+1. Subscribe at wellnessgenius.co.uk/genie
+2. Link your account with /link
+
+<b>Or try our free options:</b>
+📊 /readiness - AI Readiness Assessment
+🤖 /tryai - Try the AI Advisor online`;
+      } else {
+        const query = text.replace('/strategy', '').trim();
+        if (!query) {
+          responseText = `📈 <b>/strategy - Strategic Analysis</b>
+
+Usage: /strategy [your question]
+
+Examples:
+• /strategy How should I price a new personal training tier?
+• /strategy What's the best approach to reduce member churn?
+• /strategy Should I invest in AI-powered equipment?`;
+        } else if (anthropicKey) {
+          const anthropic = new Anthropic({ apiKey: anthropicKey });
+          responseText = await getAIResponse(query, userName, anthropic, true);
+        } else {
+          responseText = "Premium AI features are temporarily unavailable. Please try again later.";
+        }
+      }
+    }
+    else if (text.startsWith('/research')) {
+      if (!isSubscribed) {
+        responseText = `🔒 <b>/research is a Premium Command</b>
+
+This command provides deep market and competitor research.
+
+To unlock:
+1. Subscribe at wellnessgenius.co.uk/genie
+2. Link your account with /link
+
+<b>Or try our free options:</b>
+📊 /readiness - AI Readiness Assessment
+🤖 /tryai - Try the AI Advisor online`;
+      } else {
+        const topic = text.replace('/research', '').trim();
+        if (!topic) {
+          responseText = `🔍 <b>/research - Market Intelligence</b>
+
+Usage: /research [topic]
+
+Examples:
+• /research AI personal training trends 2026
+• /research boutique fitness market UK
+• /research wellness app competitors`;
+        } else if (anthropicKey) {
+          const anthropic = new Anthropic({ apiKey: anthropicKey });
+          const researchPrompt = `Provide comprehensive market research on: ${topic}
+
+Include:
+- Current market size and growth trends
+- Key players and competitors
+- Emerging trends and opportunities
+- Potential risks and challenges
+- Strategic recommendations for a wellness business operator`;
+          responseText = await getAIResponse(researchPrompt, userName, anthropic, true);
+        } else {
+          responseText = "Premium AI features are temporarily unavailable. Please try again later.";
+        }
+      }
+    }
+    else if (text.startsWith('/benchmark')) {
+      if (!isSubscribed) {
+        responseText = `🔒 <b>/benchmark is a Premium Command</b>
+
+This command provides industry benchmark comparisons for your business.
+
+To unlock:
+1. Subscribe at wellnessgenius.co.uk/genie
+2. Link your account with /link
+
+<b>Or try our free options:</b>
+📊 /readiness - AI Readiness Assessment
+🤖 /tryai - Try the AI Advisor online`;
+      } else if (anthropicKey) {
+        const anthropic = new Anthropic({ apiKey: anthropicKey });
+        const benchmarkPrompt = `Provide key industry benchmarks for wellness businesses, covering:
+
+1. Member retention rates (by business type)
+2. Revenue per member metrics
+3. Staff-to-member ratios
+4. Marketing spend as % of revenue
+5. Technology investment trends
+6. AI adoption rates in the industry
+
+Reference IHRSA, Les Mills, and ABC Fitness data where applicable. Format as a clear, actionable benchmark report.`;
+        responseText = await getAIResponse(benchmarkPrompt, userName, anthropic, true);
+      } else {
+        responseText = "Premium AI features are temporarily unavailable. Please try again later.";
+      }
+    }
     else if (text.startsWith('/help')) {
       responseText = `🆘 <b>Wellness Genius Help</b>
 
@@ -240,11 +537,17 @@ Not sure where to start? Take the AI Readiness Assessment first:
 🤖 <b>AI Advisor</b> - Get strategic guidance
 👉 wellnessgenius.co.uk/genie
 
-<b>Commands:</b>
+<b>Free Commands:</b>
 /news - Latest wellness & AI news
 /readiness - Take AI readiness assessment  
 /tryai - Try the AI Advisor
+/link - Connect your Wellness Genius account
 /help - Show this help
+
+<b>Premium Commands</b> (subscribers only):
+/strategy [question] - Deep strategic analysis
+/research [topic] - Market & competitor research
+/benchmark - Industry benchmarks
 
 <b>Or just chat!</b>
 Ask me anything about:
@@ -253,17 +556,44 @@ Ask me anything about:
 • Marketing & member retention
 • Operations & efficiency
 
+${isLinked ? (isSubscribed ? '🌟 Premium active!' : '⚠️ Link active, subscribe for premium') : '🔗 /link to unlock premium'}
+
 💬 Tag @Wellnessgenius_bot in groups`;
     }
     else {
-      // AI response for general messages
-      if (!anthropicKey) {
-        responseText = "I'm currently in limited mode. Please try the commands (/news, /readiness, /tryai) or visit wellnessgenius.co.uk for full AI chat!";
+      // General chat - check limits for non-subscribers
+      if (!isSubscribed) {
+        if (telegramUser.daily_messages_used >= FREE_DAILY_LIMIT) {
+          responseText = getDailyLimitMessage(telegramUser.daily_messages_used);
+        } else {
+          // AI response for general messages
+          if (!anthropicKey) {
+            responseText = "I'm currently in limited mode. Please try the commands (/news, /readiness, /tryai) or visit wellnessgenius.co.uk for full AI chat!";
+          } else {
+            const anthropic = new Anthropic({ apiKey: anthropicKey });
+            // Clean the message of bot mentions for cleaner AI input
+            const cleanedMessage = text.replace(/@wellnessgenius_bot/gi, '').trim();
+            responseText = await getAIResponse(cleanedMessage, userName, anthropic);
+            
+            // Increment message count
+            await incrementMessageCount(supabase, telegramUserId);
+            
+            // Add remaining messages note
+            const remaining = FREE_DAILY_LIMIT - telegramUser.daily_messages_used - 1;
+            if (remaining <= 1) {
+              responseText += `\n\n💬 ${remaining} free message${remaining === 1 ? '' : 's'} remaining today. /link to unlock unlimited!`;
+            }
+          }
+        }
       } else {
-        const anthropic = new Anthropic({ apiKey: anthropicKey });
-        // Clean the message of bot mentions for cleaner AI input
-        const cleanedMessage = text.replace(/@wellnessgenius_bot/gi, '').trim();
-        responseText = await getAIResponse(cleanedMessage, userName, anthropic);
+        // Subscriber - unlimited chat
+        if (!anthropicKey) {
+          responseText = "I'm currently in limited mode. Please try again later or visit wellnessgenius.co.uk/genie";
+        } else {
+          const anthropic = new Anthropic({ apiKey: anthropicKey });
+          const cleanedMessage = text.replace(/@wellnessgenius_bot/gi, '').trim();
+          responseText = await getAIResponse(cleanedMessage, userName, anthropic);
+        }
       }
     }
 

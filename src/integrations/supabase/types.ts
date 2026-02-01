@@ -2296,6 +2296,48 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_users: {
+        Row: {
+          created_at: string
+          daily_messages_reset_at: string
+          daily_messages_used: number
+          id: string
+          link_code: string | null
+          link_code_expires_at: string | null
+          telegram_first_name: string | null
+          telegram_user_id: number
+          telegram_username: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          daily_messages_reset_at?: string
+          daily_messages_used?: number
+          id?: string
+          link_code?: string | null
+          link_code_expires_at?: string | null
+          telegram_first_name?: string | null
+          telegram_user_id: number
+          telegram_username?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          daily_messages_reset_at?: string
+          daily_messages_used?: number
+          id?: string
+          link_code?: string | null
+          link_code_expires_at?: string | null
+          telegram_first_name?: string | null
+          telegram_user_id?: number
+          telegram_username?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_purchases: {
         Row: {
           currency: string
