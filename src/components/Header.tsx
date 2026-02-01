@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown, Sparkles, User, LogOut } from "lucide-react";
+import { Menu, X, ChevronDown, Sparkles, User, LogOut, Send } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -128,6 +128,15 @@ const Header = () => {
                 </Link>
               )
             )}
+            <a
+              href="https://t.me/Wellnessgenius_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-muted-foreground hover:text-accent transition-colors"
+              aria-label="Chat on Telegram"
+            >
+              <Send size={18} />
+            </a>
             <Button variant="accent" size="sm" asChild className="gap-1.5">
               <Link to="/advisor">
                 <Sparkles size={14} />

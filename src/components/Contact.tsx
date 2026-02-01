@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Calendar, Mail, MessageSquare } from "lucide-react";
+import { ArrowRight, Calendar, Mail, MessageSquare, Send } from "lucide-react";
 
 type InterestArea = "ai-agents" | "wellness-engagement" | "partnerships" | "";
 type ContactTab = "book" | "message";
@@ -103,6 +103,23 @@ const Contact = () => {
                   </a>
                 </div>
               </div>
+
+              <a 
+                href="https://t.me/Wellnessgenius_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-4 p-5 rounded-2xl bg-card border border-border/50 hover:border-accent/30 transition-colors"
+              >
+                <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
+                  <Send className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Chat on Telegram</h3>
+                  <p className="text-sm text-muted-foreground">
+                    24/7 AI assistant for quick questions
+                  </p>
+                </div>
+              </a>
             </div>
           </div>
 
