@@ -50,7 +50,7 @@ const generateEmailHtml = (userName: string, credits: number) => `
         <li><strong>Planner Mode</strong> - 90-day action plans</li>
       </ul>
       <div style="text-align: center;">
-        <a href="https://wellnessgenius.co.uk/hub/coach" style="display: inline-block; background: #14b8a6; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        <a href="https://www.wellnessgenius.co.uk/hub/coach" style="display: inline-block; background: #14b8a6; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
           Start Using Your Credits →
         </a>
       </div>

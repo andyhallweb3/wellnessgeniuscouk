@@ -156,7 +156,7 @@ async function sendNotificationEmail(
               <p style="color: #333; margin-bottom: 20px;">Your Genie spotted something that needs your attention:</p>
               ${notificationsList}
               <p style="margin-top: 24px;">
-                <a href="${Deno.env.get("SITE_URL") || "https://wellnessgenius.co.uk"}/genie" 
+                <a href="${Deno.env.get("SITE_URL") || "https://www.wellnessgenius.co.uk"}/genie" 
                    style="display: inline-block; background: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
                   Open Genie Dashboard
                 </a>
