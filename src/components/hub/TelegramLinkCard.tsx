@@ -179,13 +179,13 @@ export default function TelegramLinkCard() {
         <div className="space-y-4">
           <div className="space-y-3">
             <a 
-              href="https://t.me/WellnessGeniusAI_bot" 
+              href="https://t.me/Wellnessgenius_bot" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
             >
               <MessageCircle size={18} className="text-blue-500" />
-              <span className="text-sm font-medium">Open @WellnessGeniusAI_bot in Telegram</span>
+              <span className="text-sm font-medium">Open @Wellnessgenius_bot in Telegram</span>
             </a>
             <p className="text-sm text-muted-foreground">
               1. Click above to open the bot, then send <code className="bg-muted px-1.5 py-0.5 rounded">/link</code>
