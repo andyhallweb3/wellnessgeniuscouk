@@ -11,6 +11,7 @@ interface NewsItem {
   source_url: string;
   source_name: string;
   category: string;
+  published_date: string;
 }
 
 function formatDate(): string {
@@ -77,30 +78,61 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch latest news from cache
+    // Get the last sent timestamp from metadata
+    const { data: metadata } = await supabase
+      .from('rss_cache_metadata')
+      .select('last_telegram_send')
+      .eq('id', 'global')
+      .single();
+
+    const lastSentAt = metadata?.last_telegram_send 
+      ? new Date(metadata.last_telegram_send) 
+      : new Date(0);
+
+    console.log(`Last Telegram send: ${lastSentAt.toISOString()}`);
+
+    // Fetch only news published after the last send
     const { data: newsItems, error } = await supabase
       .from('rss_news_cache')
-      .select('title, summary, source_url, source_name, category')
+      .select('title, summary, source_url, source_name, category, published_date')
+      .gt('published_date', lastSentAt.toISOString())
       .order('published_date', { ascending: false })
       .limit(5);
 
     if (error) throw error;
 
     if (!newsItems || newsItems.length === 0) {
+      console.log('No new news items since last send, skipping');
       return new Response(
-        JSON.stringify({ success: false, message: 'No news items found' }),
+        JSON.stringify({ 
+          success: true, 
+          message: 'No new news items to send',
+          skipped: true,
+          last_sent_at: lastSentAt.toISOString()
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log(`Found ${newsItems.length} new items since ${lastSentAt.toISOString()}`);
+
     const message = formatNewsMessage(newsItems);
     const sent = await sendTelegramMessage(chatId, message, botToken);
+
+    if (sent) {
+      // Update the last sent timestamp
+      await supabase
+        .from('rss_cache_metadata')
+        .update({ last_telegram_send: new Date().toISOString() })
+        .eq('id', 'global');
+    }
 
     return new Response(
       JSON.stringify({ 
         success: sent, 
         message: sent ? 'Daily news sent to Telegram' : 'Failed to send message',
-        items_count: newsItems.length
+        items_count: newsItems.length,
+        skipped: false
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
