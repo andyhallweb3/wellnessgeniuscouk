@@ -2154,16 +2154,19 @@ export type Database = {
           id: string
           items_count: number
           last_refresh: string
+          last_telegram_send: string | null
         }
         Insert: {
           id?: string
           items_count?: number
           last_refresh?: string
+          last_telegram_send?: string | null
         }
         Update: {
           id?: string
           items_count?: number
           last_refresh?: string
+          last_telegram_send?: string | null
         }
         Relationships: []
       }
