@@ -91,11 +91,12 @@ Deno.serve(async (req) => {
 
     console.log(`Last Telegram send: ${lastSentAt.toISOString()}`);
 
-    // Fetch only news published after the last send
+    // Fetch only news added to cache after the last send (using created_at, not published_date)
+    // This ensures we only send truly new items that weren't in the previous batch
     const { data: newsItems, error } = await supabase
       .from('rss_news_cache')
-      .select('title, summary, source_url, source_name, category, published_date')
-      .gt('published_date', lastSentAt.toISOString())
+      .select('title, summary, source_url, source_name, category, published_date, created_at')
+      .gt('created_at', lastSentAt.toISOString())
       .order('published_date', { ascending: false })
       .limit(5);
 
