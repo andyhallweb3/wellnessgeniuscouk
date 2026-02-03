@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
-import jsPDF from "https://esm.sh/jspdf@2.5.1";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { jsPDF } from "https://esm.sh/jspdf@2.5.2?target=deno&bundle-deps";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
