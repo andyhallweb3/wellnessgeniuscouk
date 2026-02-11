@@ -166,7 +166,7 @@ const HeroNew = () => {
             </div>
 
             {/* Floating stats */}
-            <div className="absolute -bottom-4 -left-4 bg-card border border-border rounded-xl px-4 py-3 shadow-lg">
+            <div className="absolute -bottom-4 -left-4 bg-card border border-border rounded-xl px-4 py-3 shadow-lg hidden sm:block">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-green-500/10">
                   <Sparkles size={16} className="text-green-500" />
