@@ -173,18 +173,20 @@ const Genie = () => {
       <Header />
       
       <main className="pt-16 flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <ChatSidebar
-          sessions={sessions}
-          loading={sessionsLoading}
-          currentSessionId={currentSessionId}
-          onLoadSession={handleLoadSession}
-          onNewChat={handleNewChat}
-          onOpenSettings={() => setShowSettings(true)}
-          onOpenDocuments={() => setShowDocuments(true)}
-          isCollapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
+        {/* Sidebar - hidden on mobile */}
+        <div className="hidden md:block">
+          <ChatSidebar
+            sessions={sessions}
+            loading={sessionsLoading}
+            currentSessionId={currentSessionId}
+            onLoadSession={handleLoadSession}
+            onNewChat={handleNewChat}
+            onOpenSettings={() => setShowSettings(true)}
+            onOpenDocuments={() => setShowDocuments(true)}
+            isCollapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+        </div>
 
         {/* Main Chat */}
         <ChatInterface

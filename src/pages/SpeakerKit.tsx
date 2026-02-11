@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mic, Users, Lightbulb, Bot, TrendingUp, BookOpen, Linkedin, Twitter, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import andyHeadshot from "@/assets/andy-headshot.jpeg";
 import beyondRepsCover from "@/assets/beyond-reps-cover.jpeg";
 import gwiLogo from "@/assets/logos/gwi-logo.svg";
@@ -35,6 +38,11 @@ const topics = [
 const SpeakerKit = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Speaker Kit — Andy Hall | Wellness Genius</title>
+        <meta name="description" content="Book Andy Hall for keynotes, workshops, and panels on AI, automation, and the future of wellness tech." />
+      </Helmet>
+      <Header />
       {/* Hero */}
       <section className="section-padding pt-32 lg:pt-40">
         <div className="container-wide">
@@ -293,6 +301,7 @@ const SpeakerKit = () => {
           </Link>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };
