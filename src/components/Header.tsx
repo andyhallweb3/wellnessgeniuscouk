@@ -22,32 +22,28 @@ const Header = () => {
 
   useEffect(() => {
     async function checkAdminStatus() {
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
+      if (!user) { setIsAdmin(false); return; }
       try {
-        const { data } = await supabase.rpc('has_role', {
-          _user_id: user.id,
-          _role: 'admin'
-        });
+        const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
         setIsAdmin(data === true);
-      } catch {
-        setIsAdmin(false);
-      }
+      } catch { setIsAdmin(false); }
     }
     checkAdminStatus();
   }, [user]);
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
 
-  // Simplified navigation structure
+  // Restructured navigation — max 6 items, topic-siloed
   const navLinks = [
     { href: "/ai-readiness", label: "AI Assessment" },
     { href: "/products", label: "Products" },
     { href: "/services", label: "Services" },
-    { href: "/insights", label: "Insights" },
-    { href: "/news", label: "News" },
+    { href: "/insights", label: "Resources", dropdown: [
+      { href: "/insights", label: "Blog & Insights" },
+      { href: "/news", label: "Operator Intelligence" },
+      { href: "/speaker-kit", label: "Speaker Kit" },
+      { href: "/downloads", label: "Downloads" },
+    ]},
   ];
 
   return (
@@ -59,20 +55,38 @@ const Header = () => {
             <img src={logo} alt="Wellness Genius" className="h-9 w-auto" />
           </Link>
 
-          {/* Desktop Navigation - Clean single-level */}
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
-                  isActive(link.href)
-                    ? "text-accent"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {link.label}
-              </Link>
+              link.dropdown ? (
+                <DropdownMenu key={link.href}>
+                  <DropdownMenuTrigger className={`flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+                    isActive(link.href) || link.dropdown.some(d => isActive(d.href))
+                      ? "text-accent"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}>
+                    {link.label}
+                    <ChevronDown size={14} />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[180px]">
+                    {link.dropdown.map((item) => (
+                      <DropdownMenuItem key={item.href} asChild>
+                        <Link to={item.href} className="w-full">{item.label}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+                    isActive(link.href) ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </nav>
 
@@ -138,9 +152,9 @@ const Header = () => {
               <Send size={18} />
             </a>
             <Button variant="accent" size="sm" asChild className="gap-1.5">
-              <Link to="/advisor">
+              <Link to="/ai-readiness">
                 <Sparkles size={14} />
-                Try AI Advisor
+                Free AI Assessment
               </Link>
             </Button>
           </div>
@@ -159,70 +173,47 @@ const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden py-4 border-t border-border/30 animate-fade-in">
             <nav className="flex flex-col gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${
-                    isActive(link.href) ? "text-accent bg-accent/5" : "text-foreground"
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              <Link to="/ai-readiness" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/ai-readiness") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                AI Assessment
+              </Link>
+              <Link to="/products" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/products") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                Products
+              </Link>
+              <Link to="/services" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/services") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                Services
+              </Link>
+              <Link to="/insights" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/insights") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                Blog & Insights
+              </Link>
+              <Link to="/news" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/news") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                Operator Intelligence
+              </Link>
+              <Link to="/speaker-kit" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/speaker-kit") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                Speaker Kit
+              </Link>
               
               <div className="my-3 border-t border-border/30" />
               
               {!isLoading && (
                 user ? (
                   <>
-                    <Link
-                      to="/hub"
-                      className="px-3 py-2.5 text-base font-medium text-foreground"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      My Hub
-                    </Link>
-                    <Link
-                      to="/genie"
-                      className="px-3 py-2.5 text-base font-medium text-foreground"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      AI Advisor
-                    </Link>
+                    <Link to="/hub" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>My Hub</Link>
+                    <Link to="/genie" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>AI Advisor</Link>
                     {isAdmin && (
-                      <Link
-                        to="/admin"
-                        className="px-3 py-2.5 text-base font-medium text-amber-600"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Admin
-                      </Link>
+                      <Link to="/admin" className="px-3 py-2.5 text-base font-medium text-amber-600" onClick={() => setIsMenuOpen(false)}>Admin</Link>
                     )}
-                    <button
-                      onClick={() => { signOut(); setIsMenuOpen(false); }}
-                      className="px-3 py-2.5 text-base font-medium text-muted-foreground text-left"
-                    >
-                      Sign Out
-                    </button>
+                    <button onClick={() => { signOut(); setIsMenuOpen(false); }} className="px-3 py-2.5 text-base font-medium text-muted-foreground text-left">Sign Out</button>
                   </>
                 ) : (
-                  <Link
-                    to="/auth"
-                    className="px-3 py-2.5 text-base font-medium text-foreground"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Sign In
-                  </Link>
+                  <Link to="/auth" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>Sign In</Link>
                 )
               )}
               
               <div className="mt-3 px-3">
                 <Button variant="accent" asChild className="w-full gap-2">
-                  <Link to="/advisor" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/ai-readiness" onClick={() => setIsMenuOpen(false)}>
                     <Sparkles size={16} />
-                    Try AI Advisor
+                    Free AI Assessment
                   </Link>
                 </Button>
               </div>

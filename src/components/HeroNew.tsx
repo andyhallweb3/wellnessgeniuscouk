@@ -1,24 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Sparkles, Brain, MessageSquare, Mic } from "lucide-react";
+import { ArrowRight, Play, Sparkles, Brain, MessageSquare, Mic, Users, Mail, Linkedin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
 import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS } from "@/components/advisor/AdvisorModes";
-// Import real client logos
 import nuformaLogo from "@/assets/logos/nuforma.png";
 import equesoulLogo from "@/assets/logos/equesoul.jpeg";
 import leisureExpertsLogo from "@/assets/logos/the-leisure-experts.jpeg";
+import fitterStockLogo from "@/assets/logos/fitter-stock.jpeg";
+import awakeLogo from "@/assets/logos/awake-meditation.jpeg";
 
 const HeroNew = () => {
   const { user } = useAuth();
-  const [isTyping, setIsTyping] = useState(false);
-
-  const exampleQuestions = [
-    "Why is my January retention down 8%?",
-    "Should I raise my membership prices?",
-    "What should I focus on this quarter?",
-    "How do I reduce staff turnover?",
-  ];
 
   return (
     <section className="relative min-h-[90vh] flex items-center pt-20 lg:pt-0 overflow-hidden">
@@ -26,8 +18,6 @@ const HeroNew = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5 -z-10" />
       <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] -z-10" />
       <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-accent/15 rounded-full blur-[120px] -z-10" />
-      
-      {/* Subtle grid pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] -z-10" />
 
       <div className="container-wide px-6 lg:px-12 py-12 lg:py-16">
@@ -37,62 +27,69 @@ const HeroNew = () => {
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8 animate-fade-up">
               <Brain size={16} />
-              AI Business Advisor for Wellness
+              AI-Powered Business Intelligence
             </div>
 
-            {/* Headline */}
+            {/* Headline - AEO optimised */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl leading-[1.08] mb-6 animate-fade-up tracking-tight font-bold">
-              Your wellness business{" "}
+              AI business intelligence for{" "}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                questions answered
-              </span>{" "}
-              in 60 seconds
+                wellness operators
+              </span>
             </h1>
 
-            {/* Subheadline */}
+            {/* Subheadline - Entity & query optimised */}
             <p className="text-lg lg:text-xl text-muted-foreground mb-8 animate-fade-up animation-delay-100 leading-relaxed">
-              Stop guessing. Ask about retention, pricing, staffing, growth — get strategic 
-              answers trained on 10+ years of wellness industry data.
+              Join 16,000+ industry leaders using data-driven insights to increase member retention, 
+              optimise partnerships, and scale profitably.
             </p>
 
-            {/* Feature pills */}
-            <div className="flex flex-wrap gap-3 mb-8 animate-fade-up animation-delay-150">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border text-sm">
-                <MessageSquare size={14} className="text-primary" />
-                8 Expert Modes
+            {/* Trust metrics strip */}
+            <div className="flex flex-wrap gap-6 mb-8 animate-fade-up animation-delay-150">
+              <div className="flex items-center gap-2 text-sm">
+                <Linkedin size={16} className="text-[#0A66C2]" />
+                <span className="font-semibold">16,000+</span>
+                <span className="text-muted-foreground">followers</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border text-sm">
-                <Mic size={14} className="text-primary" />
-                Voice Input
+              <div className="flex items-center gap-2 text-sm">
+                <Mail size={16} className="text-primary" />
+                <span className="font-semibold">2,600+</span>
+                <span className="text-muted-foreground">subscribers</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border text-sm">
-                <Sparkles size={14} className="text-primary" />
-                Remembers Your Business
+              <div className="flex items-center gap-2 text-sm">
+                <Users size={16} className="text-accent" />
+                <span className="font-semibold">500+</span>
+                <span className="text-muted-foreground">operators served</span>
               </div>
             </div>
 
-            {/* CTA */}
-            <div className="flex flex-col sm:flex-row items-start gap-4 mb-8 animate-fade-up animation-delay-200">
+            {/* Triple CTA - Intent matching */}
+            <div className="flex flex-col sm:flex-row items-start gap-3 mb-6 animate-fade-up animation-delay-200">
               <Button variant="accent" size="xl" asChild className="shadow-glow text-base px-8 w-full sm:w-auto">
-                <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
-                  Start {FREE_TRIAL_DAYS}-Day Free Trial
+                <Link to="/ai-readiness">
+                  Try Free AI Assessment
                   <ArrowRight size={18} />
                 </Link>
               </Button>
               <Button variant="outline" size="xl" asChild className="w-full sm:w-auto">
-                <Link to="/advisor">
-                  <Play size={16} />
-                  See Demo
-                </Link>
+                <a href="#contact">
+                  Book Strategy Call
+                </a>
               </Button>
             </div>
 
-            <p className="text-sm text-muted-foreground animate-fade-up animation-delay-300 mb-6">
-              {FREE_TRIAL_CREDITS} free credits • 1 credit per message • No card required
-            </p>
+            <div className="animate-fade-up animation-delay-250">
+              <Link 
+                to="/insights" 
+                className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+              >
+                Read success stories
+                <ArrowRight size={14} />
+              </Link>
+            </div>
 
-            {/* Telegram CTA */}
-            <div className="flex items-center gap-3 animate-fade-up animation-delay-350">
+            {/* Telegram + Free trial note */}
+            <div className="flex items-center gap-4 mt-6 animate-fade-up animation-delay-350">
               <a 
                 href="https://t.me/Wellnessgenius_bot" 
                 target="_blank" 
@@ -104,7 +101,9 @@ const HeroNew = () => {
                 </svg>
                 Chat on Telegram
               </a>
-              <span className="text-xs text-muted-foreground">Get instant answers 24/7</span>
+              <span className="text-xs text-muted-foreground">
+                {FREE_TRIAL_CREDITS} free AI credits • No card required
+              </span>
             </div>
           </div>
 
@@ -127,14 +126,12 @@ const HeroNew = () => {
 
               {/* Chat content */}
               <div className="p-5 space-y-4 min-h-[320px]">
-                {/* User message */}
                 <div className="flex justify-end">
                   <div className="max-w-[80%] bg-primary text-primary-foreground rounded-2xl rounded-tr-md px-4 py-3">
                     <p className="text-sm">Why is my January retention down 8% vs last year?</p>
                   </div>
                 </div>
 
-                {/* AI response */}
                 <div className="flex justify-start">
                   <div className="max-w-[90%] bg-muted rounded-2xl rounded-tl-md px-4 py-4">
                     <p className="text-sm mb-3">
@@ -153,7 +150,6 @@ const HeroNew = () => {
                   </div>
                 </div>
 
-                {/* Typing indicator */}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   Response time: 47 seconds • 1 credit
@@ -184,16 +180,18 @@ const HeroNew = () => {
           </div>
         </div>
 
-        {/* Social proof strip */}
+        {/* Client logos strip */}
         <div className="mt-16 pt-8 border-t border-border/50 animate-fade-up animation-delay-400">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex flex-wrap items-center justify-center gap-8">
+              <img src={fitterStockLogo} alt="Fitter Stock" className="h-8 w-auto opacity-60 hover:opacity-100 transition-opacity rounded grayscale hover:grayscale-0" />
               <img src={nuformaLogo} alt="Nuforma" className="h-8 w-auto opacity-60 hover:opacity-100 transition-opacity grayscale hover:grayscale-0" />
               <img src={equesoulLogo} alt="Equesoul" className="h-8 w-auto opacity-60 hover:opacity-100 transition-opacity rounded grayscale hover:grayscale-0" />
               <img src={leisureExpertsLogo} alt="The Leisure Experts" className="h-8 w-auto opacity-60 hover:opacity-100 transition-opacity rounded grayscale hover:grayscale-0" />
+              <img src={awakeLogo} alt="Awake Meditation" className="h-8 w-auto opacity-60 hover:opacity-100 transition-opacity rounded grayscale hover:grayscale-0" />
             </div>
             <p className="text-sm text-muted-foreground">
-              Trusted by wellness operators managing £10M+ in annual revenue
+              Trusted by wellness operators across the UK
             </p>
           </div>
         </div>
