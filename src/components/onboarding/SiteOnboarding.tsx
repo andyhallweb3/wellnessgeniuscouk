@@ -11,8 +11,7 @@ import {
   BarChart3, 
   Package, 
   ArrowRight, 
-  Check,
-  X
+  Check
 } from "lucide-react";
 import wellnessGeniusLogo from "@/assets/wellness-genius-logo-teal.webp";
 import { useAuth } from "@/contexts/AuthContext";
@@ -112,14 +111,7 @@ const SiteOnboarding = () => {
 
   return (
     <Dialog open={isOnboardingOpen} onOpenChange={(open) => !open && handleSkip()}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden border-accent/20">
-        {/* Close button */}
-        <button 
-          onClick={handleSkip}
-          className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground transition-colors z-10"
-        >
-          <X size={20} />
-        </button>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden border-accent/20 rounded-2xl">
 
         {/* Progress dots */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-1.5">
