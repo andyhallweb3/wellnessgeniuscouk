@@ -17,7 +17,7 @@ import DownloadsLibrary from "./pages/DownloadsLibrary";
 import AICoach from "./pages/AICoach";
 import ServicesPage from "./pages/ServicesPage";
 import SoftwarePage from "./pages/SoftwarePage";
-import AIGenius from "./pages/AIGenius";
+
 import Genie from "./pages/Genie";
 import AIReadinessLanding from "./pages/AIReadinessLanding";
 import AIAdvisorLanding from "./pages/AIAdvisorLanding";
@@ -68,7 +68,7 @@ import CommandCentre from "./pages/founder/CommandCentre";
 import StructuredAIEbook from "./pages/StructuredAIEbook";
 import WellnessAssessment from "./pages/WellnessAssessment";
 import WellnessDashboard from "./pages/WellnessDashboard";
-import AgentSuite from "./pages/AgentSuite";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -92,7 +92,7 @@ const App = () => (
             <Route path="/structured-ai" element={<Navigate to="/hub/structured-ai-ebook" replace />} />
             <Route path="/hub/coach" element={<Navigate to="/genie" replace />} />
             <Route path="/ai-coach" element={<Navigate to="/genie" replace />} />
-            <Route path="/ai-genius" element={<AIGenius />} />
+            <Route path="/ai-genius" element={<Navigate to="/genie" replace />} />
             <Route path="/genie" element={<Genie />} />
             <Route path="/advisor" element={<AIAdvisorLanding />} />
             <Route path="/ai-advisor" element={<AIAdvisorLanding />} />
@@ -139,8 +139,8 @@ const App = () => (
             {/* Consumer Wellness Product */}
             <Route path="/wellness" element={<WellnessAssessment />} />
             <Route path="/wellness/dashboard" element={<WellnessDashboard />} />
-            {/* AI Agent Suite */}
-            <Route path="/agent" element={<AgentSuite />} />
+            {/* Redirect legacy agent route */}
+            <Route path="/agent" element={<Navigate to="/genie" replace />} />
             {/* Founder Command Centre (admin only) */}
             <Route path="/founder" element={<FounderToday />} />
             <Route path="/founder/health" element={<BusinessHealth />} />

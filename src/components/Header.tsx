@@ -36,6 +36,7 @@ const Header = () => {
   // Restructured navigation — max 6 items, topic-siloed
   const navLinks = [
     { href: "/ai-readiness", label: "AI Assessment" },
+    { href: "/genie", label: "AI Advisor" },
     { href: "/products", label: "Products" },
     { href: "/services", label: "Services" },
     { href: "/insights", label: "Resources", dropdown: [
@@ -184,6 +185,9 @@ const Header = () => {
               </Link>
               <Link to="/insights" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/insights") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
                 Blog & Insights
+              </Link>
+              <Link to="/genie" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/genie") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                AI Advisor
               </Link>
               <Link to="/news" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/news") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
                 Operator Intelligence
