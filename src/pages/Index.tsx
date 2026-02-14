@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import HeroNew from "@/components/HeroNew";
 import AIAdvisorSection from "@/components/AIAdvisorSection";
 import SocialProofStrip from "@/components/SocialProofStrip";
-import HowItWorksSimple from "@/components/HowItWorksSimple";
+import GuidedDiscovery from "@/components/GuidedDiscovery";
 import PricingSimple from "@/components/PricingSimple";
 import FAQSection from "@/components/FAQSection";
 import FounderSection from "@/components/FounderSection";
@@ -24,7 +24,7 @@ const Index = () => {
         <HeroNew />
         <AIAdvisorSection />
         <SocialProofStrip />
-        <HowItWorksSimple />
+        <GuidedDiscovery />
         <PricingSimple />
         <FAQSection />
         <FounderSection />

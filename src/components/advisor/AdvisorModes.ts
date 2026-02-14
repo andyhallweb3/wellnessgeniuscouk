@@ -415,5 +415,5 @@ export const CREDIT_PACKS: CreditPack[] = [
 ];
 
 // Free trial configuration
-export const FREE_TRIAL_DAYS = 15;
-export const FREE_TRIAL_CREDITS = 25; // Generous trial to let users experience value
+export const FREE_TRIAL_DAYS = 14;
+export const FREE_TRIAL_CREDITS = 10; // Focused trial to demonstrate value

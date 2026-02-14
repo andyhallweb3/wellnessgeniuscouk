@@ -15,7 +15,7 @@ const PricingSimple = () => {
             Simple, transparent pricing
           </h2>
           <p className="text-muted-foreground">
-            {FREE_TRIAL_DAYS}-day free trial. Then pay per message. No subscriptions.
+            {FREE_TRIAL_CREDITS} free credits to start. Then pay as you go. No subscriptions.
           </p>
         </div>
 
