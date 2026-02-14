@@ -68,6 +68,7 @@ import CommandCentre from "./pages/founder/CommandCentre";
 import StructuredAIEbook from "./pages/StructuredAIEbook";
 import WellnessAssessment from "./pages/WellnessAssessment";
 import WellnessDashboard from "./pages/WellnessDashboard";
+import AgentSuite from "./pages/AgentSuite";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -138,6 +139,8 @@ const App = () => (
             {/* Consumer Wellness Product */}
             <Route path="/wellness" element={<WellnessAssessment />} />
             <Route path="/wellness/dashboard" element={<WellnessDashboard />} />
+            {/* AI Agent Suite */}
+            <Route path="/agent" element={<AgentSuite />} />
             {/* Founder Command Centre (admin only) */}
             <Route path="/founder" element={<FounderToday />} />
             <Route path="/founder/health" element={<BusinessHealth />} />
