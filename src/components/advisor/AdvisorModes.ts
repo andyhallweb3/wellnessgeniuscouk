@@ -298,8 +298,15 @@ export const getModesByCategory = (category: AdvisorMode["category"]): AdvisorMo
 // Modes that use web research
 export const WEB_RESEARCH_MODES = ["competitor_scan", "market_research", "compare"];
 
-// Premium modes that require subscription (not available on free trial)
-export const PREMIUM_MODES = ["competitor_scan"];
+// Premium modes that require paid credits (soft-locked for free trial users)
+export const PREMIUM_MODES = ["competitor_scan", "board_mode", "commercial_lens"];
+
+// Modes available on free trial (all others are soft-locked with preview)
+export const FREE_TIER_MODES = [
+  "quick_question", "diagnose", "plan", "compare", "operate",
+  "daily_briefing", "decision_support", "diagnostic", "content_writer",
+  "weekly_review", "build_mode", "market_research",
+];
 
 // Get system prompt with mode-specific output template
 export const getModeSystemPrompt = (mode: AdvisorMode, workspaceContext: string, kbContext: string): string => {

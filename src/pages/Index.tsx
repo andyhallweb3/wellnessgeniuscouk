@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import HeroNew from "@/components/HeroNew";
@@ -12,6 +13,12 @@ import Footer from "@/components/Footer";
 import MobileBookCTA from "@/components/MobileBookCTA";
 
 const Index = () => {
+  const [discoveryContext, setDiscoveryContext] = useState<{ challenge: string; stage: string } | null>(null);
+
+  const handleDiscoveryComplete = useCallback((challenge: string, stage: string) => {
+    setDiscoveryContext({ challenge, stage });
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
@@ -24,8 +31,8 @@ const Index = () => {
         <HeroNew />
         <AIAdvisorSection />
         <SocialProofStrip />
-        <GuidedDiscovery />
-        <PricingSimple />
+        <GuidedDiscovery onDiscoveryComplete={handleDiscoveryComplete} />
+        <PricingSimple discoveryContext={discoveryContext} />
         <FAQSection />
         <FounderSection />
         <Contact />

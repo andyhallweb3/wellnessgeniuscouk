@@ -83,7 +83,11 @@ const getRecommendation = (challenge: string, stage: string, isLoggedIn: boolean
   };
 };
 
-const GuidedDiscovery = () => {
+interface GuidedDiscoveryProps {
+  onDiscoveryComplete?: (challenge: string, stage: string) => void;
+}
+
+const GuidedDiscovery = ({ onDiscoveryComplete }: GuidedDiscoveryProps) => {
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [challenge, setChallenge] = useState<string | null>(null);
@@ -99,6 +103,9 @@ const GuidedDiscovery = () => {
   const handleStageSelect = (value: string) => {
     setStage(value);
     setStep(2);
+    if (challenge) {
+      onDiscoveryComplete?.(challenge, value);
+    }
   };
 
   const handleReset = () => {
