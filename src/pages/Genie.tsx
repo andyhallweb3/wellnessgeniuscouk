@@ -145,23 +145,8 @@ const Genie = () => {
     );
   }
 
-  if (showOnboarding) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Helmet>
-          <title>Setup | AI Advisor</title>
-        </Helmet>
-        <Header />
-        <main className="pt-24 pb-16 flex-1">
-          <div className="container-narrow section-padding">
-            <AdvisorOnboarding 
-              onComplete={handleOnboardingComplete} 
-            />
-          </div>
-        </main>
-      </div>
-    );
-  }
+  // Inline onboarding: if needs onboarding, show it inside the main layout
+  // instead of a separate full-page screen
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -188,27 +173,33 @@ const Genie = () => {
           />
         </div>
 
-        {/* Main Chat */}
-        <ChatInterface
-          messages={messages}
-          setMessages={setMessages}
-          selectedMode={selectedMode}
-          setSelectedMode={setSelectedMode}
-          credits={credits.balance}
-          onDeductCredits={deductCredits}
-          memoryContext={profile ? { business_name: profile.business_name, primary_goal: goals?.goals?.[0] } : null}
-          trustDisplayMode={trustDisplayMode}
-          onSaveSession={handleSaveSession}
-          briefData={briefData}
-          isBriefLoading={isBriefLoading}
-          onGenerateBrief={handleGenerateBrief}
-          documents={documents}
-          onUploadDocument={uploadDocument}
-          uploadingDocument={uploadingDocument}
-          businessName={profile?.business_name || undefined}
-          isFreeTrial={credits.isFreeTrial}
-          daysRemaining={credits.isFreeTrial ? Math.max(0, Math.ceil((new Date(credits.freeTrialExpiresAt || "").getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : undefined}
-        />
+        {/* Main Chat - with inline onboarding if needed */}
+        {showOnboarding ? (
+          <div className="flex-1 flex items-center justify-center p-4">
+            <AdvisorOnboarding onComplete={handleOnboardingComplete} />
+          </div>
+        ) : (
+          <ChatInterface
+            messages={messages}
+            setMessages={setMessages}
+            selectedMode={selectedMode}
+            setSelectedMode={setSelectedMode}
+            credits={credits.balance}
+            onDeductCredits={deductCredits}
+            memoryContext={profile ? { business_name: profile.business_name, primary_goal: goals?.goals?.[0] } : null}
+            trustDisplayMode={trustDisplayMode}
+            onSaveSession={handleSaveSession}
+            briefData={briefData}
+            isBriefLoading={isBriefLoading}
+            onGenerateBrief={handleGenerateBrief}
+            documents={documents}
+            onUploadDocument={uploadDocument}
+            uploadingDocument={uploadingDocument}
+            businessName={profile?.business_name || undefined}
+            isFreeTrial={credits.isFreeTrial}
+            daysRemaining={credits.isFreeTrial ? Math.max(0, Math.ceil((new Date(credits.freeTrialExpiresAt || "").getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : undefined}
+          />
+        )}
       </main>
 
       {/* Settings Sheet */}

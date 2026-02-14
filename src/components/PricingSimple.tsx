@@ -4,8 +4,64 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS, CREDIT_PACKS } from "@/components/advisor/AdvisorModes";
 
-const PricingSimple = () => {
+interface DiscoveryContext {
+  challenge: string;
+  stage: string;
+}
+
+interface PricingSimpleProps {
+  discoveryContext?: DiscoveryContext | null;
+}
+
+const getPersonalisedCTA = (
+  context: DiscoveryContext | null | undefined,
+  isLoggedIn: boolean
+): { freeCta: string; paidCta: string; freeLink: string; paidLink: string } => {
+  const base = isLoggedIn ? "/genie" : "/auth?redirect=/genie";
+
+  if (!context) {
+    return {
+      freeCta: "Start Free Trial",
+      paidCta: "Get Credits",
+      freeLink: base,
+      paidLink: base,
+    };
+  }
+
+  const { challenge, stage } = context;
+
+  // Personalise CTA text based on challenge
+  const ctaMap: Record<string, { free: string; paid: string; mode: string }> = {
+    retention: { free: "Diagnose retention issues", paid: "Fix retention now", mode: "diagnose" },
+    revenue: { free: "Get a growth plan", paid: "Unlock revenue growth", mode: "plan" },
+    ai: { free: "Start AI roadmap", paid: "Build your AI strategy", mode: "plan" },
+    unsure: { free: "Find your gaps", paid: "Get a full diagnosis", mode: "diagnose" },
+  };
+
+  const entry = ctaMap[challenge] || ctaMap.unsure;
+  const modeLink = isLoggedIn ? `/genie?mode=${entry.mode}` : `/auth?redirect=/genie?mode=${entry.mode}`;
+
+  // Stage-based refinement
+  if (stage === "advanced") {
+    return {
+      freeCta: "Open AI Advisor",
+      paidCta: "Scale with more credits",
+      freeLink: isLoggedIn ? "/genie?mode=operate" : "/auth?redirect=/genie?mode=operate",
+      paidLink: modeLink,
+    };
+  }
+
+  return {
+    freeCta: entry.free,
+    paidCta: entry.paid,
+    freeLink: modeLink,
+    paidLink: modeLink,
+  };
+};
+
+const PricingSimple = ({ discoveryContext }: PricingSimpleProps) => {
   const { user } = useAuth();
+  const cta = getPersonalisedCTA(discoveryContext, !!user);
 
   return (
     <section className="section-padding bg-background">
@@ -46,8 +102,8 @@ const PricingSimple = () => {
             </ul>
 
             <Button variant="outline" className="w-full" asChild>
-              <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
-                Start Free Trial
+              <Link to={cta.freeLink}>
+                {cta.freeCta}
                 <ArrowRight size={16} />
               </Link>
             </Button>
@@ -91,8 +147,8 @@ const PricingSimple = () => {
             </ul>
 
             <Button variant="accent" className="w-full" asChild>
-              <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
-                Get Credits
+              <Link to={cta.paidLink}>
+                {cta.paidCta}
                 <ArrowRight size={16} />
               </Link>
             </Button>
