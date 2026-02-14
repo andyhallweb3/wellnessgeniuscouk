@@ -212,6 +212,28 @@ export const ADVISOR_MODES: AdvisorMode[] = [
     ],
   },
 
+  // Content Creation
+  {
+    id: "content_writer",
+    name: "Content Writer",
+    icon: "PenLine",
+    tagline: "Draft content in your voice",
+    description: "Create blog posts, LinkedIn posts, newsletters, and thought leadership using your brand voice and the C.L.E.A.R framework.",
+    creditCost: CREDIT_COST_PER_MESSAGE,
+    category: "planning",
+    outputTemplate: [
+      "Content type and audience",
+      "Draft content",
+      "SEO/engagement notes",
+      "Distribution suggestions",
+    ],
+    examples: [
+      "Write a LinkedIn post about AI in wellness",
+      "Draft a blog post on member retention",
+      "Create a newsletter intro for this week's news",
+    ],
+  },
+
   // Planning & Building
   {
     id: "weekly_review",
