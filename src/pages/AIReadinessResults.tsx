@@ -501,17 +501,32 @@ const AIReadinessResults = () => {
             </p>
           </div>
 
-          {/* Browse other products */}
-          <div className="mt-12 pt-8 border-t border-border text-center">
-            <p className="text-sm text-muted-foreground mb-4">
-              Looking for other resources?
-            </p>
-            <Button variant="outline" asChild>
-              <Link to="/products">
-                Browse All Products
-                <ArrowRight size={16} />
-              </Link>
-            </Button>
+          {/* AI Advisor CTA */}
+          <div className="mt-12 pt-8 border-t border-border">
+            <div className="bg-gradient-to-br from-accent/5 to-accent/10 rounded-xl p-6 sm:p-8 border border-accent/20 text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold mb-4">
+                <Sparkles size={12} />
+                Next Step
+              </div>
+              <h3 className="text-lg sm:text-xl font-heading mb-2">Take action on your score</h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                Use the AI Advisor to turn your readiness score into a concrete 90-day plan — tailored to your business.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button variant="accent" asChild>
+                  <Link to="/genie?mode=diagnose">
+                    <Sparkles size={16} />
+                    Open AI Advisor
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link to="/products">
+                    Browse Products
+                    <ArrowRight size={16} />
+                  </Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </main>
