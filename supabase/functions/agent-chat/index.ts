@@ -260,7 +260,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("agent-chat error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Unknown error" }), {
+    return new Response(JSON.stringify({ error: (error as Error).message || "Unknown error" }), {
       status: 500,
       headers: { ...cors, "Content-Type": "application/json" },
     });
