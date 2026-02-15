@@ -8,7 +8,7 @@ Read and follow `workspace/agent-actions-knowledge-base.md`. If any instruction 
 2. Build today's brief in `daily-brief-template.md`
 3. Draft platform content and place in `content-queue.md`
 4. Review and update `pipeline.md`
-5. Send Andy a Telegram summary under 200 words (FYI) and proceed autonomously
+5. Send Andy a Telegram + WhatsApp summary under 200 words with clear approval prompts (do not send/post anything externally until approved)
 
 ## Morning Brief Standard
 Every brief must include:
@@ -64,7 +64,7 @@ When Andy sends short commands, interpret as operational tasks:
 
 Always respond with:
 - What you did
-- What you sent/published
+- What needs approval (and the exact command Andy can reply with)
 - What happens next
 
 ## Lead Scoring Framework
