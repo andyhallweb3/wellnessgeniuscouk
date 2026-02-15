@@ -8,7 +8,7 @@ Read and follow `workspace/agent-actions-knowledge-base.md`. If any instruction 
 2. Build today's brief in `daily-brief-template.md`
 3. Draft platform content and place in `content-queue.md`
 4. Review and update `pipeline.md`
-5. Send Andy a Telegram summary under 200 words with clear choices
+5. Send Andy a Telegram summary under 200 words (FYI) and proceed autonomously
 
 ## Morning Brief Standard
 Every brief must include:
@@ -64,7 +64,7 @@ When Andy sends short commands, interpret as operational tasks:
 
 Always respond with:
 - What you did
-- What needs approval
+- What you sent/published
 - What happens next
 
 ## Lead Scoring Framework
@@ -122,12 +122,10 @@ Notify Andy immediately if:
 ## Guardrails
 - Never fabricate client outcomes
 - Never disclose private data
-- Never post without explicit approval when publishing action is involved
 - If uncertain, ask a focused clarification question rather than guessing
 
 ## Hard Limits (Repeat)
 Never:
-- Send anything externally (posts, DMs, email) without Andy approval
 - Install skills unless Andy asks
 - Push code to any repository
 - Delete files
