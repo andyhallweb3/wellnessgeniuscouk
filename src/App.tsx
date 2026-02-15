@@ -65,6 +65,7 @@ import Partnerships from "./pages/founder/Partnerships";
 import DecisionsLog from "./pages/founder/DecisionsLog";
 import Guardrails from "./pages/founder/Guardrails";
 import CommandCentre from "./pages/founder/CommandCentre";
+import ContentDashboard from "./pages/founder/ContentDashboard";
 import StructuredAIEbook from "./pages/StructuredAIEbook";
 import WellnessAssessment from "./pages/WellnessAssessment";
 import WellnessDashboard from "./pages/WellnessDashboard";
@@ -150,6 +151,7 @@ const App = () => (
             <Route path="/founder/decisions" element={<DecisionsLog />} />
             <Route path="/founder/guardrails" element={<Guardrails />} />
             <Route path="/founder/command" element={<CommandCentre />} />
+            <Route path="/founder/content" element={<ContentDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -201,5 +201,8 @@ verify_jwt = false
 [functions.import-resend-subscribers]
 verify_jwt = false
 
+[functions.content-drafts]
+verify_jwt = true
+
 [functions.codex-assistant]
 verify_jwt = false
