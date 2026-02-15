@@ -246,28 +246,124 @@ const LatestNews = () => {
     return u.toString();
   }, []);
 
-  const shareToLinkedIn = useCallback((storyId: string) => {
-    const link = buildStoryLink(storyId, "linkedin");
+  const buildShareCopy = useCallback((item: NewsItem, platform: "linkedin" | "x" | "telegram") => {
+    const title = cleanText(item.title);
+    const summary = cleanText(item.summary);
+    const dateShort = new Date(item.published_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+
+    const lens = item.business_lens || "";
+    const lensTemplates: Record<string, { hook: string; action: string }> = {
+      revenue_growth: {
+        hook: "Revenue signal worth paying attention to.",
+        action: "Sanity-check pricing, promo cadence, and conversion this week.",
+      },
+      cost_efficiency: {
+        hook: "This is really an operations story.",
+        action: "Map the workflow first, then automate the boring 20% that creates 80% of the friction.",
+      },
+      retention_engagement: {
+        hook: "This lands in retention and member behaviour, not “marketing”.",
+        action: "Look at onboarding touchpoints and week-2 usage before you touch campaigns.",
+      },
+      risk_regulation: {
+        hook: "Regulation/risk is catching up fast.",
+        action: "Audit data access, consent, and what your team is actually doing with AI tools.",
+      },
+      investment_ma: {
+        hook: "Capital markets signal (and it will shape operators).",
+        action: "Watch who’s consolidating and where suppliers will raise prices or bundle features.",
+      },
+      technology_enablement: {
+        hook: "AI/automation is moving from “tools” to operating model.",
+        action: "Decide what you will (and won’t) automate, then build the data/process foundations.",
+      },
+    };
+
+    const t = lensTemplates[lens] || {
+      hook: "Worth a quick operator read.",
+      action: "Translate this into one concrete operational decision this week.",
+    };
+
+    if (platform === "telegram") {
+      const link = buildStoryLink(item.id, "telegram");
+      return [
+        `${t.hook}`,
+        "",
+        `${title}`,
+        `${item.source_name} • ${dateShort}`,
+        "",
+        `${summary}`,
+        "",
+        `Operator hook: ${t.action}`,
+        "",
+        link,
+      ].join("\n");
+    }
+
+    if (platform === "x") {
+      const link = buildStoryLink(item.id, "x");
+      // Keep it tight; X link consumes extra characters.
+      const base = `${t.hook} ${title} (${item.source_name}).`;
+      const q = "What’s your operator take?";
+      let text = `${base} ${q}\n${link}`;
+      if (text.length > 260) {
+        const cut = Math.max(0, 260 - (q.length + link.length + 3));
+        const trimmed = base.slice(0, Math.max(0, cut)).replace(/\s+\S*$/, "").trim();
+        text = `${trimmed} ${q}\n${link}`;
+      }
+      return text;
+    }
+
+    // linkedin
+    const link = buildStoryLink(item.id, "linkedin");
+    return [
+      `${t.hook}`,
+      "",
+      `${title}`,
+      `${item.source_name} • ${dateShort}`,
+      "",
+      summary,
+      "",
+      `My operator takeaway: ${t.action}`,
+      "",
+      `Link: ${link}`,
+      "",
+      "Where are you seeing this show up in your operation right now?",
+    ].join("\n");
+  }, [buildStoryLink]);
+
+  const shareToLinkedIn = useCallback((item: NewsItem) => {
+    const link = buildStoryLink(item.id, "linkedin");
     const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`;
     window.open(shareUrl, "_blank", "noopener,noreferrer");
   }, [buildStoryLink]);
 
-  const shareToX = useCallback((storyId: string, title: string) => {
-    const link = buildStoryLink(storyId, "x");
-    const text = `${cleanText(title)}\n\nOperator angle: what's your take?`;
-    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
+  const shareToX = useCallback((item: NewsItem) => {
+    const copy = buildShareCopy(item, "x");
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(copy)}`;
     window.open(shareUrl, "_blank", "noopener,noreferrer");
-  }, [buildStoryLink]);
+  }, [buildShareCopy]);
 
-  const copyStoryLink = useCallback(async (storyId: string) => {
-    const link = buildStoryLink(storyId, "copy");
+  const copyTelegramReadyShare = useCallback(async (item: NewsItem) => {
+    const link = buildStoryLink(item.id, "copy");
+    const copy = buildShareCopy(item, "telegram").replace(buildStoryLink(item.id, "telegram"), link);
     try {
-      await navigator.clipboard.writeText(link);
-      toast({ title: "Link copied", description: "News link copied to clipboard." });
+      await navigator.clipboard.writeText(copy);
+      toast({ title: "Copied", description: "Telegram-ready share text copied to clipboard." });
     } catch {
       toast({ title: "Copy failed", description: "Couldn't access clipboard. Copy manually from the address bar.", variant: "destructive" });
     }
-  }, [buildStoryLink, toast]);
+  }, [buildShareCopy, buildStoryLink, toast]);
+
+  const copyLinkedInCaption = useCallback(async (item: NewsItem) => {
+    const copy = buildShareCopy(item, "linkedin");
+    try {
+      await navigator.clipboard.writeText(copy);
+      toast({ title: "Caption copied", description: "LinkedIn caption copied to clipboard." });
+    } catch {
+      toast({ title: "Copy failed", description: "Couldn't access clipboard.", variant: "destructive" });
+    }
+  }, [buildShareCopy, toast]);
 
   const fetchNews = useCallback(async (forceRefresh = false) => {
     try {
@@ -678,16 +774,16 @@ const LatestNews = () => {
                               <button
                                 type="button"
                                 className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                                onClick={(e) => { e.preventDefault(); shareToLinkedIn(item.id); }}
+                                onClick={(e) => { e.preventDefault(); void copyLinkedInCaption(item); shareToLinkedIn(item); }}
                                 aria-label="Share to LinkedIn"
-                                title="Share to LinkedIn"
+                                title="Share to LinkedIn (copies caption too)"
                               >
                                 <Linkedin size={14} />
                               </button>
                               <button
                                 type="button"
                                 className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                                onClick={(e) => { e.preventDefault(); shareToX(item.id, item.title); }}
+                                onClick={(e) => { e.preventDefault(); shareToX(item); }}
                                 aria-label="Share to X"
                                 title="Share to X"
                               >
@@ -696,9 +792,9 @@ const LatestNews = () => {
                               <button
                                 type="button"
                                 className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                                onClick={(e) => { e.preventDefault(); void copyStoryLink(item.id); }}
-                                aria-label="Copy link"
-                                title="Copy link"
+                                onClick={(e) => { e.preventDefault(); void copyTelegramReadyShare(item); }}
+                                aria-label="Copy Telegram-ready share"
+                                title="Copy Telegram-ready share"
                               >
                                 <Copy size={14} />
                               </button>
