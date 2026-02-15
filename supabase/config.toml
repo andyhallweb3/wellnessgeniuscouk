@@ -200,3 +200,6 @@ verify_jwt = false
 
 [functions.import-resend-subscribers]
 verify_jwt = false
+
+[functions.codex-assistant]
+verify_jwt = false

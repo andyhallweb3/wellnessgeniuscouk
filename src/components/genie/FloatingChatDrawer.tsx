@@ -55,7 +55,8 @@ const FloatingChatDrawer = ({
   }, [messages]);
 
   const streamChat = useCallback(async (userMessages: Message[], mode: string) => {
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genie-chat`;
+    const functionName = mode === "codex_assistant" ? "codex-assistant" : "genie-chat";
+    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`;
     
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData?.session?.access_token) {
