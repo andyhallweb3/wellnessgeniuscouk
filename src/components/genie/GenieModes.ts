@@ -97,6 +97,20 @@ export const GENIE_MODES: GenieMode[] = [
       "Prioritise my tech investment for next quarter",
     ],
   },
+  {
+    id: "codex_assistant",
+    name: "Codex Assistant",
+    icon: "✏️",
+    tagline: "Sharpen my pages and content strategy.",
+    description: "GPT-5-powered live guidance on page edits, copy, SEO, and content strategy. Powered by OpenAI.",
+    creditCost: 4,
+    responseStyle: "structured",
+    examples: [
+      "Review my landing page headline and CTA",
+      "Plan a 30-day content calendar for LinkedIn",
+      "How should I structure my pricing page?",
+    ],
+  },
 ];
 
 export const getModeById = (id: string): GenieMode => {
