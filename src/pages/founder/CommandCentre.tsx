@@ -55,6 +55,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import BusinessOnboardingModal from "@/components/founder/BusinessOnboardingModal";
 import SubscriptionPaywall from "@/components/founder/SubscriptionPaywall";
 import CompetitorWarRoom from "@/components/founder/CompetitorWarRoom";
+import KanbanBoard from "@/components/founder/KanbanBoard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FocusItem {
   priority: string;
@@ -478,9 +480,8 @@ export default function CommandCentre() {
                 type="multiple" 
                 value={perspectives} 
                 onValueChange={(value) => {
-                  if (value.length === 0) return; // Prevent empty selection
+                  if (value.length === 0) return;
                   setPerspectives(value as PerspectiveMode[]);
-                  // Save to database
                   if (businessProfile) {
                     supabase
                       .from('business_profiles')
@@ -582,240 +583,253 @@ export default function CommandCentre() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Focus Section */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Target className="h-5 w-5 text-primary" />
-                  Today's Focus
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {data?.founder_focus?.map((item, idx) => (
-                  <div 
-                    key={idx} 
-                    className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-2">
-                        <p className="font-medium">{item.priority}</p>
-                        <p className="text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">Why now:</span> {item.why_now}
-                        </p>
-                        <p className="text-sm text-amber-600 dark:text-amber-400">
-                          <span className="font-medium">If ignored:</span> {item.if_ignored}
-                        </p>
-                      </div>
-                      <Badge variant="secondary" className="shrink-0">
-                        {item.next_step}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+        <Tabs defaultValue="dashboard">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          </TabsList>
 
-            {/* Decisions Section */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Decisions Pending</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {data?.decisions_pending?.map((decision, idx) => (
-                  <Drawer key={idx}>
-                    <DrawerTrigger asChild>
-                      <button 
-                        className="w-full p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors text-left flex items-center justify-between"
-                        onClick={() => setSelectedDecision(decision)}
+          <TabsContent value="dashboard">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main Column */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Focus Section */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Target className="h-5 w-5 text-primary" />
+                      Today's Focus
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {data?.founder_focus?.map((item, idx) => (
+                      <div 
+                        key={idx} 
+                        className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-sm font-medium text-primary">{idx + 1}</span>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-2">
+                            <p className="font-medium">{item.priority}</p>
+                            <p className="text-sm text-muted-foreground">
+                              <span className="font-medium text-foreground">Why now:</span> {item.why_now}
+                            </p>
+                            <p className="text-sm text-amber-600 dark:text-amber-400">
+                              <span className="font-medium">If ignored:</span> {item.if_ignored}
+                            </p>
                           </div>
+                          <Badge variant="secondary" className="shrink-0">
+                            {item.next_step}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Decisions Section */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Decisions Pending</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {data?.decisions_pending?.map((decision, idx) => (
+                      <Drawer key={idx}>
+                        <DrawerTrigger asChild>
+                          <button 
+                            className="w-full p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors text-left flex items-center justify-between"
+                            onClick={() => setSelectedDecision(decision)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-sm font-medium text-primary">{idx + 1}</span>
+                              </div>
+                              <div>
+                                <p className="font-medium">{decision.decision}</p>
+                                <p className="text-sm text-muted-foreground line-clamp-1">
+                                  {decision.context}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getConfidenceBadge(decision.confidence)}
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <DrawerHeader>
+                            <DrawerTitle>{decision.decision}</DrawerTitle>
+                            <DrawerDescription>{decision.context}</DrawerDescription>
+                          </DrawerHeader>
+                          <div className="px-4 space-y-4">
+                            <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+                              <div className="flex items-center gap-2 mb-2">
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                <span className="font-medium text-green-800 dark:text-green-200">Recommended</span>
+                                {getConfidenceBadge(decision.confidence)}
+                              </div>
+                              <p className="text-green-700 dark:text-green-300">{decision.recommended_option}</p>
+                            </div>
+                            <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+                              <div className="flex items-center gap-2 mb-2">
+                                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                                <span className="font-medium text-amber-800 dark:text-amber-200">Trade-offs</span>
+                              </div>
+                              <p className="text-amber-700 dark:text-amber-300">{decision.tradeoffs}</p>
+                            </div>
+                          </div>
+                          <DrawerFooter>
+                            <DrawerClose asChild>
+                              <Button variant="outline">Close</Button>
+                            </DrawerClose>
+                          </DrawerFooter>
+                        </DrawerContent>
+                      </Drawer>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Narrative Suggestions */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Lightbulb className="h-5 w-5 text-yellow-500" />
+                      Content Ideas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {data?.narrative_suggestions?.map((narrative, idx) => (
+                        <div 
+                          key={idx}
+                          className="p-3 rounded-lg border bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30"
+                        >
+                          <p className="font-medium text-sm">{narrative.angle}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{narrative.why_it_matters}</p>
+                          <Badge variant="outline" className="mt-2 text-xs">
+                            {narrative.suggested_channel}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Brain Dump Section */}
+                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Brain className="h-5 w-5 text-primary" />
+                      Brain Dump
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Share what's on your mind. The AI will factor this into its next analysis.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Textarea
+                      placeholder="What's on your mind? Any concerns, ideas, or context the AI should know about..."
+                      value={brainDump}
+                      onChange={(e) => setBrainDump(e.target.value)}
+                      rows={4}
+                      className="resize-none"
+                    />
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleSaveNote} 
+                        disabled={savingNote || !brainDump.trim()}
+                        size="sm"
+                      >
+                        {savingNote ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4 mr-2" />
+                        )}
+                        Save & Refresh
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Side Column */}
+              <div className="space-y-6">
+                {/* Competitor War Room */}
+                <CompetitorWarRoom />
+
+                {/* Signals Ticker */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Live Signals</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {data?.signals?.map((signal, idx) => (
+                      <div 
+                        key={idx}
+                        className="flex items-start gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors"
+                      >
+                        <div className="mt-0.5">
+                          {getDirectionIcon(signal.direction)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{signal.signal}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {signal.meaning}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Risks & Distractions */}
+                <Card className="border-red-200 dark:border-red-800">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg text-red-600 dark:text-red-400">
+                      <AlertTriangle className="h-5 w-5" />
+                      Risks & Distractions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {data?.risks_and_distractions?.map((risk, idx) => (
+                      <div 
+                        key={idx}
+                        className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900"
+                      >
+                        <div className="flex items-start gap-2">
+                          <XCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
                           <div>
-                            <p className="font-medium">{decision.decision}</p>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {decision.context}
+                            <p className="font-medium text-sm text-red-800 dark:text-red-200">
+                              {risk.item}
+                            </p>
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                              {risk.reason}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {getConfidenceBadge(decision.confidence)}
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </button>
-                    </DrawerTrigger>
-                    <DrawerContent>
-                      <DrawerHeader>
-                        <DrawerTitle>{decision.decision}</DrawerTitle>
-                        <DrawerDescription>{decision.context}</DrawerDescription>
-                      </DrawerHeader>
-                      <div className="px-4 space-y-4">
-                        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-                          <div className="flex items-center gap-2 mb-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                            <span className="font-medium text-green-800 dark:text-green-200">Recommended</span>
-                            {getConfidenceBadge(decision.confidence)}
-                          </div>
-                          <p className="text-green-700 dark:text-green-300">{decision.recommended_option}</p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
-                          <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle className="h-4 w-4 text-amber-600" />
-                            <span className="font-medium text-amber-800 dark:text-amber-200">Trade-offs</span>
-                          </div>
-                          <p className="text-amber-700 dark:text-amber-300">{decision.tradeoffs}</p>
-                        </div>
                       </div>
-                      <DrawerFooter>
-                        <DrawerClose asChild>
-                          <Button variant="outline">Close</Button>
-                        </DrawerClose>
-                      </DrawerFooter>
-                    </DrawerContent>
-                  </Drawer>
-                ))}
-              </CardContent>
-            </Card>
+                    ))}
+                  </CardContent>
+                </Card>
 
-            {/* Narrative Suggestions */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Lightbulb className="h-5 w-5 text-yellow-500" />
-                  Content Ideas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {data?.narrative_suggestions?.map((narrative, idx) => (
-                    <div 
-                      key={idx}
-                      className="p-3 rounded-lg border bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30"
-                    >
-                      <p className="font-medium text-sm">{narrative.angle}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{narrative.why_it_matters}</p>
-                      <Badge variant="outline" className="mt-2 text-xs">
-                        {narrative.suggested_channel}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Brain Dump Section */}
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Brain className="h-5 w-5 text-primary" />
-                  Brain Dump
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Share what's on your mind. The AI will factor this into its next analysis.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Textarea
-                  placeholder="What's on your mind? Any concerns, ideas, or context the AI should know about..."
-                  value={brainDump}
-                  onChange={(e) => setBrainDump(e.target.value)}
-                  rows={4}
-                  className="resize-none"
-                />
-                <div className="flex justify-end">
-                  <Button 
-                    onClick={handleSaveNote} 
-                    disabled={savingNote || !brainDump.trim()}
-                    size="sm"
-                  >
-                    {savingNote ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    Save & Refresh
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Side Column */}
-          <div className="space-y-6">
-            {/* Competitor War Room */}
-            <CompetitorWarRoom />
-
-            {/* Signals Ticker */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Live Signals</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {data?.signals?.map((signal, idx) => (
-                  <div 
-                    key={idx}
-                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="mt-0.5">
-                      {getDirectionIcon(signal.direction)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{signal.signal}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {signal.meaning}
+                {/* Meta / Confidence */}
+                {data?.meta?.confidence_note && (
+                  <Card className="bg-muted/50">
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium">AI Confidence:</span> {data.meta.confidence_note}
                       </p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </TabsContent>
 
-            {/* Risks & Distractions */}
-            <Card className="border-red-200 dark:border-red-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg text-red-600 dark:text-red-400">
-                  <AlertTriangle className="h-5 w-5" />
-                  Risks & Distractions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {data?.risks_and_distractions?.map((risk, idx) => (
-                  <div 
-                    key={idx}
-                    className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900"
-                  >
-                    <div className="flex items-start gap-2">
-                      <XCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="font-medium text-sm text-red-800 dark:text-red-200">
-                          {risk.item}
-                        </p>
-                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                          {risk.reason}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Meta / Confidence */}
-            {data?.meta?.confidence_note && (
-              <Card className="bg-muted/50">
-                <CardContent className="pt-4">
-                  <p className="text-xs text-muted-foreground">
-                    <span className="font-medium">AI Confidence:</span> {data.meta.confidence_note}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
+          <TabsContent value="tasks">
+            <KanbanBoard />
+          </TabsContent>
+        </Tabs>
       </div>
     </FounderLayout>
   );
