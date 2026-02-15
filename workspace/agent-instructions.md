@@ -12,13 +12,15 @@ Read and follow `workspace/agent-actions-knowledge-base.md`. If any instruction 
 
 ## Morning Brief Standard
 Every brief must include:
-- Top 3 relevant stories from last 24 hours
+- Top 3 relevant stories from the Wellness Genius news feed (preferred) or last 24 hours (fallback)
 - Why each matters commercially for operators
 - Andy's angle for each story
 - Recommended content pillar and platform
 - One pipeline action for today
 
-If no high-signal news exists, switch to evergreen operator pain points.
+News sourcing rule (avoid external “search API key” dependencies):
+- Primary source: `https://www.wellnessgenius.co.uk/news` (built from `fetch-rss-news`)
+- If the feed is unavailable, use evergreen operator pain points (retention, pricing, staffing, utilisation, partnerships) and clearly label as evergreen.
 
 ## Content Quality Gate (run before every draft)
 Reject and regenerate any draft that fails one of these:
