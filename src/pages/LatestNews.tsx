@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNewsletter } from "@/hooks/useNewsletter";
+import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
-import { ExternalLink, Calendar, Mail, Rss, RefreshCw, Clock, Building2, Package, TrendingUp, Users, Zap, DollarSign } from "lucide-react";
+import { ExternalLink, Calendar, Mail, Rss, RefreshCw, Clock, Building2, Package, TrendingUp, Users, Zap, DollarSign, Linkedin, Twitter, Copy } from "lucide-react";
 
 interface NewsItem {
   id: string;
@@ -221,6 +222,8 @@ function filterByCategory(items: NewsItem[], category: string): NewsItem[] {
 }
 
 const LatestNews = () => {
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -229,6 +232,42 @@ const LatestNews = () => {
   const [error, setError] = useState<string | null>(null);
   const [cacheInfo, setCacheInfo] = useState<{ cached: boolean; age?: number } | null>(null);
   const { email, setEmail, isSubmitting, subscribe } = useNewsletter();
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  const storyParam = (searchParams.get("story") || "").trim();
+
+  const buildStoryLink = useCallback((storyId: string, source: "linkedin" | "x" | "telegram" | "copy") => {
+    const u = new URL("https://www.wellnessgenius.co.uk/news");
+    u.searchParams.set("story", storyId);
+    u.searchParams.set("utm_source", source);
+    u.searchParams.set("utm_medium", "share");
+    u.searchParams.set("utm_campaign", "news");
+    u.searchParams.set("utm_content", storyId);
+    return u.toString();
+  }, []);
+
+  const shareToLinkedIn = useCallback((storyId: string) => {
+    const link = buildStoryLink(storyId, "linkedin");
+    const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`;
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+  }, [buildStoryLink]);
+
+  const shareToX = useCallback((storyId: string, title: string) => {
+    const link = buildStoryLink(storyId, "x");
+    const text = `${cleanText(title)}\n\nOperator angle: what's your take?`;
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+  }, [buildStoryLink]);
+
+  const copyStoryLink = useCallback(async (storyId: string) => {
+    const link = buildStoryLink(storyId, "copy");
+    try {
+      await navigator.clipboard.writeText(link);
+      toast({ title: "Link copied", description: "News link copied to clipboard." });
+    } catch {
+      toast({ title: "Copy failed", description: "Couldn't access clipboard. Copy manually from the address bar.", variant: "destructive" });
+    }
+  }, [buildStoryLink, toast]);
 
   const fetchNews = useCallback(async (forceRefresh = false) => {
     try {
@@ -282,6 +321,21 @@ const LatestNews = () => {
 
     fetchNews();
   }, [fetchNews]);
+
+  // Deep-link to a specific story (e.g. share links)
+  useEffect(() => {
+    if (!storyParam) return;
+    if (loading) return;
+    if (!news || news.length === 0) return;
+
+    const target = document.getElementById(`news-${storyParam}`);
+    if (!target) return;
+
+    setHighlightId(storyParam);
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    const t = window.setTimeout(() => setHighlightId(null), 4500);
+    return () => window.clearTimeout(t);
+  }, [storyParam, loading, news]);
 
   // Filter and sort
   const filteredNews = filterByCategory(news, activeFilter);
@@ -566,30 +620,30 @@ const LatestNews = () => {
                       const isHighRelevance = relevanceScore >= 15;
                       
                       return (
-                        <a
+                        <article
                           key={item.id}
-                          href={item.source_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className={`card-tech p-6 flex flex-col animate-fade-up group transition-colors ${
                             isHighRelevance 
                               ? "hover:border-accent/40 border-accent/20" 
                               : "hover:border-accent/30"
-                          }`}
+                          } ${highlightId === item.id ? "ring-2 ring-accent/50" : ""}`}
                           style={{ animationDelay: `${index * 50}ms` }}
+                          id={`news-${item.id}`}
                         >
                           {item.image_url && (
-                            <div className="h-40 rounded-lg overflow-hidden mb-4 -mx-2 -mt-2 bg-secondary">
-                              <img 
-                                src={getProxiedImageUrl(item.image_url) || ''}
-                                alt={cleanText(item.title)}
-                                loading="lazy"
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).parentElement!.style.display = 'none';
-                                }}
-                              />
-                            </div>
+                            <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="block">
+                              <div className="h-40 rounded-lg overflow-hidden mb-4 -mx-2 -mt-2 bg-secondary">
+                                <img 
+                                  src={getProxiedImageUrl(item.image_url) || ''}
+                                  alt={cleanText(item.title)}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            </a>
                           )}
                           
                           {/* Business lens and audience tags */}
@@ -602,13 +656,16 @@ const LatestNews = () => {
                             <span>{item.source_name}</span>
                           </div>
                           
-                          <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">
-                            {cleanText(item.title)}
-                          </h3>
+                          <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="block">
+                            <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">
+                              {cleanText(item.title)}
+                            </h3>
+                          </a>
                           <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">
                             {item.summary}
                           </p>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
+
+                          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground pt-4 border-t border-border">
                             <span className="flex items-center gap-1.5">
                               <Calendar size={12} />
                               {new Date(item.published_date).toLocaleDateString("en-GB", {
@@ -616,11 +673,46 @@ const LatestNews = () => {
                                 month: "short"
                               })}
                             </span>
-                            <span className="flex items-center gap-1 text-accent">
-                              Read <ExternalLink size={12} />
-                            </span>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={(e) => { e.preventDefault(); shareToLinkedIn(item.id); }}
+                                aria-label="Share to LinkedIn"
+                                title="Share to LinkedIn"
+                              >
+                                <Linkedin size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={(e) => { e.preventDefault(); shareToX(item.id, item.title); }}
+                                aria-label="Share to X"
+                                title="Share to X"
+                              >
+                                <Twitter size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={(e) => { e.preventDefault(); void copyStoryLink(item.id); }}
+                                aria-label="Copy link"
+                                title="Copy link"
+                              >
+                                <Copy size={14} />
+                              </button>
+                              <a
+                                href={item.source_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-accent hover:text-accent/80 transition-colors"
+                              >
+                                Read <ExternalLink size={12} />
+                              </a>
+                            </div>
                           </div>
-                        </a>
+                        </article>
                       );
                     })}
                 </div>
@@ -665,6 +757,38 @@ const LatestNews = () => {
           </div>
         </section>
       </main>
+
+      {/* Sticky CTA */}
+      <div className="fixed bottom-4 left-0 right-0 z-50 px-4 pointer-events-none">
+        <div className="container-wide pointer-events-auto">
+          <div className="mx-auto max-w-2xl card-glass border border-accent/20 px-4 py-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold truncate">Want this applied to your business?</p>
+              <p className="text-xs text-muted-foreground truncate">Take the free AI Readiness Index (10 minutes).</p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link
+                to="/ai-readiness/start?utm_source=news&utm_medium=sticky&utm_campaign=ai_readiness"
+                className="inline-flex"
+              >
+                <Button variant="accent" size="sm">
+                  Start free
+                </Button>
+              </Link>
+              <a
+                href="https://calendly.com/andy-wellnessgenius/30min"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:inline-flex"
+              >
+                <Button variant="outline" size="sm">
+                  Book call
+                </Button>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <Footer />
     </div>
