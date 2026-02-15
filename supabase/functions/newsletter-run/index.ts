@@ -512,18 +512,31 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify admin auth via JWT
-    const authResult = await validateAdminAuth(req);
-    
-    console.log('Admin auth check:', {
-      isAdmin: authResult.isAdmin,
-      userId: authResult.userId,
-      error: authResult.error,
-    });
-    
-    if (!authResult.isAdmin) {
-      console.log('Unauthorized access attempt to newsletter-run');
-      return unauthorizedResponse(authResult.error || 'Unauthorized', corsHeaders);
+    const body = await req.json().catch(() => ({}));
+    const isAutoSendAction = body.action === 'auto-send';
+    const automationSecret = Deno.env.get('NEWSLETTER_AUTOMATION_SECRET') || '';
+    const providedAutomationSecret = req.headers.get('x-newsletter-secret') || '';
+    const isAuthorizedAutomationRun =
+      isAutoSendAction &&
+      automationSecret.length > 0 &&
+      providedAutomationSecret === automationSecret;
+
+    // Default path is still strict admin auth. Automation bypass only works with matching secret.
+    if (!isAuthorizedAutomationRun) {
+      const authResult = await validateAdminAuth(req);
+      
+      console.log('Admin auth check:', {
+        isAdmin: authResult.isAdmin,
+        userId: authResult.userId,
+        error: authResult.error,
+      });
+      
+      if (!authResult.isAdmin) {
+        console.log('Unauthorized access attempt to newsletter-run');
+        return unauthorizedResponse(authResult.error || 'Unauthorized', corsHeaders);
+      }
+    } else {
+      console.log('Authorized automated newsletter send via x-newsletter-secret');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -929,7 +942,6 @@ Deno.serve(async (req) => {
       }
     };
 
-    const body = await req.json().catch(() => ({}));
     const previewOnly = body.preview === true;
     const targetEmails: string[] | undefined = Array.isArray(body.targetEmails) ? body.targetEmails : undefined;
     const selectedArticleIds: string[] | undefined = Array.isArray(body.selectedArticleIds) ? body.selectedArticleIds : undefined;

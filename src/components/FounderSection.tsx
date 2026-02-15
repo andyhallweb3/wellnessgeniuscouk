@@ -19,20 +19,20 @@ const FounderSection = () => {
             <div className="flex-shrink-0 mx-auto md:mx-0">
               <img
                 src={andyHeadshot}
-                alt="Andy Sheridan"
+                alt="Andy Hall"
                 className="w-32 h-32 md:w-40 md:h-40 rounded-2xl object-cover border-2 border-accent/20"
               />
             </div>
 
             {/* Bio */}
             <div className="flex-1">
-              <h3 className="text-xl font-semibold mb-1">Andy Sheridan</h3>
-              <p className="text-accent text-sm mb-4">Founder, Wellness Genius</p>
+              <h3 className="text-xl font-semibold mb-1">Andy Hall</h3>
+              <p className="text-accent text-sm mb-4">Founder &amp; CEO, Wellness Genius</p>
               
               <p className="text-muted-foreground mb-4 leading-relaxed">
-                15+ years in wellness tech, from gym floor to boardroom. Former Head of Digital at a 200+ club operator. 
-                Built member engagement systems used by 500,000+ users. Now helping operators cut through AI hype 
-                and implement what actually works.
+                20+ years building wellness, health-tech, and digital platforms across the UK, Europe, and Asia.
+                Chair of the Global Wellness Institute AI Initiative. MBA (Quantic). Sold wellness technology into 42 global
+                fitness brands. Now helping operators cut through AI hype and implement what actually works.
               </p>
 
               <div className="flex flex-wrap gap-4 items-center mb-6">
