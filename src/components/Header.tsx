@@ -114,7 +114,7 @@ const Header = () => {
                       <Link to="/genie" className="w-full">AI Advisor</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/ai-readiness-results" className="w-full">My Results</Link>
+                      <Link to="/hub" className="w-full">My Results</Link>
                     </DropdownMenuItem>
                     {isAdmin && (
                       <>
