@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [latestReportId, setLatestReportId] = useState<string | null>(null);
   const { user, isLoading, signOut } = useAuth();
   const location = useLocation();
 
@@ -29,6 +30,23 @@ const Header = () => {
       } catch { setIsAdmin(false); }
     }
     checkAdminStatus();
+  }, [user]);
+
+  useEffect(() => {
+    async function fetchLatestReport() {
+      if (!user) { setLatestReportId(null); return; }
+      try {
+        const { data } = await supabase
+          .from('ai_readiness_completions')
+          .select('id')
+          .eq('user_id', user.id)
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setLatestReportId(data?.id ?? null);
+      } catch { setLatestReportId(null); }
+    }
+    fetchLatestReport();
   }, [user]);
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
@@ -113,9 +131,11 @@ const Header = () => {
                     <DropdownMenuItem asChild>
                       <Link to="/genie" className="w-full">AI Advisor</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/hub" className="w-full">My Results</Link>
-                    </DropdownMenuItem>
+                    {latestReportId && (
+                      <DropdownMenuItem asChild>
+                        <Link to={`/ai-readiness/report/${latestReportId}`} className="w-full">My Results</Link>
+                      </DropdownMenuItem>
+                    )}
                     {isAdmin && (
                       <>
                         <DropdownMenuSeparator />
