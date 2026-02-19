@@ -252,11 +252,33 @@ serve(async (req) => {
           }
         } catch (e) { console.log("[GENIE] Insights fetch skipped:", e); }
 
-        // Fetch knowledge base
+        // Fetch knowledge base (all three sources: knowledge_base, kb_canon, kb_intel)
         try {
-          const { data: knowledgeEntries } = await supabase.from("knowledge_base").select("title, content, category, tags").eq("is_active", true).order("priority", { ascending: false }).limit(20);
+          knowledgeBaseContext = "";
+          
+          // Layer A: Canon - owned frameworks and IP
+          const { data: canonEntries } = await supabase.from("kb_canon").select("title, content, category, tags").eq("is_active", true).order("priority", { ascending: false }).limit(15);
+          if (canonEntries && canonEntries.length > 0) {
+            knowledgeBaseContext += "\n\n## WELLNESS GENIUS CANON (Core Frameworks & IP)\n";
+            canonEntries.forEach((entry: any) => { knowledgeBaseContext += `\n### ${entry.title} [${entry.category}]\n${entry.content}\n`; });
+          }
+
+          // Layer B: Intel - curated industry intelligence
+          const { data: intelEntries } = await supabase.from("kb_intel").select("title, summary, category, source_name, source_url, tags").eq("is_active", true).eq("is_outdated", false).order("published_date", { ascending: false }).limit(10);
+          if (intelEntries && intelEntries.length > 0) {
+            knowledgeBaseContext += "\n\n## INDUSTRY INTELLIGENCE (Curated Sources)\n";
+            intelEntries.forEach((entry: any) => {
+              knowledgeBaseContext += `\n### ${entry.title} [${entry.category}]`;
+              if (entry.source_name) knowledgeBaseContext += ` — Source: ${entry.source_name}`;
+              knowledgeBaseContext += `\n${entry.summary}\n`;
+              if (entry.source_url) knowledgeBaseContext += `Reference: ${entry.source_url}\n`;
+            });
+          }
+
+          // Layer C: General knowledge base
+          const { data: knowledgeEntries } = await supabase.from("knowledge_base").select("title, content, category, tags").eq("is_active", true).order("priority", { ascending: false }).limit(10);
           if (knowledgeEntries && knowledgeEntries.length > 0) {
-            knowledgeBaseContext = "\n\n## KNOWLEDGE BASE\n";
+            knowledgeBaseContext += "\n\n## ADDITIONAL KNOWLEDGE BASE\n";
             knowledgeEntries.forEach((entry: any) => { knowledgeBaseContext += `\n### ${entry.title} [${entry.category}]\n${entry.content}\n`; });
           }
         } catch (e) { console.log("[GENIE] Knowledge base fetch skipped:", e); }
