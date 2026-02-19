@@ -476,9 +476,9 @@ async function extractAndSaveInsights(
 ): Promise<void> {
   try {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
     
-    if (!LOVABLE_API_KEY) return;
+    if (!apiKey) return;
 
     // Get the last few user messages for context
     const recentUserMessages = messages
@@ -506,18 +506,17 @@ Return JSON array ONLY. Each item: {"type": "observation|preference|commitment|w
 If nothing worth saving, return empty array [].
 CRITICAL: Only extract NEW, SPECIFIC information. Skip generic or vague statements.`;
 
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!ANTHROPIC_API_KEY) return;
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) return;
 
-    const extractResponse = await fetch("https://api.anthropic.com/v1/messages", {
+    const extractResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-3-5-haiku-20241022",
+        model: "google/gemini-2.5-flash-lite",
         messages: [{ role: "user", content: extractionPrompt }],
         max_tokens: 1000,
       }),
@@ -529,7 +528,7 @@ CRITICAL: Only extract NEW, SPECIFIC information. Skip generic or vague statemen
     }
 
     const extractData = await extractResponse.json();
-    const rawContent = extractData.content?.[0]?.text || "[]";
+    const rawContent = extractData.choices?.[0]?.message?.content || "[]";
     
     // Parse JSON from response (handle markdown code blocks)
     let insights: any[] = [];
@@ -1548,10 +1547,10 @@ serve(async (req) => {
       }
     }
 
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
-    if (!ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY is not configured");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     // Initialize session signals with defaults
@@ -1786,37 +1785,38 @@ serve(async (req) => {
 
     console.log("[GENIE] Mode:", mode, "Score:", trustMetadata.genieScore.overall, "Sessions:", sessionSignals.totalSessions);
 
-    // Use Claude Opus for high-value strategic modes, Sonnet for standard queries
+    // Use Pro for high-value strategic modes, Flash for standard queries
     const strategicModes = ["decision_support", "board_mode", "commercial_lens", "diagnostic", "build_mode", "competitor_scan", "market_research"];
-    const useOpusModel = strategicModes.includes(mode) && !isTrialMode;
-    const selectedModel = useOpusModel ? "claude-opus-4-20250514" : "claude-sonnet-4-20250514";
+    const useProModel = strategicModes.includes(mode) && !isTrialMode;
+    const selectedModel = useProModel ? "google/gemini-2.5-pro" : "google/gemini-3-flash-preview";
 
     // Competitor scan needs more tokens for full 8-section output
     const getMaxTokens = (m: string): number => {
-      if (m === "competitor_scan") return 8000; // Full competitive analysis
+      if (m === "competitor_scan") return 8000;
       if (strategicModes.includes(m)) return 4000;
       return 1500;
     };
 
     console.log("[GENIE] Using model:", selectedModel, "for mode:", mode, "max_tokens:", getMaxTokens(mode));
 
-    // Convert messages to Anthropic format (system prompt separate)
-    const anthropicMessages = messages.map((m: { role: string; content: string }) => ({
-      role: m.role === "assistant" ? "assistant" : "user",
-      content: m.content,
-    }));
+    // Convert messages to OpenAI format (system prompt as first message)
+    const gatewayMessages = [
+      { role: "system", content: fullSystemPrompt },
+      ...messages.map((m: { role: string; content: string }) => ({
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: m.content,
+      })),
+    ];
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: selectedModel,
-        system: fullSystemPrompt,
-        messages: anthropicMessages,
+        messages: gatewayMessages,
         max_tokens: getMaxTokens(mode),
         stream: true,
       }),
@@ -1862,16 +1862,18 @@ serve(async (req) => {
           const { done, value } = await reader.read();
           if (done) break;
           
-          // Capture text for insight extraction (Anthropic SSE format)
+          // Capture text for insight extraction (OpenAI SSE format)
           const chunk = new TextDecoder().decode(value);
           const lines = chunk.split('\n');
           for (const line of lines) {
             if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6).trim();
+              if (jsonStr === '[DONE]') continue;
               try {
-                const data = JSON.parse(line.slice(6));
-                // Anthropic streaming format: content_block_delta events
-                if (data.type === 'content_block_delta' && data.delta?.text) {
-                  fullResponseText += data.delta.text;
+                const data = JSON.parse(jsonStr);
+                const content = data.choices?.[0]?.delta?.content;
+                if (content) {
+                  fullResponseText += content;
                 }
               } catch {}
             }
