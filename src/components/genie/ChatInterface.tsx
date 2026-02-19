@@ -133,7 +133,8 @@ export default function ChatInterface({
 
   const streamChat = useCallback(async (userMessages: Message[], mode: string, webContext?: string) => {
     const functionName = mode === "codex_assistant" ? "codex-assistant" : "genie-chat";
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://hiayegpvrsxhhemyxghz.supabase.co";
+    const CHAT_URL = `${supabaseUrl}/functions/v1/${functionName}`;
     
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData?.session?.access_token) {
@@ -247,8 +248,9 @@ export default function ChatInterface({
         searchQuery = `${query} market trends funding news 2024 2025`.trim();
       }
 
+      const webSearchUrl = import.meta.env.VITE_SUPABASE_URL || "https://hiayegpvrsxhhemyxghz.supabase.co";
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/genie-web-search`,
+        `${webSearchUrl}/functions/v1/genie-web-search`,
         {
           method: "POST",
           headers: {
