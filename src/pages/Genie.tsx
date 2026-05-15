@@ -20,6 +20,7 @@ import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { useTrustSettings } from "@/hooks/useTrustSettings";
 import { TrustMetadata } from "@/components/genie/GenieMessage";
 import { supabase } from "@/integrations/supabase/client";
+import { usePoints } from "@/hooks/usePoints";
 import {
   Sheet,
   SheetContent,
@@ -65,6 +66,7 @@ const Genie = () => {
   const { documents, uploading: uploadingDocument, uploadDocument, deleteDocument, updateDocumentCategory, updateDocumentDescription } = useCoachDocuments();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession } = useGenieSessions();
   const { displayMode: trustDisplayMode } = useTrustSettings();
+  const { awardGenieSession } = usePoints();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -216,6 +218,7 @@ const Genie = () => {
             isFreeTrial={credits.isFreeTrial}
             daysRemaining={credits.isFreeTrial ? Math.max(0, Math.ceil((new Date(credits.freeTrialExpiresAt || "").getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : undefined}
             onSaveToKB={(note) => addNote(note, "general")}
+            onSessionComplete={awardGenieSession}
           />
         )}
       </main>

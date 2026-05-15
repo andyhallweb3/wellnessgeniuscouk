@@ -46,6 +46,7 @@ import {
 import PromptLibrary from "@/components/hub/PromptLibrary";
 import SavedInsights from "@/components/hub/SavedInsights";
 import KnowledgeBase from "@/components/hub/KnowledgeBase";
+import PointsCard from "@/components/hub/PointsCard";
 import OnboardingBanner from "@/components/hub/OnboardingBanner";
 import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import DownloadHistory from "@/components/hub/DownloadHistory";
@@ -505,43 +506,62 @@ const MemberHub = () => {
                     {/* Left: Quick Actions */}
                     <div className="lg:col-span-2 space-y-6">
                       
-                      {/* Quick Actions */}
+                      {/* Growth consultant quick actions */}
                       <div className="rounded-xl border border-border bg-card p-6">
-                        <h3 className="font-heading mb-4">Quick Actions</h3>
+                        <h3 className="font-heading mb-1">Grow your business</h3>
+                        <p className="text-xs text-muted-foreground mb-4">Ask Genie to guide you through each area</p>
                         <div className="grid sm:grid-cols-2 gap-3">
                           <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                            <Link to="/genie?mode=retention_audit">
+                              <Flame size={16} className="text-red-500 mr-2" />
+                              <div className="text-left">
+                                <p className="font-medium">Retention Audit</p>
+                                <p className="text-xs text-muted-foreground">Find and fix your churn</p>
+                              </div>
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                            <Link to="/genie?mode=revenue_sprint">
+                              <BarChart3 size={16} className="text-green-500 mr-2" />
+                              <div className="text-left">
+                                <p className="font-medium">Revenue Sprint</p>
+                                <p className="text-xs text-muted-foreground">30-day revenue focus</p>
+                              </div>
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                            <Link to="/genie?mode=ltv_builder">
+                              <Zap size={16} className="text-purple-500 mr-2" />
+                              <div className="text-left">
+                                <p className="font-medium">LTV Builder</p>
+                                <p className="text-xs text-muted-foreground">Increase member lifetime value</p>
+                              </div>
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                            <Link to="/genie?mode=engagement_audit">
+                              <MessageCircle size={16} className="text-blue-500 mr-2" />
+                              <div className="text-left">
+                                <p className="font-medium">Engagement Audit</p>
+                                <p className="text-xs text-muted-foreground">Turn ghost members active</p>
+                              </div>
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                            <Link to="/genie?mode=decision_support">
+                              <Brain size={16} className="text-accent mr-2" />
+                              <div className="text-left">
+                                <p className="font-medium">Decision Support</p>
+                                <p className="text-xs text-muted-foreground">Stress-test any decision</p>
+                              </div>
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
                             <Link to="/ai-readiness">
-                              <Sparkles size={16} className="text-accent mr-2" />
+                              <Sparkles size={16} className="text-amber-500 mr-2" />
                               <div className="text-left">
-                                <p className="font-medium">AI Readiness Assessment</p>
-                                <p className="text-xs text-muted-foreground">Check your AI maturity</p>
-                              </div>
-                            </Link>
-                          </Button>
-                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                            <Link to="/hub/downloads">
-                              <Library size={16} className="text-accent mr-2" />
-                              <div className="text-left">
-                                <p className="font-medium">Downloads Library</p>
-                                <p className="text-xs text-muted-foreground">Access all your resources</p>
-                              </div>
-                            </Link>
-                          </Button>
-                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                            <Link to="/insights">
-                              <BookOpen size={16} className="text-accent mr-2" />
-                              <div className="text-left">
-                                <p className="font-medium">Latest Insights</p>
-                                <p className="text-xs text-muted-foreground">Read industry news</p>
-                              </div>
-                            </Link>
-                          </Button>
-                          <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                            <Link to="/hub/coach">
-                              <MessageCircle size={16} className="text-accent mr-2" />
-                              <div className="text-left">
-                                <p className="font-medium">AI Advisor</p>
-                                <p className="text-xs text-muted-foreground">Get expert AI guidance</p>
+                                <p className="font-medium">AI Readiness Check</p>
+                                <p className="text-xs text-muted-foreground">See where you stand</p>
                               </div>
                             </Link>
                           </Button>
@@ -549,9 +569,12 @@ const MemberHub = () => {
                       </div>
                     </div>
 
-                    {/* Right: Account + Telegram + Help */}
+                    {/* Right: Points + Telegram + Account */}
                     <div className="space-y-6">
-                      {/* Telegram Bot - Prominent Position */}
+                      {/* Points / Gamification */}
+                      <PointsCard />
+
+                      {/* Telegram Bot */}
                       <TelegramLinkCard />
 
                       {/* Account Card */}

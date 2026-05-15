@@ -75,6 +75,7 @@ interface ChatInterfaceProps {
   isFreeTrial?: boolean;
   enrichedMemoryContext?: string;
   onSaveToKB?: (note: string) => Promise<boolean>;
+  onSessionComplete?: () => void;
 }
 
 // Individual message bubble — extracted so Save-to-KB state is per-message
@@ -178,6 +179,7 @@ export default function ChatInterface({
   isFreeTrial,
   enrichedMemoryContext,
   onSaveToKB,
+  onSessionComplete,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -397,9 +399,13 @@ export default function ChatInterface({
       }
 
       await streamChat(newMessages, selectedMode, webContext);
-      
+
       if (onSaveSession) {
         await onSaveSession(selectedMode, newMessages);
+      }
+
+      if (onSessionComplete) {
+        onSessionComplete();
       }
     } catch (error) {
       console.error("Chat error:", error);

@@ -212,6 +212,68 @@ export const ADVISOR_MODES: AdvisorMode[] = [
     ],
   },
 
+  // Growth Tracks — the four business pillars
+  {
+    id: "retention_audit",
+    name: "Retention Audit",
+    icon: "Flame",
+    tagline: "Find and fix your churn",
+    description: "Deep-dive diagnosis of why members leave, what to stop, and the fastest fixes.",
+    creditCost: CREDIT_COST_PER_MESSAGE,
+    category: "strategic",
+    outputTemplate: ["Retention diagnostic", "Top churn causes", "30-day sprint", "LTV impact"],
+    examples: [
+      "Why are my members leaving?",
+      "Help me reduce churn this month",
+      "Build a 30-day retention plan",
+    ],
+  },
+  {
+    id: "ltv_builder",
+    name: "LTV Builder",
+    icon: "TrendingUp",
+    tagline: "Increase member lifetime value",
+    description: "Upsell architecture, premium tiers, and retention tactics that grow revenue per member.",
+    creditCost: CREDIT_COST_PER_MESSAGE,
+    category: "strategic",
+    outputTemplate: ["LTV estimate", "Three levers", "Upsell design", "60-day plan"],
+    examples: [
+      "How do I increase what members spend with us?",
+      "Design a premium membership tier",
+      "Build a member upsell programme",
+    ],
+  },
+  {
+    id: "revenue_sprint",
+    name: "Revenue Sprint",
+    icon: "BarChart3",
+    tagline: "Grow revenue in 30 days",
+    description: "Fast, targeted actions to increase income this month. Offers, pricing, and quick wins.",
+    creditCost: CREDIT_COST_PER_MESSAGE,
+    category: "strategic",
+    outputTemplate: ["Revenue baseline", "Top 3 actions", "Offer design", "30-day tracker"],
+    examples: [
+      "What's the fastest way to increase revenue this month?",
+      "Design an offer I can run this week",
+      "Where am I leaving money on the table?",
+    ],
+  },
+  {
+    id: "engagement_audit",
+    name: "Engagement Audit",
+    icon: "Users",
+    tagline: "Turn ghost members active",
+    description: "Diagnosis of disengagement, re-activation playbooks, and building habit loops.",
+    creditCost: CREDIT_COST_PER_MESSAGE,
+    category: "strategic",
+    outputTemplate: ["Engagement diagnosis", "Re-activation plan", "Habit loop design", "Gamification fit"],
+    examples: [
+      "Why aren't members using the facility?",
+      "How do I re-engage inactive members?",
+      "Build an engagement programme for my sector",
+    ],
+  },
+
   // Content Creation
   {
     id: "content_writer",
@@ -306,6 +368,7 @@ export const FREE_TIER_MODES = [
   "quick_question", "diagnose", "plan", "compare", "operate",
   "daily_briefing", "decision_support", "diagnostic", "content_writer",
   "weekly_review", "build_mode", "market_research",
+  "retention_audit", "ltv_builder", "revenue_sprint", "engagement_audit",
 ];
 
 // Get system prompt with mode-specific output template
