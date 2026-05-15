@@ -70,7 +70,7 @@ serve(async (req) => {
 
       try {
         await resend.emails.send({
-          from: "Andy at Wellness Genius <andy@wellnessgenius.co.uk>",
+          from: "Andy at Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
           to: user.email,
           subject: `${firstName}, your Wellness Genius insights are waiting`,
           html: `
@@ -85,7 +85,7 @@ serve(async (req) => {
               <p style="font-size:15px;line-height:1.7;color:#2d4a44;">
                 What's the one business question you'd most like answered today?
               </p>
-              <a href="https://wellnessgenius.co.uk/hub/ai-coach" style="display:inline-block;background:#16d1a3;color:#06211a;text-decoration:none;font-weight:700;font-size:15px;padding:14px 24px;border-radius:8px;margin-top:8px;">
+              <a href="https://wellnessgenius.co.uk/genie" style="display:inline-block;background:#16d1a3;color:#06211a;text-decoration:none;font-weight:700;font-size:15px;padding:14px 24px;border-radius:8px;margin-top:8px;">
                 Ask Wellness Genie →
               </a>
               <p style="font-size:13px;color:#6b9a8f;margin-top:32px;">

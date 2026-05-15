@@ -27,12 +27,11 @@ serve(async (req) => {
     const businessContext = workspace?.business_name ? ` at ${workspace.business_name}` : "";
 
     await resend.emails.send({
-      from: "Andy at Wellness Genius <andy@wellnessgenius.co.uk>",
+      from: "Andy at Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
       to: email,
       subject: "Welcome to Wellness Genius — let's get you started",
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#0f1f1b;">
-          <img src="https://wellnessgenius.co.uk/og-image.png" alt="Wellness Genius" style="width:100%;border-radius:8px;margin-bottom:24px;" />
           <h1 style="font-size:24px;font-weight:700;margin-bottom:8px;">Welcome, ${firstName}.</h1>
           <p style="font-size:16px;line-height:1.6;color:#2d4a44;">
             You've just got access to the AI business intelligence platform built specifically for fitness and wellness operators${businessContext}.

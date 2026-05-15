@@ -21,7 +21,7 @@ function emailForDay(day: number, firstName: string, businessName: string | null
         <p style="font-size:15px;line-height:1.7;color:#2d4a44;">
           Most operators find at least one immediate quick win they hadn't spotted.
         </p>
-        <a href="https://wellnessgenius.co.uk/hub/ai-readiness" style="display:inline-block;background:#16d1a3;color:#06211a;text-decoration:none;font-weight:700;font-size:15px;padding:14px 24px;border-radius:8px;margin-top:8px;">
+        <a href="https://wellnessgenius.co.uk/ai-readiness" style="display:inline-block;background:#16d1a3;color:#06211a;text-decoration:none;font-weight:700;font-size:15px;padding:14px 24px;border-radius:8px;margin-top:8px;">
           Start your assessment →
         </a>
         <p style="font-size:13px;color:#6b9a8f;margin-top:32px;">Andy, Wellness Genius</p>
@@ -39,7 +39,7 @@ function emailForDay(day: number, firstName: string, businessName: string | null
         <p style="font-size:15px;line-height:1.7;color:#2d4a44;">
           Try asking it: <em>"What's the most effective way to reduce member churn in the next 90 days?"</em>
         </p>
-        <a href="https://wellnessgenius.co.uk/hub/ai-coach" style="display:inline-block;background:#16d1a3;color:#06211a;text-decoration:none;font-weight:700;font-size:15px;padding:14px 24px;border-radius:8px;margin-top:8px;">
+        <a href="https://wellnessgenius.co.uk/genie" style="display:inline-block;background:#16d1a3;color:#06211a;text-decoration:none;font-weight:700;font-size:15px;padding:14px 24px;border-radius:8px;margin-top:8px;">
           Ask Wellness Genie →
         </a>
         <p style="font-size:13px;color:#6b9a8f;margin-top:32px;">Andy, Wellness Genius</p>
@@ -124,7 +124,7 @@ serve(async (req) => {
         const { subject, html } = emailForDay(day, firstName, workspace?.business_name ?? null);
 
         try {
-          await resend.emails.send({ from: "Andy at Wellness Genius <andy@wellnessgenius.co.uk>", to: profile.email, subject, html });
+          await resend.emails.send({ from: "Andy at Wellness Genius <newsletter@news.wellnessgenius.co.uk>", to: profile.email, subject, html });
           await supabase.from("email_automation_log").insert({ user_id: profile.id, email_type: emailType });
           sent.push(`${profile.email} (day ${day})`);
         } catch (e) {
