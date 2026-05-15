@@ -38,6 +38,16 @@ const resetSchema = z.object({
 
 type ResetFormData = z.infer<typeof resetSchema>;
 
+const updatePasswordSchema = z.object({
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const redirectUrl = searchParams.get("redirect") || "/hub";
@@ -45,7 +55,7 @@ const Auth = () => {
   const isFromAssessment = redirectUrl.includes("/ai-readiness/results/");
   const isFromDownload = searchParams.get("from") === "download";
   
-  const [mode, setMode] = useState<"login" | "signup" | "reset">(initialMode);
+  const [mode, setMode] = useState<"login" | "signup" | "reset" | "update-password">(initialMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const { user, signIn, signUp } = useAuth();
@@ -90,6 +100,11 @@ const Auth = () => {
     defaultValues: { email: prefillEmail },
   });
 
+  const updatePasswordForm = useForm<UpdatePasswordFormData>({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: { password: "", confirmPassword: "" },
+  });
+
   const handleLogin = async (data: LoginFormData) => {
     setIsSubmitting(true);
     const { error } = await signIn(data.email, data.password);
@@ -124,6 +139,27 @@ const Auth = () => {
     setIsSubmitting(false);
   };
 
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setMode("update-password");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleUpdatePassword = async (data: UpdatePasswordFormData) => {
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.updateUser({ password: data.password });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Password updated. You're now signed in.");
+      navigate("/hub");
+    }
+    setIsSubmitting(false);
+  };
+
   const handlePasswordReset = async (data: ResetFormData) => {
     setIsSubmitting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
@@ -142,7 +178,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{mode === "login" ? "Sign In" : mode === "signup" ? "Create Account" : "Reset Password"} | Wellness Genius</title>
+        <title>{mode === "login" ? "Sign In" : mode === "signup" ? "Create Account" : mode === "update-password" ? "Set New Password" : "Reset Password"} | Wellness Genius</title>
         <meta name="description" content="Access your Wellness Genius account and downloads hub." />
       </Helmet>
       
@@ -160,24 +196,26 @@ const Auth = () => {
                 </div>
               )}
               <h1 className="text-3xl font-heading mb-2">
-                {mode === "login" ? "Welcome Back" : mode === "signup" ? "Create Your Free Account" : "Reset Password"}
+                {mode === "login" ? "Welcome Back" : mode === "signup" ? "Create Your Free Account" : mode === "update-password" ? "Set New Password" : "Reset Password"}
               </h1>
               <p className="text-muted-foreground">
-                {mode === "login" 
+                {mode === "login"
                   ? "Sign in to access your downloads and saved outputs."
                   : mode === "signup"
                   ? isFromDownload
                     ? "Create an account to access your downloads anytime and get personalised AI insights."
-                    : isFromAssessment 
+                    : isFromAssessment
                     ? "Save your assessment and unlock 10 free AI Advisor sessions."
                     : "Join to access your purchased products and save your progress."
+                  : mode === "update-password"
+                  ? "Choose a new password for your account."
                   : "Enter your email and we'll send you a reset link."
                 }
               </p>
             </div>
 
-            {/* Toggle - hide on reset mode */}
-            {mode !== "reset" && (
+            {/* Toggle - hide on reset/update-password mode */}
+            {mode !== "reset" && mode !== "update-password" && (
               <div className="flex rounded-lg bg-secondary/50 p-1 mb-8">
                 <button
                   onClick={() => setMode("login")}
@@ -417,8 +455,61 @@ const Auth = () => {
               </>
             )}
 
+            {/* Update Password Form */}
+            {mode === "update-password" && (
+              <form onSubmit={updatePasswordForm.handleSubmit(handleUpdatePassword)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="new-password"
+                      type="password"
+                      placeholder="••••••••"
+                      className="pl-10"
+                      {...updatePasswordForm.register("password")}
+                    />
+                  </div>
+                  {updatePasswordForm.formState.errors.password && (
+                    <p className="text-sm text-destructive">{updatePasswordForm.formState.errors.password.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="new-password-confirm">Confirm New Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="new-password-confirm"
+                      type="password"
+                      placeholder="••••••••"
+                      className="pl-10"
+                      {...updatePasswordForm.register("confirmPassword")}
+                    />
+                  </div>
+                  {updatePasswordForm.formState.errors.confirmPassword && (
+                    <p className="text-sm text-destructive">{updatePasswordForm.formState.errors.confirmPassword.message}</p>
+                  )}
+                </div>
+
+                <Button type="submit" variant="accent" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      Set New Password
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            )}
+
             {/* Footer text */}
-            {mode !== "reset" && (
+            {mode !== "reset" && mode !== "update-password" && (
               <p className="text-center text-sm text-muted-foreground mt-6">
                 By continuing, you agree to our{" "}
                 <a href="/terms" className="text-accent hover:underline">Terms of Service</a>
