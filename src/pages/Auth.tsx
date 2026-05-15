@@ -73,12 +73,12 @@ const Auth = () => {
     }
   }, []);
 
-  // Redirect if already logged in
+  // Redirect if already logged in — but not during password recovery
   useEffect(() => {
-    if (user) {
+    if (user && mode !== "update-password") {
       navigate(redirectUrl);
     }
-  }, [user, navigate, redirectUrl]);
+  }, [user, navigate, redirectUrl, mode]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
