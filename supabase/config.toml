@@ -42,8 +42,8 @@ api_url = "http://127.0.0.1"
 
 [auth]
 enabled = true
-site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+site_url = "https://wellnessgenius.co.uk"
+additional_redirect_urls = ["https://wellnessgenius.co.uk/**", "https://www.wellnessgenius.co.uk/**", "https://*.vercel.app/**", "http://127.0.0.1:3000", "http://localhost:8080"]
 jwt_expiry = 3600
 enable_signup = true
 enable_refresh_token_rotation = true
