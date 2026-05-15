@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Sparkles, Brain, MessageSquare, Mic, Users, Mail, Linkedin } from "lucide-react";
+import { ArrowRight, Sparkles, Brain, Users, Mail, Linkedin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS } from "@/components/advisor/AdvisorModes";
+import { FREE_TRIAL_CREDITS } from "@/components/advisor/AdvisorModes";
 import nuformaLogo from "@/assets/logos/nuforma.png";
 import equesoulLogo from "@/assets/logos/equesoul.jpeg";
 import leisureExpertsLogo from "@/assets/logos/the-leisure-experts.jpeg";
@@ -27,21 +27,21 @@ const HeroNew = () => {
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8 animate-fade-up">
               <Brain size={16} />
-              AI-Powered Business Intelligence
+              AI Business Advisor for Wellness Operators
             </div>
 
-            {/* Headline - AEO optimised */}
+            {/* Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl leading-[1.08] mb-6 animate-fade-up tracking-tight font-bold">
-              AI business intelligence for{" "}
+              The AI advisor that{" "}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                wellness operators
+                understands your business.
               </span>
             </h1>
 
-            {/* Subheadline - Entity & query optimised */}
+            {/* Subheadline */}
             <p className="text-lg lg:text-xl text-muted-foreground mb-8 animate-fade-up animation-delay-100 leading-relaxed">
-              Join 16,000+ industry leaders using data-driven insights to increase member retention, 
-              optimise partnerships, and scale profitably.
+              Get strategic answers on retention, pricing, and growth in 60 seconds —
+              tailored to your wellness business, not generic advice.
             </p>
 
             {/* Trust metrics strip */}
@@ -63,47 +63,27 @@ const HeroNew = () => {
               </div>
             </div>
 
-            {/* Triple CTA - Intent matching */}
-            <div className="flex flex-col sm:flex-row items-start gap-3 mb-6 animate-fade-up animation-delay-200">
+            {/* Single primary CTA */}
+            <div className="flex flex-col sm:flex-row items-start gap-3 mb-4 animate-fade-up animation-delay-200">
               <Button variant="accent" size="xl" asChild className="shadow-glow text-base px-8 w-full sm:w-auto">
-                <Link to="/ai-readiness">
-                  Try Free AI Assessment
+                <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
+                  <Sparkles size={18} />
+                  Start Free — {FREE_TRIAL_CREDITS} AI Sessions
                   <ArrowRight size={18} />
                 </Link>
               </Button>
-              <Button variant="outline" size="xl" asChild className="w-full sm:w-auto">
-                <a href="#contact">
-                  Book Strategy Call
-                </a>
-              </Button>
             </div>
 
-            <div className="animate-fade-up animation-delay-250">
-              <Link 
-                to="/insights" 
-                className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+            <div className="flex items-center gap-4 animate-fade-up animation-delay-250">
+              <span className="text-xs text-muted-foreground">No card required</span>
+              <span className="text-muted-foreground/30">·</span>
+              <Link
+                to="/ai-readiness"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
               >
-                Read success stories
-                <ArrowRight size={14} />
+                Take the free AI assessment instead
+                <ArrowRight size={12} />
               </Link>
-            </div>
-
-            {/* Telegram + Free trial note */}
-            <div className="flex items-center gap-4 mt-6 animate-fade-up animation-delay-350">
-              <a 
-                href="https://t.me/Wellnessgenius_bot" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0088cc]/10 border border-[#0088cc]/30 text-[#0088cc] hover:bg-[#0088cc]/20 transition-colors text-sm font-medium"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                </svg>
-                Chat on Telegram
-              </a>
-              <span className="text-xs text-muted-foreground">
-                {FREE_TRIAL_CREDITS} free AI credits • No card required
-              </span>
             </div>
           </div>
 

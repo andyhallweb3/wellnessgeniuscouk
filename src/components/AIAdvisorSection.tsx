@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Brain, Sparkles, CheckCircle2, Play } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { FREE_TRIAL_CREDITS, FREE_TRIAL_DAYS } from "@/components/advisor/AdvisorModes";
 
 const AIAdvisorSection = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const benefits = [
     "Answers in 60 seconds, not 6 weeks",
@@ -17,13 +18,18 @@ const AIAdvisorSection = () => {
   ];
 
   const questions = [
-    "Why is my retention dropping?",
-    "Should I raise membership prices?",
-    "What should I focus on this quarter?",
-    "How do I reduce staff turnover?",
-    "Is my marketing spend working?",
-    "When should I expand my space?",
+    { text: "Why is my retention dropping?", mode: "diagnose" },
+    { text: "Should I raise membership prices?", mode: "plan" },
+    { text: "What should I focus on this quarter?", mode: "quick" },
+    { text: "How do I reduce staff turnover?", mode: "diagnose" },
+    { text: "Is my marketing spend working?", mode: "optimize" },
+    { text: "When should I expand my space?", mode: "plan" },
   ];
+
+  const handleQuestionClick = (mode: string) => {
+    const dest = user ? `/genie?mode=${mode}` : `/auth?redirect=/genie?mode=${mode}`;
+    navigate(dest);
+  };
 
   return (
     <section className="section-padding bg-gradient-to-b from-background via-card to-background overflow-hidden">
@@ -54,18 +60,19 @@ const AIAdvisorSection = () => {
               </p>
               <div className="space-y-3">
                 {questions.map((question, i) => (
-                  <div
+                  <button
                     key={i}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-background/80 border border-border hover:border-primary/50 transition-all cursor-pointer group"
+                    onClick={() => handleQuestionClick(question.mode)}
+                    className="w-full flex items-center gap-4 p-4 rounded-xl bg-background/80 border border-border hover:border-primary/50 hover:bg-background transition-all cursor-pointer group text-left"
                   >
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <span className="text-sm font-medium text-primary">{i + 1}</span>
                     </div>
                     <p className="text-sm lg:text-base font-medium group-hover:text-primary transition-colors">
-                      "{question}"
+                      "{question.text}"
                     </p>
-                    <ArrowRight size={16} className="ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
+                    <ArrowRight size={16} className="ml-auto text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                  </button>
                 ))}
               </div>
               <div className="mt-6 pt-6 border-t border-border">

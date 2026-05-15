@@ -10,7 +10,32 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
 User-agent: *
 Allow: /
 
-Sitemap: https://wellnessgenius.co/sitemap.xml
+Disallow: /admin
+Disallow: /founder
+Disallow: /news/admin
+Disallow: /emails/admin
+Disallow: /downloads/admin
+Disallow: /coach/admin
+Disallow: /knowledge/admin
+Disallow: /feedback/admin
+Disallow: /coupons/admin
+Disallow: /admin/kb-canon
+Disallow: /admin/kb-intel
+Disallow: /admin/docs
+
+Sitemap: https://wellnessgenius.co.uk/sitemap.xml

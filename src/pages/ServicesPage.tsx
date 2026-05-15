@@ -11,8 +11,25 @@ const ServicesPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Consulting Services | Wellness Genius</title>
-        <meta name="description" content="AI consulting and custom builds for wellness businesses. From readiness sprints to full AI agent deployments." />
+        <title>AI Consulting for Fitness & Wellness Businesses | Wellness Genius</title>
+        <meta name="description" content="Hands-on AI consulting, readiness sprints, and custom AI agent builds for gym operators, spa groups, and wellness brands. Delivered by the Chair of the GWI AI Initiative." />
+        <link rel="canonical" href="https://wellnessgenius.co.uk/services" />
+        <meta property="og:title" content="AI Consulting for Fitness & Wellness Businesses | Wellness Genius" />
+        <meta property="og:description" content="From AI strategy to custom agent builds. Consulting for wellness operators who want to move fast." />
+        <meta property="og:url" content="https://wellnessgenius.co.uk/services" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://wellnessgenius.co.uk/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="AI Consulting for Fitness & Wellness Businesses" />
+        <meta name="twitter:description" content="Strategy to deployment. Consulting for wellness operators who want to move fast." />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://wellnessgenius.co.uk/" },
+            { "@type": "ListItem", "position": 2, "name": "Services", "item": "https://wellnessgenius.co.uk/services" }
+          ]
+        })}</script>
       </Helmet>
       
       <Header />

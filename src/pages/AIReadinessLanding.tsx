@@ -47,11 +47,64 @@ const AIReadinessLanding = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>AI Readiness Score for Wellness Businesses | Wellness Genius</title>
-        <meta 
-          name="description" 
-          content="A commercial diagnostic that shows what to fix, what it's worth, and what to do next. Get your AI readiness score in 5-7 minutes." 
-        />
+        <title>AI Readiness Assessment for Fitness & Wellness Businesses | Wellness Genius</title>
+        <meta name="description" content="Find out how AI-ready your fitness or wellness business is. Free 5-minute diagnostic covering strategy, data, people, process, and risk. Get a score out of 100 with a prioritised action plan." />
+        <meta name="keywords" content="AI readiness assessment, gym AI readiness, fitness business AI, wellness technology assessment, gym digital transformation" />
+        <link rel="canonical" href="https://wellnessgenius.co.uk/ai-readiness" />
+        <meta property="og:title" content="AI Readiness Assessment for Fitness & Wellness Businesses | Wellness Genius" />
+        <meta property="og:description" content="Free 5-minute diagnostic. Find out your AI readiness score and get a prioritised action plan for your wellness business." />
+        <meta property="og:url" content="https://wellnessgenius.co.uk/ai-readiness" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://wellnessgenius.co.uk/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="AI Readiness Assessment for Fitness & Wellness Businesses" />
+        <meta name="twitter:description" content="Free 5-minute diagnostic. Score out of 100 with a prioritised action plan." />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What does the AI Readiness Assessment measure?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Wellness Genius AI Readiness Assessment scores your fitness or wellness business across five pillars: Leadership & AI Strategy, Data Infrastructure, People & Culture, Processes & Operations, and Risk & Governance. Each pillar is scored independently and combined into an overall score out of 100, with a maturity band from Foundational to Leading."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is the AI Readiness Assessment free?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. The AI Readiness Assessment is free to complete and takes 5-7 minutes. It produces an overall score out of 100, a maturity band, and a breakdown by pillar. A full diagnostic report with revenue upside estimates, top 3 blockers, and a 90-day action plan is available as a paid upgrade."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How long does the AI Readiness Assessment take?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The free AI Readiness Assessment takes approximately 5-7 minutes to complete. It consists of 10 questions covering your business's current approach to AI strategy, data, people, processes, and risk management."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Who should take the AI Readiness Assessment?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The AI Readiness Assessment is designed for gym operators, fitness studio founders, spa managers, wellness app leaders, hospitality wellness directors, and corporate wellbeing providers. It is most useful for operators who want to understand where to start with AI, or who want to benchmark their progress against industry standards."
+              }
+            }
+          ]
+        })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://wellnessgenius.co.uk/" },
+            { "@type": "ListItem", "position": 2, "name": "AI Readiness Assessment", "item": "https://wellnessgenius.co.uk/ai-readiness" }
+          ]
+        })}</script>
       </Helmet>
       
       <Header />

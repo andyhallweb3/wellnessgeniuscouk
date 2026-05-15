@@ -46,6 +46,26 @@
       gtag('config', 'G-80WVTW5VFM');
     </script>
     
+    <!-- JSON-LD: WebSite (enables sitelinks searchbox) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Wellness Genius",
+      "url": "https://wellnessgenius.co.uk",
+      "description": "AI-powered business intelligence for fitness and wellness operators. Strategic advice on retention, pricing, and growth — tailored to your business.",
+      "inLanguage": "en-GB",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://wellnessgenius.co.uk/insights?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
     <!-- JSON-LD: Organization -->
     <script type="application/ld+json">
     {
@@ -53,22 +73,51 @@
       "@type": "Organization",
       "name": "Wellness Genius",
       "alternateName": "Wellness Genius Ltd",
-      "description": "AI-powered business intelligence for fitness, wellness, and hospitality operators. Helping 16,000+ industry leaders scale with data-driven insights.",
+      "description": "AI-powered business intelligence for fitness, wellness, and hospitality operators. Helping 16,000+ industry leaders increase retention, optimise partnerships, and scale profitably.",
       "url": "https://wellnessgenius.co.uk",
-      "logo": "https://wellnessgenius.co.uk/favicon.png",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://wellnessgenius.co.uk/favicon.png",
+        "width": 512,
+        "height": 512
+      },
       "image": "https://wellnessgenius.co.uk/og-image.png",
       "foundingDate": "2020",
       "founder": {
         "@type": "Person",
         "name": "Andy Hall",
         "jobTitle": "Founder & CEO",
-        "sameAs": ["https://www.linkedin.com/in/andyweb3", "https://twitter.com/andy_web_3"]
+        "description": "AI strategist and wellness industry consultant. Chair of the Global Wellness Institute AI Initiative. Advisor to 500+ fitness and wellness operators.",
+        "knowsAbout": ["Artificial Intelligence", "Wellness Business Strategy", "Member Retention", "Fitness Industry", "Hospitality Technology"],
+        "affiliation": {
+          "@type": "Organization",
+          "name": "Global Wellness Institute"
+        },
+        "sameAs": [
+          "https://www.linkedin.com/in/andyweb3",
+          "https://twitter.com/andy_web_3"
+        ]
       },
-      "areaServed": {
-        "@type": "Country",
-        "name": "United Kingdom"
+      "areaServed": [
+        { "@type": "Country", "name": "United Kingdom" },
+        { "@type": "Country", "name": "United States" },
+        { "@type": "Continent", "name": "Europe" }
+      ],
+      "knowsAbout": [
+        "Artificial Intelligence for Business",
+        "Wellness Technology",
+        "Gym Member Retention",
+        "Fitness Industry Benchmarks",
+        "Hospitality AI",
+        "Business Intelligence",
+        "AI Readiness Assessment",
+        "Wellness Business Growth"
+      ],
+      "memberOf": {
+        "@type": "Organization",
+        "name": "Global Wellness Institute AI Initiative",
+        "url": "https://globalwellnessinstitute.org/ai-initiative/"
       },
-      "knowsAbout": ["Artificial Intelligence", "Wellness Technology", "Fitness Industry", "Hospitality Technology", "Member Retention", "Business Intelligence"],
       "sameAs": [
         "https://www.linkedin.com/in/andyweb3",
         "https://twitter.com/andy_web_3",
@@ -77,11 +126,12 @@
       "contactPoint": {
         "@type": "ContactPoint",
         "email": "andy@wellnessgenius.co.uk",
-        "contactType": "sales"
+        "contactType": "customer support",
+        "availableLanguage": "English"
       }
     }
     </script>
-    
+
     <!-- JSON-LD: SoftwareApplication -->
     <script type="application/ld+json">
     {
@@ -89,23 +139,80 @@
       "@type": "SoftwareApplication",
       "name": "Wellness Genius AI Business Advisor",
       "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "AI Business Intelligence",
       "operatingSystem": "Web",
-      "description": "AI-powered business advisor for fitness and wellness operators. Get strategic answers on retention, pricing, staffing, and growth in 60 seconds.",
-      "url": "https://wellnessgenius.co.uk/advisor",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "GBP",
-        "description": "Free trial with 10 credits"
-      },
+      "description": "AI-powered strategic advisor for fitness and wellness operators. Get expert answers on member retention, pricing, staffing, and growth in under 60 seconds. Remembers your business context across sessions.",
+      "url": "https://wellnessgenius.co.uk/genie",
+      "featureList": [
+        "15 specialised advisory modes",
+        "Business context memory across sessions",
+        "Industry-specific wellness knowledge base",
+        "AI Readiness Assessment",
+        "Daily business briefings",
+        "Document analysis",
+        "Voice mode"
+      ],
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free Trial",
+          "price": "0",
+          "priceCurrency": "GBP",
+          "description": "10 free AI Advisor sessions — no card required"
+        },
+        {
+          "@type": "Offer",
+          "name": "Starter Pack",
+          "price": "9",
+          "priceCurrency": "GBP",
+          "description": "50 AI Advisor credits, pay as you go"
+        },
+        {
+          "@type": "Offer",
+          "name": "Professional Pack",
+          "price": "19",
+          "priceCurrency": "GBP",
+          "description": "150 AI Advisor credits, pay as you go"
+        }
+      ],
       "provider": {
         "@type": "Organization",
-        "name": "Wellness Genius"
+        "name": "Wellness Genius",
+        "url": "https://wellnessgenius.co.uk"
+      },
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Fitness and wellness business operators, gym owners, spa managers, studio founders"
       }
     }
     </script>
 
-    <!-- JSON-LD: FAQPage -->
+    <!-- JSON-LD: Service (AI Consulting) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "AI Consulting for Wellness Businesses",
+      "description": "Hands-on AI consulting, readiness sprints, and custom AI agent builds for wellness operators. From strategy to deployment.",
+      "url": "https://wellnessgenius.co.uk/services",
+      "provider": {
+        "@type": "Organization",
+        "name": "Wellness Genius",
+        "url": "https://wellnessgenius.co.uk"
+      },
+      "areaServed": { "@type": "Country", "name": "United Kingdom" },
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Gym operators, spa groups, wellness brands, hospitality businesses"
+      },
+      "offers": {
+        "@type": "Offer",
+        "description": "Consulting services from £1,500. Custom AI agent builds from £5,000."
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: FAQPage (AEO-optimised) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -116,31 +223,63 @@
           "name": "What is Wellness Genius?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Wellness Genius is an AI-powered business intelligence platform for fitness, wellness, and hospitality operators. It provides strategic business advice, industry benchmarks, and data-driven insights to help operators increase retention, optimise partnerships, and scale profitably."
+            "text": "Wellness Genius is an AI-powered business intelligence platform built specifically for fitness, wellness, and hospitality operators. It provides a strategic AI business advisor (called Genie), an AI Readiness Assessment, industry benchmarks, and downloadable playbooks to help gym owners, spa managers, and studio founders increase member retention, optimise pricing, and scale profitably. It is used by 500+ operators and followed by 16,000+ industry leaders."
           }
         },
         {
           "@type": "Question",
-          "name": "Who uses Wellness Genius?",
+          "name": "How can AI help a gym or fitness business?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Wellness Genius is used by gym operators, spa owners, studio founders, wellness brand leaders, and hospitality professionals who want strategic guidance without hiring expensive consultants. Over 16,000 industry leaders follow Wellness Genius for insights."
+            "text": "AI can help gym and fitness businesses in several practical ways: (1) Identifying members at risk of cancelling before they leave, enabling targeted retention campaigns. (2) Optimising membership pricing and class schedules based on demand patterns. (3) Automating routine member communications such as re-engagement emails and milestone messages. (4) Analysing revenue per square metre to improve space utilisation. (5) Generating data-driven answers to strategic questions about staffing, marketing spend, and expansion timing. Wellness Genius provides an AI advisor trained on wellness industry data to help operators act on these opportunities."
           }
         },
         {
           "@type": "Question",
-          "name": "How much does Wellness Genius cost?",
+          "name": "What is an AI Readiness Assessment for a wellness business?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Wellness Genius offers a free AI Readiness Assessment and 10 free AI Advisor credits to get started. After the trial, credits are available on a pay-as-you-go basis with no subscription required. Consulting services start from £1,500."
+            "text": "An AI Readiness Assessment for a wellness business evaluates how prepared the organisation is to adopt and benefit from artificial intelligence. It scores the business across five pillars: Leadership & Strategy, Data Infrastructure, People & Culture, Processes & Operations, and Risk & Governance. The result is a score out of 100 with a maturity band (from Foundational to Leading), plus a prioritised action plan. The Wellness Genius AI Readiness Assessment takes 5-7 minutes and is free to complete."
           }
         },
         {
           "@type": "Question",
-          "name": "How is Wellness Genius different from ChatGPT?",
+          "name": "How much does the Wellness Genius AI Advisor cost?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Three key differences: (1) It is trained specifically on wellness industry data, benchmarks, and best practices. (2) It remembers your business context across sessions. (3) It has 8 specialised modes for different tasks, from quick questions to board-ready analysis."
+            "text": "The Wellness Genius AI Advisor starts with a free trial of 10 sessions — no credit card required. After the trial, credits are available on a pay-as-you-go basis: £9 for 50 credits, £19 for 150 credits, or £49 for 500 credits. Each message costs 1 credit. There is no monthly subscription required. Consulting services start from £1,500."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is Wellness Genius different from ChatGPT for wellness businesses?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Wellness Genius differs from ChatGPT in three key ways: (1) Industry specificity — it is trained on wellness business data, benchmarks, and operational best practices rather than general internet content. (2) Business memory — it remembers your business name, type, goals, and key metrics across every session, so you never repeat yourself. (3) Specialised modes — it has 15 advisory modes tailored to specific tasks, from quick operational questions to board-ready strategic analysis, market research, and competitor positioning."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is gym member retention and how can it be improved?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Gym member retention refers to the percentage of members who continue their membership over a given period. Industry benchmarks typically show that gyms retain between 60-80% of members annually, though this varies by business model and location. Retention can be improved by: identifying at-risk members early using attendance data; strengthening the first 90 days of membership with structured onboarding; reintroducing lapsed members through targeted re-engagement campaigns; and aligning class schedules to peak demand times. Wellness Genius provides AI-powered analysis to help operators pinpoint their specific retention gaps."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Who is Andy Hall from Wellness Genius?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Andy Hall is the founder and CEO of Wellness Genius and Chair of the Global Wellness Institute AI Initiative. He is an AI strategist and wellness industry consultant who has worked with 500+ fitness and wellness operators across the UK and internationally. He has 16,000+ LinkedIn followers in the wellness and fitness industry and publishes regular insights on AI automation and wellness business growth."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Wellness Genius work for small fitness businesses or only large operators?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Wellness Genius is designed for fitness and wellness operators of all sizes — from single-site boutique studios and independent gym owners to multi-site operators and wellness hotel groups. The AI Advisor adapts its advice to the size, business model, and specific challenges of each operator. The free trial and pay-as-you-go pricing make it accessible without the commitment of an enterprise contract."
           }
         }
       ]

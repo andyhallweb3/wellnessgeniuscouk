@@ -151,8 +151,18 @@ const Genie = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Helmet>
-        <title>AI Advisor | Wellness Genius</title>
-        <meta name="description" content="Your AI business advisor for strategic decisions, competitive analysis, and growth planning." />
+        <title>AI Business Advisor for Wellness Operators | Wellness Genius Genie</title>
+        <meta name="description" content="Get strategic answers on member retention, pricing, staffing, and growth in 60 seconds. AI advisor trained on wellness industry data — remembers your business across every session." />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://wellnessgenius.co.uk/genie" />
+        <meta property="og:title" content="AI Business Advisor for Wellness Operators | Wellness Genius" />
+        <meta property="og:description" content="Strategic answers on retention, pricing, and growth in 60 seconds. Start free — 10 sessions, no card required." />
+        <meta property="og:url" content="https://wellnessgenius.co.uk/genie" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://wellnessgenius.co.uk/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="AI Business Advisor for Wellness Operators | Wellness Genius" />
+        <meta name="twitter:description" content="Strategic answers in 60 seconds. 10 free sessions. No card required." />
       </Helmet>
       
       <Header />

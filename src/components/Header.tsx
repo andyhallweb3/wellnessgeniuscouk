@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown, Sparkles, User, LogOut, Send } from "lucide-react";
+import { Menu, X, Sparkles, User, LogOut, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,17 +51,15 @@ const Header = () => {
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
 
-  // Restructured navigation — max 6 items, topic-siloed
   const navLinks = [
-    { href: "/ai-readiness", label: "AI Assessment" },
+    { href: "/ai-readiness", label: "Assessment" },
     { href: "/genie", label: "AI Advisor" },
-    { href: "/products", label: "Products" },
-    { href: "/services", label: "Services" },
-    { href: "/insights", label: "Resources", dropdown: [
+    { href: "/hub?tab=community", label: "Community" },
+    { href: "/products", label: "Pricing & Products" },
+    { href: "/insights", label: "Insights", dropdown: [
       { href: "/insights", label: "Blog & Insights" },
       { href: "/news", label: "Operator Intelligence" },
-      { href: "/speaker-kit", label: "Speaker Kit" },
-      { href: "/downloads", label: "Downloads" },
+      { href: "/services", label: "Services" },
     ]},
   ];
 
@@ -70,22 +68,22 @@ const Header = () => {
       <div className="container-wide px-6 lg:px-12">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
             <img src={logo} alt="Wellness Genius" className="h-9 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-0.5">
             {navLinks.map((link) => (
               link.dropdown ? (
                 <DropdownMenu key={link.href}>
                   <DropdownMenuTrigger className={`flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors rounded-md ${
-                    isActive(link.href) || link.dropdown.some(d => isActive(d.href))
+                    link.dropdown.some(d => isActive(d.href))
                       ? "text-accent"
                       : "text-muted-foreground hover:text-foreground"
                   }`}>
                     {link.label}
-                    <ChevronDown size={14} />
+                    <ChevronDown size={13} />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="min-w-[180px]">
                     {link.dropdown.map((item) => (
@@ -100,7 +98,7 @@ const Header = () => {
                   key={link.href}
                   to={link.href}
                   className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
-                    isActive(link.href) ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                    isActive(link.href.split("?")[0]) ? "text-accent" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {link.label}
@@ -115,14 +113,14 @@ const Header = () => {
               user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md">
-                    <User size={16} />
+                    <User size={15} />
                     My Hub
                     {isAdmin && (
                       <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[10px] font-bold border-amber-500/50 text-amber-600">
                         Admin
                       </Badge>
                     )}
-                    <ChevronDown size={14} />
+                    <ChevronDown size={13} />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[160px]">
                     <DropdownMenuItem asChild>
@@ -163,19 +161,10 @@ const Header = () => {
                 </Link>
               )
             )}
-            <a
-              href="https://t.me/Wellnessgenius_bot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-muted-foreground hover:text-accent transition-colors"
-              aria-label="Chat on Telegram"
-            >
-              <Send size={18} />
-            </a>
             <Button variant="accent" size="sm" asChild className="gap-1.5">
-              <Link to="/ai-readiness">
+              <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
                 <Sparkles size={14} />
-                Free AI Assessment
+                Start Free
               </Link>
             </Button>
           </div>
@@ -197,32 +186,31 @@ const Header = () => {
               <Link to="/ai-readiness" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/ai-readiness") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
                 AI Assessment
               </Link>
-              <Link to="/products" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/products") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Products
+              <Link to="/genie" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/genie") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                AI Advisor
               </Link>
-              <Link to="/services" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/services") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Services
+              <Link to="/hub?tab=community" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/hub") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                Community
+              </Link>
+              <Link to="/products" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/products") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                Pricing & Products
               </Link>
               <Link to="/insights" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/insights") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
                 Blog & Insights
               </Link>
-              <Link to="/genie" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/genie") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                AI Advisor
-              </Link>
               <Link to="/news" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/news") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
                 Operator Intelligence
               </Link>
-              <Link to="/speaker-kit" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/speaker-kit") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Speaker Kit
+              <Link to="/services" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/services") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                Services
               </Link>
-              
+
               <div className="my-3 border-t border-border/30" />
-              
+
               {!isLoading && (
                 user ? (
                   <>
                     <Link to="/hub" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>My Hub</Link>
-                    <Link to="/genie" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>AI Advisor</Link>
                     {isAdmin && (
                       <Link to="/admin" className="px-3 py-2.5 text-base font-medium text-amber-600" onClick={() => setIsMenuOpen(false)}>Admin</Link>
                     )}
@@ -232,12 +220,12 @@ const Header = () => {
                   <Link to="/auth" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>Sign In</Link>
                 )
               )}
-              
+
               <div className="mt-3 px-3">
                 <Button variant="accent" asChild className="w-full gap-2">
-                  <Link to="/ai-readiness" onClick={() => setIsMenuOpen(false)}>
+                  <Link to={user ? "/genie" : "/auth?redirect=/genie"} onClick={() => setIsMenuOpen(false)}>
                     <Sparkles size={16} />
-                    Free AI Assessment
+                    Start Free — 10 AI Sessions
                   </Link>
                 </Button>
               </div>

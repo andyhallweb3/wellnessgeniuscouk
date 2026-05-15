@@ -779,11 +779,54 @@ const Products = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Products | Wellness Genius</title>
-        <meta 
-          name="description" 
-          content="Practical intelligence products for wellness leaders. Free assessments, diagnostic tools, and premium playbooks." 
-        />
+        <title>Playbooks, Assessments & AI Tools for Wellness Operators | Wellness Genius</title>
+        <meta name="description" content="Free and paid resources for fitness and wellness operators. Includes the AI Readiness Assessment, retention playbooks, gamification frameworks, prompt packs, and strategy templates. From £9." />
+        <link rel="canonical" href="https://wellnessgenius.co.uk/products" />
+        <meta property="og:title" content="Playbooks & AI Tools for Wellness Operators | Wellness Genius" />
+        <meta property="og:description" content="Free assessments, retention playbooks, prompt packs, and strategy templates for gym and wellness operators." />
+        <meta property="og:url" content="https://wellnessgenius.co.uk/products" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://wellnessgenius.co.uk/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Playbooks & AI Tools for Wellness Operators | Wellness Genius" />
+        <meta name="twitter:description" content="Free assessments, retention playbooks, and strategy templates. From £9." />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://wellnessgenius.co.uk/" },
+            { "@type": "ListItem", "position": 2, "name": "Products & Playbooks", "item": "https://wellnessgenius.co.uk/products" }
+          ]
+        })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "name": "Wellness Genius Products",
+          "description": "Playbooks, assessments, and AI tools for fitness and wellness operators",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "AI Readiness Assessment",
+              "description": "Score your wellness business AI readiness across 5 pillars. Free 5-minute diagnostic.",
+              "url": "https://wellnessgenius.co.uk/ai-readiness"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Engagement Systems Playbook",
+              "description": "Habit-to-outcome mapping, intervention ladder, and KPI canon for wellness operators. £39.",
+              "url": "https://wellnessgenius.co.uk/products"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Gamification Playbook",
+              "description": "Gamification, rewards, and hyper-personalisation operating system for wellness businesses. £39.",
+              "url": "https://wellnessgenius.co.uk/products"
+            }
+          ]
+        })}</script>
       </Helmet>
       
       <Header />
