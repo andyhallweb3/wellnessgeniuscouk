@@ -12,6 +12,7 @@ import DocumentManager from "@/components/genie/DocumentManager";
 import TrustSettingsToggle from "@/components/genie/TrustSettingsToggle";
 import { ADVISOR_MODES, CREDIT_COST_PER_MESSAGE, getPrimaryModes } from "@/components/advisor/AdvisorModes";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { useBusinessNotes } from "@/hooks/useBusinessNotes";
 import { useCoachCredits } from "@/hooks/useCoachCredits";
 import { useCoachDocuments } from "@/hooks/useCoachDocuments";
 import { useGenieSessions } from "@/hooks/useGenieSessions";
@@ -59,6 +60,7 @@ const Genie = () => {
 
   const { brief: briefData, isLoading: isBriefLoading, generateBrief } = useDailyBrief();
   const { profile, goals, constraints, isLoading: workspaceLoading, needsOnboarding, saveProfile, saveGoals, saveConstraints, addDecision, getContextString } = useWorkspace();
+  const { getNotesContext, addNote } = useBusinessNotes();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { documents, uploading: uploadingDocument, uploadDocument, deleteDocument, updateDocumentCategory, updateDocumentDescription } = useCoachDocuments();
   const { sessions, loading: sessionsLoading, currentSessionId, setCurrentSessionId, saveSession, loadSession } = useGenieSessions();
@@ -197,6 +199,7 @@ const Genie = () => {
             credits={credits.balance}
             onDeductCredits={deductCredits}
             memoryContext={profile ? { business_name: profile.business_name, primary_goal: goals?.goals?.[0] } : null}
+            enrichedMemoryContext={getContextString(getNotesContext())}
             trustDisplayMode={trustDisplayMode}
             onSaveSession={handleSaveSession}
             briefData={briefData}
@@ -208,6 +211,7 @@ const Genie = () => {
             businessName={profile?.business_name || undefined}
             isFreeTrial={credits.isFreeTrial}
             daysRemaining={credits.isFreeTrial ? Math.max(0, Math.ceil((new Date(credits.freeTrialExpiresAt || "").getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : undefined}
+            onSaveToKB={(note) => addNote(note, "general")}
           />
         )}
       </main>

@@ -157,8 +157,14 @@ serve(async (req) => {
     }
 
     const { messages, mode = "daily_operator", memoryContext: rawMemoryContext, documentContext, webContext, _hp_field, isTrialMode } = rawBody;
-    
-    const memoryContext = typeof rawMemoryContext === 'string' ? rawMemoryContext : (rawMemoryContext ? JSON.stringify(rawMemoryContext) : '');
+
+    // If enriched context is provided (includes metrics + notes), prefer it; otherwise fall back to basic stringify
+    let memoryContext: string;
+    if (rawMemoryContext && typeof rawMemoryContext === 'object' && rawMemoryContext._enriched) {
+      memoryContext = String(rawMemoryContext._enriched);
+    } else {
+      memoryContext = typeof rawMemoryContext === 'string' ? rawMemoryContext : (rawMemoryContext ? JSON.stringify(rawMemoryContext) : '');
+    }
     
     // Honeypot validation
     const honeypotResult = validateHoneypot(_hp_field);

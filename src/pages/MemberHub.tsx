@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,6 +45,7 @@ import {
 } from "@/lib/pdf-generators";
 import PromptLibrary from "@/components/hub/PromptLibrary";
 import SavedInsights from "@/components/hub/SavedInsights";
+import KnowledgeBase from "@/components/hub/KnowledgeBase";
 import OnboardingBanner from "@/components/hub/OnboardingBanner";
 import OnboardingProgress from "@/components/hub/OnboardingProgress";
 import DownloadHistory from "@/components/hub/DownloadHistory";
@@ -107,6 +108,8 @@ interface ReadinessScore {
 const MemberHub = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "overview";
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [savedOutputs, setSavedOutputs] = useState<SavedOutput[]>([]);
   const [recentDownloads, setRecentDownloads] = useState<RecentDownload[]>([]);
@@ -324,7 +327,7 @@ const MemberHub = () => {
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
           ) : (
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs defaultValue={initialTab} className="w-full">
               <TabsList className="mb-8">
                 <TabsTrigger value="overview" className="flex items-center gap-2">
                   <Home size={16} />
@@ -349,6 +352,10 @@ const MemberHub = () => {
                 <TabsTrigger value="resources" className="flex items-center gap-2">
                   <BookOpen size={16} />
                   Resources
+                </TabsTrigger>
+                <TabsTrigger value="knowledge" className="flex items-center gap-2">
+                  <Brain size={16} />
+                  Knowledge
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="flex items-center gap-2">
                   <User size={16} />
@@ -821,6 +828,11 @@ const MemberHub = () => {
                     <SavedInsights />
                   </div>
                 </div>
+              </TabsContent>
+
+              {/* KNOWLEDGE TAB */}
+              <TabsContent value="knowledge">
+                <KnowledgeBase />
               </TabsContent>
 
               {/* SETTINGS TAB */}

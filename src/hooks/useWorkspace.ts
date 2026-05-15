@@ -207,7 +207,7 @@ export const useWorkspace = () => {
     decisions,
   });
 
-  const getContextString = (): string => {
+  const getContextString = (notesContext?: string): string => {
     if (!profile) return "";
 
     const parts: string[] = [];
@@ -239,9 +239,19 @@ export const useWorkspace = () => {
         parts.push(`Constraints: ${constraintParts.join(", ")}`);
       }
     }
+    if (metrics?.current_values && Object.keys(metrics.current_values).length > 0) {
+      const kpiLines = Object.entries(metrics.current_values)
+        .filter(([, v]) => v !== "" && v !== null && v !== undefined)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
+      if (kpiLines) parts.push(`Current KPIs: ${kpiLines}`);
+    }
     if (decisions.length > 0) {
       const recentDecisions = decisions.slice(0, 3).map(d => d.summary).join("; ");
       parts.push(`Recent decisions: ${recentDecisions}`);
+    }
+    if (notesContext) {
+      parts.push(notesContext);
     }
 
     return parts.join("\n");

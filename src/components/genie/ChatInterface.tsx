@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Send, 
-  Loader2, 
+import {
+  Send,
+  Loader2,
   Brain,
   User,
   Sparkles,
@@ -16,7 +16,9 @@ import {
   Search,
   TrendingUp,
   AlertTriangle,
-  Lock
+  Lock,
+  BookmarkPlus,
+  Check
 } from "lucide-react";
 import { ADVISOR_MODES, getModeById, WEB_RESEARCH_MODES, CREDIT_COST_PER_MESSAGE, PREMIUM_MODES } from "@/components/advisor/AdvisorModes";
 import { getAdvisorIcon } from "@/components/advisor/AdvisorIcons";
@@ -71,6 +73,80 @@ interface ChatInterfaceProps {
   businessName?: string;
   daysRemaining?: number;
   isFreeTrial?: boolean;
+  enrichedMemoryContext?: string;
+  onSaveToKB?: (note: string) => Promise<boolean>;
+}
+
+// Individual message bubble — extracted so Save-to-KB state is per-message
+function MessageBubble({
+  message,
+  isLast,
+  isStreaming,
+  trustDisplayMode,
+  onSaveToKB,
+}: {
+  message: Message;
+  isLast: boolean;
+  isStreaming: boolean;
+  trustDisplayMode: "full" | "compact";
+  onSaveToKB?: (note: string) => Promise<boolean>;
+}) {
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    if (!onSaveToKB || saved) return;
+    const ok = await onSaveToKB(message.content.slice(0, 500));
+    if (ok) { setSaved(true); toast.success("Saved to knowledge base"); }
+  };
+
+  const showSaveButton = message.role === "assistant" && onSaveToKB && !(isLast && isStreaming) && message.content.length > 20;
+
+  return (
+    <div className={cn("flex gap-4", message.role === "user" ? "justify-end" : "")}>
+      {message.role === "assistant" && (
+        <div className="p-2 rounded-full bg-accent/10 h-fit shrink-0">
+          <Brain size={18} className="text-accent" />
+        </div>
+      )}
+      <div className="flex flex-col gap-1 max-w-[85%]">
+        <div className={cn(
+          "rounded-2xl px-4 py-3",
+          message.role === "user"
+            ? "bg-accent text-accent-foreground"
+            : "bg-secondary/50"
+        )}>
+          {message.role === "assistant" ? (
+            <GenieMessage
+              content={message.content}
+              trustMetadata={message.trustMetadata}
+              displayMode={trustDisplayMode}
+            />
+          ) : (
+            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+          )}
+        </div>
+        {showSaveButton && (
+          <button
+            onClick={handleSave}
+            className={cn(
+              "self-start flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors",
+              saved
+                ? "text-accent cursor-default"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            )}
+          >
+            {saved ? <Check size={11} /> : <BookmarkPlus size={11} />}
+            {saved ? "Saved to knowledge base" : "Save to knowledge base"}
+          </button>
+        )}
+      </div>
+      {message.role === "user" && (
+        <div className="p-2 rounded-full bg-secondary h-fit shrink-0">
+          <User size={18} className="text-foreground/70" />
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Quick action suggestions for empty state
@@ -100,6 +176,8 @@ export default function ChatInterface({
   businessName,
   daysRemaining,
   isFreeTrial,
+  enrichedMemoryContext,
+  onSaveToKB,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -147,10 +225,12 @@ export default function ChatInterface({
         "Content-Type": "application/json",
         Authorization: `Bearer ${sessionData.session.access_token}`,
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         messages: userMessages.map(m => ({ role: m.role, content: m.content })),
         mode,
-        memoryContext: memoryContext || undefined,
+        memoryContext: enrichedMemoryContext
+          ? { ...memoryContext, _enriched: enrichedMemoryContext }
+          : (memoryContext || undefined),
         documentContext: documentContext || undefined,
         webContext: webContext || undefined,
         _hp_field: "",
@@ -526,37 +606,14 @@ export default function ChatInterface({
             /* Messages */
             <div className="space-y-6">
               {messages.map((message, i) => (
-                <div key={i} className={cn(
-                  "flex gap-4",
-                  message.role === "user" ? "justify-end" : ""
-                )}>
-                  {message.role === "assistant" && (
-                    <div className="p-2 rounded-full bg-accent/10 h-fit shrink-0">
-                      <Brain size={18} className="text-accent" />
-                    </div>
-                  )}
-                  <div className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-3",
-                    message.role === "user" 
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-secondary/50"
-                  )}>
-                    {message.role === "assistant" ? (
-                      <GenieMessage 
-                        content={message.content}
-                        trustMetadata={message.trustMetadata}
-                        displayMode={trustDisplayMode}
-                      />
-                    ) : (
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    )}
-                  </div>
-                  {message.role === "user" && (
-                    <div className="p-2 rounded-full bg-secondary h-fit shrink-0">
-                      <User size={18} className="text-foreground/70" />
-                    </div>
-                  )}
-                </div>
+                <MessageBubble
+                  key={i}
+                  message={message}
+                  isLast={i === messages.length - 1}
+                  isStreaming={isStreaming}
+                  trustDisplayMode={trustDisplayMode}
+                  onSaveToKB={onSaveToKB}
+                />
               ))}
               
               {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
