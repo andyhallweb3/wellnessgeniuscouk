@@ -1,19 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { 
-  Loader2, 
+  Loader2,
   Lock,
   LogOut,
   Newspaper,
@@ -27,117 +20,141 @@ import {
   Gift,
   Home,
   LayoutDashboard,
-  FileText
+  FileText,
+  Users,
+  SendHorizonal,
+  RefreshCcw,
+  TrendingUp,
 } from "lucide-react";
+
+interface EmailStats {
+  totalSubscribers: number;
+  activeSubscribers: number;
+  reengagementTotal: number;
+  weeklyNewsThisWeek: number;
+  recentLog: { email_type: string; email: string | null; sent_at: string }[];
+}
+
 const ADMIN_SECTIONS = [
-  { 
-    id: "docs", 
-    label: "Documentation", 
-    description: "Architecture, data models, and system overview",
-    icon: FileText,
-    path: "/admin/docs",
-    color: "bg-slate-500/10 text-slate-600"
-  },
-  { 
-    id: "newsletter", 
-    label: "Newsletter", 
-    description: "Manage articles, subscribers, and send newsletters",
+  {
+    id: "newsletter",
+    label: "Newsletter",
+    description: "Articles, subscribers, send history",
     icon: Newspaper,
     path: "/news/admin",
-    color: "bg-blue-500/10 text-blue-600"
+    color: "text-blue-400",
   },
-  { 
-    id: "campaigns", 
-    label: "Email Campaigns", 
-    description: "Send campaign emails to subscribers via templates",
+  {
+    id: "campaigns",
+    label: "Email Campaigns",
+    description: "Send campaigns via templates",
     icon: Mail,
     path: "/news/admin?tab=campaigns",
-    color: "bg-indigo-500/10 text-indigo-600"
+    color: "text-indigo-400",
   },
-  { 
-    id: "downloads", 
-    label: "Downloads & Upsells", 
-    description: "Track downloads, manage upsell campaigns, view A/B tests",
-    icon: Download,
-    path: "/downloads/admin",
-    color: "bg-green-500/10 text-green-600"
-  },
-  { 
-    id: "emails", 
-    label: "Email Templates", 
-    description: "Create and manage email templates for automation",
+  {
+    id: "emails",
+    label: "Email Templates",
+    description: "Create and manage templates",
     icon: Mail,
     path: "/emails/admin",
-    color: "bg-purple-500/10 text-purple-600"
+    color: "text-purple-400",
   },
-  { 
-    id: "credits", 
-    label: "Coach Credits", 
-    description: "Manage user credits, view transactions, trigger resets",
+  {
+    id: "downloads",
+    label: "Downloads & Upsells",
+    description: "Downloads, upsells, A/B tests",
+    icon: Download,
+    path: "/downloads/admin",
+    color: "text-green-400",
+  },
+  {
+    id: "credits",
+    label: "Coach Credits",
+    description: "Credits, transactions, resets",
     icon: Coins,
     path: "/coach/admin",
-    color: "bg-amber-500/10 text-amber-600"
+    color: "text-amber-400",
   },
-  { 
-    id: "feedback", 
-    label: "Feedback Reports", 
-    description: "View and manage user-reported problems and feature requests",
-    icon: MessageSquareWarning,
-    path: "/feedback/admin",
-    color: "bg-rose-500/10 text-rose-600"
-  },
-  { 
-    id: "validation", 
-    label: "Validation Errors", 
-    description: "Track API validation errors and request issues over time",
-    icon: Shield,
-    path: "/validation/admin",
-    color: "bg-orange-500/10 text-orange-600"
-  },
-  { 
-    id: "knowledge", 
-    label: "Knowledge Base", 
-    description: "Add resources and insights the AI advisor uses in responses",
+  {
+    id: "knowledge",
+    label: "Knowledge Base",
+    description: "AI advisor resources",
     icon: BookOpen,
     path: "/knowledge/admin",
-    color: "bg-teal-500/10 text-teal-600"
+    color: "text-teal-400",
   },
-  { 
-    id: "coupons", 
-    label: "Coupon Analytics", 
-    description: "Track newsletter coupon redemptions and conversion rates",
+  {
+    id: "feedback",
+    label: "Feedback",
+    description: "User problems and requests",
+    icon: MessageSquareWarning,
+    path: "/feedback/admin",
+    color: "text-rose-400",
+  },
+  {
+    id: "coupons",
+    label: "Coupon Analytics",
+    description: "Redemptions and conversions",
     icon: Gift,
     path: "/coupons/admin",
-    color: "bg-pink-500/10 text-pink-600"
+    color: "text-pink-400",
+  },
+  {
+    id: "docs",
+    label: "Documentation",
+    description: "Architecture and data models",
+    icon: FileText,
+    path: "/admin/docs",
+    color: "text-slate-400",
   },
 ];
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { 
-    isAdmin, 
-    isLoading: authLoading, 
-    isAuthenticated, 
-    signIn, 
-    signOut,
-  } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, isAuthenticated, signIn, signOut } = useAdminAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailStats, setEmailStats] = useState<EmailStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchStats = async () => {
+      setStatsLoading(true);
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const [totalRes, activeRes, reengagementRes, reengagementWeekRes, weeklyRes, recentRes] =
+        await Promise.all([
+          supabase.from("newsletter_subscribers").select("*", { count: "exact", head: true }),
+          supabase.from("newsletter_subscribers").select("*", { count: "exact", head: true }).eq("is_active", true).eq("bounced", false),
+          supabase.from("email_automation_log").select("*", { count: "exact", head: true }).eq("email_type", "reengagement"),
+          supabase.from("email_automation_log").select("*", { count: "exact", head: true }).eq("email_type", "reengagement").gte("sent_at", weekAgo),
+          supabase.from("newsletter_subscribers").select("*", { count: "exact", head: true }).eq("is_active", true).gte("last_delivered_at", weekAgo),
+          supabase.from("email_automation_log").select("email_type, email, sent_at").order("sent_at", { ascending: false }).limit(6),
+        ]);
+
+      setEmailStats({
+        totalSubscribers: totalRes.count ?? 0,
+        activeSubscribers: activeRes.count ?? 0,
+        reengagementTotal: reengagementRes.count ?? 0,
+        weeklyNewsThisWeek: weeklyRes.count ?? 0,
+        recentLog: recentRes.data ?? [],
+      });
+      setStatsLoading(false);
+    };
+    fetchStats();
+  }, [isAdmin]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSigningIn(true);
     setError(null);
-    
     const result = await signIn(email, password);
-    
-    if (result.error) {
-      setError(result.error.message);
-    }
-    
+    if (result.error) setError(result.error.message);
     setIsSigningIn(false);
   };
 
@@ -153,57 +170,27 @@ const Admin = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Helmet>
-          <title>Admin Login | Wellness Genius</title>
+          <title>Admin | Wellness Genius</title>
           <meta name="robots" content="noindex, nofollow" />
         </Helmet>
-        
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           <div className="rounded-2xl border border-border bg-card p-8 shadow-elegant">
             <div className="flex items-center gap-3 mb-8 justify-center">
-              <div className="p-3 rounded-full bg-accent/10">
-                <Lock size={24} className="text-accent" />
+              <div className="p-2.5 rounded-full bg-accent/10">
+                <Lock size={20} className="text-accent" />
               </div>
-              <div>
-                <h1 className="text-2xl font-heading">Admin Dashboard</h1>
-                <p className="text-muted-foreground text-sm">Sign in to continue</p>
-              </div>
+              <h1 className="text-xl font-heading">Admin</h1>
             </div>
-
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <div>
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && (
-                <p className="text-sm text-destructive text-center">{error}</p>
-              )}
+            <form onSubmit={handleSignIn} className="space-y-3">
+              <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              {error && <p className="text-sm text-destructive text-center">{error}</p>}
               <Button type="submit" className="w-full" disabled={isSigningIn}>
-                {isSigningIn ? (
-                  <Loader2 className="animate-spin" size={16} />
-                ) : (
-                  "Sign In"
-                )}
+                {isSigningIn ? <Loader2 className="animate-spin" size={16} /> : "Sign In"}
               </Button>
             </form>
-            
-            <div className="mt-6 text-center">
-              <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-                ← Back to site
-              </Link>
+            <div className="mt-4 text-center">
+              <Link to="/" className="text-xs text-muted-foreground hover:text-foreground">← Back to site</Link>
             </div>
           </div>
         </div>
@@ -214,97 +201,105 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Admin Dashboard | Wellness Genius</title>
+        <title>Admin | Wellness Genius</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container-wide flex items-center justify-between h-16 px-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-accent/10">
-              <Shield size={20} className="text-accent" />
-            </div>
-            <h1 className="font-heading text-xl">Admin Dashboard</h1>
+        <div className="container-wide flex items-center justify-between h-14 px-6">
+          <div className="flex items-center gap-2">
+            <Shield size={18} className="text-accent" />
+            <span className="font-heading text-lg">Admin</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/hub">
-                <LayoutDashboard size={16} />
-                Back to Hub
-              </Link>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/hub"><LayoutDashboard size={14} className="mr-1.5" />Hub</Link>
             </Button>
-            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-              View Site
-            </Link>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/">Site</Link>
+            </Button>
             <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut size={16} />
-              Sign Out
+              <LogOut size={14} className="mr-1.5" />Out
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Breadcrumb */}
-      <div className="container-wide px-6 py-3 border-b border-border/50 bg-muted/30">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/" className="flex items-center gap-1">
-                  <Home size={14} />
-                  Home
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/hub">My Hub</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Admin Dashboard</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
+      <main className="container-wide py-8 px-6 max-w-5xl">
 
-      {/* Content */}
-      <main className="container-wide py-8 px-6">
-        <div className="mb-8">
-          <h2 className="text-lg font-medium mb-2">Welcome back</h2>
-          <p className="text-muted-foreground">
-            Select a section to manage your platform.
-          </p>
-        </div>
+        {/* Email Performance */}
+        <section className="mb-10">
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-4">Email Performance</h2>
+          {statsLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Loader2 size={13} className="animate-spin" />Loading…
+            </div>
+          ) : emailStats ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "Total contacts", value: emailStats.totalSubscribers.toLocaleString(), icon: Users, color: "text-blue-400" },
+                  { label: "Active subscribers", value: emailStats.activeSubscribers.toLocaleString(), icon: TrendingUp, color: "text-green-400" },
+                  { label: "Re-engagement sent", value: emailStats.reengagementTotal.toLocaleString(), icon: RefreshCcw, color: "text-purple-400" },
+                  { label: "Delivered this week", value: emailStats.weeklyNewsThisWeek.toLocaleString(), icon: SendHorizonal, color: "text-accent" },
+                ].map(stat => {
+                  const Icon = stat.icon;
+                  return (
+                    <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
+                      <Icon size={13} className={`${stat.color} mb-2`} />
+                      <p className="text-2xl font-bold font-heading leading-none mb-1">{stat.value}</p>
+                      <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {ADMIN_SECTIONS.map((section) => {
-            const Icon = section.icon;
-            
-            return (
-              <button
-                key={section.id}
-                onClick={() => navigate(section.path)}
-                className="group text-left p-6 rounded-2xl border border-border bg-card hover:border-accent/50 hover:shadow-lg transition-all duration-200"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`p-3 rounded-xl ${section.color}`}>
-                    <Icon size={24} />
-                  </div>
-                  <ArrowRight 
-                    size={20} 
-                    className="text-muted-foreground group-hover:text-accent group-hover:translate-x-1 transition-all" 
-                  />
+              {emailStats.recentLog.length > 0 && (
+                <div className="rounded-xl border border-border bg-card divide-y divide-border">
+                  {emailStats.recentLog.map((entry, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                      <div className="flex items-center gap-3">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${entry.email_type === "reengagement" ? "bg-purple-400" : "bg-blue-400"}`} />
+                        <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{entry.email_type}</span>
+                        <span className="text-muted-foreground truncate max-w-[200px]">{entry.email ?? "—"}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
+                        {new Date(entry.sent_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <h3 className="text-lg font-heading mb-2">{section.label}</h3>
-                <p className="text-sm text-muted-foreground">{section.description}</p>
-              </button>
-            );
-          })}
-        </div>
+              )}
+            </div>
+          ) : null}
+        </section>
+
+        {/* Admin Sections */}
+        <section>
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-4">Manage</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {ADMIN_SECTIONS.map((section) => {
+              const Icon = section.icon;
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => navigate(section.path)}
+                  className="group text-left p-4 rounded-xl border border-border bg-card hover:border-accent/40 hover:bg-card/80 transition-all duration-150 flex items-start gap-3"
+                >
+                  <Icon size={16} className={`${section.color} mt-0.5 shrink-0`} />
+                  <div className="min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{section.label}</p>
+                      <ArrowRight size={13} className="text-muted-foreground/40 group-hover:text-accent group-hover:translate-x-0.5 transition-all shrink-0" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{section.description}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
       </main>
     </div>
   );

@@ -107,14 +107,43 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Update subscriber to inactive using service role
+    const cleanEmail = emailToUnsubscribe.toLowerCase().trim();
+
+    // Update Supabase newsletter_subscribers
     const { error } = await supabase
       .from('newsletter_subscribers')
       .update({ is_active: false })
-      .eq('email', emailToUnsubscribe.toLowerCase().trim());
+      .eq('email', cleanEmail);
 
     if (error) {
-      console.error('Unsubscribe error:', error);
+      console.error('Supabase unsubscribe error:', error);
+    }
+
+    // Mark as unsubscribed in Resend contacts
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+    if (RESEND_API_KEY) {
+      try {
+        // Find contact by email, then update by ID
+        const searchRes = await fetch(`https://api.resend.com/contacts?email=${encodeURIComponent(cleanEmail)}`, {
+          headers: { 'Authorization': `Bearer ${RESEND_API_KEY}` },
+        });
+        if (searchRes.ok) {
+          const { data } = await searchRes.json();
+          const contact = data?.[0];
+          if (contact?.id) {
+            await fetch(`https://api.resend.com/contacts/${contact.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Authorization': `Bearer ${RESEND_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ unsubscribed: true }),
+            });
+          }
+        }
+      } catch (resendErr) {
+        console.error('Resend unsubscribe error:', resendErr);
+      }
     }
 
     // Always return success to prevent email enumeration
