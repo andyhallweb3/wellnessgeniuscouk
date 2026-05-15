@@ -79,10 +79,26 @@ const ADMIN_SECTIONS = [
   {
     id: "knowledge",
     label: "Knowledge Base",
-    description: "AI advisor resources",
+    description: "General AI advisor resources",
     icon: BookOpen,
     path: "/knowledge/admin",
     color: "text-teal-400",
+  },
+  {
+    id: "kb-canon",
+    label: "KB Canon",
+    description: "Core IP frameworks & principles",
+    icon: BookOpen,
+    path: "/admin/kb-canon",
+    color: "text-cyan-400",
+  },
+  {
+    id: "kb-intel",
+    label: "KB Intel",
+    description: "Curated industry intelligence",
+    icon: BookOpen,
+    path: "/admin/kb-intel",
+    color: "text-sky-400",
   },
   {
     id: "feedback",
