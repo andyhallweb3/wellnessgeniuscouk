@@ -55,11 +55,11 @@ const Header = () => {
     { href: "/ai-readiness", label: "Assessment" },
     { href: "/genie", label: "AI Advisor" },
     { href: "/hub?tab=community", label: "Community" },
-    { href: "/products", label: "Pricing & Products" },
-    { href: "/insights", label: "Insights", dropdown: [
+    { href: "/products", label: "Pricing" },
+    { href: "/services", label: "Services" },
+    { href: "/insights", label: "Learn", dropdown: [
       { href: "/insights", label: "Blog & Insights" },
-      { href: "/news", label: "Operator Intelligence" },
-      { href: "/services", label: "Services" },
+      { href: "/news", label: "Operator Intel" },
     ]},
   ];
 
@@ -127,7 +127,7 @@ const Header = () => {
                       <Link to="/hub" className="w-full">Dashboard</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/genie" className="w-full">AI Advisor</Link>
+                      <Link to="/hub?tab=knowledge" className="w-full">Knowledge Base</Link>
                     </DropdownMenuItem>
                     {latestReportId && (
                       <DropdownMenuItem asChild>
@@ -184,7 +184,7 @@ const Header = () => {
           <div className="lg:hidden py-4 border-t border-border/30 animate-fade-in">
             <nav className="flex flex-col gap-1">
               <Link to="/ai-readiness" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/ai-readiness") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                AI Assessment
+                Assessment
               </Link>
               <Link to="/genie" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/genie") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
                 AI Advisor
@@ -193,16 +193,16 @@ const Header = () => {
                 Community
               </Link>
               <Link to="/products" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/products") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Pricing & Products
+                Pricing
+              </Link>
+              <Link to="/services" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/services") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                Services
               </Link>
               <Link to="/insights" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/insights") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
                 Blog & Insights
               </Link>
               <Link to="/news" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/news") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Operator Intelligence
-              </Link>
-              <Link to="/services" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/services") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Services
+                Operator Intel
               </Link>
 
               <div className="my-3 border-t border-border/30" />

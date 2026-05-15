@@ -109,7 +109,11 @@ const MemberHub = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") || "overview";
+  const rawTab = searchParams.get("tab") || "overview";
+  // Redirect legacy tab names to new consolidated tabs
+  const initialTab = rawTab === "feed" || rawTab === "resources" || rawTab === "research"
+    ? rawTab === "feed" ? "community" : rawTab === "resources" || rawTab === "research" ? "library" : rawTab
+    : rawTab;
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [savedOutputs, setSavedOutputs] = useState<SavedOutput[]>([]);
   const [recentDownloads, setRecentDownloads] = useState<RecentDownload[]>([]);
@@ -333,29 +337,21 @@ const MemberHub = () => {
                   <Home size={16} />
                   Overview
                 </TabsTrigger>
-                <TabsTrigger value="products" className="flex items-center gap-2">
-                  <Package size={16} />
-                  Products
-                </TabsTrigger>
-                <TabsTrigger value="feed" className="flex items-center gap-2">
-                  <MessageCircle size={16} />
-                  Feed
-                </TabsTrigger>
                 <TabsTrigger value="community" className="flex items-center gap-2">
                   <Trophy size={16} />
                   Community
                 </TabsTrigger>
-                <TabsTrigger value="research" className="flex items-center gap-2">
-                  <Search size={16} />
-                  Research
-                </TabsTrigger>
-                <TabsTrigger value="resources" className="flex items-center gap-2">
-                  <BookOpen size={16} />
-                  Resources
-                </TabsTrigger>
                 <TabsTrigger value="knowledge" className="flex items-center gap-2">
                   <Brain size={16} />
                   Knowledge
+                </TabsTrigger>
+                <TabsTrigger value="library" className="flex items-center gap-2">
+                  <BookOpen size={16} />
+                  Library
+                </TabsTrigger>
+                <TabsTrigger value="products" className="flex items-center gap-2">
+                  <Package size={16} />
+                  My Products
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="flex items-center gap-2">
                   <User size={16} />
@@ -779,53 +775,76 @@ const MemberHub = () => {
                 </div>
               </TabsContent>
 
-              {/* FEED TAB */}
-              <TabsContent value="feed">
-                <ProfessionalFeed />
-              </TabsContent>
-
-              {/* COMMUNITY TAB */}
+              {/* COMMUNITY TAB — Feed + Leaderboard */}
               <TabsContent value="community">
-                <div className="grid lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2">
-                    <GenieLeaderboard />
+                <div className="space-y-10">
+                  {/* Industry Feed */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 rounded-lg bg-accent/10">
+                        <MessageCircle size={20} className="text-accent" />
+                      </div>
+                      <h2 className="text-xl font-heading">Industry Feed</h2>
+                    </div>
+                    <ProfessionalFeed />
                   </div>
-                  <div className="space-y-6">
-                    <div className="rounded-xl border border-border bg-card p-6">
-                      <h3 className="font-heading mb-4">Community Highlights</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Opt in to the leaderboard to see how you compare with other operators in your segment.
-                      </p>
+
+                  {/* Leaderboard */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 rounded-lg bg-amber-500/10">
+                        <Trophy size={20} className="text-amber-500" />
+                      </div>
+                      <h2 className="text-xl font-heading">Operator Leaderboard</h2>
+                    </div>
+                    <div className="grid lg:grid-cols-3 gap-8">
+                      <div className="lg:col-span-2">
+                        <GenieLeaderboard />
+                      </div>
+                      <div>
+                        <div className="rounded-xl border border-border bg-card p-6">
+                          <h3 className="font-heading mb-3">How it works</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Opt in to see how you compare with operators in your sector. Rankings are based on AI Advisor usage and assessment scores.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </TabsContent>
 
-              {/* RESEARCH TAB */}
-              <TabsContent value="research">
-                <ResearchAssistant />
-              </TabsContent>
-
-              {/* RESOURCES TAB */}
-              <TabsContent value="resources">
-                <div className="grid lg:grid-cols-2 gap-8">
-                  <div>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-lg bg-accent/10">
-                        <Terminal size={20} className="text-accent" />
+              {/* LIBRARY TAB — Prompts + Saved Insights + Research */}
+              <TabsContent value="library">
+                <div className="space-y-10">
+                  <div className="grid lg:grid-cols-2 gap-8">
+                    <div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 rounded-lg bg-accent/10">
+                          <Terminal size={20} className="text-accent" />
+                        </div>
+                        <h2 className="text-xl font-heading">Prompt Library</h2>
                       </div>
-                      <h2 className="text-xl font-heading">Prompt Library</h2>
+                      <PromptLibrary />
                     </div>
-                    <PromptLibrary />
+                    <div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 rounded-lg bg-purple-500/10">
+                          <Bookmark size={20} className="text-purple-500" />
+                        </div>
+                        <h2 className="text-xl font-heading">Saved Insights</h2>
+                      </div>
+                      <SavedInsights />
+                    </div>
                   </div>
                   <div>
                     <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-lg bg-purple-500/10">
-                        <Bookmark size={20} className="text-purple-500" />
+                      <div className="p-2 rounded-lg bg-blue-500/10">
+                        <Search size={20} className="text-blue-500" />
                       </div>
-                      <h2 className="text-xl font-heading">Saved Insights</h2>
+                      <h2 className="text-xl font-heading">Research Assistant</h2>
                     </div>
-                    <SavedInsights />
+                    <ResearchAssistant />
                   </div>
                 </div>
               </TabsContent>

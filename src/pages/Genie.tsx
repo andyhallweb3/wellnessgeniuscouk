@@ -59,7 +59,7 @@ const Genie = () => {
   const [showDocuments, setShowDocuments] = useState(false);
 
   const { brief: briefData, isLoading: isBriefLoading, generateBrief } = useDailyBrief();
-  const { profile, goals, constraints, isLoading: workspaceLoading, needsOnboarding, saveProfile, saveGoals, saveConstraints, addDecision, getContextString } = useWorkspace();
+  const { profile, goals, constraints, isLoading: workspaceLoading, needsOnboarding, saveProfile, saveGoals, saveConstraints, saveMetrics, addDecision, getContextString } = useWorkspace();
   const { getNotesContext, addNote } = useBusinessNotes();
   const { credits, loading: creditsLoading, deductCredits } = useCoachCredits();
   const { documents, uploading: uploadingDocument, uploadDocument, deleteDocument, updateDocumentCategory, updateDocumentDescription } = useCoachDocuments();
@@ -86,24 +86,28 @@ const Genie = () => {
     }
   }, [searchParams]);
 
-  const handleOnboardingComplete = async (data: { business_name: string; sector: string; business_size: string; goals: string[]; biggest_challenge: string; current_stack: string[] }) => {
+  const handleOnboardingComplete = async (data: { business_name: string; sector: string; business_size: string; goals: string[]; biggest_challenge: string; current_stack: string[]; initial_kpis?: Record<string, string> }) => {
     const profileSuccess = await saveProfile({
       business_name: data.business_name,
       sector: data.sector,
       business_size: data.business_size,
       onboarding_completed: true,
     });
-    
+
     if (data.goals.length > 0) {
       await saveGoals({ goals: data.goals });
     }
-    
+
     if (data.biggest_challenge) {
       await saveConstraints({ budget_range: data.biggest_challenge });
     }
-    
+
+    if (data.initial_kpis && Object.keys(data.initial_kpis).length > 0) {
+      await saveMetrics({ current_values: data.initial_kpis });
+    }
+
     if (profileSuccess) {
-      toast.success("Business profile saved!");
+      toast.success("Business profile saved — Genie is ready.");
       setShowOnboarding(false);
     } else {
       toast.error("Failed to save profile.");
