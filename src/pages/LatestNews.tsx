@@ -125,6 +125,8 @@ const FILTER_CATEGORIES = [
   { key: "member", label: "Member Trends" },
   { key: "investment", label: "Investment Signals" },
   { key: "supplier", label: "Supplier Moves" },
+  { key: "longevity", label: "Longevity & Recovery" },
+  { key: "hospitality", label: "Media & Hospitality" },
 ];
 
 function cleanText(raw: string) {
@@ -215,6 +217,20 @@ function filterByCategory(items: NewsItem[], category: string): NewsItem[] {
         return titleLower.includes("platform") || titleLower.includes("software") ||
                titleLower.includes("partnership") || titleLower.includes("launches") ||
                summaryLower.includes("vendor") || summaryLower.includes("supplier");
+      case "longevity":
+        return titleLower.includes("longevity") || titleLower.includes("recovery") ||
+               titleLower.includes("sleep") || titleLower.includes("biohack") ||
+               titleLower.includes("anti-aging") || titleLower.includes("healthspan") ||
+               titleLower.includes("regenerat") || titleLower.includes("wearable") ||
+               summaryLower.includes("longevity") || summaryLower.includes("recovery") ||
+               summaryLower.includes("healthspan");
+      case "hospitality":
+        return titleLower.includes("hospitality") || titleLower.includes("hotel") ||
+               titleLower.includes("resort") || titleLower.includes("spa") ||
+               titleLower.includes("media") || titleLower.includes("broadcast") ||
+               titleLower.includes("podcast") || titleLower.includes("content creator") ||
+               summaryLower.includes("hospitality") || summaryLower.includes("hotel") ||
+               summaryLower.includes("resort") || summaryLower.includes("media");
       default:
         return true;
     }

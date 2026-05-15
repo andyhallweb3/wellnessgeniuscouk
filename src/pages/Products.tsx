@@ -258,15 +258,15 @@ const bundles: Product[] = [
   {
     id: "gamification-bundle",
     name: "Gamification & Personalisation Bundle",
-    description: "Engagement Systems + Gamification Playbooks. Perfect for operators focused on member engagement.",
-    price: "£69.99",
+    description: "Engagement Systems + Gamification Playbooks. Perfect for operators focused on member engagement and retention.",
+    price: "£59.99",
     originalPrice: "£69.98",
     type: "bundle",
     icon: <Package size={24} />,
     features: [
       "Engagement Systems Playbook (£29.99)",
       "Gamification & Rewards Playbook (£39.99)",
-      "Bundle pricing",
+      "Save £10",
     ],
     cta: "Buy Bundle",
     link: "#gamification-bundle",

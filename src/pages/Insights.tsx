@@ -15,7 +15,7 @@ import aiComplianceImg from "@/assets/blog/ai-compliance.jpeg";
 import aiWellnessDataImg from "@/assets/blog/ai-wellness-data.webp";
 import aiPersonalisationImg from "@/assets/blog/ai-personalisation.jpeg";
 
-const categories = ["All", "AI Agents", "Wellness", "Data"];
+const categories = ["All", "AI Agents", "Wellness", "Data", "Longevity & Recovery", "Media & Hospitality"];
 
 // Fallback image mapping for posts without images
 const fallbackImages: Record<string, string> = {
