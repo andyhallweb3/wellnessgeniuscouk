@@ -555,12 +555,12 @@ const LatestNews = () => {
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           {item.business_lens && <BusinessLensPill lens={item.business_lens} />}
                           <AudienceTag audience={getAudienceTag(item)} />
-                          <span className="text-xs text-muted-foreground">• {item.source_name}</span>
+                          <span className="text-xs text-muted-foreground min-w-0 max-w-full truncate">• {item.source_name}</span>
                         </div>
-                        <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                        <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors line-clamp-2 break-words [overflow-wrap:anywhere]">
                           {cleanText(item.title)}
                         </h3>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2 break-words [overflow-wrap:anywhere]">
                           {item.summary}
                         </p>
                       </div>
@@ -654,7 +654,7 @@ const LatestNews = () => {
         {loading ? (
           <section className="px-6 lg:px-12 pb-20">
             <div className="container-wide">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="card-tech p-6 animate-pulse">
                     <div className="h-4 bg-secondary rounded w-1/4 mb-4"></div>
@@ -707,7 +707,7 @@ const LatestNews = () => {
                     className="card-tech p-8 lg:p-10 block group hover:border-accent/30 transition-colors"
                   >
                     <div className="flex flex-col lg:flex-row lg:items-start gap-8">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-3 mb-4">
                           {featuredNews.business_lens && (
                             <BusinessLensPill lens={featuredNews.business_lens} />
@@ -716,13 +716,13 @@ const LatestNews = () => {
                           <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
                             Top Story
                           </span>
-                          <span className="text-xs text-muted-foreground">{featuredNews.source_name}</span>
+                          <span className="text-xs text-muted-foreground min-w-0 max-w-full truncate">{featuredNews.source_name}</span>
                         </div>
-                        <h2 className="text-2xl lg:text-3xl mb-4 group-hover:text-accent transition-colors">
+                        <h2 className="text-2xl lg:text-3xl mb-4 group-hover:text-accent transition-colors line-clamp-3 break-words [overflow-wrap:anywhere]">
                           {cleanText(featuredNews.title)}
                         </h2>
-                        <p className="text-muted-foreground mb-6">{featuredNews.summary}</p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+                        <p className="text-muted-foreground mb-6 line-clamp-4 break-words [overflow-wrap:anywhere]">{featuredNews.summary}</p>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mb-6">
                           <span className="flex items-center gap-1.5">
                             <Calendar size={14} />
                             {new Date(featuredNews.published_date).toLocaleDateString("en-GB", {
@@ -738,7 +738,7 @@ const LatestNews = () => {
                         </span>
                       </div>
                       {featuredNews.image_url && (
-                        <div className="lg:w-80 h-48 lg:h-56 rounded-xl overflow-hidden bg-secondary flex-shrink-0">
+                        <div className="w-full lg:w-80 aspect-video lg:aspect-auto lg:h-56 rounded-xl overflow-hidden bg-secondary flex-shrink-0">
                           <img 
                             src={getProxiedImageUrl(featuredNews.image_url) || ''}
                             alt={cleanText(featuredNews.title)}
@@ -759,7 +759,7 @@ const LatestNews = () => {
             {/* News Grid */}
             <section className="px-6 lg:px-12 pb-20">
               <div className="container-wide">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {sortedNews
                     .slice(activeFilter === "All" ? 1 : 0)
                     .map((item, index) => {
@@ -769,7 +769,7 @@ const LatestNews = () => {
                       return (
                         <article
                           key={item.id}
-                          className={`card-tech p-6 flex flex-col animate-fade-up group transition-colors ${
+                          className={`card-tech p-6 flex flex-col h-full min-w-0 overflow-hidden animate-fade-up group transition-colors ${
                             isHighRelevance 
                               ? "hover:border-accent/40 border-accent/20" 
                               : "hover:border-accent/30"
@@ -779,7 +779,7 @@ const LatestNews = () => {
                         >
                           {item.image_url && (
                             <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="block">
-                              <div className="h-40 rounded-lg overflow-hidden mb-4 -mx-2 -mt-2 bg-secondary">
+                              <div className="aspect-video rounded-lg overflow-hidden mb-4 -mx-2 -mt-2 bg-secondary">
                                 <img 
                                   src={getProxiedImageUrl(item.image_url) || ''}
                                   alt={cleanText(item.title)}
@@ -799,20 +799,20 @@ const LatestNews = () => {
                             <AudienceTag audience={getAudienceTag(item)} />
                           </div>
                           
-                          <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
-                            <span>{item.source_name}</span>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-3 text-xs text-muted-foreground min-w-0">
+                            <span className="min-w-0 max-w-full truncate">{item.source_name}</span>
                           </div>
                           
                           <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="block">
-                            <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-accent transition-colors">
+                            <h3 className="text-lg font-semibold mb-3 line-clamp-3 break-words [overflow-wrap:anywhere] group-hover:text-accent transition-colors">
                               {cleanText(item.title)}
                             </h3>
                           </a>
-                          <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3">
+                          <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3 break-words [overflow-wrap:anywhere]">
                             {item.summary}
                           </p>
 
-                          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground pt-4 border-t border-border">
+                          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground pt-4 border-t border-border">
                             <span className="flex items-center gap-1.5">
                               <Calendar size={12} />
                               {new Date(item.published_date).toLocaleDateString("en-GB", {
