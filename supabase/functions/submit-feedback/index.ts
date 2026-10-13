@@ -73,7 +73,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             from: 'Wellness Genius <noreply@wellnessgenius.co.uk>',
-            to: ['support@wellnessgenius.ai'],
+            to: ['andy@wellnessgenius.ai'],
             subject: `[${(feedbackType || 'bug').toUpperCase()}] ${severity?.toUpperCase() || 'MEDIUM'}: ${featureArea}`,
             html: `
               <h2>New ${feedbackType === 'feature' ? 'Feature Request' : feedbackType === 'improvement' ? 'Improvement Suggestion' : 'Bug Report'}</h2>
