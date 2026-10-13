@@ -9,6 +9,7 @@ interface LeadFormProps {
   title?: string;
   description?: string;
   buttonLabel?: string;
+  compact?: boolean;
 }
 
 const LeadForm = ({
@@ -16,6 +17,7 @@ const LeadForm = ({
   title = "Get the free briefing",
   description = "Weekly wellness, hospitality and AI intelligence. Free. Unsubscribe any time.",
   buttonLabel = "Get the free briefing",
+  compact = false,
 }: LeadFormProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -41,9 +43,9 @@ const LeadForm = ({
   };
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 sm:p-8">
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground mb-5">{description}</p>
+    <div className={`bg-card border border-border rounded-2xl ${compact ? "p-4" : "p-6 sm:p-8"}`}>
+      <h3 className={`${compact ? "text-base" : "text-xl"} font-semibold mb-1`}>{title}</h3>
+      <p className={`text-sm text-muted-foreground ${compact ? "mb-3" : "mb-5"}`}>{description}</p>
       {done ? (
         <p className="text-sm font-medium text-accent">Thanks. Look out for the next briefing in your inbox.</p>
       ) : (
