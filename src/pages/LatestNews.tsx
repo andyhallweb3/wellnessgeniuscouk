@@ -772,7 +772,7 @@ const LatestNews = () => {
                           style={{ animationDelay: `${index * 50}ms` }}
                           id={`news-${item.id}`}
                         >
-                          <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="block -mx-2 -mt-2 mb-4 rounded-lg overflow-hidden" tabIndex={-1} aria-hidden="true">
+                          <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="hidden sm:block -mx-2 -mt-2 mb-4 rounded-lg overflow-hidden" tabIndex={-1} aria-hidden="true">
                             <NewsImage src={item.image_url} alt="" sectors={item.sectors} imgClassName="group-hover:scale-105 transition-transform duration-300" />
                           </a>
                           
@@ -786,11 +786,14 @@ const LatestNews = () => {
                             <span className="min-w-0 max-w-full truncate">{item.source_name}</span>
                           </div>
                           
-                          <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="block">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <NewsImage variant="thumb" src={item.image_url} alt="" sectors={item.sectors} className="sm:hidden w-20 h-20 shrink-0 rounded-lg" />
+                          <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="block min-w-0 flex-1">
                             <h3 className="text-lg font-semibold mb-3 line-clamp-3 break-words [overflow-wrap:anywhere] group-hover:text-accent transition-colors">
                               {cleanText(item.title)}
                             </h3>
                           </a>
+                          </div>
                           {item.summary && (
                             <p className="text-muted-foreground text-sm mb-4 line-clamp-3 break-words [overflow-wrap:anywhere]">
                               {item.summary}

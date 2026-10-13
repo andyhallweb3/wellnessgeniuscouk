@@ -19,33 +19,43 @@ interface Props {
   sectors?: string[] | null;
   className?: string;
   imgClassName?: string;
+  /** "banner" = 16:9 block; "thumb" = fills a fixed-size box set by className */
+  variant?: "banner" | "thumb";
 }
 
-/** 16:9 news image with a branded per-sector fallback for missing or broken images. */
-const NewsImage = ({ src, alt, sectors, className = "", imgClassName = "" }: Props) => {
-  const [failed, setFailed] = useState(false);
-  const url = proxiedImageUrl(src);
+/**
+ * News image: loads via image-proxy, falls back to the direct URL (no referrer),
+ * then to a subtle per-sector placeholder.
+ */
+const NewsImage = ({ src, alt, sectors, className = "", imgClassName = "", variant = "banner" }: Props) => {
+  const [stage, setStage] = useState(0);
+  const candidates = [proxiedImageUrl(src), src || null].filter(Boolean) as string[];
+  const url = candidates[stage];
   const style = (sectors && sectors.map((s) => SECTOR_STYLE[s]).find(Boolean)) || DEFAULT_STYLE;
+  const box = variant === "banner" ? "aspect-video w-full" : "";
 
   return (
-    <div className={`relative aspect-video w-full overflow-hidden bg-secondary ${className}`}>
-      {url && !failed ? (
+    <div className={`relative overflow-hidden bg-secondary ${box} ${className}`}>
+      {url ? (
         <img
+          key={url}
           src={url}
           alt={alt}
           loading="lazy"
           decoding="async"
-          onError={() => setFailed(true)}
+          referrerPolicy="no-referrer"
+          onError={() => setStage((n) => n + 1)}
           className={`absolute inset-0 h-full w-full object-cover ${imgClassName}`}
         />
       ) : (
         <div
           aria-hidden="true"
-          className="absolute inset-0 flex flex-col justify-end p-4"
+          className="absolute inset-0 flex items-end p-2 opacity-60"
           style={{ background: `linear-gradient(135deg, ${style.from}, ${style.to})` }}
         >
-          <span className="text-[10px] uppercase tracking-[0.2em] text-white/70">Wellness Genius</span>
-          <span className="text-lg font-semibold text-white leading-tight">{style.label}</span>
+          {variant === "banner" && (
+            <span className="text-[10px] uppercase tracking-[0.2em] text-white/80">{style.label}</span>
+          )}
         </div>
       )}
     </div>
