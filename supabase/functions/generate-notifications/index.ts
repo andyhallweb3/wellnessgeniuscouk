@@ -244,7 +244,7 @@ function generateStreakWarningEmail(
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center">
-                    <a href="https://wellnessgenius.ai/genie" 
+                    <a href="https://www.wellnessgenius.co.uk/genie" 
                        style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);">
                       Keep My Streak Going →
                     </a>
@@ -259,7 +259,7 @@ function generateStreakWarningEmail(
             <td style="padding: 24px 40px; border-top: 1px solid #2d3748;">
               <p style="margin: 0; font-size: 12px; color: #718096; text-align: center;">
                 You're receiving this because you opted into leaderboard tracking.<br>
-                <a href="https://wellnessgenius.ai/genie" style="color: #14b8a6;">Manage notification preferences</a>
+                <a href="https://www.wellnessgenius.co.uk/genie" style="color: #14b8a6;">Manage notification preferences</a>
               </p>
             </td>
           </tr>
@@ -433,7 +433,7 @@ async function checkStreakRecovery(
           const firstName = profile.full_name?.split(' ')[0] || 'there';
           
           await resend.emails.send({
-            from: "Wellness Genius <notifications@wellnessgenius.ai>",
+            from: "Wellness Genius <notifications@wellnessgenius.co.uk>",
             to: [profile.email],
             subject: `🔥 ${daysRemaining} day${daysRemaining > 1 ? 's' : ''} left to save your ${streakWeeks}-week streak!`,
             html: generateStreakWarningEmail(

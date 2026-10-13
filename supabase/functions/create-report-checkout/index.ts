@@ -50,7 +50,7 @@ serve(async (req) => {
       logStep("Found existing customer", { customerId });
     }
 
-    const origin = req.headers.get("origin") || "https://wellnessgenius.ai";
+    const origin = req.headers.get("origin") || "https://www.wellnessgenius.co.uk";
 
     // Create checkout session options
     const sessionOptions: Stripe.Checkout.SessionCreateParams = {

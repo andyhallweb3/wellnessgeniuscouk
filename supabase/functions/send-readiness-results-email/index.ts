@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const resultsUrl = `${supabaseUrl?.replace('.supabase.co', '')?.includes('localhost') 
       ? 'http://localhost:5173' 
-      : 'https://wellnessgenius.ai'}/ai-readiness/results/${data.completionId}`;
+      : 'https://www.wellnessgenius.co.uk'}/ai-readiness/results/${data.completionId}`;
 
     console.log(`Sending results email to ${data.email}`);
 
@@ -133,7 +133,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="padding: 20px; background: #f9fafb; text-align: center; border-top: 1px solid #e5e7eb;">
             <p style="font-size: 12px; color: #6b7280; margin: 0;">
-              You received this email because you completed an AI Readiness Assessment on wellnessgenius.ai
+              You received this email because you completed an AI Readiness Assessment on wellnessgenius.co.uk
             </p>
           </div>
         </div>

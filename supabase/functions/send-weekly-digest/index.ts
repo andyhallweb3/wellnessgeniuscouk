@@ -152,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
         const emailHtml = generateDigestEmail(digest);
         
         await resend.emails.send({
-          from: "Wellness Genius <insights@wellnessgenius.ai>",
+          from: "Wellness Genius <insights@wellnessgenius.co.uk>",
           to: [digest.email],
           subject: `📊 Your Weekly Genie Update: ${digest.streakWeeks} Week Streak!`,
           html: emailHtml,
@@ -317,7 +317,7 @@ function generateDigestEmail(digest: DigestData): string {
 
               <!-- CTA -->
               <div style="text-align: center; margin-top: 32px;">
-                <a href="https://wellnessgenius.ai/genie" 
+                <a href="https://www.wellnessgenius.co.uk/genie" 
                    style="display: inline-block; background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%); color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
                   Continue Your Streak →
                 </a>
@@ -332,7 +332,7 @@ function generateDigestEmail(digest: DigestData): string {
                 You're receiving this because you opted into the Wellness Genius Leaderboard.
               </p>
               <p style="margin: 0; color: #9CA3AF; font-size: 12px;">
-                <a href="https://wellnessgenius.ai/genie" style="color: #0F766E; text-decoration: none;">Manage preferences</a>
+                <a href="https://www.wellnessgenius.co.uk/genie" style="color: #0F766E; text-decoration: none;">Manage preferences</a>
               </p>
             </td>
           </tr>
