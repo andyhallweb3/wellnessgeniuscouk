@@ -175,7 +175,7 @@ const StructuredAIEbook = () => {
           {/* Back link for logged in users */}
           {user && (
             <Button variant="ghost" size="sm" className="mb-6" asChild>
-              <Link to="/hub">
+              <Link to="/resources">
                 <ArrowLeft size={16} />
                 Back to Hub
               </Link>

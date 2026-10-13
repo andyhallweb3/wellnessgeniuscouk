@@ -251,8 +251,8 @@ const PrivacyReadinessResults = () => {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link to="/genie">
-                  Ask AI Advisor
+                <Link to="/resources">
+                  Free resources
                 </Link>
               </Button>
             </div>

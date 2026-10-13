@@ -69,7 +69,7 @@ const NewsletterThankYou = () => {
                     AI Prompt Guide for Wellness Operators
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    20+ battle-tested prompts to automate marketing, operations, and client engagement. Worth £19.99 — <span className="text-primary font-medium">free for subscribers</span>.
+                    20+ battle-tested prompts to automate marketing, operations, and client engagement. <span className="text-primary font-medium">free for subscribers</span>.
                   </p>
                 </div>
               </div>

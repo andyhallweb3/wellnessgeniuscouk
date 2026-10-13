@@ -64,8 +64,6 @@ const getStatusColor = (variant: "critical" | "warning" | "healthy" | "strong") 
   }
 };
 
-const SHOW_ADVISOR_CTA = false;
-
 const lockedFeatures = [
   "Conservative revenue upside range",
   "Top 3 blockers identified by pillar",
@@ -206,7 +204,7 @@ const AIReadinessResults = () => {
       
       if (error) throw error;
       
-      // Also save to product_downloads so the AI Advisor can see it
+      // Also save to product_downloads
       const userEmail = user.email;
       if (userEmail) {
         await supabase.from("product_downloads").insert({
@@ -418,16 +416,12 @@ const AIReadinessResults = () => {
                     </span>
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Save your assessment results and get <strong>10 free AI Advisor sessions</strong> to help you take action on your score.
+                    Save your assessment results so you can track your progress over time.
                   </p>
                   <ul className="space-y-2 mb-6">
                     <li className="flex items-center gap-2 text-sm">
                       <CheckCircle size={14} className="text-accent" />
                       Save and track your AI readiness progress
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle size={14} className="text-accent" />
-                      10 free AI Advisor sessions (14-day trial)
                     </li>
                     <li className="flex items-center gap-2 text-sm">
                       <CheckCircle size={14} className="text-accent" />
@@ -478,42 +472,6 @@ const AIReadinessResults = () => {
             </div>
           </div>
 
-          {/* AI Advisor CTA (hidden while the site runs as a free hub) */}
-          {SHOW_ADVISOR_CTA && <div className="mt-12 pt-8 border-t border-border">
-            <div className="bg-gradient-to-br from-accent/5 to-accent/10 rounded-xl p-6 sm:p-8 border border-accent/20">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <div className="flex-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold mb-3">
-                    <Sparkles size={12} />
-                    Recommended next step
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-heading mb-2">
-                    Your score is {resultData.overallScore}/100 — ask Genie what to fix first.
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    The AI Advisor already knows your score. Start a free session and get a prioritised 90-day action plan for your business in under 60 seconds.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 sm:shrink-0">
-                  <Button variant="accent" asChild className="whitespace-nowrap">
-                    <Link to={user
-                      ? `/genie?mode=diagnose&context=readiness&score=${resultData.overallScore}`
-                      : `/auth?redirect=/genie?mode=diagnose%26context=readiness%26score=${resultData.overallScore}`
-                    }>
-                      <Sparkles size={16} />
-                      Ask Genie — free
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to="/resources">
-                      Browse playbooks
-                      <ArrowRight size={14} />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>}
         </div>
       </main>
 

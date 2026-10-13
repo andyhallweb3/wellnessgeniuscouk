@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
-import SiteOnboarding from "@/components/onboarding/SiteOnboarding";
 import CookieConsent from "@/components/CookieConsent";
 import HubHome from "./pages/hub/HubHome";
 import HubResources from "./pages/hub/Resources";
@@ -13,23 +12,12 @@ import SectorsIndex from "./pages/hub/SectorsIndex";
 import SectorPage from "./pages/hub/SectorPage";
 import Briefing from "./pages/hub/Briefing";
 import BriefingIssue from "./pages/hub/BriefingIssue";
-import Products from "./pages/Products";
-import Bundles from "./pages/Bundles";
 import Auth from "./pages/Auth";
-import MemberHub from "./pages/MemberHub";
 import DownloadsLibrary from "./pages/DownloadsLibrary";
-import AICoach from "./pages/AICoach";
-import ServicesPage from "./pages/ServicesPage";
-import SoftwarePage from "./pages/SoftwarePage";
 
-import Genie from "./pages/Genie";
 import AIReadinessLanding from "./pages/AIReadinessLanding";
-import AIAdvisorLanding from "./pages/AIAdvisorLanding";
 import AIReadinessAssessmentFree from "./pages/AIReadinessAssessmentFree";
-import AIReadinessAssessmentPaid from "./pages/AIReadinessAssessmentPaid";
 import AIReadinessResults from "./pages/AIReadinessResults";
-import AIReadinessCheckout from "./pages/AIReadinessCheckout";
-import AIReadinessReport from "./pages/AIReadinessReport";
 import SharedReport from "./pages/SharedReport";
 import SpeakerKit from "./pages/SpeakerKit";
 import Insights from "./pages/Insights";
@@ -38,7 +26,6 @@ import LatestNews from "./pages/LatestNews";
 import NewsletterAdmin from "./pages/NewsletterAdmin";
 import DownloadsAdmin from "./pages/DownloadsAdmin";
 import EmailTemplatesAdmin from "./pages/EmailTemplatesAdmin";
-import CoachCreditsAdmin from "./pages/CoachCreditsAdmin";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
 import ValidationErrorsAdmin from "./pages/ValidationErrorsAdmin";
 import KnowledgeBaseAdmin from "./pages/KnowledgeBaseAdmin";
@@ -46,14 +33,12 @@ import KBCanonAdmin from "./pages/KBCanonAdmin";
 import KBIntelAdmin from "./pages/KBIntelAdmin";
 import WorkspacesAdmin from "./pages/WorkspacesAdmin";
 import CouponAnalyticsAdmin from "./pages/CouponAnalyticsAdmin";
-import Roadmap from "./pages/Roadmap";
 import Admin from "./pages/Admin";
 import AdminDocs from "./pages/AdminDocs";
 import Unsubscribe from "./pages/Unsubscribe";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CookiePolicy from "./pages/CookiePolicy";
-import HowToUseStack from "./pages/HowToUseStack";
 import PrivacyPlaybook from "./pages/PrivacyPlaybook";
 import PrivacyReadinessLanding from "./pages/PrivacyReadinessLanding";
 import PrivacyReadinessAssessment from "./pages/PrivacyReadinessAssessment";
@@ -61,16 +46,6 @@ import PrivacyReadinessResults from "./pages/PrivacyReadinessResults";
 import NotFound from "./pages/NotFound";
 import NewsletterSignup from "./pages/NewsletterSignup";
 import NewsletterThankYou from "./pages/NewsletterThankYou";
-import FounderToday from "./pages/founder/FounderToday";
-import BusinessHealth from "./pages/founder/BusinessHealth";
-import GrowthLevers from "./pages/founder/GrowthLevers";
-import Narrative from "./pages/founder/Narrative";
-import Partnerships from "./pages/founder/Partnerships";
-import DecisionsLog from "./pages/founder/DecisionsLog";
-import Guardrails from "./pages/founder/Guardrails";
-import CommandCentre from "./pages/founder/CommandCentre";
-import ContentDashboard from "./pages/founder/ContentDashboard";
-import OperatorNudgeAdmin from "./pages/founder/OperatorNudgeAdmin";
 import StructuredAIEbook from "./pages/StructuredAIEbook";
 import WellnessAssessment from "./pages/WellnessAssessment";
 import WellnessDashboard from "./pages/WellnessDashboard";
@@ -96,36 +71,36 @@ const App = () => (
             <Route path="/thought-leadership" element={<Navigate to="/briefing" replace />} />
             <Route path="/pricing" element={<Navigate to="/resources" replace />} />
             <Route path="/products" element={<Navigate to="/resources" replace />} />
-            <Route path="/products/legacy" element={<Products />} />
+            <Route path="/products/legacy" element={<Navigate to="/resources" replace />} />
             <Route path="/bundles" element={<Navigate to="/resources" replace />} />
-            <Route path="/bundles/legacy" element={<Bundles />} />
-            <Route path="/how-to-use" element={<HowToUseStack />} />
+            <Route path="/bundles/legacy" element={<Navigate to="/resources" replace />} />
+            <Route path="/how-to-use" element={<Navigate to="/" replace />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/member-hub" element={<Navigate to="/hub" replace />} />
-            <Route path="/hub" element={<MemberHub />} />
+            <Route path="/member-hub" element={<Navigate to="/" replace />} />
+            <Route path="/hub" element={<Navigate to="/" replace />} />
             <Route path="/hub/downloads" element={<DownloadsLibrary />} />
             <Route path="/hub/structured-ai-ebook" element={<StructuredAIEbook />} />
             <Route path="/structured-ai" element={<Navigate to="/hub/structured-ai-ebook" replace />} />
-            <Route path="/hub/coach" element={<Navigate to="/genie" replace />} />
-            <Route path="/ai-coach" element={<Navigate to="/genie" replace />} />
-            <Route path="/ai-genius" element={<Navigate to="/genie" replace />} />
-            <Route path="/genie" element={<Genie />} />
-            <Route path="/advisor" element={<AIAdvisorLanding />} />
-            <Route path="/ai-advisor" element={<AIAdvisorLanding />} />
+            <Route path="/hub/coach" element={<Navigate to="/" replace />} />
+            <Route path="/ai-coach" element={<Navigate to="/" replace />} />
+            <Route path="/ai-genius" element={<Navigate to="/" replace />} />
+            <Route path="/genie" element={<Navigate to="/" replace />} />
+            <Route path="/advisor" element={<Navigate to="/" replace />} />
+            <Route path="/ai-advisor" element={<Navigate to="/" replace />} />
             <Route path="/ai-readiness" element={<AIReadinessLanding />} />
             <Route path="/ai-readiness/start" element={<AIReadinessAssessmentFree />} />
-            <Route path="/ai-readiness/full/:id" element={<AIReadinessAssessmentPaid />} />
+            <Route path="/ai-readiness/full/:id" element={<Navigate to="/ai-readiness" replace />} />
             <Route path="/ai-readiness/results/:id" element={<AIReadinessResults />} />
-            <Route path="/ai-readiness/checkout/:id" element={<AIReadinessCheckout />} />
-            <Route path="/ai-readiness/report/:id" element={<AIReadinessReport />} />
+            <Route path="/ai-readiness/checkout/:id" element={<Navigate to="/ai-readiness" replace />} />
+            <Route path="/ai-readiness/report/:id" element={<Navigate to="/ai-readiness" replace />} />
             <Route path="/ai-readiness/share/:token" element={<SharedReport />} />
             <Route path="/privacy-playbook" element={<PrivacyPlaybook />} />
             <Route path="/privacy-readiness" element={<PrivacyReadinessLanding />} />
             <Route path="/privacy-readiness/start" element={<PrivacyReadinessAssessment />} />
             <Route path="/privacy-readiness/results" element={<PrivacyReadinessResults />} />
             <Route path="/speaker-kit" element={<SpeakerKit />} />
-            <Route path="/services" element={<ServicesPage />} />
-            <Route path="/software" element={<SoftwarePage />} />
+            <Route path="/services" element={<Navigate to="/" replace />} />
+            <Route path="/software" element={<Navigate to="/" replace />} />
             <Route path="/insights" element={<Insights />} />
             <Route path="/insights/:slug" element={<BlogPost />} />
             <Route path="/news" element={<LatestNews />} />
@@ -134,7 +109,7 @@ const App = () => (
             <Route path="/news/admin" element={<NewsletterAdmin />} />
             <Route path="/downloads/admin" element={<DownloadsAdmin />} />
             <Route path="/emails/admin" element={<EmailTemplatesAdmin />} />
-            <Route path="/coach/admin" element={<CoachCreditsAdmin />} />
+            <Route path="/coach/admin" element={<Navigate to="/admin" replace />} />
             <Route path="/feedback/admin" element={<FeedbackAdmin />} />
             <Route path="/validation/admin" element={<ValidationErrorsAdmin />} />
             <Route path="/knowledge/admin" element={<KnowledgeBaseAdmin />} />
@@ -142,7 +117,7 @@ const App = () => (
             <Route path="/admin/kb-intel" element={<KBIntelAdmin />} />
             <Route path="/admin/workspaces" element={<WorkspacesAdmin />} />
             <Route path="/coupons/admin" element={<CouponAnalyticsAdmin />} />
-            <Route path="/roadmap" element={<Roadmap />} />
+            <Route path="/roadmap" element={<Navigate to="/" replace />} />
             <Route path="/structured-ai" element={<StructuredAIEbook />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/subscribe" element={<NewsletterSignup />} />
@@ -156,24 +131,24 @@ const App = () => (
             <Route path="/wellness" element={<WellnessAssessment />} />
             <Route path="/wellness/dashboard" element={<WellnessDashboard />} />
             {/* Redirect legacy agent route */}
-            <Route path="/agent" element={<Navigate to="/genie" replace />} />
+            <Route path="/agent" element={<Navigate to="/" replace />} />
             {/* Founder Command Centre (admin only) */}
-            <Route path="/founder" element={<FounderToday />} />
-            <Route path="/founder/health" element={<BusinessHealth />} />
-            <Route path="/founder/growth" element={<GrowthLevers />} />
-            <Route path="/founder/narrative" element={<Narrative />} />
-            <Route path="/founder/partnerships" element={<Partnerships />} />
-            <Route path="/founder/decisions" element={<DecisionsLog />} />
-            <Route path="/founder/guardrails" element={<Guardrails />} />
-            <Route path="/founder/command" element={<CommandCentre />} />
-            <Route path="/founder/content" element={<ContentDashboard />} />
-            <Route path="/founder/nudge" element={<OperatorNudgeAdmin />} />
-            <Route path="/developer" element={<Developer />} />
+            <Route path="/founder" element={<Navigate to="/" replace />} />
+            <Route path="/founder/health" element={<Navigate to="/" replace />} />
+            <Route path="/founder/growth" element={<Navigate to="/" replace />} />
+            <Route path="/founder/narrative" element={<Navigate to="/" replace />} />
+            <Route path="/founder/partnerships" element={<Navigate to="/" replace />} />
+            <Route path="/founder/decisions" element={<Navigate to="/" replace />} />
+            <Route path="/founder/guardrails" element={<Navigate to="/" replace />} />
+            <Route path="/founder/command" element={<Navigate to="/" replace />} />
+            <Route path="/founder/content" element={<Navigate to="/" replace />} />
+            <Route path="/founder/nudge" element={<Navigate to="/" replace />} />
+            <Route path="/developer" element={<Navigate to="/" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
           {/* AI advisor floating button hidden while the site runs as a free hub. */}
-          <SiteOnboarding />
+          {/* Site tour removed: it introduced the AI advisor. */}
           <CookieConsent />
         </BrowserRouter>
       </TooltipProvider>

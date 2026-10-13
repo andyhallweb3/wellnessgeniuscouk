@@ -290,7 +290,7 @@ const AIReadinessLanding = () => {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link to="/products">
+                <Link to="/resources">
                   Browse All Products
                 </Link>
               </Button>

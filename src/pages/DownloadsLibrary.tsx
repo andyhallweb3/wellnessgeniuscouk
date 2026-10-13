@@ -171,7 +171,7 @@ const DownloadsLibrary = () => {
         default:
           // For products without PDF generators, redirect to products page
           toast.info("Please download this product from the Products page");
-          navigate("/products");
+          navigate("/resources");
           return;
       }
 
@@ -227,7 +227,7 @@ const DownloadsLibrary = () => {
         <div className="container-wide section-padding">
           {/* Back link */}
           <Button variant="ghost" size="sm" className="mb-6" asChild>
-            <Link to="/hub">
+            <Link to="/resources">
               <ArrowLeft size={16} />
               Back to Hub
             </Link>
@@ -292,7 +292,7 @@ const DownloadsLibrary = () => {
                     Download free resources or purchase products to see them here.
                   </p>
                   <Button variant="accent" asChild>
-                    <Link to="/products">Browse Products</Link>
+                    <Link to="/resources">Browse free resources</Link>
                   </Button>
                 </>
               ) : (

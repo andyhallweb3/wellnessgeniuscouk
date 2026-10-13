@@ -167,10 +167,10 @@ const PrivacyReadinessLanding = () => {
           </div>
         </section>
 
-        {/* Pricing */}
+        {/* What you get */}
         <section className="section-padding">
           <div className="container-narrow">
-            <h2 className="text-3xl font-heading text-center mb-12">Pricing</h2>
+            <h2 className="text-3xl font-heading text-center mb-12">What you get</h2>
             
             <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
               {/* Free tier */}

@@ -120,7 +120,7 @@ const Header = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md">
                     <User size={15} />
-                    My Hub
+                    My account
                     {isAdmin && (
                       <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[10px] font-bold border-amber-500/50 text-amber-600">
                         Admin
@@ -130,14 +130,11 @@ const Header = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[160px]">
                     <DropdownMenuItem asChild>
-                      <Link to="/hub" className="w-full">Dashboard</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/hub?tab=knowledge" className="w-full">Knowledge Base</Link>
+                      <Link to="/hub/downloads" className="w-full">My downloads</Link>
                     </DropdownMenuItem>
                     {latestReportId && (
                       <DropdownMenuItem asChild>
-                        <Link to={`/ai-readiness/report/${latestReportId}`} className="w-full">My Results</Link>
+                        <Link to={`/ai-readiness/results/${latestReportId}`} className="w-full">My Results</Link>
                       </DropdownMenuItem>
                     )}
                     {isAdmin && (
@@ -145,9 +142,6 @@ const Header = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link to="/admin" className="w-full text-amber-600">Admin</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/founder" className="w-full text-amber-600">Founder</Link>
                         </DropdownMenuItem>
                       </>
                     )}
@@ -200,7 +194,7 @@ const Header = () => {
               {!isLoading && (
                 user ? (
                   <>
-                    <Link to="/hub" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>My Hub</Link>
+                    <Link to="/hub/downloads" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>My downloads</Link>
                     {isAdmin && (
                       <Link to="/admin" className="px-3 py-2.5 text-base font-medium text-amber-600" onClick={() => setIsMenuOpen(false)}>Admin</Link>
                     )}

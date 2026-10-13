@@ -50,7 +50,7 @@ type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/hub";
+  const redirectUrl = searchParams.get("redirect") || "/hub/downloads";
   const initialMode = searchParams.get("mode") === "login" ? "login" : "signup";
   const isFromAssessment = redirectUrl.includes("/ai-readiness/results/");
   const isFromDownload = searchParams.get("from") === "download";
@@ -133,7 +133,7 @@ const Auth = () => {
         toast.error(error.message);
       }
     } else {
-      toast.success("Account created! You now have 10 free AI Advisor sessions.");
+      toast.success("Account created.");
       navigate(redirectUrl);
     }
     setIsSubmitting(false);
@@ -155,7 +155,7 @@ const Auth = () => {
       toast.error(error.message);
     } else {
       toast.success("Password updated. You're now signed in.");
-      navigate("/hub");
+      navigate("/hub/downloads");
     }
     setIsSubmitting(false);
   };
@@ -192,7 +192,7 @@ const Auth = () => {
               {(isFromAssessment || isFromDownload) && mode === "signup" && (
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
                   <Gift size={16} />
-                  {isFromDownload ? "Access your downloads anytime" : "Get 10 free AI Advisor sessions"}
+                  {isFromDownload ? "Access your downloads anytime" : "Save your results"}
                 </div>
               )}
               <h1 className="text-3xl font-heading mb-2">
@@ -205,8 +205,8 @@ const Auth = () => {
                   ? isFromDownload
                     ? "Create an account to access your downloads anytime and get personalised AI insights."
                     : isFromAssessment
-                    ? "Save your assessment and unlock 10 free AI Advisor sessions."
-                    : "Join to access your purchased products and save your progress."
+                    ? "Save your assessment results to your account."
+                    : "Join to access your downloads and save your progress."
                   : mode === "update-password"
                   ? "Choose a new password for your account."
                   : "Enter your email and we'll send you a reset link."
