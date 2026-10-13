@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
     `;
 
     const { data, error } = await resend.emails.send({
-      from: "Wellness Genius <newsletter@news.wellnessgenius.co.uk>",
+      from: "Wellness Genius <newsletter@wellnessgenius.co.uk>",
       reply_to: "andy@wellnessgenius.co.uk",
       to: [email],
       subject: "Welcome to Wellness Genius 🎉",
