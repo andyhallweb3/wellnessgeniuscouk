@@ -1,4 +1,5 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -24,6 +25,29 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Email is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Guard: only send to addresses that subscribed in the last 10 minutes,
+    // so this public endpoint cannot be used to email arbitrary people.
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { data: subscriber, error: lookupError } = await supabase
+      .from("newsletter_subscribers")
+      .select("id")
+      .eq("email", String(email).trim().toLowerCase())
+      .gte("subscribed_at", since)
+      .limit(1)
+      .maybeSingle();
+
+    if (lookupError || !subscriber) {
+      console.log("Confirmation skipped: no recent subscription for this address");
+      return new Response(
+        JSON.stringify({ success: true, sent: false }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
