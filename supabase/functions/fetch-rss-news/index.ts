@@ -166,7 +166,7 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
     let title = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
     
     // Strip any HTML tags from title (some feeds include anchor tags)
-    title = decodeEntities(title.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+    title = decodeEntities(title.replace(/<[^>]+>/g, ' ')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     
     if (!title) return null;
     
@@ -181,7 +181,7 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
                       item.match(/<content:encoded[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/content:encoded>/is);
     let summary = descMatch ? descMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
     
-    summary = decodeEntities(summary.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+    summary = decodeEntities(summary.replace(/<[^>]+>/g, ' ')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     if (summary.length > 300) {
       summary = summary.substring(0, 297) + '...';
     }
