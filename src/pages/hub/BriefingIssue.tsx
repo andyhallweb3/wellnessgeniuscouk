@@ -2,6 +2,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Quote } from "lucide-react";
 import HubLayout from "@/components/hub/HubLayout";
 import LeadForm from "@/components/hub/LeadForm";
+import BriefingCover from "@/components/hub/BriefingCover";
 import { getIssue } from "@/data/briefingIssues";
 
 const BriefingIssue = () => {
@@ -19,6 +20,7 @@ const BriefingIssue = () => {
           {new Date(issue.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
         </p>
         <h1 className="text-3xl lg:text-4xl font-bold tracking-tight mb-4">{issue.title}</h1>
+        <BriefingCover image={issue.image} title={issue.title} className="rounded-xl mb-6 aspect-[1200/630]" />
         <p className="text-lg text-muted-foreground mb-6">{issue.summary}</p>
 
         {issue.audioUrl && (

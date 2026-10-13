@@ -12,6 +12,7 @@ export interface BriefingIssue {
   date: string;              // ISO date, e.g. "2024-06-28"
   summary: string;
   linkedinUrl: string;       // real LinkedIn article URL
+  image?: string;            // self-hosted cover, e.g. /briefing/<slug>.jpg (LinkedIn CDN links expire)
   sectors?: string[];        // sector slugs from src/data/sectors.ts
   tags?: string[];
   audioUrl?: string;         // optional audio snippet (mp3/m4a URL)
@@ -31,6 +32,7 @@ export const BRIEFING_ISSUES: BriefingIssue[] = [
     date: "2026-10-12",
     summary: "Cold, oxygen and light are moving from the spa menu into one guest programme.",
     linkedinUrl: "https://www.linkedin.com/pulse/recovery-circuit-becoming-new-hotel-wellness-standard-andy-hall-ycm6e",
+    image: "/briefing/recovery-circuit-hotel-wellness-standard.jpg",
     sectors: ["hotels-spas"],
   },
   {
@@ -39,6 +41,7 @@ export const BRIEFING_ISSUES: BriefingIssue[] = [
     date: "2026-09-09",
     summary: "Why hyperbaric oxygen is following cryo and red light into hospitality and fitness, and what that means for investment decisions.",
     linkedinUrl: "https://www.linkedin.com/pulse/room-makes-hyperbaric-boardroom-decision-clinical-one-andy-hall-z6xpe",
+    image: "/briefing/hyperbaric-boardroom-decision.jpg",
     sectors: ["hotels-spas", "clinics", "fitness"],
   },
   {
@@ -47,6 +50,7 @@ export const BRIEFING_ISSUES: BriefingIssue[] = [
     date: "2026-08-11",
     summary: "Sheraton Stockholm's renovation as a preview of where premium hospitality wellness is heading.",
     linkedinUrl: "https://www.linkedin.com/pulse/hotels-turning-wellness-membership-business-andy-hall-toaje",
+    image: "/briefing/hotels-wellness-membership-business.jpg",
     sectors: ["hotels-spas", "country-clubs"],
   },
   {
@@ -55,6 +59,7 @@ export const BRIEFING_ISSUES: BriefingIssue[] = [
     date: "2026-06-22",
     summary: "Lessons from months of conferences, buyer events and site visits with fitness and wellness operators.",
     linkedinUrl: "https://www.linkedin.com/pulse/three-modalities-product-sequence-andy-hall-83tpe",
+    image: "/briefing/three-modalities-sequence.jpg",
     sectors: ["fitness", "hotels-spas", "clinics"],
   },
   {
@@ -63,6 +68,7 @@ export const BRIEFING_ISSUES: BriefingIssue[] = [
     date: "2026-02-23",
     summary: "The fitness industry does not have an engagement crisis. It has a retention economics problem.",
     linkedinUrl: "https://www.linkedin.com/pulse/wellness-has-retention-problemnot-engagement-problem-andy-hall-ss5ge",
+    image: "/briefing/wellness-retention-problem.jpg",
     sectors: ["fitness", "country-clubs"],
   },
   {
@@ -71,6 +77,7 @@ export const BRIEFING_ISSUES: BriefingIssue[] = [
     date: "2026-01-12",
     summary: "What ChatGPT Health could mean for wellness operators and their customers.",
     linkedinUrl: "https://www.linkedin.com/pulse/openais-health-play-what-chatgpt-means-operators-consumers-andy-hall-eh4me",
+    image: "/briefing/openai-health-play.jpg",
     sectors: ["clinics", "fitness"],
   },
   {
@@ -79,6 +86,7 @@ export const BRIEFING_ISSUES: BriefingIssue[] = [
     date: "2026-01-03",
     summary: "Most wellness operators want to use AI. Few know where to start.",
     linkedinUrl: "https://www.linkedin.com/pulse/happy-new-year-wellness-genius-gift-kickstart-your-2025-andy-hall-2upbe",
+    image: "/briefing/new-year-ai-strategy-gift.jpg",
   },
   {
     slug: "ai-wellness-experimentation-to-execution",
@@ -86,6 +94,7 @@ export const BRIEFING_ISSUES: BriefingIssue[] = [
     date: "2025-12-29",
     summary: "What the week's AI, fitness, fintech and health signals say about where the industry is heading.",
     linkedinUrl: "https://www.linkedin.com/pulse/ai-wellness-shift-from-experimentation-execution-andy-hall-zipje",
+    image: "/briefing/ai-wellness-experimentation-to-execution.jpg",
   },
   {
     slug: "wellness-web3-ai-news-round-up-2024-06",
@@ -93,6 +102,7 @@ export const BRIEFING_ISSUES: BriefingIssue[] = [
     date: "2024-06-28",
     summary: "A round-up of the month's stories across wellness, Web3 and AI.",
     linkedinUrl: "https://www.linkedin.com/pulse/wellness-web3-ai-latest-news-round-up-andy-hall-l6ore",
+    image: "/briefing/wellness-web3-ai-news-round-up-2024-06.jpg",
   },
 ];
 
