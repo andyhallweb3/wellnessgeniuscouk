@@ -146,7 +146,7 @@ export function decodeEntities(input: string): string {
 }
 
 const JUNK_SUMMARY = /^(x+|test|lorem ipsum.*|n\/?a|null|undefined|\.+|-+)$/i;
-const SPORTS_OFFTOPIC = /\b(ncaa|hazing|football coach|basketball|quarterback|touchdown|athletics director|college football|college golf|softball|baseball|hockey|playoffs?|varsity)\b/i;
+const SPORTS_OFFTOPIC = /\b(ncaa|hazing|varsity|quarterback|touchdown|playoffs?|athletics director|transfer windows?|eligibility|(football|soccer|basketball|baseball|softball|hockey|lacrosse|volleyball|wrestling)( team| coach(es|ing staff)?| program| season| player)s?|college (football|golf|athletics|sports)|high school (sports|athletes|athletics|football))\b/i;
 
 export function cleanSummary(summary: string): string {
   let s = summary.replace(/\s*The post .{1,400}? appeared first on .{1,200}?\.?\s*$/i, '').trim();
@@ -156,7 +156,7 @@ export function cleanSummary(summary: string): string {
 }
 
 export function isOffTopicSports(item: { title: string; sectors?: string[] | null }): boolean {
-  return (!item.sectors || item.sectors.length === 0) && SPORTS_OFFTOPIC.test(item.title);
+  return SPORTS_OFFTOPIC.test(item.title);
 }
 
 function absoluteUrl(u: string | null | undefined, base: string): string | null {
@@ -498,7 +498,7 @@ Deno.serve(async (req) => {
         .from('rss_news_cache')
         .select('news_id, title, summary, source_url, source_name, category, image_url, published_date, business_lens, sectors')
         .order('published_date', { ascending: false })
-        .limit(sector ? limit : limit + 60);
+        .limit(limit + 60);
 
       if (category && category !== 'All') {
         query = query.eq('category', category);
@@ -511,7 +511,7 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
-      const formattedNews = (cachedNews || []).filter(i => sector || !isOffTopicSports(i)).slice(0, limit).map(item => ({
+      const formattedNews = (cachedNews || []).filter(i => !isOffTopicSports(i)).slice(0, limit).map(item => ({
         id: item.news_id,
         title: item.title,
         summary: item.summary,
@@ -550,9 +550,8 @@ Deno.serve(async (req) => {
     }
     if (sector) {
       resultNews = resultNews.filter(item => item.sectors.includes(sector as Sector));
-    } else {
-      resultNews = resultNews.filter(item => !isOffTopicSports(item));
     }
+    resultNews = resultNews.filter(item => !isOffTopicSports(item));
 
     return new Response(
       JSON.stringify({
