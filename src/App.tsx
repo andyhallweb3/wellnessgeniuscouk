@@ -20,7 +20,7 @@ import AIReadinessAssessmentFree from "./pages/AIReadinessAssessmentFree";
 import AIReadinessResults from "./pages/AIReadinessResults";
 import SharedReport from "./pages/SharedReport";
 import SpeakerKit from "./pages/SpeakerKit";
-import Insights from "./pages/Insights";
+import Articles from "./pages/hub/Articles";
 import BlogPost from "./pages/BlogPost";
 import LatestNews from "./pages/LatestNews";
 import NewsletterAdmin from "./pages/NewsletterAdmin";
@@ -101,7 +101,8 @@ const App = () => (
             <Route path="/speaker-kit" element={<SpeakerKit />} />
             <Route path="/services" element={<Navigate to="/" replace />} />
             <Route path="/software" element={<Navigate to="/" replace />} />
-            <Route path="/insights" element={<Insights />} />
+            <Route path="/insights" element={<Articles />} />
+            <Route path="/articles" element={<Navigate to="/insights" replace />} />
             <Route path="/insights/:slug" element={<BlogPost />} />
             <Route path="/news" element={<LatestNews />} />
             <Route path="/admin" element={<Admin />} />
