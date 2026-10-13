@@ -25,3 +25,7 @@ END $$;
 UPDATE public.rss_news_cache
 SET title = public.news_decode_full(title), summary = public.news_decode_full(summary)
 WHERE title ~ '&[a-zA-Z#0-9]+;|<' OR summary ~ '&[a-zA-Z#0-9]+;|<';
+
+-- Drop truncated trailing tags such as "<a href=..." with no closing bracket.
+UPDATE public.rss_news_cache SET summary = btrim(regexp_replace(summary, '<[a-zA-Z/][^>]*$', ''))
+WHERE summary ~ '<[a-zA-Z/][^>]*$';
