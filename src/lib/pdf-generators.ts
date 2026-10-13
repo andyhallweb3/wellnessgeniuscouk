@@ -3680,7 +3680,7 @@ export const generateStructuredAIEbook = (): jsPDF => {
   
   doc.setFontSize(14);
   doc.setTextColor(...BRAND.teal);
-  doc.text("wellnessgenius.co.uk/ai-advisor", 105, 220, { align: "center" });
+  doc.text("www.wellnessgenius.co.uk/ai-readiness", 105, 220, { align: "center" });
   
   doc.setFontSize(10);
   doc.setTextColor(...BRAND.muted);
