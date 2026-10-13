@@ -77,7 +77,7 @@ const ArticleCard = ({ c }: { c: Card }) => {
           <img src={c.image} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : null}
       </div>
-      <h3 className="font-semibold leading-snug line-clamp-2 break-words [overflow-wrap:anywhere] group-hover:text-accent transition-colors">{c.title}</h3>
+      <h3 className="!text-base font-semibold leading-snug line-clamp-2 break-words [overflow-wrap:anywhere] group-hover:text-accent transition-colors">{c.title}</h3>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
         <span className="inline-flex items-center gap-1"><Calendar size={11} />{fmt(c.date)}</span>
         {c.readTime && <span className="inline-flex items-center gap-1"><Clock size={11} />{c.readTime}</span>}
@@ -230,7 +230,7 @@ const Articles = () => {
             {DOWNLOADABLE_RESOURCES.slice(0, 6).map((r) => (
               <Link key={r.id} to="/resources" className="block bg-card border border-border rounded-xl p-4 hover:border-accent transition-colors min-w-0">
                 <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">{r.format}</p>
-                <h3 className="font-semibold leading-snug line-clamp-2">{r.title}</h3>
+                <h3 className="!text-base font-semibold leading-snug line-clamp-2">{r.title}</h3>
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.subtitle}</p>
               </Link>
             ))}
