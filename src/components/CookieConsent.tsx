@@ -123,30 +123,30 @@ export const CookieConsent = () => {
     <>
       {showBanner && (
         <div 
-          className={`fixed bottom-0 left-0 right-0 z-50 p-4 transition-all duration-300 ${
+          className={`fixed bottom-0 left-0 right-0 z-[60] p-2 md:p-3 transition-all duration-300 ${
             isAnimating ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
           }`}
         >
           <div className="container-wide">
-            <div className="bg-card border border-border rounded-xl p-4 md:p-6 shadow-prominent flex flex-col md:flex-row items-start md:items-center gap-4">
-              <div className="flex items-start gap-3 flex-1">
-                <Cookie className="w-6 h-6 text-accent flex-shrink-0 mt-0.5" />
+            <div className="mx-auto max-w-3xl bg-card/95 backdrop-blur border border-border rounded-xl px-3 py-2 md:px-4 md:py-3 shadow-prominent flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Cookie className="w-4 h-4 text-accent flex-shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-sm md:text-base font-medium">We use cookies</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    We use essential cookies to make our site work. With your consent, we may also use non-essential cookies to improve your experience.{" "}
+                  
+                  <p className="text-xs text-muted-foreground">
+                    We use essential cookies, and others only with your consent.{" "}
                     <Link to="/cookies" className="text-accent hover:underline">
                       Learn more
                     </Link>
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={openPreferencesModal}
-                  className="flex-1 md:flex-none"
+                  className="flex-1 sm:flex-none h-8 px-3 text-xs"
                 >
                   <Settings size={16} className="mr-1" />
                   Customize
@@ -155,7 +155,7 @@ export const CookieConsent = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleRejectAll}
-                  className="flex-1 md:flex-none"
+                  className="flex-1 sm:flex-none h-8 px-3 text-xs"
                 >
                   Reject All
                 </Button>
@@ -163,7 +163,7 @@ export const CookieConsent = () => {
                   variant="accent"
                   size="sm"
                   onClick={handleAcceptAll}
-                  className="flex-1 md:flex-none"
+                  className="flex-1 sm:flex-none h-8 px-3 text-xs"
                 >
                   Accept All
                 </Button>
@@ -174,7 +174,7 @@ export const CookieConsent = () => {
                     setIsAnimating(false);
                     setTimeout(() => setShowBanner(false), 300);
                   }}
-                  className="md:hidden"
+                  className="sm:hidden h-8 w-8"
                 >
                   <X size={16} />
                 </Button>

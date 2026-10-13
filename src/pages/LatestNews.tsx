@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import NewsImage from "@/components/news/NewsImage";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
@@ -144,11 +145,6 @@ function cleanText(raw: string) {
   return doc.body.textContent?.replace(/\s+/g, " ").trim() || '';
 }
 
-function getProxiedImageUrl(imageUrl: string | null): string | null {
-  if (!imageUrl) return null;
-  const proxyBase = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy`;
-  return `${proxyBase}?url=${encodeURIComponent(imageUrl)}`;
-}
 
 // Calculate operator relevance score
 function calculateRelevanceScore(item: NewsItem): number {
@@ -406,15 +402,22 @@ const LatestNews = () => {
       else setLoading(true);
       setError(null);
 
-      const { data, error: fnError } = await supabase.functions.invoke('fetch-rss-news?limit=300', {
+      const qs = activeSector === "all" ? "limit=300" : `limit=200&sector=${encodeURIComponent(activeSector)}`;
+      const request = supabase.functions.invoke(`fetch-rss-news?${qs}`, {
         body: null,
         headers: forceRefresh ? { 'x-force-refresh': 'true' } : undefined,
       });
+      const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("News request timed out")), 20000));
+      const { data, error: fnError } = await Promise.race([request, timeout]);
 
       if (fnError) throw fnError;
       
       if (data?.success && data?.data) {
-        setNews(data.data);
+        const junk = /^(x+|test|lorem ipsum.*|n\/?a|null|undefined|read more at source\.*)$/i;
+        setNews((data.data as NewsItem[]).map((n) => {
+          const sm = (n.summary || "").replace(/\s*The post .*? appeared first on .*$/i, "").trim();
+          return { ...n, summary: sm.length < 15 || junk.test(sm) ? "" : sm };
+        }));
         setCacheInfo({
           cached: data.cached ?? false,
           age: data.cache_age_minutes,
@@ -429,7 +432,7 @@ const LatestNews = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [activeSector]);
 
   useEffect(() => {
     document.title = "Wellness Genius Daily — Operator Intelligence";
@@ -493,7 +496,7 @@ const LatestNews = () => {
   const dateRange = `${weekAgo.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} - ${today.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
 
   return (
-    <div className="min-h-screen bg-background dark">
+    <div className="min-h-screen bg-background dark pb-24">
       <Helmet>
         <title>Operator Intelligence | Wellness Genius</title>
         <meta name="description" content="Weekly intelligence for wellness operators. Revenue signals, operational insights, and market moves that matter for gyms, studios, and fitness facilities." />
@@ -560,9 +563,11 @@ const LatestNews = () => {
                         <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors line-clamp-2 break-words [overflow-wrap:anywhere]">
                           {cleanText(item.title)}
                         </h3>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2 break-words [overflow-wrap:anywhere]">
-                          {item.summary}
-                        </p>
+                        {item.summary && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2 break-words [overflow-wrap:anywhere]">
+                            {item.summary}
+                          </p>
+                        )}
                       </div>
                       <ExternalLink size={16} className="flex-shrink-0 text-muted-foreground group-hover:text-accent mt-1" />
                     </a>
@@ -721,7 +726,7 @@ const LatestNews = () => {
                         <h2 className="text-2xl lg:text-3xl mb-4 group-hover:text-accent transition-colors line-clamp-3 break-words [overflow-wrap:anywhere]">
                           {cleanText(featuredNews.title)}
                         </h2>
-                        <p className="text-muted-foreground mb-6 line-clamp-4 break-words [overflow-wrap:anywhere]">{featuredNews.summary}</p>
+                        {featuredNews.summary && <p className="text-muted-foreground mb-6 line-clamp-4 break-words [overflow-wrap:anywhere]">{featuredNews.summary}</p>}
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mb-6">
                           <span className="flex items-center gap-1.5">
                             <Calendar size={14} />
@@ -737,19 +742,9 @@ const LatestNews = () => {
                           <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
                         </span>
                       </div>
-                      {featuredNews.image_url && (
-                        <div className="w-full lg:w-80 aspect-video lg:aspect-auto lg:h-56 rounded-xl overflow-hidden bg-secondary flex-shrink-0">
-                          <img 
-                            src={getProxiedImageUrl(featuredNews.image_url) || ''}
-                            alt={cleanText(featuredNews.title)}
-                            loading="lazy"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
+                      <div className="w-full lg:w-80 rounded-xl overflow-hidden flex-shrink-0">
+                        <NewsImage src={featuredNews.image_url} alt={cleanText(featuredNews.title)} sectors={featuredNews.sectors} />
+                      </div>
                     </div>
                   </a>
                 </div>
@@ -777,21 +772,9 @@ const LatestNews = () => {
                           style={{ animationDelay: `${index * 50}ms` }}
                           id={`news-${item.id}`}
                         >
-                          {item.image_url && (
-                            <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="block">
-                              <div className="aspect-video rounded-lg overflow-hidden mb-4 -mx-2 -mt-2 bg-secondary">
-                                <img 
-                                  src={getProxiedImageUrl(item.image_url) || ''}
-                                  alt={cleanText(item.title)}
-                                  loading="lazy"
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            </a>
-                          )}
+                          <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="block -mx-2 -mt-2 mb-4 rounded-lg overflow-hidden" tabIndex={-1} aria-hidden="true">
+                            <NewsImage src={item.image_url} alt="" sectors={item.sectors} imgClassName="group-hover:scale-105 transition-transform duration-300" />
+                          </a>
                           
                           {/* Business lens and audience tags */}
                           <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -808,9 +791,11 @@ const LatestNews = () => {
                               {cleanText(item.title)}
                             </h3>
                           </a>
-                          <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3 break-words [overflow-wrap:anywhere]">
-                            {item.summary}
-                          </p>
+                          {item.summary && (
+                            <p className="text-muted-foreground text-sm mb-4 line-clamp-3 break-words [overflow-wrap:anywhere]">
+                              {item.summary}
+                            </p>
+                          )}
 
                           <div className="mt-auto flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground pt-4 border-t border-border">
                             <span className="flex items-center gap-1.5">
@@ -911,24 +896,16 @@ const LatestNews = () => {
           <div className="mx-auto max-w-2xl card-glass border border-accent/20 px-4 py-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold truncate">Want this applied to your business?</p>
-              <p className="text-xs text-muted-foreground truncate">Take the free AI Readiness Index (10 minutes).</p>
+              <p className="text-xs text-muted-foreground truncate">Book a call with Andy.</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <Link
-                to="/ai-readiness/start?utm_source=news&utm_medium=sticky&utm_campaign=ai_readiness"
-                className="inline-flex"
-              >
-                <Button variant="accent" size="sm">
-                  Start free
-                </Button>
-              </Link>
               <a
                 href="https://meetings.hubspot.com/andy-hall6/andy-hall-meeting"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden sm:inline-flex"
+                className="inline-flex"
               >
-                <Button variant="outline" size="sm">
+                <Button variant="accent" size="sm">
                   Book call
                 </Button>
               </a>
