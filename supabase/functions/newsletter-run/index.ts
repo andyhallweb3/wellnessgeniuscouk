@@ -1469,7 +1469,7 @@ Deno.serve(async (req) => {
 
         const resend = new Resend(resendApiKey);
         const result = await resend.emails.send({
-          from: 'Wellness Genius <news@wellnessgenius.ai>',
+          from: 'Wellness Genius <news@wellnessgenius.co.uk>',
           to: [email],
           subject: '🧠 Wellness Genius Weekly Intelligence',
           html: personalizedHtml,
