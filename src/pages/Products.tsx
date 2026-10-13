@@ -508,7 +508,7 @@ const ProductCard = ({
               className="w-full text-xs" 
               asChild
             >
-              <a href="https://calendly.com/andy-wellnessgenius/30min" target="_blank" rel="noopener noreferrer">
+              <a href="https://meetings.hubspot.com/andy-hall6/andy-hall-meeting" target="_blank" rel="noopener noreferrer">
                 <Phone size={14} />
                 Book a Call with Andy
               </a>
@@ -528,7 +528,7 @@ const ProductCard = ({
                 className="w-full text-xs" 
                 asChild
               >
-                <a href="https://calendly.com/andy-wellnessgenius/30min" target="_blank" rel="noopener noreferrer">
+                <a href="https://meetings.hubspot.com/andy-hall6/andy-hall-meeting" target="_blank" rel="noopener noreferrer">
                   <Phone size={14} />
                   Book a Call with Andy
                 </a>

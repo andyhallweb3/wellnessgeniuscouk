@@ -9,10 +9,30 @@ const corsHeadersExtended = {
 
 const CACHE_DURATION_MINUTES = 20;
 
+type Sector = 'hotels-spas' | 'fitness' | 'clinics' | 'country-clubs';
+
 interface RSSFeed {
   url: string;
   category: string;
   sourceName: string;
+  sectors?: Sector[]; // default sectors for every item from this feed
+}
+
+// Keyword rules used to tag items with sectors from title and summary.
+const SECTOR_KEYWORDS: Record<Sector, RegExp> = {
+  'hotels-spas': /\b(hotels?|hospitality|resorts?|spas?|thermal|bathhouse|wellness (retreat|resort|tourism|travel)|guest experience|hotelier)\b/i,
+  'fitness': /\b(gyms?|fitness|health clubs?|leisure centres?|studios?|boutique fitness|personal train(er|ing)|strength training|pilates|yoga|membership churn|ukactive|ihrsa|health & fitness association)\b/i,
+  'clinics': /\b(clinics?|med ?spas?|medspas?|aesthetics?|longevity|cryotherapy|hyperbaric|red light|iv drip|physiotherap(y|ist)|diagnostics|preventive health|patients?|dermatolog(y|ist))\b/i,
+  'country-clubs': /\b(country clubs?|private clubs?|golf( club| course| resort)?s?|members'? club|club manag(er|ement)|racquet club|tennis club)\b/i,
+};
+
+function tagSectors(title: string, summary: string, feed: RSSFeed): Sector[] {
+  const text = `${title} ${summary}`;
+  const tags = new Set<Sector>(feed.sectors || []);
+  for (const [sector, re] of Object.entries(SECTOR_KEYWORDS) as [Sector, RegExp][]) {
+    if (re.test(text)) tags.add(sector);
+  }
+  return Array.from(tags);
 }
 
 interface NewsItem {
@@ -24,27 +44,45 @@ interface NewsItem {
   category: string;
   image_url: string | null;
   published_date: string;
+  sectors: Sector[];
   business_lens?: string | null;
 }
 
 const RSS_FEEDS: RSSFeed[] = [
+  // === SECTOR SOURCES (added Oct 2026, each verified to return RSS) ===
+  // Hotels & Spas
+  { url: 'https://www.hospitalitynet.org/news/global.xml', category: 'Hospitality', sourceName: 'Hospitality Net', sectors: ['hotels-spas'] },
+  { url: 'https://hoteldesigns.net/feed/', category: 'Hospitality', sourceName: 'Hotel Designs', sectors: ['hotels-spas'] },
+  { url: 'https://www.hotelowner.co.uk/feed/', category: 'Hospitality', sourceName: 'Hotel Owner', sectors: ['hotels-spas'] },
+  { url: 'https://www.hoteliermiddleeast.com/feed', category: 'Hospitality', sourceName: 'Hotelier Middle East', sectors: ['hotels-spas'] },
+  { url: 'https://www.globalwellnesssummit.com/feed/', category: 'Wellness', sourceName: 'Global Wellness Summit', sectors: ['hotels-spas', 'clinics'] },
+  { url: 'https://news.google.com/rss/search?q=%22hotel+spa%22+OR+%22wellness+resort%22&hl=en-GB&gl=GB&ceid=GB:en', category: 'Hospitality', sourceName: 'Google News: hotel spa', sectors: ['hotels-spas'] },
+  // Wellness Clinics
+  { url: 'https://www.aestheticsjournal.com/rss', category: 'Clinics', sourceName: 'Aesthetics Journal', sectors: ['clinics'] },
+  { url: 'https://www.aestheticmed.co.uk/rss', category: 'Clinics', sourceName: 'Aesthetic Medicine', sectors: ['clinics'] },
+  { url: 'https://www.lifespan.io/feed/', category: 'Clinics', sourceName: 'Lifespan.io', sectors: ['clinics'] },
+  { url: 'https://news.google.com/rss/search?q=%22medspa%22+OR+%22med+spa%22+OR+%22longevity+clinic%22&hl=en-GB&gl=GB&ceid=GB:en', category: 'Clinics', sourceName: 'Google News: clinics', sectors: ['clinics'] },
+  // Country Clubs
+  { url: 'https://clubandresortbusiness.com/feed/', category: 'Clubs', sourceName: 'Club + Resort Business', sectors: ['country-clubs'] },
+  { url: 'https://news.google.com/rss/search?q=%22country+club%22+OR+%22private+club%22+golf+membership&hl=en-GB&gl=GB&ceid=GB:en', category: 'Clubs', sourceName: 'Google News: country clubs', sectors: ['country-clubs'] },
+
   // === OPERATOR & B2B FOCUSED (Priority Sources) ===
   
   // Fitness Industry Trade (Gyms, Health Clubs, Studios)
-  { url: 'https://www.hcmmag.com/feed/', category: 'Fitness', sourceName: 'HCM Magazine' },
-  { url: 'https://clubindustry.com/rss.xml', category: 'Fitness', sourceName: 'Club Industry' },
-  { url: 'https://athletechnews.com/feed/', category: 'Fitness', sourceName: 'Athletech News' },
+  { url: 'https://www.hcmmag.com/feed/', category: 'Fitness', sourceName: 'HCM Magazine', sectors: ['fitness'] },
+  { url: 'https://clubindustry.com/rss.xml', category: 'Fitness', sourceName: 'Club Industry', sectors: ['fitness'] },
+  { url: 'https://athletechnews.com/feed/', category: 'Fitness', sourceName: 'Athletech News', sectors: ['fitness'] },
   { url: 'https://www.athleticbusiness.com/rss', category: 'Fitness', sourceName: 'Athletic Business' },
   { url: 'https://insider.fitt.co/rss/', category: 'Fitness', sourceName: 'Fitt Insider' },
   
   // Spa & Wellness Industry Trade
-  { url: 'https://www.spabusiness.com/rss', category: 'Wellness', sourceName: 'Spa Business' },
+  { url: 'https://www.spabusiness.com/rss', category: 'Wellness', sourceName: 'Spa Business', sectors: ['hotels-spas'] },
   { url: 'https://globalwellnessinstitute.org/feed/', category: 'Wellness', sourceName: 'Global Wellness Institute' },
   { url: 'https://longevity.technology/news/feed/', category: 'Wellness', sourceName: 'Longevity Technology' },
   
   // Hospitality & Hotels
   { url: 'https://skift.com/feed/', category: 'Hospitality', sourceName: 'Skift' },
-  { url: 'https://www.hotelmanagement.net/rss.xml', category: 'Hospitality', sourceName: 'Hotel Management' },
+  { url: 'https://www.hotelmanagement.net/rss.xml', category: 'Hospitality', sourceName: 'Hotel Management', sectors: ['hotels-spas'] },
   { url: 'https://www.phocuswire.com/rss.xml', category: 'Hospitality', sourceName: 'Phocuswire' },
   
   // Corporate Wellness & HR
@@ -151,6 +189,7 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
       category: feed.category,
       image_url: imageUrl,
       published_date: publishedDate,
+      sectors: tagSectors(title, summary, feed),
     };
   } catch (error) {
     console.error('Error parsing RSS item:', error);
@@ -188,13 +227,13 @@ async function fetchFeed(feed: RSSFeed): Promise<NewsItem[]> {
     const items: NewsItem[] = [];
     let match;
     
-    while ((match = itemRegex.exec(xml)) !== null && items.length < 5) {
+    while ((match = itemRegex.exec(xml)) !== null && items.length < 8) {
       const parsed = parseRSSItem(match[1], feed);
       if (parsed) items.push(parsed);
     }
     
     if (items.length === 0) {
-      while ((match = entryRegex.exec(xml)) !== null && items.length < 5) {
+      while ((match = entryRegex.exec(xml)) !== null && items.length < 8) {
         const parsed = parseRSSItem(match[1], feed);
         if (parsed) items.push(parsed);
       }
@@ -224,9 +263,9 @@ async function fetchAllFeeds(): Promise<NewsItem[]> {
     return true;
   });
   
+  // Keep every unique item so smaller sector sources are not crowded out.
   return uniqueItems
-    .sort((a, b) => new Date(b.published_date).getTime() - new Date(a.published_date).getTime())
-    .slice(0, 50);
+    .sort((a, b) => new Date(b.published_date).getTime() - new Date(a.published_date).getTime());
 }
 
 Deno.serve(async (req) => {
@@ -243,6 +282,7 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url);
     const category = url.searchParams.get('category');
+    const sector = url.searchParams.get('sector');
     const limit = parseInt(url.searchParams.get('limit') || '30');
     
     // Force refresh requires admin authentication to prevent abuse
@@ -278,12 +318,15 @@ Deno.serve(async (req) => {
 
       let query = supabase
         .from('rss_news_cache')
-        .select('news_id, title, summary, source_url, source_name, category, image_url, published_date, business_lens')
+        .select('news_id, title, summary, source_url, source_name, category, image_url, published_date, business_lens, sectors')
         .order('published_date', { ascending: false })
         .limit(limit);
 
       if (category && category !== 'All') {
         query = query.eq('category', category);
+      }
+      if (sector) {
+        query = query.contains('sectors', [sector]);
       }
 
       const { data: cachedNews, error } = await query;
@@ -300,6 +343,7 @@ Deno.serve(async (req) => {
         image_url: item.image_url,
         published_date: item.published_date,
         business_lens: item.business_lens,
+        sectors: item.sectors || [],
       })) || [];
 
       // Safety: if cache table is empty but metadata says it's fresh, treat as stale and refetch
@@ -352,6 +396,7 @@ Deno.serve(async (req) => {
         category: item.category,
         image_url: item.image_url,
         published_date: item.published_date,
+        sectors: item.sectors,
         fetched_at: new Date().toISOString(),
         business_lens: lensMap.get(item.source_url) || null,
       }));
@@ -391,6 +436,9 @@ Deno.serve(async (req) => {
     let resultNews = freshNews;
     if (category && category !== 'All') {
       resultNews = freshNews.filter(item => item.category === category);
+    }
+    if (sector) {
+      resultNews = resultNews.filter(item => item.sectors.includes(sector as Sector));
     }
 
     return new Response(

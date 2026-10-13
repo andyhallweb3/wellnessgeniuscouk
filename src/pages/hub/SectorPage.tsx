@@ -2,6 +2,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import HubLayout from "@/components/hub/HubLayout";
 import LeadForm from "@/components/hub/LeadForm";
+import SectorNews from "@/components/hub/SectorNews";
 import { getSector, SECTORS } from "@/data/sectors";
 import { sortedIssues } from "@/data/briefingIssues";
 
@@ -39,6 +40,8 @@ const SectorPage = () => {
             </Link>
           ))}
         </div>
+
+        <SectorNews sector={sector.slug} name={sector.name} />
 
         {issues.length > 0 && (
           <>

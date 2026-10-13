@@ -20,7 +20,16 @@ interface NewsItem {
   image_url: string | null;
   published_date: string;
   business_lens?: string | null;
+  sectors?: string[];
 }
+
+const SECTOR_FILTERS = [
+  { key: "all", label: "All sectors" },
+  { key: "hotels-spas", label: "Hotels & Spas" },
+  { key: "fitness", label: "Fitness" },
+  { key: "clinics", label: "Clinics" },
+  { key: "country-clubs", label: "Country Clubs" },
+];
 
 // Operator-centric business lenses with icons and styling
 const BUSINESS_LENSES: Record<string, { label: string; color: string; bg: string; icon: typeof TrendingUp }> = {
@@ -244,6 +253,16 @@ const LatestNews = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
+  const [activeSector, setActiveSector] = useState<string>(() => {
+    const p = new URLSearchParams(window.location.search).get("sector");
+    return SECTOR_FILTERS.some((f) => f.key === p) ? (p as string) : "all";
+  });
+  const chooseSector = (key: string) => {
+    setActiveSector(key);
+    const url = new URL(window.location.href);
+    if (key === "all") url.searchParams.delete("sector"); else url.searchParams.set("sector", key);
+    window.history.replaceState(null, "", url.toString());
+  };
   const [sortMode, setSortMode] = useState<"relevant" | "latest">("relevant");
   const [error, setError] = useState<string | null>(null);
   const [cacheInfo, setCacheInfo] = useState<{ cached: boolean; age?: number } | null>(null);
@@ -387,7 +406,7 @@ const LatestNews = () => {
       else setLoading(true);
       setError(null);
 
-      const { data, error: fnError } = await supabase.functions.invoke('fetch-rss-news', {
+      const { data, error: fnError } = await supabase.functions.invoke('fetch-rss-news?limit=300', {
         body: null,
         headers: forceRefresh ? { 'x-force-refresh': 'true' } : undefined,
       });
@@ -450,7 +469,8 @@ const LatestNews = () => {
   }, [storyParam, loading, news]);
 
   // Filter and sort
-  const filteredNews = filterByCategory(news, activeFilter);
+  const sectorNews = activeSector === "all" ? news : news.filter((n) => n.sectors?.includes(activeSector));
+  const filteredNews = filterByCategory(sectorNews, activeFilter);
   
   const sortedNews = [...filteredNews].sort((a, b) => {
     if (sortMode === "latest") {
@@ -556,6 +576,21 @@ const LatestNews = () => {
         {/* Filter Tabs */}
         <section className="px-6 lg:px-12 pb-8">
           <div className="container-wide">
+            <div className="flex flex-wrap items-center gap-2 mb-3" role="group" aria-label="Filter by sector">
+              {SECTOR_FILTERS.map((sec) => (
+                <button
+                  key={sec.key}
+                  onClick={() => chooseSector(sec.key)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-300 ${
+                    activeSector === sec.key
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-foreground border-border hover:border-accent"
+                  }`}
+                >
+                  {sec.label}
+                </button>
+              ))}
+            </div>
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {FILTER_CATEGORIES.map((cat) => (
                 <button
@@ -888,7 +923,7 @@ const LatestNews = () => {
                 </Button>
               </Link>
               <a
-                href="https://calendly.com/andy-wellnessgenius/30min"
+                href="https://meetings.hubspot.com/andy-hall6/andy-hall-meeting"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden sm:inline-flex"

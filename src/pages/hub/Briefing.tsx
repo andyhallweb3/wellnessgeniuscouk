@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ExternalLink, Headphones } from "lucide-react";
 import HubLayout from "@/components/hub/HubLayout";
 import LeadForm from "@/components/hub/LeadForm";
+import BriefingCover from "@/components/hub/BriefingCover";
 import { LINKEDIN_NEWSLETTER_URL, sortedIssues } from "@/data/briefingIssues";
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -22,13 +23,16 @@ const Briefing = () => {
 
         <div className="space-y-4 mb-12">
           {issues.map((i) => (
-            <Link key={i.slug} to={`/briefing/${i.slug}`} className="block bg-card border border-border rounded-xl p-6 hover:border-accent transition-colors">
+            <Link key={i.slug} to={`/briefing/${i.slug}`} className="flex flex-col sm:flex-row bg-card border border-border rounded-xl overflow-hidden hover:border-accent transition-colors">
+              <BriefingCover image={i.image} title={i.title} className="sm:w-56 h-40 sm:h-auto shrink-0" />
+              <div className="p-6">
               <p className="text-xs text-muted-foreground mb-1 flex items-center gap-2">
                 {formatDate(i.date)}
                 {i.audioUrl && <span className="inline-flex items-center gap-1 text-accent"><Headphones size={12} />Audio</span>}
               </p>
               <h2 className="text-lg font-semibold mb-1">{i.title}</h2>
               <p className="text-sm text-muted-foreground">{i.summary}</p>
+              </div>
             </Link>
           ))}
           {issues.length === 0 && <p className="text-muted-foreground">Issues coming soon.</p>}

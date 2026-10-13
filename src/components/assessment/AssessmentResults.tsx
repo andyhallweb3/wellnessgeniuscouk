@@ -601,7 +601,7 @@ const AssessmentResults = ({ answers, questions, userInfo }: AssessmentResultsPr
         </p>
       </div>
 
-      {/* Calendly Section */}
+      {/* Book a call */}
       <div id="book-call" className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
         <h3 className="text-xl font-heading mb-2 text-center">
           Pressure-test this with a human.
@@ -616,22 +616,12 @@ const AssessmentResults = ({ answers, questions, userInfo }: AssessmentResultsPr
         </ul>
         <div className="text-center mb-6">
           <Button variant="accent" size="lg" asChild>
-            <a href="https://calendly.com/andy-wellnessgenius/30min" target="_blank" rel="noopener noreferrer">
+            <a href="https://meetings.hubspot.com/andy-hall6/andy-hall-meeting" target="_blank" rel="noopener noreferrer">
               Book AI Readiness Review
               <ArrowRight size={16} />
             </a>
           </Button>
         </div>
-        <div 
-          className="calendly-inline-widget rounded-lg overflow-hidden" 
-          data-url="https://calendly.com/andy-wellnessgenius/30min?hide_gdpr_banner=1"
-          style={{ minWidth: '320px', height: '700px' }}
-        />
-        <script 
-          type="text/javascript" 
-          src="https://assets.calendly.com/assets/external/widget.js" 
-          async 
-        />
       </div>
 
       {/* Consultant's Note */}
