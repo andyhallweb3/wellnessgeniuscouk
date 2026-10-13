@@ -51,17 +51,23 @@ const Header = () => {
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
 
-  const navLinks = [
-    { href: "/ai-readiness", label: "Assessment" },
-    { href: "/genie", label: "AI Advisor" },
-    { href: "/hub?tab=community", label: "Community" },
-    { href: "/products", label: "Pricing" },
-    { href: "/services", label: "Services" },
-    { href: "/insights", label: "Learn", dropdown: [
-      { href: "/insights", label: "Blog & Insights" },
-      { href: "/news", label: "Operator Intel" },
+  type NavItem = { href: string; label: string; dropdown?: { href: string; label: string }[] };
+  const navLinks: NavItem[] = [
+    { href: "/news", label: "News" },
+    { href: "/insights", label: "Articles", dropdown: [
+      { href: "/insights", label: "Articles" },
+      { href: "/briefing", label: "Andy's Briefing" },
+    ]},
+    { href: "/resources", label: "Resources" },
+    { href: "/ai-readiness", label: "Readiness Score" },
+    { href: "/sectors", label: "By sector", dropdown: [
+      { href: "/sectors/hotels-spas", label: "Hotels & Spas" },
+      { href: "/sectors/fitness", label: "Fitness" },
+      { href: "/sectors/clinics", label: "Clinics" },
+      { href: "/sectors/country-clubs", label: "Country Clubs" },
     ]},
   ];
+  const mobileLinks = navLinks.flatMap((l) => l.dropdown ?? [l]).filter((l, i, arr) => arr.findIndex((x) => x.href === l.href) === i);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/40">
@@ -114,7 +120,7 @@ const Header = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md">
                     <User size={15} />
-                    My Hub
+                    My account
                     {isAdmin && (
                       <Badge variant="outline" className="ml-1 px-1.5 py-0 text-[10px] font-bold border-amber-500/50 text-amber-600">
                         Admin
@@ -124,14 +130,11 @@ const Header = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[160px]">
                     <DropdownMenuItem asChild>
-                      <Link to="/hub" className="w-full">Dashboard</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/hub?tab=knowledge" className="w-full">Knowledge Base</Link>
+                      <Link to="/hub/downloads" className="w-full">My downloads</Link>
                     </DropdownMenuItem>
                     {latestReportId && (
                       <DropdownMenuItem asChild>
-                        <Link to={`/ai-readiness/report/${latestReportId}`} className="w-full">My Results</Link>
+                        <Link to={`/ai-readiness/results/${latestReportId}`} className="w-full">My Results</Link>
                       </DropdownMenuItem>
                     )}
                     {isAdmin && (
@@ -139,9 +142,6 @@ const Header = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link to="/admin" className="w-full text-amber-600">Admin</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/founder" className="w-full text-amber-600">Founder</Link>
                         </DropdownMenuItem>
                       </>
                     )}
@@ -162,9 +162,9 @@ const Header = () => {
               )
             )}
             <Button variant="accent" size="sm" asChild className="gap-1.5">
-              <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
+              <Link to="/newsletter">
                 <Sparkles size={14} />
-                Start Free
+                Get the free briefing
               </Link>
             </Button>
           </div>
@@ -183,34 +183,18 @@ const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden py-4 border-t border-border/30 animate-fade-in">
             <nav className="flex flex-col gap-1">
-              <Link to="/ai-readiness" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/ai-readiness") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Assessment
-              </Link>
-              <Link to="/genie" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/genie") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                AI Advisor
-              </Link>
-              <Link to="/hub?tab=community" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/hub") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Community
-              </Link>
-              <Link to="/products" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/products") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Pricing
-              </Link>
-              <Link to="/services" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/services") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Services
-              </Link>
-              <Link to="/insights" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/insights") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Blog & Insights
-              </Link>
-              <Link to="/news" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/news") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Operator Intel
-              </Link>
+              {mobileLinks.map((item) => (
+                <Link key={item.href} to={item.href} className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive(item.href) ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                  {item.label}
+                </Link>
+              ))}
 
               <div className="my-3 border-t border-border/30" />
 
               {!isLoading && (
                 user ? (
                   <>
-                    <Link to="/hub" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>My Hub</Link>
+                    <Link to="/hub/downloads" className="px-3 py-2.5 text-base font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>My downloads</Link>
                     {isAdmin && (
                       <Link to="/admin" className="px-3 py-2.5 text-base font-medium text-amber-600" onClick={() => setIsMenuOpen(false)}>Admin</Link>
                     )}
@@ -223,9 +207,9 @@ const Header = () => {
 
               <div className="mt-3 px-3">
                 <Button variant="accent" asChild className="w-full gap-2">
-                  <Link to={user ? "/genie" : "/auth?redirect=/genie"} onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/newsletter" onClick={() => setIsMenuOpen(false)}>
                     <Sparkles size={16} />
-                    Start Free — 10 AI Sessions
+                    Get the free briefing
                   </Link>
                 </Button>
               </div>

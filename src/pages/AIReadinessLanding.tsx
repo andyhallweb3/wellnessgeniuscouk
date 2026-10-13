@@ -18,19 +18,10 @@ const targetAudience = [
 ];
 
 const freeFeatures = [
-  "AI Readiness Score (0–100)",
+  "AI Readiness Score (0 to 100)",
   "Maturity band assessment",
   "Headline diagnosis",
   "Section score breakdown",
-];
-
-const paidFeatures = [
-  "Full diagnostic report",
-  "Revenue upside range",
-  "Top 3 blockers identified",
-  "90-day priority plan",
-  "Monetisation paths",
-  "Downloadable PDF",
 ];
 
 const AIReadinessLanding = () => {
@@ -168,8 +159,8 @@ const AIReadinessLanding = () => {
                 },
                 { 
                   step: "3", 
-                  title: "Unlock your full report", 
-                  desc: "Revenue upside, blockers, and 90-day action plan" 
+                  title: "Act on it for free", 
+                  desc: "Free playbooks, checklists and sector resources" 
                 },
               ].map((item) => (
                 <div key={item.step} className="text-center">
@@ -228,66 +219,26 @@ const AIReadinessLanding = () => {
           </div>
         </section>
 
-        {/* Pricing */}
+        {/* What you get (free) */}
         <section className="section-padding">
-          <div className="container-narrow">
-            <h2 className="text-3xl font-heading text-center mb-12">Pricing</h2>
-            
-            <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-              {/* Free tier */}
-              <div className="bg-card rounded-xl p-8 border border-border">
-                <div className="mb-6">
-                  <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Score</p>
-                  <p className="text-3xl font-heading">Free</p>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {freeFeatures.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 text-sm">
-                      <CheckCircle size={16} className="text-accent mt-0.5 shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/ai-readiness/start">
-                    Start Assessment
-                  </Link>
-                </Button>
-              </div>
-              
-              {/* Paid tier */}
-              <div className="bg-accent/5 rounded-xl p-8 border-2 border-accent/30 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="px-3 py-1 bg-accent text-accent-foreground text-xs font-medium rounded-full">
-                    Full Report
-                  </span>
-                </div>
-                <div className="mb-6">
-                  <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Complete Diagnostic</p>
-                  <p className="text-3xl font-heading">£39.99</p>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {paidFeatures.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 text-sm">
-                      <CheckCircle size={16} className="text-accent mt-0.5 shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button variant="accent" className="w-full" asChild>
-                  <Link to="/ai-readiness/start">
-                    Start Assessment
-                    <ArrowRight size={16} />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-            
-            {/* Optional add-on */}
-            <div className="mt-8 text-center">
-              <p className="text-muted-foreground text-sm">
-                Optional: 30-minute debrief call — £249
-              </p>
+          <div className="container-narrow max-w-xl mx-auto">
+            <h2 className="text-3xl font-heading text-center mb-8">What you get, free</h2>
+            <div className="bg-card rounded-xl p-8 border border-border">
+              <ul className="space-y-3 mb-8">
+                {freeFeatures.map((feature) => (
+                  <li key={feature} className="flex items-start gap-3 text-sm">
+                    <CheckCircle size={16} className="text-accent mt-0.5 shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button variant="accent" className="w-full" asChild>
+                <Link to="/ai-readiness/start">
+                  Start the free assessment
+                  <ArrowRight size={16} />
+                </Link>
+              </Button>
+              <p className="text-xs text-muted-foreground mt-4 text-center">We ask for your email so we can send your results and the free briefing.</p>
             </div>
           </div>
         </section>
@@ -339,7 +290,7 @@ const AIReadinessLanding = () => {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link to="/products">
+                <Link to="/resources">
                   Browse All Products
                 </Link>
               </Button>

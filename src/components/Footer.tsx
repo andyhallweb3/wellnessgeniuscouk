@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Linkedin, Twitter, Bot, Send } from "lucide-react";
+import { ArrowRight, Linkedin, Twitter } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.webp";
 import gwiLogo from "@/assets/logos/gwi-logo.svg";
 import { useNewsletter } from "@/hooks/useNewsletter";
@@ -54,7 +54,7 @@ const Footer = () => {
       {/* Main Footer */}
       <div className="px-6 lg:px-12 py-12">
         <div className="container-wide">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 mb-12">
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
               <img src={logo} alt="Wellness Genius" className="h-12 w-auto mb-4" />
@@ -86,15 +86,6 @@ const Footer = () => {
                 >
                   <Twitter size={18} />
                 </a>
-                <a
-                  href="https://t.me/Wellnessgenius_bot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
-                  aria-label="Telegram Bot"
-                >
-                  <Send size={18} />
-                </a>
               </div>
               
               {/* AI Initiative */}
@@ -125,66 +116,84 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Services */}
             <div>
-              <h3 className="font-medium mb-4">Services</h3>
+              <h3 className="font-medium mb-4">Read</h3>
               <ul className="space-y-3 text-sm text-primary-foreground/70">
                 <li>
-                  <Link to="/services" className="hover:text-primary-foreground transition-colors">
-                    AI Consulting & Builds
+                  <Link to="/news" className="hover:text-primary-foreground transition-colors">
+                    News and Operator Intel
                   </Link>
                 </li>
                 <li>
-                  <Link to="/software" className="hover:text-primary-foreground transition-colors">
-                    Custom AI Agents
+                  <Link to="/insights" className="hover:text-primary-foreground transition-colors">
+                    Articles
                   </Link>
                 </li>
                 <li>
-                  <Link to="/ai-advisor" className="hover:text-primary-foreground transition-colors flex items-center gap-1.5">
-                    <Bot size={14} />
-                    AI Advisor
+                  <Link to="/briefing" className="hover:text-primary-foreground transition-colors">
+                    Andy's Briefing
                   </Link>
                 </li>
                 <li>
-                  <Link to="/ai-readiness" className="hover:text-primary-foreground transition-colors">
-                    AI Readiness Assessment
+                  <Link to="/newsletter" className="hover:text-primary-foreground transition-colors">
+                    Newsletter
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Products & Resources */}
             <div>
-              <h3 className="font-medium mb-4">Products & Resources</h3>
+              <h3 className="font-medium mb-4">Use</h3>
               <ul className="space-y-3 text-sm text-primary-foreground/70">
                 <li>
-                  <Link to="/products" className="hover:text-accent transition-colors font-medium">
-                    Free AI Prompt Guide
+                  <Link to="/resources" className="hover:text-primary-foreground transition-colors">
+                    Free resources
                   </Link>
                 </li>
                 <li>
-                  <Link to="/products" className="hover:text-primary-foreground transition-colors">
-                    Playbooks & Templates
+                  <Link to="/ai-readiness" className="hover:text-primary-foreground transition-colors">
+                    AI Readiness Score
                   </Link>
                 </li>
                 <li>
-                  <Link to="/bundles" className="hover:text-primary-foreground transition-colors">
-                    Product Bundles
+                  <Link to="/privacy-readiness" className="hover:text-primary-foreground transition-colors">
+                    Privacy Readiness Check
                   </Link>
                 </li>
                 <li>
-                  <Link to="/insights" className="hover:text-primary-foreground transition-colors">
-                    Blog & Insights
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/news" className="hover:text-primary-foreground transition-colors">
-                    Operator Intelligence
+                  <Link to="/privacy-playbook" className="hover:text-primary-foreground transition-colors">
+                    Privacy Playbook
                   </Link>
                 </li>
                 <li>
                   <Link to="/speaker-kit" className="hover:text-primary-foreground transition-colors">
                     Speaker Kit
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-4">By sector</h3>
+              <ul className="space-y-3 text-sm text-primary-foreground/70">
+                <li>
+                  <Link to="/sectors/hotels-spas" className="hover:text-primary-foreground transition-colors">
+                    Hotels & Spas
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/sectors/fitness" className="hover:text-primary-foreground transition-colors">
+                    Fitness
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/sectors/clinics" className="hover:text-primary-foreground transition-colors">
+                    Clinics
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/sectors/country-clubs" className="hover:text-primary-foreground transition-colors">
+                    Country Clubs
                   </Link>
                 </li>
               </ul>

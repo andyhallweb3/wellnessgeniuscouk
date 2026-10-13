@@ -9,6 +9,7 @@ import AssessmentIntro from "@/components/assessment/AssessmentIntro";
 import AssessmentQuestion from "@/components/assessment/AssessmentQuestion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { captureLead } from "@/lib/leads";
 import { FREE_QUESTIONS, PILLARS, getScoreBand, calculatePillarScore } from "@/data/aiReadinessQuestions";
 
 export interface AssessmentAnswers {
@@ -66,6 +67,28 @@ const AIReadinessAssessmentFree = () => {
 
       const scoreBandResult = getScoreBand(overallScore);
 
+      // Lead capture goes to newsletter_subscribers, which is live and accepts public inserts.
+      try {
+        await captureLead(userInfo.email, "ai-readiness", userInfo.name);
+      } catch (leadErr) {
+        console.error("Lead capture failed:", leadErr);
+      }
+
+      const navState = {
+        overallScore,
+        scoreBand: scoreBandResult.label,
+        scoreBandDescription: scoreBandResult.description,
+        pillarScores: {
+          leadership_score: transformationScore,
+          data_score: architectureScore,
+          people_score: governanceScore,
+          process_score: valueScore,
+          risk_score: operatingScore,
+        },
+      };
+
+      // Saving the full completion needs the manage-readiness-completions function.
+      // If it is not deployed, still show the results from local state.
       const { data, error } = await supabase.functions.invoke('manage-readiness-completions', {
         body: {
           action: 'save',
@@ -85,7 +108,11 @@ const AIReadinessAssessmentFree = () => {
         },
       });
 
-      if (error) throw error;
+      if (error || !data?.id) {
+        console.error("Could not save completion, showing local results:", error);
+        navigate(`/ai-readiness/results/local`, { state: navState });
+        return;
+      }
 
       if (data?.id) {
         // Pass the scores via navigation state to avoid RLS fetch issues

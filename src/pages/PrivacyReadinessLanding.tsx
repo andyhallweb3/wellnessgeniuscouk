@@ -167,10 +167,10 @@ const PrivacyReadinessLanding = () => {
           </div>
         </section>
 
-        {/* Pricing */}
+        {/* What you get */}
         <section className="section-padding">
           <div className="container-narrow">
-            <h2 className="text-3xl font-heading text-center mb-12">Pricing</h2>
+            <h2 className="text-3xl font-heading text-center mb-12">What you get</h2>
             
             <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
               {/* Free tier */}
@@ -203,7 +203,7 @@ const PrivacyReadinessLanding = () => {
                 </div>
                 <div className="mb-6">
                   <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Complete Diagnostic</p>
-                  <p className="text-3xl font-heading">£29.99</p>
+                  <p className="text-3xl font-heading">Free</p>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {fullFeatures.map((feature) => (

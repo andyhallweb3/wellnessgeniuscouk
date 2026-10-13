@@ -1,110 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
-
-  <!-- Core / highest priority -->
-  <url>
-    <loc>https://wellnessgenius.co.uk/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/genie</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.95</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/ai-readiness</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.95</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-
-  <!-- Products & pricing -->
-  <url>
-    <loc>https://wellnessgenius.co.uk/products</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/bundles</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-
-  <!-- Services -->
-  <url>
-    <loc>https://wellnessgenius.co.uk/services</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/software</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-
-  <!-- Content / SEO -->
-  <url>
-    <loc>https://wellnessgenius.co.uk/insights</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/news</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-
-  <!-- Lead magnets / community -->
-  <url>
-    <loc>https://wellnessgenius.co.uk/subscribe</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/hub</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/downloads</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/speaker-kit</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.65</priority>
-    <lastmod>2026-05-15</lastmod>
-  </url>
-
-  <!-- Legal -->
-  <url>
-    <loc>https://wellnessgenius.co.uk/privacy</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/terms</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://wellnessgenius.co.uk/cookies</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://www.wellnessgenius.co.uk/</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/news</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/insights</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/resources</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/ai-readiness</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/privacy-readiness</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/privacy-playbook</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/sectors</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/sectors/hotels-spas</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/sectors/fitness</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/sectors/clinics</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/sectors/country-clubs</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/newsletter</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/speaker-kit</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/privacy</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/terms</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/cookies</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing/recovery-circuit-hotel-wellness-standard</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing/hyperbaric-boardroom-decision</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing/hotels-wellness-membership-business</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing/three-modalities-sequence</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing/wellness-retention-problem</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing/openai-health-play</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing/new-year-ai-strategy-gift</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing/ai-wellness-experimentation-to-execution</loc></url>
+  <url><loc>https://www.wellnessgenius.co.uk/briefing/wellness-web3-ai-news-round-up-2024-06</loc></url>
 </urlset>

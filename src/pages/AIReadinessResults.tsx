@@ -49,7 +49,7 @@ const getHeadline = (score: number) => {
 
 const getSubheadline = (score: number) => {
   if (score < 40) return "There are some foundational steps to take first. The full report shows you exactly where to start.";
-  if (score < 60) return "Good awareness, but gaps remain. Unlock your report to see the specific blockers holding you back.";
+  if (score < 60) return "Good awareness, but gaps remain. See the free resources below to work on the gaps.";
   if (score < 80) return "Strong foundations in place. Your report reveals how to accelerate from here.";
   return "You're ahead of most. Your report shows how to maximise your advantage.";
 };
@@ -204,7 +204,7 @@ const AIReadinessResults = () => {
       
       if (error) throw error;
       
-      // Also save to product_downloads so the AI Advisor can see it
+      // Also save to product_downloads
       const userEmail = user.email;
       if (userEmail) {
         await supabase.from("product_downloads").insert({
@@ -416,16 +416,12 @@ const AIReadinessResults = () => {
                     </span>
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Save your assessment results and get <strong>10 free AI Advisor sessions</strong> to help you take action on your score.
+                    Save your assessment results so you can track your progress over time.
                   </p>
                   <ul className="space-y-2 mb-6">
                     <li className="flex items-center gap-2 text-sm">
                       <CheckCircle size={14} className="text-accent" />
                       Save and track your AI readiness progress
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle size={14} className="text-accent" />
-                      10 free AI Advisor sessions (14-day trial)
                     </li>
                     <li className="flex items-center gap-2 text-sm">
                       <CheckCircle size={14} className="text-accent" />
@@ -450,93 +446,32 @@ const AIReadinessResults = () => {
             </div>
           )}
 
-          {/* Locked Premium Content */}
-          <div className="bg-secondary/30 rounded-xl p-8 border border-border relative overflow-hidden mb-8">
-            {/* Blur overlay */}
-            <div className="absolute inset-0 backdrop-blur-sm bg-background/60 flex flex-col items-center justify-center z-10">
-              <Lock size={32} className="text-muted-foreground mb-4" />
-              <h3 className="text-xl font-heading mb-2">Unlock Full Report</h3>
-              <p className="text-muted-foreground text-sm mb-6 text-center max-w-md">
-                {resultData.subheadline}
-              </p>
-              <Button variant="accent" size="lg" asChild>
-                <Link to={`/ai-readiness/checkout/${id}`}>
-                  Unlock for £99
-                  <ArrowRight size={16} />
-                </Link>
-              </Button>
-            </div>
-            
-            {/* Preview content (blurred) */}
-            <div className="space-y-4 opacity-50">
-              <div className="h-24 bg-card rounded-lg" />
-              <div className="h-32 bg-card rounded-lg" />
-              <div className="h-48 bg-card rounded-lg" />
-            </div>
-          </div>
-
-          {/* What's included in the report */}
+          {/* Free next steps (no paid report while the site runs as a free hub) */}
           <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
-            <h2 className="text-xl font-heading mb-6">What's in the full report</h2>
-            <ul className="space-y-3">
-              {lockedFeatures.map((feature) => (
-                <li key={feature} className="flex items-start gap-3">
-                  <CheckCircle size={16} className="text-accent mt-0.5 shrink-0" />
-                  <span className="text-sm">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* CTA */}
-          <div className="text-center">
-            <Button variant="accent" size="lg" asChild>
-              <Link to={`/ai-readiness/checkout/${id}`}>
-                Unlock Full Report — £99
-                <ArrowRight size={16} />
-              </Link>
-            </Button>
-            <p className="text-xs text-muted-foreground mt-4">
-              Secure payment. Instant access.
+            <h2 className="text-xl font-heading mb-2">What to do next</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Your score is saved to the email you gave us. Here are free ways to act on it.
             </p>
-          </div>
-
-          {/* AI Advisor CTA */}
-          <div className="mt-12 pt-8 border-t border-border">
-            <div className="bg-gradient-to-br from-accent/5 to-accent/10 rounded-xl p-6 sm:p-8 border border-accent/20">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <div className="flex-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold mb-3">
-                    <Sparkles size={12} />
-                    Recommended next step
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-heading mb-2">
-                    Your score is {resultData.overallScore}/100 — ask Genie what to fix first.
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    The AI Advisor already knows your score. Start a free session and get a prioritised 90-day action plan for your business in under 60 seconds.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 sm:shrink-0">
-                  <Button variant="accent" asChild className="whitespace-nowrap">
-                    <Link to={user
-                      ? `/genie?mode=diagnose&context=readiness&score=${resultData.overallScore}`
-                      : `/auth?redirect=/genie?mode=diagnose%26context=readiness%26score=${resultData.overallScore}`
-                    }>
-                      <Sparkles size={16} />
-                      Ask Genie — free
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to="/products">
-                      Browse playbooks
-                      <ArrowRight size={14} />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Link to="/resources" className="rounded-lg border border-border p-4 hover:border-accent transition-colors">
+                <p className="font-medium mb-1">Free playbooks and checklists</p>
+                <p className="text-sm text-muted-foreground">Practical downloads to close your gaps.</p>
+              </Link>
+              <Link to="/privacy-readiness" className="rounded-lg border border-border p-4 hover:border-accent transition-colors">
+                <p className="font-medium mb-1">Privacy Readiness Check</p>
+                <p className="text-sm text-muted-foreground">Check your data and AI privacy basics.</p>
+              </Link>
+              <Link to="/sectors" className="rounded-lg border border-border p-4 hover:border-accent transition-colors">
+                <p className="font-medium mb-1">Resources for your sector</p>
+                <p className="text-sm text-muted-foreground">Hotels and spas, fitness, clinics, country clubs.</p>
+              </Link>
+              <a href="/#contact" className="rounded-lg border border-border p-4 hover:border-accent transition-colors">
+                <p className="font-medium mb-1">Talk it through with Andy</p>
+                <p className="text-sm text-muted-foreground">Free 30 minute call.</p>
+              </a>
             </div>
           </div>
+
         </div>
       </main>
 

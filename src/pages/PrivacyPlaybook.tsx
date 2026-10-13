@@ -462,8 +462,8 @@ const PrivacyPlaybook = () => {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link to="/genie">
-                  Try AI Advisor
+                <Link to="/resources">
+                  Free resources
                 </Link>
               </Button>
             </div>
