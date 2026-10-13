@@ -143,7 +143,7 @@ const PrivacyPolicy = () => {
                   <li>AI processing services (Google Gemini, OpenAI via Lovable AI)</li>
                   <li>Payment processing (Stripe)</li>
                   <li>Database and hosting (Supabase, Lovable)</li>
-                  <li>Scheduling tools (e.g. Calendly)</li>
+                  <li>Scheduling tools (e.g. HubSpot Meetings)</li>
                   <li>Analytics providers (privacy-friendly where possible)</li>
                 </ul>
                 <p className="text-muted-foreground">

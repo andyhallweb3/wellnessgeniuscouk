@@ -126,7 +126,7 @@ Q: I can't log in to my account.
 A: Use the "Forgot Password" link to reset. If issues persist, ensure you're using the same email you registered with.
 
 Q: How do I contact support?
-A: Email hello@wellnessgenius.co.uk or book a call with Andy via Calendly (links on product pages).`;
+A: Email hello@wellnessgenius.co.uk or book a call with Andy at https://meetings.hubspot.com/andy-hall6/andy-hall-meeting.`;
 
 
 // Mode-specific prompt additions

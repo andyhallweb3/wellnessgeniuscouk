@@ -311,7 +311,7 @@ const Bundles = () => {
                       className="w-full text-xs" 
                       asChild
                     >
-                      <a href="https://calendly.com/andy-wellnessgenius/30min" target="_blank" rel="noopener noreferrer">
+                      <a href="https://meetings.hubspot.com/andy-hall6/andy-hall-meeting" target="_blank" rel="noopener noreferrer">
                         <Phone size={14} />
                         Book a Call with Andy
                       </a>
@@ -435,7 +435,7 @@ const Bundles = () => {
                 <div className="p-6 rounded-xl bg-card border border-border">
                   <h3 className="font-heading text-lg mb-2">Is there a refund policy?</h3>
                   <p className="text-muted-foreground text-sm">
-                    Due to the digital nature of these products, we don't offer refunds after download. However, if you're unsure which bundle is right for you, <a href="https://calendly.com/andy-wellnessgenius/30min" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">book a free call with Andy</a> to discuss your needs first.
+                    Due to the digital nature of these products, we don't offer refunds after download. However, if you're unsure which bundle is right for you, <a href="https://meetings.hubspot.com/andy-hall6/andy-hall-meeting" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">book a free call with Andy</a> to discuss your needs first.
                   </p>
                 </div>
               </div>
