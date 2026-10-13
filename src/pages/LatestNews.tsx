@@ -742,7 +742,7 @@ const LatestNews = () => {
                           <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
                         </span>
                       </div>
-                      <div className="w-full lg:w-80 rounded-xl overflow-hidden flex-shrink-0">
+                      <div className={`${featuredNews.image_url ? "block" : "hidden sm:block"} w-full lg:w-80 rounded-xl overflow-hidden flex-shrink-0`}>
                         <NewsImage src={featuredNews.image_url} alt={cleanText(featuredNews.title)} sectors={featuredNews.sectors} />
                       </div>
                     </div>
