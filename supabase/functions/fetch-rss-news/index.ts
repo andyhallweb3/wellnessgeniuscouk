@@ -76,12 +76,12 @@ const RSS_FEEDS: RSSFeed[] = [
   { url: 'https://news.google.com/rss/search?q=%22hotel+spa%22+OR+%22wellness+resort%22&hl=en-GB&gl=GB&ceid=GB:en', category: 'Hospitality', sourceName: 'Google News: hotel spa', sectors: ['hotels-spas'] },
   // Wellness Clinics
   { url: 'https://www.aestheticsjournal.com/rss', category: 'Clinics', sourceName: 'Aesthetics Journal', sectors: ['clinics'] },
-  { url: 'https://www.aestheticmed.co.uk/rss', category: 'Clinics', sourceName: 'Aesthetic Medicine', sectors: ['clinics'] },
+  { url: 'https://www.aestheticmed.co.uk/rss', category: 'Clinics', sourceName: 'Aesthetic Medicine' }, // keyword-tagged: mixes beauty and clinic news
   { url: 'https://www.lifespan.io/feed/', category: 'Clinics', sourceName: 'Lifespan.io', sectors: ['clinics'] },
   { url: 'https://news.google.com/rss/search?q=%22medspa%22+OR+%22med+spa%22+OR+%22longevity+clinic%22&hl=en-GB&gl=GB&ceid=GB:en', category: 'Clinics', sourceName: 'Google News: clinics', sectors: ['clinics'] },
   // Country Clubs
   { url: 'https://clubandresortbusiness.com/feed/', category: 'Clubs', sourceName: 'Club + Resort Business', sectors: ['country-clubs'] },
-  { url: 'https://news.google.com/rss/search?q=%22country+club%22+OR+%22private+club%22+golf+membership&hl=en-GB&gl=GB&ceid=GB:en', category: 'Clubs', sourceName: 'Google News: country clubs', sectors: ['country-clubs'] },
+  { url: 'https://news.google.com/rss/search?q=%28%22country+club%22+OR+%22private+club%22%29+%28membership+OR+%22club+manager%22+OR+%22general+manager%22+OR+clubhouse%29+-college+-university+-NCAA&hl=en-GB&gl=GB&ceid=GB:en', category: 'Clubs', sourceName: 'Google News: country clubs', sectors: ['country-clubs'] },
 
   // === OPERATOR & B2B FOCUSED (Priority Sources) ===
   
@@ -129,6 +129,22 @@ const RSS_FEEDS: RSSFeed[] = [
   { url: 'https://www.forbes.com/health/feed/', category: 'Wellness', sourceName: 'Forbes Health' },
 ];
 
+// Decode common HTML entities (named and numeric) found in feed titles and summaries.
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '-', mdash: '-',
+  lsquo: "'", rsquo: "'", ldquo: '"', rdquo: '"', hellip: '...', pound: '£', euro: '€',
+};
+export function decodeEntities(input: string): string {
+  let out = input;
+  for (let i = 0; i < 2; i++) { // twice handles double-encoded text like &amp;amp;
+    out = out
+      .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+      .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+      .replace(/&([a-z]+);/gi, (m, name) => NAMED_ENTITIES[name.toLowerCase()] ?? m);
+  }
+  return out;
+}
+
 function extractImageFromContent(content: string): string | null {
   const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
   if (imgMatch) return imgMatch[1];
@@ -150,7 +166,7 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
     let title = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
     
     // Strip any HTML tags from title (some feeds include anchor tags)
-    title = title.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    title = decodeEntities(title.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
     
     if (!title) return null;
     
@@ -165,7 +181,7 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
                       item.match(/<content:encoded[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/content:encoded>/is);
     let summary = descMatch ? descMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
     
-    summary = summary.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    summary = decodeEntities(summary.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
     if (summary.length > 300) {
       summary = summary.substring(0, 297) + '...';
     }
