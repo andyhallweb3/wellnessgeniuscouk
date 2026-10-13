@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import NewsImage from "@/components/news/NewsImage";
+import LeadForm from "@/components/hub/LeadForm";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
@@ -145,6 +146,51 @@ function cleanText(raw: string) {
   return doc.body.textContent?.replace(/\s+/g, " ").trim() || '';
 }
 
+
+
+// Top Signals: genuinely useful business stories for hospitality, spa, clinic, club and recovery operators
+const SIGNAL_EXCLUDE = /\b(award|awards|winners?|shortlist|finalists?|newsletter|round-?up|week ending|digest|appoint(s|ed|ment)?|joins|promoted|promotion|named (as )?|hires?|new (ceo|cfo|coo|director|gm|general manager)|obituary|makeup|nail|lash|brow|lipstick|fragrance|haircare|skincare launch|ncaa|football|soccer|basketball|baseball|hockey|golf tournament|podcast|webinar)\b/i;
+const SIGNAL_POSITIVE: [RegExp, number][] = [
+  [/\b(opens?|opening|launch(es|ed)?|debuts?|unveils?)\b/i, 4],
+  [/\b(invest(s|ment|ors?)?|funding|raises?|acqui(res|red|sition)|deal|merger|buys?|sells?|sale|valuation|ipo|\$\d|£\d|€\d|\d+(m|bn|million|billion))\b/i, 5],
+  [/\b(data|report|survey|study|research|index|forecast|trends?|growth|revenue|profit|results|occupancy|revpar|demand)\b/i, 4],
+  [/\b(ai|artificial intelligence|technology|tech|app|platform|digital|automation|software)\b/i, 3],
+  [/\b(spa|wellness|recovery|longevity|thermal|sauna|cold plunge|clinic|medical|membership|members|club|resort|hotel)\b/i, 2],
+];
+const TRUSTED_SIGNAL_SOURCE = (name: string) => !/^Google News/i.test(name);
+
+function pickTopSignals(items: NewsItem[], count: number): NewsItem[] {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const scored = items
+    .filter((n) => (n.sectors?.length ?? 0) > 0 && !!n.image_url && TRUSTED_SIGNAL_SOURCE(n.source_name))
+    .filter((n) => new Date(n.published_date).getTime() >= weekAgo)
+    .filter((n) => !SIGNAL_EXCLUDE.test(n.title) && (n.summary || "").length >= 40)
+    .map((n) => {
+      const text = `${n.title} ${n.summary}`;
+      const score = SIGNAL_POSITIVE.reduce((sum, [re, w]) => sum + (re.test(text) ? w : 0), 0) + (re2(n.title) ? 2 : 0);
+      return { n, score };
+    })
+    .filter((x) => x.score >= 6)
+    .sort((a, b) => b.score - a.score || new Date(b.n.published_date).getTime() - new Date(a.n.published_date).getTime());
+  const picked: NewsItem[] = [];
+  const sources = new Set<string>();
+  const sectors = new Set<string>();
+  // First pass: new source and new sector; second pass: new source only
+  for (const pass of [0, 1]) {
+    for (const { n } of scored) {
+      if (picked.length >= count) break;
+      if (picked.includes(n) || sources.has(n.source_name)) continue;
+      if (pass === 0 && n.sectors!.every((sec) => sectors.has(sec))) continue;
+      picked.push(n);
+      sources.add(n.source_name);
+      n.sectors!.forEach((sec) => sectors.add(sec));
+    }
+  }
+  return picked;
+}
+function re2(title: string) {
+  return /\b(first|largest|record|new)\b/i.test(title);
+}
 
 // Calculate operator relevance score
 function calculateRelevanceScore(item: NewsItem): number {
@@ -435,7 +481,7 @@ const LatestNews = () => {
   }, [activeSector]);
 
   useEffect(() => {
-    document.title = "Wellness Genius Daily — Operator Intelligence";
+    document.title = "Wellness Genius Daily | Operator Intelligence";
     
     const setMeta = (property: string, content: string) => {
       let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
@@ -447,7 +493,7 @@ const LatestNews = () => {
       meta.setAttribute('content', content);
     };
 
-    setMeta('og:title', 'Wellness Genius Daily — Operator Intelligence');
+    setMeta('og:title', 'Wellness Genius Daily | Operator Intelligence');
     setMeta('og:description', 'Weekly intelligence for wellness operators. Revenue signals, operational insights, and market moves that matter.');
     setMeta('og:image', 'https://www.wellnessgenius.co.uk/images/wellness-genius-news-og.png');
     setMeta('og:url', 'https://www.wellnessgenius.co.uk/news');
@@ -484,11 +530,8 @@ const LatestNews = () => {
   });
 
   // Get top 3 signals for the week (highest relevance scores)
-  const topSignals = [...news]
-    .sort((a, b) => calculateRelevanceScore(b) - calculateRelevanceScore(a))
-    .slice(0, 3);
+  const topSignals = pickTopSignals(news, 3);
 
-  const featuredNews = sortedNews[0];
 
   // Get date range for display
   const today = new Date();
@@ -507,86 +550,25 @@ const LatestNews = () => {
       </Helmet>
       <Header />
       
-      <main className="pt-24 lg:pt-32">
-        {/* Hero Section */}
-        <section className="section-padding pb-8">
-          <div className="container-wide">
-            <div className="max-w-3xl animate-fade-up">
-              <span className="badge-tech mb-6">
-                <Rss size={14} className="mr-1" />
-                Weekly Intelligence • {dateRange}
-              </span>
-              <h1 className="mb-6">
-                Operator Intelligence
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                What you need to think about this week — with clear commercial context.
-                Revenue signals, operational insights, and market moves that matter.
-              </p>
-            </div>
+      <main className="pt-20 lg:pt-24">
+        {/* Compact intro */}
+        <section className="px-4 lg:px-12 pb-2">
+          <div className="container-wide flex flex-wrap items-center justify-between gap-2">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Operator news <span className="text-muted-foreground font-normal text-sm sm:text-base">{dateRange}</span></h1>
+            <a href="#digest" className="text-xs sm:text-sm font-semibold text-accent hover:underline whitespace-nowrap">Get the free briefing</a>
           </div>
         </section>
 
-        {/* This Week's Top Signals */}
-        {!loading && !error && topSignals.length > 0 && activeFilter === "All" && (
-          <section className="px-6 lg:px-12 pb-12">
-            <div className="container-wide">
-              <div className="card-glass p-6 lg:p-8 border-accent/20">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-accent/20 border border-accent/30">
-                    <Zap className="w-5 h-5 text-accent" />
-                  </span>
-                  <div>
-                    <h2 className="text-xl font-heading">This Week&apos;s Top Signals</h2>
-                    <p className="text-sm text-muted-foreground">3 things operators should pay attention to</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  {topSignals.map((item, index) => (
-                    <a
-                      key={`signal-${item.id}`}
-                      href={item.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-start gap-4 p-4 rounded-xl bg-background/50 hover:bg-background/80 border border-border/50 hover:border-accent/30 transition-all group"
-                    >
-                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-sm">
-                        {index + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          {item.business_lens && <BusinessLensPill lens={item.business_lens} />}
-                          <AudienceTag audience={getAudienceTag(item)} />
-                          <span className="text-xs text-muted-foreground min-w-0 max-w-full truncate">• {item.source_name}</span>
-                        </div>
-                        <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors line-clamp-2 break-words [overflow-wrap:anywhere]">
-                          {cleanText(item.title)}
-                        </h3>
-                        {item.summary && (
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2 break-words [overflow-wrap:anywhere]">
-                            {item.summary}
-                          </p>
-                        )}
-                      </div>
-                      <ExternalLink size={16} className="flex-shrink-0 text-muted-foreground group-hover:text-accent mt-1" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
 
-        {/* Filter Tabs */}
-        <section className="px-6 lg:px-12 pb-8">
-          <div className="container-wide">
-            <div className="flex flex-wrap items-center gap-2 mb-3" role="group" aria-label="Filter by sector">
+        {/* Filters (sticky, compact, scrollable on mobile) */}
+        <section className="sticky top-16 lg:top-20 z-30 bg-background/95 backdrop-blur border-b border-border/60 px-4 lg:px-12 py-2 mb-4">
+          <div className="container-wide space-y-2">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-1 px-1" role="group" aria-label="Filter by sector">
               {SECTOR_FILTERS.map((sec) => (
                 <button
                   key={sec.key}
                   onClick={() => chooseSector(sec.key)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-300 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold border transition-colors ${
                     activeSector === sec.key
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-card text-foreground border-border hover:border-accent"
@@ -595,62 +577,46 @@ const LatestNews = () => {
                   {sec.label}
                 </button>
               ))}
+              <span className="shrink-0 w-px h-5 bg-border mx-1" aria-hidden="true" />
+              <div className="shrink-0 flex items-center gap-1 bg-secondary rounded-full p-0.5">
+                {(["relevant", "latest"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setSortMode(m)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${sortMode === m ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {m === "relevant" ? "Most relevant" : "Latest"}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => fetchNews(true)}
+                disabled={refreshing}
+                aria-label="Refresh news"
+                className="shrink-0 p-1.5 rounded-full text-muted-foreground hover:text-foreground bg-secondary disabled:opacity-50"
+              >
+                <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+              </button>
             </div>
-            <div className="flex flex-wrap items-center gap-2 mb-4">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
               {FILTER_CATEGORIES.map((cat) => (
                 <button
                   key={cat.key}
                   onClick={() => setActiveFilter(cat.key)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  className={`shrink-0 whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                     activeFilter === cat.key
                       ? "bg-accent text-accent-foreground"
-                      : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {cat.label}
                 </button>
               ))}
-              <button
-                onClick={() => fetchNews(true)}
-                disabled={refreshing}
-                className="ml-auto flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all duration-300 disabled:opacity-50"
-              >
-                <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </button>
-            </div>
-            
-            {/* Sort Toggle */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1 bg-secondary rounded-full p-1">
-                <button
-                  onClick={() => setSortMode("relevant")}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                    sortMode === "relevant"
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Most Relevant
-                </button>
-                <button
-                  onClick={() => setSortMode("latest")}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                    sortMode === "latest"
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Latest
-                </button>
-              </div>
               {cacheInfo && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock size={12} />
-                  {cacheInfo.cached 
-                    ? `Updated ${cacheInfo.age} min ago`
-                    : 'Freshly curated'}
-                </div>
+                <span className="shrink-0 flex items-center gap-1 text-[11px] text-muted-foreground ml-1 whitespace-nowrap">
+                  <Clock size={11} />
+                  {cacheInfo.cached ? `Updated ${cacheInfo.age} min ago` : "Freshly curated"}
+                </span>
               )}
             </div>
           </div>
@@ -701,67 +667,17 @@ const LatestNews = () => {
           </section>
         ) : (
           <>
-            {/* Featured News */}
-            {activeFilter === "All" && featuredNews && (
-              <section className="px-6 lg:px-12 pb-12">
-                <div className="container-wide">
-                  <a 
-                    href={featuredNews.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="card-tech p-8 lg:p-10 block group hover:border-accent/30 transition-colors"
-                  >
-                    <div className="flex flex-col lg:flex-row lg:items-start gap-8">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-3 mb-4">
-                          {featuredNews.business_lens && (
-                            <BusinessLensPill lens={featuredNews.business_lens} />
-                          )}
-                          <AudienceTag audience={getAudienceTag(featuredNews)} />
-                          <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                            Top Story
-                          </span>
-                          <span className="text-xs text-muted-foreground min-w-0 max-w-full truncate">{featuredNews.source_name}</span>
-                        </div>
-                        <h2 className="text-2xl lg:text-3xl mb-4 group-hover:text-accent transition-colors line-clamp-3 break-words [overflow-wrap:anywhere]">
-                          {cleanText(featuredNews.title)}
-                        </h2>
-                        {featuredNews.summary && <p className="text-muted-foreground mb-6 line-clamp-4 break-words [overflow-wrap:anywhere]">{featuredNews.summary}</p>}
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mb-6">
-                          <span className="flex items-center gap-1.5">
-                            <Calendar size={14} />
-                            {new Date(featuredNews.published_date).toLocaleDateString("en-GB", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric"
-                            })}
-                          </span>
-                        </div>
-                        <span className="inline-flex items-center gap-2 text-accent font-medium">
-                          Read Full Article
-                          <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
-                        </span>
-                      </div>
-                      <div className={`${featuredNews.image_url ? "block" : "hidden sm:block"} w-full lg:w-80 rounded-xl overflow-hidden flex-shrink-0`}>
-                        <NewsImage src={featuredNews.image_url} alt={cleanText(featuredNews.title)} sectors={featuredNews.sectors} />
-                      </div>
-                    </div>
-                  </a>
-                </div>
-              </section>
-            )}
-
             {/* News Grid */}
-            <section className="px-6 lg:px-12 pb-20">
+            <section className="px-4 lg:px-12 pb-16">
               <div className="container-wide">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                   {sortedNews
-                    .slice(activeFilter === "All" ? 1 : 0)
+                    .slice(0)
                     .map((item, index) => {
                       const relevanceScore = calculateRelevanceScore(item);
                       const isHighRelevance = relevanceScore >= 15;
                       
-                      return (
+                      return [
                         <article
                           key={item.id}
                           className={`card-tech p-6 flex flex-col h-full min-w-0 overflow-hidden animate-fade-up group transition-colors ${
@@ -847,8 +763,13 @@ const LatestNews = () => {
                               </a>
                             </div>
                           </div>
-                        </article>
-                      );
+                        </article>,
+                        index === 5 ? (
+                          <div key="inline-signup" className="col-span-full">
+                            <LeadForm compact source="news-inline" title="Get the free weekly briefing" />
+                          </div>
+                        ) : null,
+                      ];
                     })}
                 </div>
               </div>
@@ -856,8 +777,59 @@ const LatestNews = () => {
           </>
         )}
 
+        {/* This Week's Top Signals */}
+        {!loading && !error && topSignals.length > 0 && activeFilter === "All" && (
+          <section className="px-6 lg:px-12 pb-12">
+            <div className="container-wide">
+              <div className="card-glass p-6 lg:p-8 border-accent/20">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-accent/20 border border-accent/30">
+                    <Zap className="w-5 h-5 text-accent" />
+                  </span>
+                  <div>
+                    <h2 className="text-xl font-heading">This Week&apos;s Top Signals</h2>
+                    <p className="text-sm text-muted-foreground">Three business stories from this week, one per source</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  {topSignals.map((item, index) => (
+                    <a
+                      key={`signal-${item.id}`}
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-4 p-4 rounded-xl bg-background/50 hover:bg-background/80 border border-border/50 hover:border-accent/30 transition-all group"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-sm">
+                        {index + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          {item.business_lens && <BusinessLensPill lens={item.business_lens} />}
+                          <AudienceTag audience={getAudienceTag(item)} />
+                          <span className="text-xs text-muted-foreground min-w-0 max-w-full truncate">• {item.source_name}</span>
+                        </div>
+                        <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors line-clamp-2 break-words [overflow-wrap:anywhere]">
+                          {cleanText(item.title)}
+                        </h3>
+                        {item.summary && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2 break-words [overflow-wrap:anywhere]">
+                            {item.summary}
+                          </p>
+                        )}
+                      </div>
+                      <ExternalLink size={16} className="flex-shrink-0 text-muted-foreground group-hover:text-accent mt-1" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Newsletter CTA */}
-        <section className="px-6 lg:px-12 pb-20">
+        <section id="digest" className="px-6 lg:px-12 pb-20 scroll-mt-32">
           <div className="container-narrow">
             <div className="card-glass p-8 lg:p-12 text-center">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 text-accent mb-6">

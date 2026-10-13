@@ -14,10 +14,26 @@ const SectorPage = () => {
 
   return (
     <HubLayout title={sector.headline} description={sector.intro}>
-      <div className="container-wide px-6 lg:px-12 max-w-5xl">
-        <p className="text-sm font-semibold text-accent mb-2">{sector.name}</p>
-        <h1 className="text-3xl lg:text-5xl font-bold tracking-tight mb-4">{sector.headline}</h1>
-        <p className="text-lg text-muted-foreground mb-10 max-w-2xl">{sector.intro}</p>
+      <div className="container-wide px-4 lg:px-12 max-w-6xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-accent">{sector.name}</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">{sector.headline}</h1>
+          </div>
+          <a href="#briefing" className="shrink-0 self-start sm:self-auto text-xs sm:text-sm font-semibold text-accent hover:underline">Get the free briefing</a>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 mb-4">
+          {sector.resources.map((r) => (
+            <Link key={r.href} to={r.href} className="shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs sm:text-sm bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+              {r.label}<ArrowRight size={12} />
+            </Link>
+          ))}
+        </div>
+
+        <SectorNews sector={sector.slug} name={sector.name} limit={12} signupAfter={6} signupSource={`sector-${sector.slug}-inline`} />
+
+        <p className="text-muted-foreground mb-8 max-w-2xl">{sector.intro}</p>
 
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
           <div>
@@ -28,7 +44,9 @@ const SectorPage = () => {
               ))}
             </ul>
           </div>
-          <LeadForm source={`sector-${sector.slug}`} title={`Get the free ${sector.name} briefing`} />
+          <div id="briefing" className="scroll-mt-24">
+            <LeadForm source={`sector-${sector.slug}`} title={`Get the free ${sector.name} briefing`} />
+          </div>
         </div>
 
         <h2 className="text-xl font-semibold mb-4">Start here</h2>
@@ -40,8 +58,6 @@ const SectorPage = () => {
             </Link>
           ))}
         </div>
-
-        <SectorNews sector={sector.slug} name={sector.name} />
 
         {issues.length > 0 && (
           <>

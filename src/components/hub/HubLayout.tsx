@@ -10,7 +10,7 @@ const HubLayout = ({ title, description, children }: { title: string; descriptio
       <meta name="description" content={description} />
     </Helmet>
     <Header />
-    <main className="pt-24 pb-16">{children}</main>
+    <main className="pt-20 lg:pt-24 pb-16">{children}</main>
     <Footer />
   </div>
 );
