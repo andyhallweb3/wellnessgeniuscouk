@@ -18,21 +18,38 @@ interface RSSFeed {
   sectors?: Sector[]; // default sectors for every item from this feed
 }
 
-// Keyword rules used to tag items with sectors from title and summary.
-const SECTOR_KEYWORDS: Record<Sector, RegExp> = {
-  'hotels-spas': /\b(hotels?|hospitality|resorts?|spas?|thermal|bathhouse|wellness (retreat|resort|tourism|travel)|guest experience|hotelier)\b/i,
-  'fitness': /\b(gyms?|fitness|health clubs?|leisure centres?|studios?|boutique fitness|personal train(er|ing)|strength training|pilates|yoga|membership churn|ukactive|ihrsa|health & fitness association)\b/i,
-  'clinics': /\b(clinics?|med ?spas?|medspas?|aesthetics?|longevity|cryotherapy|hyperbaric|red light|iv drip|physiotherap(y|ist)|diagnostics|preventive health|patients?|dermatolog(y|ist))\b/i,
-  'country-clubs': /\b(country clubs?|private clubs?|golf( club| course| resort)?s?|members'? club|club manag(er|ement)|racquet club|tennis club)\b/i,
+// Sector tagging.
+// Trade-press feeds (with default sectors) are trusted: their items get only the feed's sectors.
+// General feeds are tagged by keywords: one strong term is enough, loose terms need two matches.
+const SECTOR_RULES: Record<Sector, { strong: RegExp; loose: RegExp }> = {
+  'hotels-spas': {
+    strong: /\b(hotels?|hotelier|hospitality|resorts?|day spas?|hotel spas?|spa (resort|business|operator|menu|director)s?|thermal spas?|wellness (retreat|resort|tourism|travel)s?)\b/gi,
+    loose: /\b(spas?|guests?|bookings?|thermal|sauna|bathhouse|retreats?|travel)\b/gi,
+  },
+  'fitness': {
+    strong: /\b(gyms?|fitness|health clubs?|leisure centres?|ukactive|ihrsa|personal train(er|ers|ing)|boutique fitness)\b/gi,
+    loose: /\b(studios?|yoga|pilates|strength|workouts?|exercise|members(hip)?|classes|trainers?)\b/gi,
+  },
+  'clinics': {
+    strong: /\b(clinics?|med ?spas?|medspas?|aesthetic (clinic|medicine|practitioner|treatment)s?|longevity|hyperbaric|cryotherapy|dermatolog(y|ist|ists))\b/gi,
+    loose: /\b(patients?|diagnostics?|physiotherap(y|ist)|iv drips?|red light|injectables?|botox|healthspan|biomarkers?)\b/gi,
+  },
+  'country-clubs': {
+    strong: /\b(country clubs?|private clubs?|golf (clubs?|courses?|resorts?)|members'? clubs?|club manag(er|ers|ement))\b/gi,
+    loose: /\b(golf(ers)?|tennis|racquet|padel|clubhouse|members?)\b/gi,
+  },
 };
 
+const countMatches = (re: RegExp, text: string) => (text.match(re) || []).length;
+
 function tagSectors(title: string, summary: string, feed: RSSFeed): Sector[] {
+  if (feed.sectors && feed.sectors.length > 0) return [...feed.sectors];
   const text = `${title} ${summary}`;
-  const tags = new Set<Sector>(feed.sectors || []);
-  for (const [sector, re] of Object.entries(SECTOR_KEYWORDS) as [Sector, RegExp][]) {
-    if (re.test(text)) tags.add(sector);
+  const tags: Sector[] = [];
+  for (const [sector, rule] of Object.entries(SECTOR_RULES) as [Sector, { strong: RegExp; loose: RegExp }][]) {
+    if (countMatches(rule.strong, text) >= 1 || countMatches(rule.loose, text) >= 2) tags.push(sector);
   }
-  return Array.from(tags);
+  return tags;
 }
 
 interface NewsItem {
@@ -72,12 +89,12 @@ const RSS_FEEDS: RSSFeed[] = [
   { url: 'https://www.hcmmag.com/feed/', category: 'Fitness', sourceName: 'HCM Magazine', sectors: ['fitness'] },
   { url: 'https://clubindustry.com/rss.xml', category: 'Fitness', sourceName: 'Club Industry', sectors: ['fitness'] },
   { url: 'https://athletechnews.com/feed/', category: 'Fitness', sourceName: 'Athletech News', sectors: ['fitness'] },
-  { url: 'https://www.athleticbusiness.com/rss', category: 'Fitness', sourceName: 'Athletic Business' },
-  { url: 'https://insider.fitt.co/rss/', category: 'Fitness', sourceName: 'Fitt Insider' },
+  { url: 'https://www.athleticbusiness.com/rss', category: 'Fitness', sourceName: 'Athletic Business', sectors: ['fitness'] },
+  { url: 'https://insider.fitt.co/rss/', category: 'Fitness', sourceName: 'Fitt Insider', sectors: ['fitness'] },
   
   // Spa & Wellness Industry Trade
   { url: 'https://www.spabusiness.com/rss', category: 'Wellness', sourceName: 'Spa Business', sectors: ['hotels-spas'] },
-  { url: 'https://globalwellnessinstitute.org/feed/', category: 'Wellness', sourceName: 'Global Wellness Institute' },
+  { url: 'https://globalwellnessinstitute.org/feed/', category: 'Wellness', sourceName: 'Global Wellness Institute', sectors: ['hotels-spas', 'clinics'] },
   { url: 'https://longevity.technology/news/feed/', category: 'Wellness', sourceName: 'Longevity Technology' },
   
   // Hospitality & Hotels
