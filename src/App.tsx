@@ -5,10 +5,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
-import FloatingCoachButton from "@/components/coach/FloatingCoachButton";
 import SiteOnboarding from "@/components/onboarding/SiteOnboarding";
 import CookieConsent from "@/components/CookieConsent";
-import Index from "./pages/Index";
+import HubHome from "./pages/hub/HubHome";
+import HubResources from "./pages/hub/Resources";
+import SectorsIndex from "./pages/hub/SectorsIndex";
+import SectorPage from "./pages/hub/SectorPage";
+import Briefing from "./pages/hub/Briefing";
+import BriefingIssue from "./pages/hub/BriefingIssue";
 import Products from "./pages/Products";
 import Bundles from "./pages/Bundles";
 import Auth from "./pages/Auth";
@@ -83,9 +87,18 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/bundles" element={<Bundles />} />
+            <Route path="/" element={<HubHome />} />
+            <Route path="/resources" element={<HubResources />} />
+            <Route path="/sectors" element={<SectorsIndex />} />
+            <Route path="/sectors/:slug" element={<SectorPage />} />
+            <Route path="/briefing" element={<Briefing />} />
+            <Route path="/briefing/:slug" element={<BriefingIssue />} />
+            <Route path="/thought-leadership" element={<Navigate to="/briefing" replace />} />
+            <Route path="/pricing" element={<Navigate to="/resources" replace />} />
+            <Route path="/products" element={<Navigate to="/resources" replace />} />
+            <Route path="/products/legacy" element={<Products />} />
+            <Route path="/bundles" element={<Navigate to="/resources" replace />} />
+            <Route path="/bundles/legacy" element={<Bundles />} />
             <Route path="/how-to-use" element={<HowToUseStack />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/member-hub" element={<Navigate to="/hub" replace />} />
@@ -159,7 +172,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <FloatingCoachButton />
+          {/* AI advisor floating button hidden while the site runs as a free hub. */}
           <SiteOnboarding />
           <CookieConsent />
         </BrowserRouter>

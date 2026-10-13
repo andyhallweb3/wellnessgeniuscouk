@@ -1,3 +1,4 @@
+import { captureLead } from "@/lib/leads";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,8 +39,17 @@ const Contact = () => {
 
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      await captureLead(formData.email, "contact-form", formData.name);
+    } catch {
+      toast({
+        title: "Something went wrong",
+        description: "Please email andy@wellnessgenius.co.uk instead.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     toast({
       title: "Message sent",
