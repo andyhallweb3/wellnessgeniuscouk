@@ -32,9 +32,9 @@ const SectorNews = ({ sector, name }: { sector: string; name: string }) => {
 
   return (
     <section className="mb-12">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-4">
         <h2 className="text-xl font-semibold">Latest {name} news</h2>
-        <Link to={`/news?sector=${sector}`} className="text-sm text-accent hover:underline inline-flex items-center gap-1">
+        <Link to={`/news?sector=${sector}`} className="text-sm text-accent hover:underline inline-flex items-center gap-1 shrink-0 self-start sm:self-auto">
           All {name} news <ArrowRight size={14} />
         </Link>
       </div>
@@ -44,9 +44,9 @@ const SectorNews = ({ sector, name }: { sector: string; name: string }) => {
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {items.map((i) => (
             <li key={i.id} className="min-w-0">
-              <a href={i.source_url} target="_blank" rel="noopener noreferrer" className="flex flex-col bg-card border border-border rounded-xl hover:border-accent transition-colors h-full min-w-0 overflow-hidden">
-                <NewsImage src={i.image_url} alt="" sectors={i.sectors?.length ? i.sectors : [sector]} />
-                <div className="p-4 min-w-0">
+              <a href={i.source_url} target="_blank" rel="noopener noreferrer" className="flex flex-row items-stretch gap-3 bg-card border border-border rounded-xl hover:border-accent transition-colors h-full min-w-0 overflow-hidden p-3">
+                <NewsImage variant="thumb" src={i.image_url} alt="" sectors={i.sectors?.length ? i.sectors : [sector]} className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-lg" />
+                <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground mb-1 truncate">
                   {i.source_name} · {new Date(i.published_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                 </p>
