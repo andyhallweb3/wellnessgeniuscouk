@@ -145,6 +145,55 @@ export function decodeEntities(input: string): string {
   return out;
 }
 
+const JUNK_SUMMARY = /^(x+|test|lorem ipsum.*|n\/?a|null|undefined|\.+|-+)$/i;
+const SPORTS_OFFTOPIC = /\b(ncaa|hazing|football coach|basketball|quarterback|touchdown|athletics director|college football|college golf|softball|baseball|hockey|playoffs?|varsity)\b/i;
+
+export function cleanSummary(summary: string): string {
+  let s = summary.replace(/\s*The post .{1,400}? appeared first on .{1,200}?\.?\s*$/i, '').trim();
+  s = s.replace(/\s*(Continue reading|Read more)\s*(\.\.\.|…)?\s*$/i, '').trim();
+  if (s.length < 15 || JUNK_SUMMARY.test(s)) return '';
+  return s;
+}
+
+export function isOffTopicSports(item: { title: string; sectors?: string[] | null }): boolean {
+  return (!item.sectors || item.sectors.length === 0) && SPORTS_OFFTOPIC.test(item.title);
+}
+
+function absoluteUrl(u: string | null | undefined, base: string): string | null {
+  if (!u) return null;
+  try {
+    const abs = new URL(u.replace(/&amp;/g, '&'), base).toString();
+    return abs.startsWith('http') ? abs : null;
+  } catch { return null; }
+}
+
+async function fetchOgImage(pageUrl: string): Promise<string | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3500);
+    const res = await fetch(pageUrl, { signal: ctrl.signal, redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WellnessGeniusBot/1.0)', Accept: 'text/html' } });
+    clearTimeout(t);
+    if (!res.ok || !(res.headers.get('content-type') || '').includes('html')) return null;
+    const html = (await res.text()).slice(0, 200000);
+    const m = html.match(/<meta[^>]+(?:property|name)=["'](?:og:image(?::secure_url)?|twitter:image)["'][^>]*>/i)?.[0];
+    const c = m?.match(/content=["']([^"']+)["']/i)?.[1];
+    return absoluteUrl(c, res.url || pageUrl);
+  } catch { return null; }
+}
+
+/** Fill missing images via og:image, capped and concurrency-limited. */
+export async function fillOgImages<T extends { source_url: string; image_url: string | null }>(items: T[], cap = 30): Promise<number> {
+  const todo = items.filter(i => !i.image_url && !/news\.google\.com/.test(i.source_url)).slice(0, cap);
+  let found = 0;
+  for (let i = 0; i < todo.length; i += 8) {
+    await Promise.all(todo.slice(i, i + 8).map(async (it) => {
+      const img = await fetchOgImage(it.source_url);
+      if (img) { it.image_url = img; found++; }
+    }));
+  }
+  return found;
+}
+
 function extractImageFromContent(content: string): string | null {
   const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
   if (imgMatch) return imgMatch[1];
@@ -152,9 +201,10 @@ function extractImageFromContent(content: string): string | null {
   const mediaMatch = content.match(/<media:content[^>]+url=["']([^"']+)["']/i);
   if (mediaMatch) return mediaMatch[1];
   
-  const enclosureMatch = content.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
-  if (enclosureMatch && enclosureMatch[1].match(/\.(jpg|jpeg|png|gif|webp)/i)) {
-    return enclosureMatch[1];
+  const enclosureTag = content.match(/<enclosure[^>]*>/i)?.[0];
+  if (enclosureTag) {
+    const u = enclosureTag.match(/url=["']([^"']+)["']/i)?.[1];
+    if (u && (/type=["']image\//i.test(enclosureTag) || /\.(jpg|jpeg|png|gif|webp)/i.test(u))) return u;
   }
   
   return null;
@@ -182,6 +232,7 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
     let summary = descMatch ? descMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
     
     summary = decodeEntities(summary.replace(/<[^>]+>/g, ' ')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    summary = cleanSummary(summary);
     if (summary.length > 300) {
       summary = summary.substring(0, 297) + '...';
     }
@@ -216,11 +267,11 @@ function parseRSSItem(item: string, feed: RSSFeed): NewsItem | null {
     return {
       id: link,
       title,
-      summary: summary || 'Read more at source...',
+      summary,
       source_url: link,
       source_name: feed.sourceName,
       category: feed.category,
-      image_url: imageUrl,
+      image_url: absoluteUrl(imageUrl, link),
       published_date: publishedDate,
       sectors: tagSectors(title, summary, feed),
     };
@@ -301,6 +352,93 @@ async function fetchAllFeeds(): Promise<NewsItem[]> {
     .sort((a, b) => new Date(b.published_date).getTime() - new Date(a.published_date).getTime());
 }
 
+async function refreshCache(supabase: ReturnType<typeof createClient>): Promise<NewsItem[]> {
+  // Fetch fresh data from RSS feeds
+  console.log('Fetching fresh RSS data...');
+  const freshNews = await fetchAllFeeds();
+
+  if (freshNews.length > 0) {
+    console.log(`Updating cache with ${freshNews.length} items`);
+
+    // Get business_lens from articles table for matching URLs
+    const urls = freshNews.map(item => item.source_url);
+    const { data: articlesWithLens } = await supabase
+      .from('articles')
+      .select('url, business_lens')
+      .in('url', urls);
+
+    const lensMap = new Map<string, string>();
+    if (articlesWithLens) {
+      for (const article of articlesWithLens) {
+        if (article.business_lens) {
+          lensMap.set(article.url, article.business_lens);
+        }
+      }
+    }
+    console.log(`Found ${lensMap.size} articles with business_lens`);
+
+    // Keep images already stored (including og:image backfills), then fetch og:image for a capped set of new items
+    const { data: existingImgs } = await supabase
+      .from('rss_news_cache')
+      .select('news_id, image_url')
+      .in('news_id', freshNews.map(i => i.id))
+      .not('image_url', 'is', null);
+    const imgMap = new Map((existingImgs || []).map(r => [r.news_id, r.image_url as string]));
+    for (const item of freshNews) {
+      if (!item.image_url && imgMap.has(item.id)) item.image_url = imgMap.get(item.id)!;
+    }
+    const ogCandidates = freshNews.filter(i => !imgMap.has(i.id) && (i.sectors.length > 0));
+    const ogFound = await fillOgImages(ogCandidates, 30);
+    console.log(`og:image filled ${ogFound}`);
+
+    const cacheItems = freshNews.map(item => ({
+      news_id: item.id,
+      title: item.title,
+      summary: item.summary,
+      source_url: item.source_url,
+      source_name: item.source_name,
+      category: item.category,
+      image_url: item.image_url,
+      published_date: item.published_date,
+      sectors: item.sectors,
+      fetched_at: new Date().toISOString(),
+      business_lens: lensMap.get(item.source_url) || null,
+    }));
+
+    // Also update freshNews with business_lens for immediate response
+    for (const item of freshNews) {
+      item.business_lens = lensMap.get(item.source_url) || null;
+    }
+
+    // Deduplicate within the batch to avoid unique-constraint errors
+    const uniqueCacheItems = Array.from(
+      new Map(cacheItems.map(i => [i.news_id, i])).values()
+    );
+
+    const { error: upsertError } = await supabase
+      .from('rss_news_cache')
+      .upsert(uniqueCacheItems, { onConflict: 'news_id' });
+
+    if (upsertError) {
+      console.error('Error writing cache:', upsertError);
+      // Don't update metadata if cache write failed; this forces a retry on next request
+    } else {
+      console.log(`Successfully cached ${uniqueCacheItems.length} items`);
+
+      // Update metadata ONLY after a successful cache write
+      await supabase
+        .from('rss_cache_metadata')
+        .upsert({
+          id: 'global',
+          last_refresh: new Date().toISOString(),
+          items_count: uniqueCacheItems.length,
+        });
+    }
+  }
+
+  return freshNews;
+}
+
 Deno.serve(async (req) => {
   const dynamicCorsHeaders = getCorsHeaders(req);
   
@@ -346,14 +484,21 @@ Deno.serve(async (req) => {
     console.log(`Cache age: ${minutesSinceRefresh.toFixed(1)} minutes, stale: ${cacheIsStale}`);
 
     // If cache is fresh and not forcing refresh, try to return cached data
-    if (!cacheIsStale && !forceRefresh) {
+    // Serve the cache unless an admin forces a refresh; refresh stale caches in the background
+    if (!forceRefresh) {
+      if (cacheIsStale) {
+        await supabase.from('rss_cache_metadata').upsert({ id: 'global', last_refresh: new Date().toISOString(), items_count: metadata?.items_count ?? 0 });
+        const bg = refreshCache(supabase).catch((e) => console.error('Background refresh failed', e));
+        const rt = (globalThis as unknown as { EdgeRuntime?: { waitUntil(p: Promise<unknown>): void } }).EdgeRuntime;
+        if (rt?.waitUntil) rt.waitUntil(bg);
+      }
       console.log('Returning cached data');
 
       let query = supabase
         .from('rss_news_cache')
         .select('news_id, title, summary, source_url, source_name, category, image_url, published_date, business_lens, sectors')
         .order('published_date', { ascending: false })
-        .limit(limit);
+        .limit(sector ? limit : limit + 60);
 
       if (category && category !== 'All') {
         query = query.eq('category', category);
@@ -366,7 +511,7 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
-      const formattedNews = cachedNews?.map(item => ({
+      const formattedNews = (cachedNews || []).filter(i => sector || !isOffTopicSports(i)).slice(0, limit).map(item => ({
         id: item.news_id,
         title: item.title,
         summary: item.summary,
@@ -377,7 +522,7 @@ Deno.serve(async (req) => {
         published_date: item.published_date,
         business_lens: item.business_lens,
         sectors: item.sectors || [],
-      })) || [];
+      }));
 
       // Safety: if cache table is empty but metadata says it's fresh, treat as stale and refetch
       if (formattedNews.length > 0) {
@@ -396,74 +541,7 @@ Deno.serve(async (req) => {
       console.warn('Cache metadata says fresh but table is empty; refetching');
     }
 
-    // Fetch fresh data from RSS feeds
-    console.log('Fetching fresh RSS data...');
-    const freshNews = await fetchAllFeeds();
-
-    if (freshNews.length > 0) {
-      console.log(`Updating cache with ${freshNews.length} items`);
-
-      // Get business_lens from articles table for matching URLs
-      const urls = freshNews.map(item => item.source_url);
-      const { data: articlesWithLens } = await supabase
-        .from('articles')
-        .select('url, business_lens')
-        .in('url', urls);
-
-      const lensMap = new Map<string, string>();
-      if (articlesWithLens) {
-        for (const article of articlesWithLens) {
-          if (article.business_lens) {
-            lensMap.set(article.url, article.business_lens);
-          }
-        }
-      }
-      console.log(`Found ${lensMap.size} articles with business_lens`);
-
-      const cacheItems = freshNews.map(item => ({
-        news_id: item.id,
-        title: item.title,
-        summary: item.summary,
-        source_url: item.source_url,
-        source_name: item.source_name,
-        category: item.category,
-        image_url: item.image_url,
-        published_date: item.published_date,
-        sectors: item.sectors,
-        fetched_at: new Date().toISOString(),
-        business_lens: lensMap.get(item.source_url) || null,
-      }));
-
-      // Also update freshNews with business_lens for immediate response
-      for (const item of freshNews) {
-        item.business_lens = lensMap.get(item.source_url) || null;
-      }
-
-      // Deduplicate within the batch to avoid unique-constraint errors
-      const uniqueCacheItems = Array.from(
-        new Map(cacheItems.map(i => [i.news_id, i])).values()
-      );
-
-      const { error: upsertError } = await supabase
-        .from('rss_news_cache')
-        .upsert(uniqueCacheItems, { onConflict: 'news_id' });
-
-      if (upsertError) {
-        console.error('Error writing cache:', upsertError);
-        // Don't update metadata if cache write failed; this forces a retry on next request
-      } else {
-        console.log(`Successfully cached ${uniqueCacheItems.length} items`);
-
-        // Update metadata ONLY after a successful cache write
-        await supabase
-          .from('rss_cache_metadata')
-          .upsert({
-            id: 'global',
-            last_refresh: new Date().toISOString(),
-            items_count: uniqueCacheItems.length,
-          });
-      }
-    }
+    const freshNews = await refreshCache(supabase);
 
     // Filter by category if needed
     let resultNews = freshNews;
@@ -472,6 +550,8 @@ Deno.serve(async (req) => {
     }
     if (sector) {
       resultNews = resultNews.filter(item => item.sectors.includes(sector as Sector));
+    } else {
+      resultNews = resultNews.filter(item => !isOffTopicSports(item));
     }
 
     return new Response(
