@@ -71,7 +71,7 @@ const PricingSimple = ({ discoveryContext }: PricingSimpleProps) => {
             Simple, transparent pricing
           </h2>
           <p className="text-muted-foreground">
-            {FREE_TRIAL_CREDITS} free credits to start. Then pay as you go. No subscriptions.
+            {FREE_TRIAL_CREDITS} free credits to start. Then pay as you go, or subscribe for a monthly credit allowance.
           </p>
         </div>
 
@@ -153,6 +153,30 @@ const PricingSimple = ({ discoveryContext }: PricingSimpleProps) => {
               </Link>
             </Button>
           </div>
+        </div>
+
+        {/* Subscriptions */}
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-6">
+          {[
+            { name: "AI Coach Pro", price: "£19.99", detail: "40 credits every month", link: "/genie" },
+            { name: "AI Coach Expert", price: "£39.99", detail: "120 credits every month", link: "/genie" },
+            { name: "Founder Agent Pro", price: "£49", detail: "Your personal AI strategic advisor", link: "/founder" },
+          ].map((plan) => (
+            <div key={plan.name} className="bg-card border border-border rounded-2xl p-6">
+              <h3 className="text-lg font-semibold mb-1">{plan.name}</h3>
+              <p className="text-3xl font-bold mb-1">
+                {plan.price}
+                <span className="text-base font-normal text-muted-foreground">/month</span>
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">{plan.detail}. Cancel anytime.</p>
+              <Button variant="outline" className="w-full" asChild>
+                <Link to={plan.link}>
+                  Choose {plan.name}
+                  <ArrowRight size={16} />
+                </Link>
+              </Button>
+            </div>
+          ))}
         </div>
 
         {/* Consulting note */}
