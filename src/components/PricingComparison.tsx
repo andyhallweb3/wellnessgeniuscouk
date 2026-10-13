@@ -73,7 +73,7 @@ const PricingComparison = () => {
             Start free, scale as you grow
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            No subscriptions required. Use credits when you need them, or get hands-on help with consulting.
+            Use credits when you need them, subscribe from £19.99/month for a monthly allowance, or get hands-on help with consulting.
           </p>
         </div>
 

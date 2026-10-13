@@ -48,7 +48,7 @@ const AIAdvisorLanding = () => {
       icon: CreditCard,
       title: "Pay As You Go",
       description:
-        "No subscriptions. Buy credits when you need them. Simple questions cost less; deep analysis costs more. You control the spend.",
+        "Buy credits when you need them, or subscribe from £19.99/month. Simple questions cost less; deep analysis costs more. You control the spend.",
     },
   ];
 
@@ -349,7 +349,7 @@ const AIAdvisorLanding = () => {
                   Simple, Transparent Pricing
                 </h2>
                 <p className="text-muted-foreground mb-8">
-                  Pay only for what you use. No subscriptions, no commitments.
+                  Pay only for what you use, or subscribe monthly and cancel anytime.
                 </p>
 
                 <div className="grid sm:grid-cols-3 gap-4 mb-8">
