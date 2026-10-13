@@ -64,7 +64,7 @@ const PricingSimple = ({ discoveryContext }: PricingSimpleProps) => {
   const cta = getPersonalisedCTA(discoveryContext, !!user);
 
   return (
-    <section className="section-padding bg-background">
+    <section id="pricing" className="section-padding bg-background scroll-mt-20">
       <div className="container-wide">
         <div className="text-center mb-12">
           <h2 className="text-2xl lg:text-3xl tracking-tight mb-3">

@@ -150,6 +150,16 @@ const Footer = () => {
                     AI Readiness Assessment
                   </Link>
                 </li>
+                <li>
+                  <Link to="/privacy-readiness" className="hover:text-primary-foreground transition-colors">
+                    Privacy Readiness Check
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/developer" className="hover:text-primary-foreground transition-colors">
+                    Developer API
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -159,7 +169,7 @@ const Footer = () => {
               <ul className="space-y-3 text-sm text-primary-foreground/70">
                 <li>
                   <Link to="/products" className="hover:text-accent transition-colors font-medium">
-                    Free AI Prompt Guide
+                    Free Resources
                   </Link>
                 </li>
                 <li>
@@ -185,6 +195,21 @@ const Footer = () => {
                 <li>
                   <Link to="/speaker-kit" className="hover:text-primary-foreground transition-colors">
                     Speaker Kit
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/hub?tab=community" className="hover:text-primary-foreground transition-colors">
+                    Community
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/newsletter" className="hover:text-primary-foreground transition-colors">
+                    Newsletter
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/how-to-use" className="hover:text-primary-foreground transition-colors">
+                    How to use Wellness Genius
                   </Link>
                 </li>
               </ul>

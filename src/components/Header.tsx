@@ -51,17 +51,24 @@ const Header = () => {
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
 
-  const navLinks = [
-    { href: "/ai-readiness", label: "Assessment" },
-    { href: "/genie", label: "AI Advisor" },
-    { href: "/hub?tab=community", label: "Community" },
-    { href: "/products", label: "Pricing" },
-    { href: "/services", label: "Services" },
-    { href: "/insights", label: "Learn", dropdown: [
+  type NavItem = { href: string; label: string; dropdown?: { href: string; label: string }[] };
+  const navLinks: NavItem[] = [
+    { href: "/advisor", label: "AI Advisor" },
+    { href: "/ai-readiness", label: "Assessments", dropdown: [
+      { href: "/ai-readiness", label: "AI Readiness Assessment" },
+      { href: "/privacy-readiness", label: "Privacy Readiness Check" },
+    ]},
+    { href: "/products", label: "Resources", dropdown: [
+      { href: "/products", label: "Playbooks & Downloads" },
+      { href: "/bundles", label: "Bundles" },
       { href: "/insights", label: "Blog & Insights" },
       { href: "/news", label: "Operator Intel" },
+      { href: "/newsletter", label: "Weekly Newsletter" },
     ]},
+    { href: "/#pricing", label: "Pricing" },
+    { href: "/services", label: "Consulting" },
   ];
+  const mobileLinks = navLinks.flatMap((l) => l.dropdown ?? [l]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/40">
@@ -93,6 +100,14 @@ const Header = () => {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+              ) : link.href.startsWith("/#") ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="px-3 py-2 text-sm font-medium transition-colors rounded-md text-muted-foreground hover:text-foreground"
+                >
+                  {link.label}
+                </a>
               ) : (
                 <Link
                   key={link.href}
@@ -164,7 +179,7 @@ const Header = () => {
             <Button variant="accent" size="sm" asChild className="gap-1.5">
               <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
                 <Sparkles size={14} />
-                Start Free
+                Try free
               </Link>
             </Button>
           </div>
@@ -183,27 +198,17 @@ const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden py-4 border-t border-border/30 animate-fade-in">
             <nav className="flex flex-col gap-1">
-              <Link to="/ai-readiness" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/ai-readiness") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Assessment
-              </Link>
-              <Link to="/genie" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/genie") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                AI Advisor
-              </Link>
-              <Link to="/hub?tab=community" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/hub") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Community
-              </Link>
-              <Link to="/products" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/products") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Pricing
-              </Link>
-              <Link to="/services" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/services") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Services
-              </Link>
-              <Link to="/insights" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/insights") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Blog & Insights
-              </Link>
-              <Link to="/news" className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive("/news") ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
-                Operator Intel
-              </Link>
+              {mobileLinks.map((item) =>
+                item.href.startsWith("/#") ? (
+                  <a key={item.href} href={item.href} className="px-3 py-2.5 text-base font-medium text-foreground rounded-md" onClick={() => setIsMenuOpen(false)}>
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link key={item.href} to={item.href} className={`px-3 py-2.5 text-base font-medium transition-colors rounded-md ${isActive(item.href) ? "text-accent bg-accent/5" : "text-foreground"}`} onClick={() => setIsMenuOpen(false)}>
+                    {item.label}
+                  </Link>
+                )
+              )}
 
               <div className="my-3 border-t border-border/30" />
 
@@ -225,7 +230,7 @@ const Header = () => {
                 <Button variant="accent" asChild className="w-full gap-2">
                   <Link to={user ? "/genie" : "/auth?redirect=/genie"} onClick={() => setIsMenuOpen(false)}>
                     <Sparkles size={16} />
-                    Start Free — 10 AI Sessions
+                    Try free: 10 AI sessions
                   </Link>
                 </Button>
               </div>

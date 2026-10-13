@@ -40,7 +40,7 @@ const HeroNew = () => {
 
             {/* Subheadline */}
             <p className="text-lg lg:text-xl text-muted-foreground mb-8 animate-fade-up animation-delay-100 leading-relaxed">
-              Get strategic answers on retention, pricing, and growth in 60 seconds —
+              Get strategic answers on retention, pricing, and growth in 60 seconds,
               tailored to your wellness business, not generic advice.
             </p>
 
@@ -63,27 +63,26 @@ const HeroNew = () => {
               </div>
             </div>
 
-            {/* Single primary CTA */}
+            {/* Primary and secondary CTA */}
             <div className="flex flex-col sm:flex-row items-start gap-3 mb-4 animate-fade-up animation-delay-200">
               <Button variant="accent" size="xl" asChild className="shadow-glow text-base px-8 w-full sm:w-auto">
                 <Link to={user ? "/genie" : "/auth?redirect=/genie"}>
                   <Sparkles size={18} />
-                  Start Free — {FREE_TRIAL_CREDITS} AI Sessions
+                  Try free: {FREE_TRIAL_CREDITS} AI sessions
                   <ArrowRight size={18} />
                 </Link>
+              </Button>
+              <Button variant="outline" size="xl" asChild className="text-base px-8 w-full sm:w-auto">
+                <Link to="/ai-readiness">Take the free AI assessment</Link>
               </Button>
             </div>
 
             <div className="flex items-center gap-4 animate-fade-up animation-delay-250">
               <span className="text-xs text-muted-foreground">No card required</span>
               <span className="text-muted-foreground/30">·</span>
-              <Link
-                to="/ai-readiness"
-                className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
-              >
-                Take the free AI assessment instead
-                <ArrowRight size={12} />
-              </Link>
+              <a href="#pricing" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                See pricing
+              </a>
             </div>
           </div>
 
@@ -118,9 +117,9 @@ const HeroNew = () => {
                       <span className="font-semibold text-primary">Based on your profile, 3 likely causes:</span>
                     </p>
                     <div className="space-y-2 text-sm">
-                      <p>1. <strong>Onboarding gap</strong> — Dec joiners had 40% fewer touchpoints</p>
-                      <p>2. <strong>Price timing</strong> — Your increase hit during competitor promos</p>
-                      <p>3. <strong>Schedule change</strong> — 23% of churned attended cut evening slots</p>
+                      <p>1. <strong>Onboarding gap</strong>: Dec joiners had 40% fewer touchpoints</p>
+                      <p>2. <strong>Price timing</strong>: Your increase hit during competitor promos</p>
+                      <p>3. <strong>Schedule change</strong>: 23% of churned attended cut evening slots</p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-border">
                       <p className="text-sm text-primary font-medium">
