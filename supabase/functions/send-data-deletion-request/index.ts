@@ -1,4 +1,4 @@
-import { Resend } from 'https://esm.sh/resend@4.0.0';
+import { Resend } from "../_shared/mailer.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
