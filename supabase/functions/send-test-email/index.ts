@@ -1,4 +1,4 @@
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Resend } from "../_shared/mailer.ts";
 import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
