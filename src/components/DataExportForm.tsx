@@ -113,9 +113,6 @@ export const DataExportForm = () => {
         <h4 className="font-medium mb-2">What's included in your export:</h4>
         <ul className="list-disc pl-5 text-muted-foreground space-y-1">
           <li>Profile information</li>
-          <li>AI Coach sessions and saved outputs</li>
-          <li>Credit transactions history</li>
-          <li>Product downloads and purchases</li>
           <li>Newsletter subscription data</li>
           <li>AI Readiness assessment results</li>
         </ul>

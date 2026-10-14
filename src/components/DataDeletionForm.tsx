@@ -132,7 +132,7 @@ export const DataDeletionForm = () => {
         </label>
         <Textarea
           id="deletion-details"
-          placeholder="Any specific details about which data you'd like deleted (e.g., newsletter subscription, AI Coach data, assessment results)"
+          placeholder="Any specific details about which data you'd like deleted (e.g. newsletter subscription, PULSE interest, assessment results)"
           value={formData.details}
           onChange={(e) => setFormData({ ...formData, details: e.target.value })}
           className={errors.details ? "border-destructive" : ""}
