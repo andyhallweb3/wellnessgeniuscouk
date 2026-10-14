@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Linkedin, Twitter } from "lucide-react";
 import logo from "@/assets/wellness-genius-logo-teal.webp";
-import gwiLogo from "@/assets/logos/gwi-logo.svg";
 import { useNewsletter } from "@/hooks/useNewsletter";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -88,31 +87,10 @@ const Footer = () => {
                 </a>
               </div>
               
-              {/* AI Initiative */}
+              {/* Founder credit */}
               <div className="mt-6 pt-4 border-t border-primary-foreground/10">
-                <p className="text-xs text-primary-foreground/50 mb-3">Chair of</p>
-                <a
-                  href="https://globalwellnessinstitute.org/ai-initiative/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block mb-3 hover:opacity-80 transition-opacity"
-                >
-                  <img 
-                    src={gwiLogo} 
-                    alt="Global Wellness Institute" 
-                    className="h-8 w-auto brightness-0 invert opacity-80"
-                  />
-                </a>
-                <p className="text-sm text-accent mb-2">AI Initiative</p>
-                <a
-                  href="https://www.linkedin.com/company/global-wellness-institute-ai-initiative/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary-foreground/50 hover:text-primary-foreground transition-colors inline-flex items-center gap-1"
-                >
-                  <Linkedin size={12} />
-                  Follow on LinkedIn
-                </a>
+                <p className="text-xs text-primary-foreground/50 mb-1">Founded by</p>
+                <p className="text-sm text-primary-foreground/90">Andy Hall, BSc, EMBA</p>
               </div>
             </div>
 

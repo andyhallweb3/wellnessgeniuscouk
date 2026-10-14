@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { captureLead } from "@/lib/leads";
 
 const BOOK_CALL = "https://meetings.hubspot.com/andy-hall6/andy-hall-meeting";
-const GWI_AI = "https://globalwellnessinstitute.org/ai-initiative/";
 
 type Track = "operator" | "advisor";
 type Tier = "community" | "cohort" | "advisory";
@@ -175,10 +174,7 @@ const Pulse = () => (
           <Button variant="accent" asChild><a href="#register">Register interest <ArrowRight size={16} /></a></Button>
           <Button variant="outline" asChild><a href={BOOK_CALL} target="_blank" rel="noopener noreferrer"><CalendarClock size={16} /> Book a call</a></Button>
         </div>
-        <p className="text-sm text-muted-foreground mt-5">
-          Led by Andy Hall, Chair of the{" "}
-          <a href={GWI_AI} target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Global Wellness Institute AI Initiative</a>.
-        </p>
+        <p className="text-sm text-muted-foreground mt-5">Led by Andy Hall, BSc, EMBA.</p>
       </section>
 
       {/* Phases */}
