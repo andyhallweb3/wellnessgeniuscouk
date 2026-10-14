@@ -170,6 +170,11 @@ const Footer = () => {
                     Speaker Kit
                   </Link>
                 </li>
+                <li>
+                  <Link to="/pulse" className="hover:text-primary-foreground transition-colors">
+                    Work with Andy
+                  </Link>
+                </li>
               </ul>
             </div>
 
