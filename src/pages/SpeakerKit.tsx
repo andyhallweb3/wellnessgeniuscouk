@@ -1,12 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Mic, Users, Lightbulb, Bot, TrendingUp, BookOpen, Linkedin, Twitter, ExternalLink } from "lucide-react";
+import { ArrowRight, Mic, Users, Lightbulb, Bot, TrendingUp, BookOpen, Linkedin, Twitter } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import andyHeadshot from "@/assets/andy-headshot.jpeg";
 import beyondRepsCover from "@/assets/beyond-reps-cover.jpeg";
-import gwiLogo from "@/assets/logos/gwi-logo.svg";
 
 const topics = [
   {
@@ -94,23 +93,13 @@ const SpeakerKit = () => {
             </h2>
             <div className="space-y-4 text-muted-foreground">
               <p>
-                Andy Hall is the founder of Wellness Genius, helping wellness, fitness, and hospitality 
-                businesses scale through intelligent automation and AI agents. He also chairs the{" "}
-                <a 
-                  href="https://globalwellnessinstitute.org/ai-initiative/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-accent hover:underline inline-flex items-center gap-1"
-                >
-                  Global Wellness Institute AI Initiative
-                  <ExternalLink size={14} />
-                </a>
-                , shaping policy and best practices for AI adoption across the wellness sector.
+                Andy Hall, BSc, EMBA, is the founder of Wellness Genius, helping wellness, fitness, and hospitality 
+                businesses scale through intelligent automation and AI agents.
               </p>
               <p>
                 With a background spanning digital transformation, product development, and the wellness 
                 industry, Andy brings a practical, outcome-focused perspective to every engagement. 
-                No jargon, no hype — just actionable insights that leadership teams can implement immediately.
+                No jargon, no hype, just actionable insights that leadership teams can implement immediately.
               </p>
               <p>
                 Andy has worked with brands including Fitter Stock, The Leisure Experts, Nuforma, 
@@ -119,32 +108,6 @@ const SpeakerKit = () => {
               </p>
             </div>
             
-            {/* AI Initiative Card */}
-            <div className="mt-8 bg-secondary/50 rounded-2xl p-6 border border-border/50">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Chair of</p>
-              <a
-                href="https://globalwellnessinstitute.org/ai-initiative/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-4 group"
-              >
-                <img 
-                  src={gwiLogo} 
-                  alt="Global Wellness Institute" 
-                  className="h-12 w-auto"
-                />
-                <div>
-                  <p className="font-semibold text-foreground group-hover:text-accent transition-colors">
-                    AI Initiative
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Shaping AI policy for the wellness industry
-                  </p>
-                </div>
-                <ExternalLink size={16} className="text-muted-foreground ml-auto" />
-              </a>
-            </div>
-
             {/* Social Links */}
             <div className="flex flex-wrap gap-3 mt-6">
               <a
@@ -164,15 +127,6 @@ const SpeakerKit = () => {
               >
                 <Twitter size={16} className="text-accent" />
                 @andy_web_3
-              </a>
-              <a
-                href="https://www.linkedin.com/company/global-wellness-institute-ai-initiative/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border/50 text-sm hover:border-accent/30 transition-colors"
-              >
-                <Linkedin size={16} className="text-accent" />
-                GWI AI Initiative
               </a>
             </div>
           </div>

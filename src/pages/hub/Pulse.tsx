@@ -88,6 +88,70 @@ const FAQ = [
   { q: "Can advisors become certified now?", a: "The advisor track is open for interest. A certified advisor directory is planned, and people who register interest will hear first." },
 ];
 
+
+const GUIDE_URL = "/downloads/pulse-operators-ai-starter-guide.pdf";
+
+const GuideDownload = () => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const startDownload = () => {
+    const a = document.createElement("a");
+    a.href = GUIDE_URL;
+    a.download = "PULSE-Operators-AI-Starter-Guide.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    setBusy(true);
+    try {
+      await captureLead(email, "pulse-framework-download", name);
+      setDone(true);
+      startDownload();
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="bg-card border border-accent/40 rounded-2xl p-5 grid md:grid-cols-[1fr_auto] gap-4 items-start">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-accent mb-1">Free guide</p>
+        <h2 className="!text-xl font-semibold mb-1">Download the PULSE framework</h2>
+        <p className="text-sm text-muted-foreground mb-3">
+          PULSE: The Operator's AI Starter Guide. The five phases in plain terms, a self-check and 10 copy-paste prompts for spas, gyms, clinics and clubs.
+        </p>
+        {done ? (
+          <p className="text-sm">
+            Thanks. Your download should start now. If it does not,{" "}
+            <a href={GUIDE_URL} download className="text-accent underline">download the guide here</a>.
+          </p>
+        ) : (
+          <form onSubmit={submit} className="flex flex-col sm:flex-row gap-3">
+            <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} className="sm:max-w-[200px]" />
+            <Input type="email" required placeholder="Work email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Button type="submit" variant="accent" disabled={busy}>{busy ? "Sending..." : "Download the guide"}</Button>
+          </form>
+        )}
+        <p className="text-xs text-muted-foreground mt-2">
+          We will also send you Andy's Briefing. Unsubscribe any time. See our <a href="/privacy" className="underline">privacy policy</a>.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const InterestForm = () => {
   const [track, setTrack] = useState<Track>("operator");
   const [tier, setTier] = useState<Tier>("community");
@@ -175,6 +239,10 @@ const Pulse = () => (
           <Button variant="outline" asChild><a href={BOOK_CALL} target="_blank" rel="noopener noreferrer"><CalendarClock size={16} /> Book a call</a></Button>
         </div>
         <p className="text-sm text-muted-foreground mt-5">Led by Andy Hall, BSc, EMBA.</p>
+      </section>
+
+      <section className="mb-10" aria-label="Free guide">
+        <GuideDownload />
       </section>
 
       {/* Phases */}
