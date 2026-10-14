@@ -1,5 +1,4 @@
-import { Linkedin, Twitter, ExternalLink } from "lucide-react";
-import gwiLogo from "@/assets/logos/gwi-logo.svg";
+import { Linkedin, Twitter } from "lucide-react";
 import andyHeadshot from "@/assets/andy-headshot.jpeg";
 
 const FounderSection = () => {
@@ -26,12 +25,12 @@ const FounderSection = () => {
 
             {/* Bio */}
             <div className="flex-1">
-              <h3 className="text-xl font-semibold mb-1">Andy Hall</h3>
+              <h3 className="text-xl font-semibold mb-1">Andy Hall, BSc, EMBA</h3>
               <p className="text-accent text-sm mb-4">Founder &amp; CEO, Wellness Genius</p>
               
               <p className="text-muted-foreground mb-4 leading-relaxed">
                 20+ years building wellness, health-tech, and digital platforms across the UK, Europe, and Asia.
-                Chair of the Global Wellness Institute AI Initiative. MBA (Quantic). Sold wellness technology into 42 global
+                Sold wellness technology into 42 global
                 fitness brands. Now helping operators cut through AI hype and implement what actually works.
               </p>
 
@@ -56,30 +55,6 @@ const FounderSection = () => {
                 </a>
               </div>
 
-              {/* Credentials */}
-              <div className="p-4 rounded-xl bg-card border border-border">
-                <div className="flex items-center gap-4">
-                  <a
-                    href="https://globalwellnessinstitute.org/ai-initiative/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-shrink-0"
-                  >
-                    <img
-                      src={gwiLogo}
-                      alt="Global Wellness Institute"
-                      className="h-10 w-auto"
-                    />
-                  </a>
-                  <div>
-                    <p className="text-sm font-medium">Chair, AI Initiative</p>
-                    <p className="text-xs text-muted-foreground">
-                      Global Wellness Institute — leading industry AI standards and best practices
-                    </p>
-                  </div>
-                  <ExternalLink size={14} className="text-muted-foreground flex-shrink-0" />
-                </div>
-              </div>
             </div>
           </div>
         </div>

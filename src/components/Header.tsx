@@ -66,6 +66,7 @@ const Header = () => {
       { href: "/sectors/clinics", label: "Clinics" },
       { href: "/sectors/country-clubs", label: "Country Clubs" },
     ]},
+    { href: "/pulse", label: "Work with Andy" },
   ];
   const mobileLinks = navLinks.flatMap((l) => l.dropdown ?? [l]).filter((l, i, arr) => arr.findIndex((x) => x.href === l.href) === i);
 

@@ -21,6 +21,7 @@ import AIReadinessResults from "./pages/AIReadinessResults";
 import SharedReport from "./pages/SharedReport";
 import SpeakerKit from "./pages/SpeakerKit";
 import Articles from "./pages/hub/Articles";
+import Pulse from "./pages/hub/Pulse";
 import BlogPost from "./pages/BlogPost";
 import LatestNews from "./pages/LatestNews";
 import NewsletterAdmin from "./pages/NewsletterAdmin";
@@ -102,6 +103,8 @@ const App = () => (
             <Route path="/services" element={<Navigate to="/" replace />} />
             <Route path="/software" element={<Navigate to="/" replace />} />
             <Route path="/insights" element={<Articles />} />
+            <Route path="/pulse" element={<Pulse />} />
+            <Route path="/work-with-andy" element={<Navigate to="/pulse" replace />} />
             <Route path="/articles" element={<Navigate to="/insights" replace />} />
             <Route path="/insights/:slug" element={<BlogPost />} />
             <Route path="/news" element={<LatestNews />} />

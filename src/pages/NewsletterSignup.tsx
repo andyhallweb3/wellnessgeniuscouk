@@ -10,7 +10,6 @@ const NewsletterSignup = () => {
 
   const linkedInProfiles = [
     { name: "Andy", url: "https://www.linkedin.com/in/andyweb3", role: "Founder" },
-    { name: "GWI AI Initiative", url: "https://www.linkedin.com/company/global-wellness-institute-ai-initiative/", role: "Partner" },
     { name: "Wellness Genius", url: "https://www.linkedin.com/company/wellnessgenius/", role: "Company" },
   ];
 

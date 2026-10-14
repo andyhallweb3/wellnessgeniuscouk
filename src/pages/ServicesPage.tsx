@@ -12,7 +12,7 @@ const ServicesPage = () => {
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>AI Consulting for Fitness & Wellness Businesses | Wellness Genius</title>
-        <meta name="description" content="Hands-on AI consulting, readiness sprints, and custom AI agent builds for gym operators, spa groups, and wellness brands. Delivered by the Chair of the GWI AI Initiative." />
+        <meta name="description" content="Hands-on AI consulting, readiness sprints, and custom AI agent builds for gym operators, spa groups, and wellness brands. Delivered by Andy Hall, BSc, EMBA." />
         <link rel="canonical" href="https://wellnessgenius.co.uk/services" />
         <meta property="og:title" content="AI Consulting for Fitness & Wellness Businesses | Wellness Genius" />
         <meta property="og:description" content="From AI strategy to custom agent builds. Consulting for wellness operators who want to move fast." />

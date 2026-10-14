@@ -1,25 +1,15 @@
-import { Award, Users, Mic, BookOpen, Shield, Lock } from "lucide-react";
+import { Users, Mic } from "lucide-react";
 
 const credentials = [
   {
-    icon: Award,
-    label: "GWI Research Council",
-    detail: "Contributing member",
-  },
-  {
     icon: Users,
-    label: "500+ operators",
-    detail: "Using our AI tools",
+    label: "3,000+ newsletter readers",
+    detail: "Andy's Briefing",
   },
   {
     icon: Mic,
     label: "Industry speaker",
     detail: "FIBO, ukactive, IHRSA",
-  },
-  {
-    icon: Lock,
-    label: "Data secure",
-    detail: "SOC 2 compliant",
   },
 ];
 
@@ -33,7 +23,7 @@ const CredibilityStack = () => {
               <cred.icon size={16} className="text-accent" />
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-medium">{cred.label}</span>
-                <span className="text-xs text-muted-foreground">— {cred.detail}</span>
+                <span className="text-xs text-muted-foreground">· {cred.detail}</span>
               </div>
             </div>
           ))}
