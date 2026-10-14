@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 
 const PrivacyPolicy = () => {
-  const lastUpdated = "21 December 2025";
+  const lastUpdated = "14 October 2026";
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -19,7 +19,7 @@ const PrivacyPolicy = () => {
 
             <div className="prose prose-slate dark:prose-invert max-w-none space-y-8">
               <p className="text-lg text-muted-foreground">
-                Wellness Genius ("we", "us", "our") respects your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and protect your information when you visit our website, use our tools (including the AI Readiness Index), or engage with our services.
+                Wellness Genius ("we", "us", "our") respects your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and protect your information when you visit our website, sign up for our briefing or downloads, use our free tools (including the AI Readiness Score), or get in touch with us.
               </p>
               <p className="text-muted-foreground">
                 This policy is written in accordance with the UK GDPR, EU GDPR, and applicable data protection laws.
@@ -28,7 +28,7 @@ const PrivacyPolicy = () => {
               <section>
                 <h2 className="text-2xl font-heading mb-4">1. Who We Are</h2>
                 <p className="text-muted-foreground mb-4">
-                  Wellness Genius provides AI readiness assessments, advisory services, education, and AI agent solutions across wellness, fitness, hospitality, and related sectors.
+                  Wellness Genius is a free knowledge hub for wellness, fitness, hospitality and clinic operators, run by Andy Hall. It offers news, articles, Andy's Briefing, free resources, the AI Readiness Score, and the PULSE programme for operators and advisors who want to work with Andy.
                 </p>
                 <p className="text-muted-foreground">
                   If you have any questions about this policy or how we handle your data, you can contact us at:
@@ -50,7 +50,7 @@ const PrivacyPolicy = () => {
                   <li>Email address</li>
                   <li>Company name</li>
                   <li>Job title / role</li>
-                  <li>Responses to surveys or assessments (e.g. AI Readiness Index)</li>
+                  <li>Responses to surveys or assessments (e.g. the AI Readiness Score)</li>
                   <li>Information submitted via contact forms or booking forms</li>
                 </ul>
 
@@ -72,7 +72,9 @@ const PrivacyPolicy = () => {
                 <p className="text-muted-foreground mb-2">We use your data to:</p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4">
                   <li>Provide and operate our website, tools, and services</li>
-                  <li>Deliver AI readiness assessments and personalised insights</li>
+                  <li>Deliver the AI Readiness Score and your results</li>
+                  <li>Send the briefing, guides or downloads you ask for</li>
+                  <li>Follow up on PULSE register interest requests</li>
                   <li>Respond to enquiries and schedule calls</li>
                   <li>Send relevant communications (where consent has been given)</li>
                   <li>Improve our services and user experience</li>
@@ -85,18 +87,18 @@ const PrivacyPolicy = () => {
                 <h2 className="text-2xl font-heading mb-4">4. Legal Basis for Processing</h2>
                 <p className="text-muted-foreground mb-2">Under GDPR, we process your data based on one or more of the following lawful bases:</p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4">
-                  <li><strong>Consent</strong> – where you have explicitly agreed (e.g. newsletters, assessments)</li>
-                  <li><strong>Legitimate interest</strong> – to run and improve our business responsibly</li>
-                  <li><strong>Contractual necessity</strong> – where processing is required to deliver a service</li>
-                  <li><strong>Legal obligation</strong> – where required by law</li>
+                  <li><strong>Consent</strong>: where you have explicitly agreed (e.g. newsletters, assessments)</li>
+                  <li><strong>Legitimate interest</strong>: to run and improve our business responsibly</li>
+                  <li><strong>Contractual necessity</strong>: where processing is required to deliver a service</li>
+                  <li><strong>Legal obligation</strong>: where required by law</li>
                 </ul>
                 <p className="text-muted-foreground">You may withdraw consent at any time.</p>
               </section>
 
               <section>
-                <h2 className="text-2xl font-heading mb-4">5. AI Readiness Index & Automated Insights</h2>
+                <h2 className="text-2xl font-heading mb-4">5. AI Readiness Score</h2>
                 <p className="text-muted-foreground mb-4">
-                  Our AI Readiness Index provides rule-based and insight-led outputs based on your responses.
+                  The AI Readiness Score is a rule-based assessment. Your answers are scored against fixed criteria to produce your results; they are not sent to an AI model.
                 </p>
                 <p className="text-muted-foreground mb-2"><strong>Important:</strong></p>
                 <ul className="list-disc pl-6 text-muted-foreground">
@@ -107,29 +109,22 @@ const PrivacyPolicy = () => {
               </section>
 
               <section>
-                <h2 className="text-2xl font-heading mb-4">5a. AI Coach & Newsletter Services</h2>
+                <h2 className="text-2xl font-heading mb-4">5a. Briefing, Downloads and PULSE Interest</h2>
                 <p className="text-muted-foreground mb-4">
-                  When you use our AI Coach feature or subscribe to our newsletter, we collect and process additional data:
+                  When you sign up for Andy's Briefing, download a guide (such as the PULSE Operator's AI Starter Guide), or register interest in PULSE, we store your details in our subscriber list. This may include:
                 </p>
-                <h3 className="text-xl font-medium mb-2">AI Coach</h3>
-                <ul className="list-disc pl-6 text-muted-foreground mb-4">
-                  <li>Chat messages and prompts you submit</li>
-                  <li>Business profile information you provide during onboarding</li>
-                  <li>Documents you upload for context (stored securely and only accessible to you)</li>
-                  <li>Usage data including credit consumption and session history</li>
-                </ul>
-                <p className="text-muted-foreground mb-4">
-                  AI Coach responses are generated using third-party AI services. Your prompts are sent to these services for processing but are not used to train their models. We retain chat history to improve your experience and for quality assurance.
-                </p>
-                <h3 className="text-xl font-medium mb-2">Newsletter</h3>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4">
                   <li>Email address and name (if provided)</li>
-                  <li>Subscription source and date</li>
-                  <li>Email engagement metrics (opens, clicks) for service improvement</li>
-                  <li>IP address at time of subscription</li>
+                  <li>Where you signed up (for example a sector page, the guide download, or the PULSE track and format you chose)</li>
+                  <li>Date of sign-up</li>
+                  <li>IP address at the time of sign-up</li>
+                  <li>Email delivery and bounce status</li>
                 </ul>
+                <p className="text-muted-foreground mb-4">
+                  Signing up for a download or registering interest also adds you to Andy's Briefing. Registering interest in PULSE means Andy may contact you about it. We do not take payments on this website.
+                </p>
                 <p className="text-muted-foreground">
-                  You can unsubscribe from our newsletter at any time using the link in any email or by contacting us directly.
+                  You can unsubscribe at any time using the link in any email or by contacting us directly.
                 </p>
               </section>
 
@@ -140,9 +135,8 @@ const PrivacyPolicy = () => {
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4">
                   <li>Email delivery services (Resend)</li>
-                  <li>AI processing services (Google Gemini, OpenAI via Lovable AI)</li>
-                  <li>Payment processing (Stripe)</li>
-                  <li>Database and hosting (Supabase, Lovable)</li>
+                  <li>Database and backend services (Supabase)</li>
+                  <li>Website hosting (Vercel)</li>
                   <li>Scheduling tools (e.g. HubSpot Meetings)</li>
                   <li>Analytics providers (privacy-friendly where possible)</li>
                 </ul>
