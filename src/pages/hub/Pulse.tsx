@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { captureLead } from "@/lib/leads";
 
-const BOOK_CALL = "https://meetings.hubspot.com/andy-hall6/andy-hall-meeting";
+const BOOK_CALL = "https://calendly.com/andy-wellnessgenius";
 
 type Track = "operator" | "advisor";
 type Tier = "community" | "cohort" | "advisory";

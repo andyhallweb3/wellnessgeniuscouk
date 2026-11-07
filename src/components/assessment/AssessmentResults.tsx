@@ -616,7 +616,7 @@ const AssessmentResults = ({ answers, questions, userInfo }: AssessmentResultsPr
         </ul>
         <div className="text-center mb-6">
           <Button variant="accent" size="lg" asChild>
-            <a href="https://meetings.hubspot.com/andy-hall6/andy-hall-meeting" target="_blank" rel="noopener noreferrer">
+            <a href="https://calendly.com/andy-wellnessgenius" target="_blank" rel="noopener noreferrer">
               Book AI Readiness Review
               <ArrowRight size={16} />
             </a>
