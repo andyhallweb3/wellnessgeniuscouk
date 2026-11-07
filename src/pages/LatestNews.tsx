@@ -875,7 +875,7 @@ const LatestNews = () => {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <a
-                href="https://meetings.hubspot.com/andy-hall6/andy-hall-meeting"
+                href="https://calendly.com/andy-wellnessgenius"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex"
