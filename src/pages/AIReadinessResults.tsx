@@ -448,6 +448,10 @@ const AIReadinessResults = () => {
 
           {/* Free next steps (no paid report while the site runs as a free hub) */}
           <div className="bg-card rounded-xl p-8 border border-border shadow-elegant mb-8">
+            <div className="rounded-lg border border-accent bg-accent/5 p-5 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <p className="font-medium">Want to act on your score? Book a 30-minute call with Andy to turn it into a 90-day plan.</p>
+              <a href="https://calendly.com/andy-wellnessgenius" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold whitespace-nowrap hover:opacity-90">Book a call with Andy</a>
+            </div>
             <h2 className="text-xl font-heading mb-2">What to do next</h2>
             <p className="text-sm text-muted-foreground mb-6">
               Your score is saved to the email you gave us. Here are free ways to act on it.
@@ -465,9 +469,9 @@ const AIReadinessResults = () => {
                 <p className="font-medium mb-1">Resources for your sector</p>
                 <p className="text-sm text-muted-foreground">Hotels and spas, fitness, clinics, country clubs.</p>
               </Link>
-              <a href="/#contact" className="rounded-lg border border-border p-4 hover:border-accent transition-colors">
+              <a href="https://calendly.com/andy-wellnessgenius" target="_blank" rel="noopener noreferrer" className="rounded-lg border border-border p-4 hover:border-accent transition-colors">
                 <p className="font-medium mb-1">Talk it through with Andy</p>
-                <p className="text-sm text-muted-foreground">Free 30 minute call.</p>
+                <p className="text-sm text-muted-foreground">A 30-minute call to talk through your score.</p>
               </a>
             </div>
           </div>
