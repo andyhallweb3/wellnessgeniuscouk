@@ -20,8 +20,8 @@ const PILLARS = [
 const HubHome = () => (
   <div className="min-h-screen bg-background">
     <Helmet>
-      <title>Wellness Genius | Free AI and wellness intelligence for hospitality, fitness and clinics</title>
-      <meta name="description" content="Free news, articles, playbooks and an AI Readiness Score for hotels and spas, fitness operators, wellness clinics and country clubs." />
+      <title>Wellness Genius | AI and wellness intelligence for hospitality, fitness and clinic operators</title>
+      <meta name="description" content="AI and wellness intelligence for hotels and spas, fitness operators, wellness clinics and country clubs. Industry news, playbooks, a free AI Readiness Score and hands-on help from Andy Hall." />
     </Helmet>
     <Header />
     <main className="pt-20 lg:pt-24">
