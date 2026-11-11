@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from 'https://esm.sh/resend@4.0.0';
+import { Resend } from "../_shared/mailer.ts";
 import { validateAdminAuth, unauthorizedResponse } from '../_shared/admin-auth.ts';
 
 const corsHeaders = {
