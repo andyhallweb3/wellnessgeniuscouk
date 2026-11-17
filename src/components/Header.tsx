@@ -60,6 +60,7 @@ const Header = () => {
     ]},
     { href: "/resources", label: "Resources" },
     { href: "/ai-readiness", label: "Readiness Score" },
+    { href: "/cv-score", label: "CV Score" },
     { href: "/sectors", label: "By sector", dropdown: [
       { href: "/sectors/hotels-spas", label: "Hotels & Spas" },
       { href: "/sectors/fitness", label: "Fitness" },

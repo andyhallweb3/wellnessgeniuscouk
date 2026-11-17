@@ -134,6 +134,11 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/cv-score" className="hover:text-primary-foreground transition-colors">
+                    CV Score
+                  </Link>
+                </li>
+                <li>
                   <Link to="/privacy-readiness" className="hover:text-primary-foreground transition-colors">
                     Privacy Readiness Check
                   </Link>
