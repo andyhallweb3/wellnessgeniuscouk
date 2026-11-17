@@ -51,6 +51,7 @@ import StructuredAIEbook from "./pages/StructuredAIEbook";
 import WellnessAssessment from "./pages/WellnessAssessment";
 import WellnessDashboard from "./pages/WellnessDashboard";
 import Developer from "@/pages/Developer";
+import CvScore from "./pages/CvScore";
 
 const queryClient = new QueryClient();
 
@@ -148,6 +149,7 @@ const App = () => (
             <Route path="/founder/content" element={<Navigate to="/" replace />} />
             <Route path="/founder/nudge" element={<Navigate to="/" replace />} />
             <Route path="/developer" element={<Navigate to="/" replace />} />
+            <Route path="/cv-score" element={<CvScore />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
