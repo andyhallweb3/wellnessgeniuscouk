@@ -155,7 +155,7 @@ export function canonicalUrl(u: string): string {
 export function titleKey(title: string): string {
   let t = title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   // Drop a trailing " - Publisher" / " | Publisher" segment of up to 6 words (Google News style)
-  t = t.replace(/\s+[-|–—]\s+[^-|–—]{1,60}$/, (m) => (m.trim().split(/\s+/).length <= 7 ? '' : m));
+  t = t.replace(/\s+[-|\u2013\u2014]\s+[^-|\u2013\u2014]{1,60}$/, (m) => (m.trim().split(/\s+/).length <= 7 ? '' : m));
   t = t.toLowerCase().replace(/[’'`"“”]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
   return t.slice(0, 90);
 }
