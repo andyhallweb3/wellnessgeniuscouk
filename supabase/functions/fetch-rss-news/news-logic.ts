@@ -1,5 +1,7 @@
 // Pure news logic for fetch-rss-news: parsing, dates, dedupe, Google News unwrap, homepage balancing.
 // No Supabase or Deno-only APIs here, so it can be run locally for previews and tests.
+import { HOME_SCORING, scoreItem } from './scoring.ts';
+export { HOME_SCORING, scoreItem } from './scoring.ts';
 
 export type Sector = 'hotels-spas' | 'fitness' | 'clinics' | 'country-clubs';
 
@@ -78,7 +80,7 @@ export function decodeEntities(input: string): string {
 }
 
 const JUNK_SUMMARY = /^(x+|test|lorem ipsum.*|n\/?a|null|undefined|\.+|-+)$/i;
-const SPORTS_OFFTOPIC = /\b(ncaa|hazing|varsity|quarterback|touchdown|playoffs?|athletics director|transfer windows?|eligibility|(football|soccer|basketball|baseball|softball|hockey|lacrosse|volleyball|wrestling)( team| coach(es|ing staff)?| program| season| player)s?|college (football|golf|athletics|sports)|high school (sports|athletes|athletics|football))\b/i;
+const SPORTS_OFFTOPIC = /\b(ncaa|hazing|varsity|quarterback|touchdown|playoffs?|athletics director|transfer windows?|eligibility|(football|soccer|basketball|baseball|softball|hockey|lacrosse|volleyball|wrestling)( team| coach(es|ing staff)?| program| season| player)s?|nil (deals?|contracts?|collectives?)|student-athletes?|sports betting|gambling sponsors?|premier league|wsl|football clubs?|name,? image,? and likeness|college (football|golf|athletics|sports)|high school (sports|athletes|athletics|football))\b/i;
 
 export function cleanSummary(summary: string): string {
   let s = summary.replace(/\s*The post .{1,400}? appeared first on .{1,200}?\.?\s*$/i, '').trim();
@@ -346,32 +348,36 @@ export function isHomeEligible(item: { title: string; category: string; sectors?
 }
 
 /**
- * Round-robin across hotel, spa, fitness, clinic and club over a date-sorted list.
- * Each round takes the newest unused item from every bucket (max `maxPerSource` per source),
- * and rounds are emitted newest first. Only items from the last `recentDays` take part in the
- * rotation; if that does not fill `limit`, the rest is filled by date.
+ * Homepage ranking. Items are scored (relevance x recency, see scoring.ts), then a round-robin across
+ * hotel, spa, fitness, clinic and club takes the best-scoring unused item from each bucket, subject to
+ * per-source caps (max `maxPerSource` per source, `maxGoogleNews` across all Google News feeds).
+ * Each round is emitted best score first. Only items from the last HOME_SCORING.maxAgeDays take part;
+ * if the rotation runs dry, the rest is filled by score.
  */
-export function balanceForHome<T extends { title: string; category: string; sectors?: string[] | null; published_date: string; source_name: string }>(
-  items: T[], limit: number, opts: { maxPerSource?: number; maxGoogleNews?: number; recentDays?: number; now?: number } = {},
-): T[] {
+export function balanceForHome<T extends { title: string; category: string; sectors?: string[] | null; published_date: string; source_name: string; source_url?: string; summary?: string | null }>(
+  items: T[], limit: number, opts: { maxPerSource?: number; maxGoogleNews?: number; now?: number; scoring?: typeof HOME_SCORING } = {},
+): (T & { score: number; score_reasons: string[] })[] {
   const now = opts.now ?? Date.now();
+  const cfg = opts.scoring ?? HOME_SCORING;
   const maxPerSource = opts.maxPerSource ?? 2;
-  // All Google News search feeds count as one source, so wire copy cannot crowd out trade press
   const maxGoogleNews = opts.maxGoogleNews ?? 2;
   const group = (it: T) => (/^Google News/i.test(it.source_name) ? 'Google News' : it.source_name);
   const cap = (g: string) => (g === 'Google News' ? maxGoogleNews : maxPerSource);
-  const recentMs = (opts.recentDays ?? 10) * 86400_000;
-  const sorted = [...items].sort((a, b) => Date.parse(b.published_date) - Date.parse(a.published_date));
-  const queues = new Map<Bucket, T[]>(BUCKET_ORDER.map((b) => [b, []]));
-  for (const it of sorted) {
-    const b = primaryBucket(it);
-    if (b && now - Date.parse(it.published_date) <= recentMs) queues.get(b)!.push(it);
-  }
+  const maxAge = cfg.maxAgeDays * 86400_000;
+
+  const scored = items
+    .filter((it) => now - Date.parse(it.published_date) <= maxAge)
+    .map((it) => { const s = scoreItem(it, now, cfg); return Object.assign({}, it, { score: s.score, score_reasons: s.reasons }); })
+    .sort((a, b) => b.score - a.score || Date.parse(b.published_date) - Date.parse(a.published_date));
+  type S = (typeof scored)[number];
+
+  const queues = new Map<Bucket, S[]>(BUCKET_ORDER.map((b) => [b, []]));
+  for (const it of scored) { const b = primaryBucket(it); if (b) queues.get(b)!.push(it); }
   const perSource = new Map<string, number>();
-  const out: T[] = [];
-  const used = new Set<T>();
+  const out: S[] = [];
+  const used = new Set<S>();
   while (out.length < limit) {
-    const round: T[] = [];
+    const round: S[] = [];
     for (const b of BUCKET_ORDER) {
       const q = queues.get(b)!;
       const idx = q.findIndex((it) => (perSource.get(group(it)) ?? 0) < cap(group(it)));
@@ -381,10 +387,10 @@ export function balanceForHome<T extends { title: string; category: string; sect
       perSource.set(group(it), (perSource.get(group(it)) ?? 0) + 1);
     }
     if (round.length === 0) break;
-    round.sort((a, b) => Date.parse(b.published_date) - Date.parse(a.published_date));
+    round.sort((a, b) => b.score - a.score);
     for (const it of round) { if (out.length < limit) { out.push(it); used.add(it); } }
   }
-  for (const it of sorted) { // top up if rotation ran dry
+  for (const it of scored) { // top up if rotation ran dry
     if (out.length >= limit) break;
     if (!used.has(it)) { out.push(it); used.add(it); }
   }
