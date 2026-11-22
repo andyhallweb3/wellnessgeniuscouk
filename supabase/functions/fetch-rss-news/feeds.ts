@@ -21,8 +21,7 @@ export const RSS_FEEDS: RSSFeed[] = [
   // === OPERATOR & B2B FOCUSED (Priority Sources) ===
   
   // Fitness Industry Trade (Gyms, Health Clubs, Studios)
-  // HCM's own feed (hcmmag.com/feed/) returns HTTP 500 and has never written a row; read it via Google News instead.
-  { url: 'https://news.google.com/rss/search?q=site:hcmmag.com+when:14d&hl=en-GB&gl=GB&ceid=GB:en', category: 'Fitness', sourceName: 'HCM Magazine', sectors: ['fitness'], maxAgeDays: 21 },
+  // HCM Magazine removed Nov 2026: hcmmag.com/feed/ returns HTTP 500, never wrote a row, and Google News does not index the site.
   { url: 'https://clubindustry.com/rss.xml', category: 'Fitness', sourceName: 'Club Industry', sectors: ['fitness'] },
   { url: 'https://athletechnews.com/feed/', category: 'Fitness', sourceName: 'Athletech News', sectors: ['fitness'] },
   { url: 'https://www.athleticbusiness.com/rss', category: 'Fitness', sourceName: 'Athletic Business', sectors: ['fitness'] },
