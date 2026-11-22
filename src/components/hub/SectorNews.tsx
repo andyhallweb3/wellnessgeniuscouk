@@ -31,7 +31,7 @@ const SectorNews = ({ sector, name, limit = 6, heading, allHref, signupAfter, si
   useEffect(() => {
     let cancelled = false;
     supabase.functions
-      .invoke(`fetch-rss-news?limit=${limit}${sector ? `&sector=${encodeURIComponent(sector)}` : ""}`, { body: null })
+      .invoke(`fetch-rss-news?limit=${limit}${sector ? `&sector=${encodeURIComponent(sector)}` : "&mix=home"}`, { body: null })
       .then(({ data }) => {
         if (!cancelled) setItems(data?.success ? (data.data as Item[]).slice(0, limit) : []);
       })
